@@ -1,0 +1,444 @@
+id,name,slot,twoHanded,weaponType,damage,damageType,stat,range,armor,weight,value,minLevel,generate,modifiers,tags,flavor
+chef_knife,Chef's Knife,mainHand,,blades,1d6,,DEX,close,,1,12,,false,,occupation,Still smells like onions and minimum wage.
+trauma_shears,Trauma Shears,mainHand,,blades,1d4,,DEX,close,,1,8,,false,skill:first_aid=1,occupation,Designed to cut through clothing. Monsters wear clothing sometimes.
+framing_hammer,Framing Hammer,mainHand,,blunt,1d8,,STR,close,,3,14,,false,,occupation,Twenty-two ounces of opinion.
+desk_calculator,Desk Calculator,mainHand,,improvised,1d4,,STR,close,,2,4,,false,skill:appraisal=1,occupation,"The big kind with the paper roll. It prints your kill count, if you hold the button."
+coach_whistle,Coach's Whistle,neck,,,,,,,,0,3,,false,skill:intimidation=1,occupation,Blowing it makes monsters briefly feel like they're running laps.
+tattoo_gun,Tattoo Gun,mainHand,,improvised,1d4,,DEX,close,,1,20,,false,,occupation,Battery at 61%. Make every needle count.
+ring_light,Ring Light,mainHand,,improvised,1d4,,STR,close,,3,15,,false,skill:persuasion=1,occupation; light,Everyone looks better in a ring light. Even the thing eating you.
+trick_cane,Trick Cane,mainHand,,blunt,1d4,,DEX,close,,1,10,,false,skill:deception=1,occupation,Turns into a bouquet of fake flowers. Exactly once.
+pipe_wrench,Pipe Wrench,mainHand,,blunt,1d6+1,,STR,close,,4,12,,false,,occupation,Eighteen inches of righty-tighty.
+laser_pointer,Laser Pointer,offHand,,,,,,,,0,5,,false,skill:persuasion=1,occupation; light,For making points. Do not point at eyes. Unless they're bad eyes.
+bottle_opener_knife,Bartender's Key,mainHand,,blades,1d4,,DEX,close,,0.5,6,,false,,occupation,"Opens bottles, cans, and the occasional jugular."
+mag_flashlight,Mag Flashlight,mainHand,,blunt,1d6,,STR,close,,2,10,,false,,occupation; light,Four D-cell batteries. Can light a room or end a conversation.
+dental_pick,Dental Pick,mainHand,,blades,1d3,,DEX,close,,0,5,,false,skill:lockpicking=1,occupation,You've seen what this does to plaque. Imagine an eye.
+ice_cream_scoop,Ice Cream Scoop,mainHand,,improvised,1d4,,STR,close,,1,3,,false,,occupation,Melon-baller energy. Very upsetting in the right hands.
+bug_sprayer,Pump Bug Sprayer,mainHand,,improvised,1d4,poison,DEX,near,,4,18,,false,,occupation,Half full of something that says DANGER in three languages.
+toilet_plunger,Gas Station Plunger,mainHand,,improvised,1d4,,STR,close,,1,1,,false,,location,You did not wash it. There was no time.
+cake_knife,Engraved Cake Knife,mainHand,,blades,1d4,,DEX,close,,0.5,25,,false,,location,Engraved with a date that no longer matters.
+iv_pole,IV Pole,mainHand,true,polearm,1d6,,STR,close,,5,6,,false,,location,Squeaky wheel included. The bag is empty. Probably.
+kettlebell,Kettlebell,mainHand,,improvised,1d8,,STR,close,,8,8,,false,,location,Thirty-five pounds. Swing from the hips.
+tire_iron,Tire Iron,mainHand,,blunt,1d6,,STR,close,,3,6,,false,,location,"Lefty-loosey, monster-skully."
+karaoke_mic,Karaoke Microphone,mainHand,,improvised,1d3,,STR,close,,1,4,,false,stat:CHA=1,location,Still has echo turned up to eleven.
+bowling_ball,House Bowling Ball,mainHand,,thrown,1d8,,STR,near,,6,5,,false,,location,Twelve pounds. The finger holes are a little too sticky.
+bathrobe,Bathrobe,chest,,,,,,,1,1,2,,false,,clothing,Terrycloth. Belt optional. Dignity not included.
+rented_tux_jacket,Rented Tuxedo Jacket,chest,,,,,,,1,1,10,,false,skill:persuasion=1,clothing,The deposit is gone. Everything is gone.
+dress_shoes,Patent Leather Shoes,feet,,,,,,,0,1,8,,false,skill:stealth=-1,clothing,They click. Everyone can hear them click.
+hospital_gown,Hospital Gown,chest,,,,,,,0,0.5,1,,false,,clothing,Open in the back. The dungeon has seen everything.
+grip_socks,Grip Socks,feet,,,,,,,0,0,1,,false,skill:dodge=1,clothing,Little rubber smiles on the bottom. They grip. They believe in you.
+gym_shorts,Gym Shorts,legs,,,,,,,0,0.5,2,,false,,clothing,Five-inch inseam. Bold.
+sweatband,Terry Sweatband,head,,,,,,,0,0,1,,false,skill:athletics=1,clothing,Keeps the sweat out of your eyes. The blood is your problem.
+stained_hoodie,Stained Hoodie,chest,,,,,,,1,1,2,,false,skill:stealth=1,clothing,The stain is shaped like Ohio. Nobody knows what it is.
+sequin_blazer,Sequin Blazer,chest,,,,,,,1,1,15,,false,stat:CHA=1; skill:stealth=-2,clothing,Catches the light. Catches every light. Catches the eye of every predator.
+paper_bib,Paper Dental Bib,neck,,,,,,,0,0,0,,false,,clothing,Clipped on with a little chain. Absorbs approximately one drool.
+hot_dog_suit,Giant Hot Dog Costume,chest,,,,,,,2,4,6,,false,skill:stealth=-3,clothing; weird,Foam bun. Surprisingly protective. Monsters will think you're food.
+swim_trunks,Swim Trunks,legs,,,,,,,0,0.5,3,,false,swim=2,clothing,Pineapple pattern. Drawstring permanently knotted.
+flip_flops,Flip-Flops,feet,,,,,,,0,0,1,,false,flee=-1,clothing,The worst possible shoes for the end of the world.
+bowling_shoes,Rental Bowling Shoes,feet,,,,,,,0,1,2,,false,,clothing,Size 10 1/2. Sprayed with something. Two-tone.
+bowling_shirt,Bowling Shirt,chest,,,,,,,1,0.5,4,,false,,clothing,Embroidered name tag says 'Ricky'. You are not Ricky.
+mail_satchel,Mail Satchel,offHand,,,,,,,,2,6,,false,skill:dodge=1,occupation,Neither rain nor sleet nor the screaming thing in the hall.
+stop_sign,Handheld Stop Sign,mainHand,true,polearm,1d6,,STR,close,,3,8,,false,,occupation,It has always worked before. Cars respect it. Monsters might.
+grooming_clippers,Electric Grooming Clippers,mainHand,,blades,1d4,lightning,DEX,close,,1,18,,false,,occupation,Cordless. Rated for poodles. Not rated for this.
+red_pen,Red Grading Pen,mainHand,,blades,1d2,,DEX,close,,0,1,,false,skill:intimidation=1,occupation,You've failed tougher customers than this.
+car_keys,Car Keys on a Lanyard,mainHand,,improvised,1d3,,DEX,close,,0,2,,false,flee=1,occupation,The car is gone. The keys remain. Click the button. Hear nothing.
+number_dispenser,Take-a-Number Dispenser,mainHand,,blunt,1d6,,STR,close,,3,10,,false,skill:intimidation=1,occupation,Now serving: you. Now serving: pain.
+fry_basket,Fry Basket,mainHand,,blunt,1d6,fire,STR,close,,2,8,,false,,occupation,Still dripping. Still hot. Still has some fries in it.
+espresso_tamper,Espresso Tamper,mainHand,,blunt,1d4,,DEX,close,,1,20,,false,,occupation,"Thirty pounds of pressure, evenly applied."
+date_stamp,Due Date Stamp,mainHand,,blunt,1d3,,DEX,close,,0.5,3,,false,skill:perception=1,occupation,Stamps OVERDUE in red. The monster is very overdue.
+safety_vest,Hi-Vis Safety Vest,chest,,,,,,,1,0.5,4,,false,skill:perception=1,occupation,You are very visible. That is a mixed blessing down here.
+serving_ladle,Industrial Serving Ladle,mainHand,,blunt,1d6,,STR,close,,2,5,,false,,occupation,One scoop of violence. No seconds.
+ranger_hat,Campaign Hat,head,,,,,,,1,0.5,10,,false,skill:perception=1,occupation,Wide brim. Strap under the chin. Authority over squirrels.
+moisture_probe,Moisture Probe,mainHand,,blades,1d4,,DEX,close,,1,14,,false,skill:perception=1,occupation,"Detects rot. In wood, walls, and walls that are actually monsters."
+lockpick_set,Lockpick Roll,offHand,,,,,,,,0.5,25,,false,skill:lockpicking=2,occupation,"Twelve picks, two tension wrenches, and an attitude."
+meat_cleaver,Meat Cleaver,mainHand,,blades,1d6+1,,STR,close,,2,15,,false,,occupation,It knows what it's for.
+wire_strippers,Wire Strippers,mainHand,,blades,1d4,lightning,DEX,close,,1,12,,false,,occupation,Insulated handles. That's the important part.
+hedge_trimmers,Hedge Trimmers,mainHand,true,blades,1d8,,STR,close,,4,20,,false,,occupation,Long-reach. Carbon steel. Has seen some hedges.
+clipboard,Clipboard,offHand,,,,,,,1,1,3,,false,skill:appraisal=1,occupation,"Holds forms. Blocks blows. Is, in a legal sense, a shield."
+open_house_sign,Open House Sign,mainHand,true,polearm,1d6,,STR,close,,3,6,,false,skill:persuasion=1,occupation,Arrow points left. Your face is on it. Smiling.
+pill_counter,Pill Counting Tray,offHand,,,,,,,,0.5,10,,false,skill:first_aid=1; skill:appraisal=1,occupation,Counts by fives. Counts fast. Counts on you.
+catchpole,Animal Control Pole,mainHand,true,polearm,1d4,,DEX,near,,4,25,,false,perk:grapple=1,occupation,Loop goes around the neck. Works on dogs. Works on worse.
+headset,Call Center Headset,head,,,,,,,,0,5,,false,skill:persuasion=1,occupation,"Hello, have you considered your extended warranty against death?"
+trash_grabber,Trash Grabber,mainHand,,improvised,1d3,,DEX,near,,1,8,,false,skill:perception=1,occupation,Pinches things at arm's length. You have been waiting your whole life for this.
+refrigerant_can,Can of Refrigerant,mainHand,,improvised,1d4,frost,DEX,near,,2,20,,false,,occupation,Sprays cold. Very cold. The label has a skull and also a snowflake.
+push_broom,Push Broom,mainHand,true,polearm,1d6,,STR,close,,3,6,,false,,occupation,Eighteen inches of bristle. You have pushed worse than this down a hallway.
+golf_driver,Golf Driver,mainHand,,blunt,1d8,,STR,close,,2,40,,false,,occupation,Titanium head. Graphite shaft. Forty-dollar grip.
+baton,Collapsible Baton,mainHand,,blunt,1d6,,STR,close,,1,20,,false,,occupation,Snaps out with a satisfying click.
+defibrillator,Portable Defibrillator,mainHand,,improvised,1d6,lightning,DEX,close,,4,60,,false,skill:first_aid=1,occupation,CLEAR. The AI voice says stand back. You do not stand back.
+eye_chart,Rolled-Up Eye Chart,mainHand,,blunt,1d3,,STR,close,,1,5,,false,skill:perception=1,occupation,E. F P. T O Z. Hit them with the big E.
+fog_machine,Fog Machine Remote,offHand,,,,,,,,1,30,,false,skill:stealth=1,occupation,One button. Unleashes a fog bank. Now it's a party.
+tow_chain,Length of Tow Chain,mainHand,,blunt,1d6,,STR,near,,5,10,,false,,occupation,Hooks on the end. Can drag things that should not be dragged.
+embalming_trocar,Embalming Trocar,mainHand,,blades,1d6,,DEX,close,,1,30,,false,,occupation,"Pointy, hollow, and you know exactly where to put it."
+floral_shears,Floral Shears,mainHand,,blades,1d4,,DEX,close,,0.5,10,,false,,occupation,Snips stems. Snips other things.
+knee_kicker,Knee Kicker,mainHand,,blunt,1d6,,STR,close,,3,30,,false,,occupation,You kick it with your knee. It kicks back with teeth.
+aviator_goggles,Aviator Goggles,eyes,,,,,,,,0,15,,false,skill:perception=1; resist:blind=1,occupation,Bug-spattered and unbreakable.
+menu_stack,Stack of Laminated Menus,offHand,,,,,,,1,1,5,,false,,occupation,"Two-sided, wipe-clean, and harder than they look."
+inflatable_tube_man,Inflatable Tube Man,mainHand,true,improvised,1d3,,DEX,close,,3,40,,false,skill:persuasion=1,occupation; weird,Deflated. You keep it anyway. It still waves when you blow into it.
+sewing_shears,Tailor's Shears,mainHand,,blades,1d6,,DEX,close,,1,25,,false,,occupation,Nobody touches the fabric scissors. Nobody.
+tuning_hammer,Tuning Hammer,mainHand,,blunt,1d4,,DEX,close,,1,25,,false,skill:perception=1,occupation,You can hear when something is sharp. Or flat. Or behind you.
+census_tablet,Government Tablet,offHand,,,,,,,,1,20,,false,skill:appraisal=1,occupation,You were counting people. Now you're counting monsters.
+bingo_cage,Bingo Ball Cage,mainHand,,blunt,1d6,,STR,close,,4,20,,false,,occupation,Rattles with seventy-five balls. B-9. You sank my B-9.
+rescue_tube,Rescue Tube,offHand,,,,,,,,1,15,,false,swim=3,occupation,"Red foam. Rope included. Saves lives, sometimes yours."
+ice_scraper,Hockey Rink Scraper,mainHand,true,polearm,1d6,,STR,close,,4,12,,false,resist:frost=1,occupation,Long and flat. Scrapes ice. Scrapes faces.
+paper_shredder_cassette,Hole Punch,mainHand,,blunt,1d4,,STR,close,,1,4,,false,,occupation,Three-ring. Heavy duty. You punch holes for a living.
+saliva_ejector,Saliva Ejector,mainHand,,improvised,1d2,,DEX,close,,1,25,,false,perk:disarm=1,occupation,It sucks. Literally. Can pull a small weapon out of a hand.
+parachute_pack,Reserve Parachute,chest,,,,,,,1,3,80,,false,perk:fallDamage=50,occupation,Never deployed. Might deploy. Don't pull the tab indoors.
+coax_cable,Coil of Coaxial Cable,mainHand,,improvised,1d4,,DEX,near,,1,5,,false,skill:trap_engineering=1,occupation,"Fifty feet of RG6. You can whip with it, or trip things."
+massage_oil,Bottle of Massage Oil,offHand,,,,,,,,0.5,10,,false,skill:first_aid=1; perk:escapeGrapple=1,occupation,Eucalyptus. Slippery. Makes you hard to hold.
+wine_corkscrew,Waiter's Corkscrew,mainHand,,blades,1d3,,DEX,close,,0,10,,false,skill:appraisal=1,occupation,You can uncork a bottle in four seconds and an eye in two.
+yoga_mat,Rolled Yoga Mat,offHand,,,,,,,1,1,20,,false,skill:dodge=1,occupation,"Purple, non-slip, rolled tight. Namaste."
+steam_iron,Steam Iron,mainHand,,blunt,1d6,fire,STR,close,,2,20,,false,,occupation,Linen setting. Hot enough to matter.
+stress_ball,Branded Stress Ball,mainHand,,thrown,1d2,,DEX,near,,0,1,,false,resist:fear=1,occupation,Shaped like a bull. Squeeze it when the market crashes. Market crashed.
+coin_roll,Roll of Quarters,mainHand,,blunt,1d4,,STR,close,,0.5,10,,false,,occupation,"Ten dollars of quarters, tight in a fist."
+orange_wands,Marshalling Wands,offHand,,,,,,,,1,20,,false,perk:allyBonus=1,occupation,Glow orange. Point where you want things to go. Sometimes they go.
+oil_filter_wrench,Oil Filter Wrench,mainHand,,blunt,1d6,,STR,close,,2,10,,false,,occupation,Your fingernails will never be clean again. That's fine.
+hot_dog_tongs,Stainless Tongs,mainHand,,blades,1d3,,DEX,close,,0.5,4,,false,perk:disarm=1,occupation,Click click. You grab things. It's what you do.
+balloon_pump,Balloon Pump,mainHand,,blunt,1d2,,DEX,close,,0.5,5,,false,skill:deception=1,occupation; weird,You can make a giraffe in nine seconds. A decoy in twelve.
+skinning_knife,Skinning Knife,mainHand,,blades,1d6,,DEX,close,,0.5,20,,false,,occupation,You know where everything comes apart.
+card_shoe,Card Shoe,mainHand,,blunt,1d4,,STR,close,,2,20,,false,skill:appraisal=1,occupation,Eight decks. The house always wins. Are you the house now?
+microphone_boom,Studio Mic on a Boom Arm,mainHand,true,polearm,1d4,,STR,close,,3,60,,false,skill:persuasion=1,occupation,You're listening to the end of the world. Lines are open.
+weather_clicker,Presentation Clicker,offHand,,,,,,,,0,20,,false,skill:perception=1,occupation,Click. Seventy percent chance of death. Click.
+gaffer_tape,Roll of Gaffer Tape,offHand,,,,,,,,0.5,15,,false,skill:trap_engineering=1; skill:improvised=1,occupation,Fixes anything. Anything.
+stenotype,Stenotype Machine,mainHand,,blunt,1d4,,STR,close,,3,200,,false,skill:perception=1,occupation,You type 225 words a minute. You will record every scream.
+price_gun,Price Tag Gun,mainHand,,improvised,1d2,,DEX,near,,1,8,,false,skill:appraisal=1,occupation,Ka-chunk. Everything has a price.
+boat_hook,Boat Hook,mainHand,true,polearm,1d6,,STR,near,,3,15,,false,swim=1,occupation,Pulls things toward you. Pushes things away. Choose carefully.
+chimney_brush,Chimney Brush,mainHand,true,polearm,1d4,,STR,close,,2,15,,false,resist:fire=1,occupation,Wire bristles. Soot permanent. Very 1890s.
+bee_smoker,Bee Smoker,mainHand,,improvised,1d3,fire,DEX,near,,1,25,,false,perk:calm=1,occupation,Puffs of smoke make bees calm. Unclear what they do to everything else.
+shepherds_crook,Shepherd's Crook,mainHand,true,polearm,1d6,,STR,close,,3,10,,false,,occupation,Hooks around a neck. Any neck.
+arrow_sign,Spinning Arrow Sign,mainHand,true,polearm,1d6,,DEX,close,,2,5,,false,skill:dodge=1,occupation,MATTRESS SALE. You can spin it at ninety RPM.
+chest_protector,Umpire Chest Protector,chest,,,,,,,2,3,30,,false,,occupation,Took foul balls for a living. Now takes worse.
+scalpel,Scalpel,mainHand,,blades,1d4,,DEX,close,,0,30,,false,perk:crit=1,occupation,Very sharp. Very precise. Very expensive malpractice insurance.
+nail_file,Metal Nail File,mainHand,,blades,1d3,,DEX,close,,0,3,,false,,occupation,Pointy on the end. You've buffed tougher.
+work_gloves,Leather Work Gloves,hands,,,,,,,,0.5,10,,false,attack:unarmed=1; resist:disease=1,occupation,Thick enough for anything you'd find in a dumpster. Or a dungeon.
+hymnal,Hardcover Hymnal,mainHand,,blunt,1d4,,STR,close,,2,10,,false,resist:fear=1,occupation,Four hundred hymns. Heavy enough for a fifth.
+blowpipe,Glassblowing Blowpipe,mainHand,true,polearm,1d6,fire,STR,close,,3,40,,false,resist:fire=1,occupation,Five feet of steel tube. One end is still hot.
+pool_skimmer,Pool Skimmer,mainHand,true,polearm,1d4,,DEX,near,,2,20,,false,swim=1,occupation,Extends to sixteen feet. Scoops leaves. Scoops eyes.
+u_lock,U-Lock,mainHand,,blunt,1d6+1,,STR,close,,2,40,,false,,occupation,"Heavy, hardened steel. You've used it on worse than a bike thief."
+welding_mask,Welding Helmet,head,,,,,,,1,2,50,,false,resist:blind=2; resist:fire=1,occupation,Auto-darkening. Makes you look like a robot knight.
+tour_flag,Tour Group Flag,mainHand,true,polearm,1d3,,DEX,close,,1,5,,false,perk:allyBonus=1,occupation,Bright yellow. Everyone follows the flag. Follow the flag.
+spray_tan_gun,Spray Tan Gun,mainHand,,improvised,1d2,,DEX,near,,2,40,,false,perk:blind=1,occupation,Golden Glow #4. Gets in eyes. Gets everywhere.
+handcuffs,Handcuffs,offHand,,,,,,,,0.5,20,,false,perk:grapple=1,occupation,You can't arrest anyone. They don't need to know that.
+dive_knife,Dive Knife,mainHand,,blades,1d4,,DEX,close,,0.5,30,,false,swim=2,occupation,Strapped to the calf. Serrated on one edge.
+transit_badge,Transit Authority Badge,neck,,,,,,,,0,5,,false,skill:intimidation=1; resist:fear=1,occupation,You've seen everything on the 14 bus. This is nothing.
+bone_mallet,Orthopedic Mallet,mainHand,,blunt,1d4,,DEX,close,,1,25,,false,skill:first_aid=1,occupation,You know exactly where to hit a foot. Everything down here has feet.
+claw_hammer,Claw Hammer,mainHand,,blunt,1d6,,STR,close,,2,10,,false,,occupation,Hits nails. Pulls nails. Covers the basics.
+sock_puppet,Sock Puppet,offHand,,,,,,,,0,1,,false,skill:deception=2,occupation; weird,His name is Gerald. He says what you can't.
+gavel,Gavel,mainHand,,blunt,1d4,,STR,close,,1,30,,false,skill:intimidation=1,occupation,ORDER. ORDER.
+jewelers_loupe,Jeweler's Loupe,neck,,,,,,,,0,20,,false,skill:appraisal=2,occupation,You can tell fake gold from across a room.
+ice_chisel,Ice Chisel,mainHand,,blades,1d6,frost,DEX,close,,2,25,,false,,occupation,"Wide, flat, very cold. Swans are your specialty."
+safety_bar_key,Ride Safety Key,neck,,,,,,,,0,5,,false,skill:persuasion=1,occupation,Keep your hands and arms inside the dungeon at all times.
+headlamp,Mining Headlamp,head,,,,,,,1,0.5,20,,false,skill:perception:dark=2,occupation; light,Lights the way. Lights you up. Lights everything.
+horseshoe,Horseshoe,mainHand,,thrown,1d4,,STR,near,,1,2,,false,perk:firstRoomLuck=1,occupation,Lucky. Hard. Bent in a way that suggests it's been used for this before.
+tongs_forge,Forge Tongs,mainHand,,blunt,1d6,fire,STR,close,,3,20,,false,,occupation,"Real fire, fake accent."
+film_reel,Steel Film Reel,mainHand,,thrown,1d6,,DEX,near,,2,15,,false,,occupation,Two hours of 35mm. Sails like a discus.
+crab_hook,Crab Pot Hook,mainHand,,blades,1d6,,STR,near,,2,10,,false,swim=1,occupation,"Rusty, heavy, and still wet."
+meter_scanner,Meter Reading Gun,offHand,,,,,,,,1,20,,false,skill:perception=1,occupation,"Bleeps. Counts. Detects electricity, and things that run on it."
+sample_spray,Free Sample Perfume,mainHand,,improvised,1d2,poison,DEX,near,,0.5,15,,false,skill:persuasion=1,occupation,"Excuse me, sir, ma'am, monster. Can I ask you a question?"
+star_pointer,Telescoping Pointer,mainHand,,blades,1d3,,DEX,near,,0,10,,false,skill:perception:dark=1,occupation; nerd,Extends to three feet. Points at Orion. Points at eyes.
+pizza_bag,Insulated Pizza Bag,offHand,,,,,,,1,1,10,,false,resist:frost=1,occupation,Keeps things hot. Keeps you warm. Smells like pepperoni forever.
+hot_dog_roller_rod,Hot Dog Roller Rod,mainHand,,blunt,1d4,fire,STR,close,,1,5,,false,,occupation,"Pried loose from the machine. Still rotating, a little."
+seltzer_bottle,Seltzer Bottle,mainHand,,improvised,1d2,,DEX,near,,1,5,,false,perk:blind=1,occupation; weird,Sprays in the face. Gets laughs. Gets eyes.
+accordion_file,Accordion File,offHand,,,,,,,1,1,5,,false,,occupation,Stuffed with motions. Surprisingly solid.
+coffee_pot,Glass Coffee Pot,mainHand,,improvised,1d4,fire,DEX,close,,1,10,,false,,occupation,Topped off. Always topped off. Hot enough to matter.
+felling_axe,Felling Axe,mainHand,true,blades,1d10,,STR,close,,5,35,,false,,occupation,You've cut down things bigger than whatever that is.
+oyster_knife,Oyster Knife,mainHand,,blades,1d4,,DEX,close,,0.5,10,,false,perk:crit=1,occupation,"Short, stubby, and goes exactly where it needs to."
+gas_sniffer,Gas Leak Detector,offHand,,,,,,,,1,30,,false,resist:poison=2; skill:perception=1,occupation,Beeps louder near danger. Never stops beeping down here.
+chafing_lid,Chafing Dish Lid,offHand,,,,,,,1,2,15,,false,,occupation,Stainless. Dented already. Keeps things warm and teeth away.
+headset_mic,Fitness Headset Mic,head,,,,,,,,0,20,,false,perk:allyBonus=1; skill:intimidation=1,occupation,ONE MORE HILL. Monsters hate this one weird trick.
+casino_chips,Stack of Casino Chips,mainHand,,thrown,1d2,,DEX,near,,0.5,25,,false,skill:bartering=1,occupation,"Clay, heavy, and nobody can tell you they aren't currency."
+squeegee,Long-Handled Squeegee,mainHand,true,polearm,1d4,,DEX,close,,2,10,,false,skill:athletics:climb=2,occupation,You hang off buildings for a living. Heights are a lifestyle.
+brochure_rack,Stack of Glossy Brochures,offHand,,,,,,,,1,5,,false,skill:persuasion=1,occupation,ESCAPE TO PARADISE. Ironic.
+pin_cushion,Wrist Pin Cushion,offHand,,,,,,,,0,3,,false,attack:unarmed=1,occupation,"Forty pins, wrist-mounted. Every punch is a little worse."
+pole_saw,Pole Saw,mainHand,true,polearm,1d8,,STR,near,,5,50,,false,,occupation,"Ten feet of reach. Cuts limbs, the tree kind, usually."
+rubber_mallet,Rubber Mallet,mainHand,,blunt,1d4,,STR,close,,1,8,,false,perk:stun=1,occupation,Doesn't crack tile. Does make things see stars.
+cash_strap,Bundle of Singles,offHand,,,,,,,,0.5,10,,false,skill:bartering=1,occupation,Fifty ones in a paper strap. Bribes start small.
+velvet_rope,Velvet Rope on a Stanchion,mainHand,true,polearm,1d4,,STR,close,,4,30,,false,perk:block=1,occupation,PLEASE DO NOT TOUCH THE EXHIBITS. The exhibits touched first.
+cb_radio,CB Radio Handset,mainHand,,blunt,1d3,,STR,close,,1,20,,false,perk:allyBonus=1,occupation,Breaker one-nine. Anybody out there? Something answers.
+sledgehammer,Sledgehammer,mainHand,true,blunt,1d10,,STR,close,,8,25,,false,,occupation,Ten pounds. Breaks rock. Breaks rocks that move.
+pin_setter_part,Bowling Pin,mainHand,,blunt,1d6,,STR,close,,2,5,,false,,occupation,Maple wood. Ten of them stood up for you every day.
+crystal_ball,Crystal Ball,mainHand,,thrown,1d6,,STR,near,,3,40,,false,skill:deception=1,occupation; weird,You saw this coming. You did not see this coming.
+drywall_saw,Jab Saw,mainHand,,blades,1d6,,STR,close,,1,10,,false,,occupation,Cuts holes in walls. Some walls bleed now.
+noise_headphones,Studio Headphones,head,,,,,,,,0.5,60,,false,resist:stun=1; skill:perception=1,occupation,Closed-back. You can hear a mouse cough at forty yards.
+survey_tripod,Surveying Tripod,mainHand,true,polearm,1d6,,STR,close,,5,80,,false,skill:perception=1,occupation,Three legs. Brass fittings. Everything down here is out of level.
+carpet_spray,Spot Remover Spray,mainHand,,improvised,1d2,poison,DEX,near,,1,8,,false,perk:blind=1,occupation,Removes stains. Removes pigment. Removes vision.
+suction_cup,Glass Suction Lifter,offHand,,,,,,,,1,30,,false,skill:athletics:climb=1; perk:disarm=1,occupation,Grips anything flat. Pulls anything loose.
+healing_crystal,Healing Crystal,neck,,,,,,,,0,40,,false,skill:first_aid=1; resist:fear=1,occupation; weird,"Rose quartz. Does it work? Here, for the first time, maybe."
+cosmetic_laser,Cosmetic Laser Wand,mainHand,,improvised,1d4,fire,DEX,near,,2,200,,false,,occupation,Class IV. Do not look into the business end.
+slot_keys,Ring of Casino Keys,mainHand,,improvised,1d2,,DEX,close,,0.5,10,,false,skill:lockpicking=1,occupation,Opens slot machines. Opens a surprising number of chests.
+fish_net,Aquarium Net,mainHand,,improvised,1d2,,DEX,close,,0,3,,false,perk:entangle=1,occupation,Sized for goldfish. Optimistic.
+box_cutter,Box Cutter,mainHand,,blades,1d4,,DEX,close,,0,2,,false,,occupation,Thumb-slide. Retractable. Opens anything that comes in a box.
+ring_toss,Ring Toss Rings,mainHand,,thrown,1d2,,DEX,near,,0.5,3,,false,attack:thrown=1,occupation,Step right up. Everyone's a winner. Nobody is a winner.
+air_horn,Air Horn,offHand,,,,,,,,0.5,10,,false,perk:stun=1,occupation,BWAAAAAAAMP. Used sparingly. Used constantly.
+cobbler_hammer,Cobbler's Hammer,mainHand,,blunt,1d4,,DEX,close,,1,15,,false,,occupation,Small head. Lots of practice.
+taxi_meter,Ripped-Out Taxi Meter,mainHand,,blunt,1d4,,STR,close,,2,20,,false,skill:bartering=1,occupation,Still running. Fare is up to $412.
+chlorine_tablets,Bucket of Chlorine Tablets,mainHand,,thrown,1d3,poison,DEX,near,,2,10,,false,resist:disease=1,occupation,Pool-grade. Do not eat. Do not breathe near.
+magnet_stick,Magnetic Pickup Wand,offHand,,,,,,,,0.5,10,,false,perk:lootBonus=5,occupation,Pulls metal out of trash. Pulls loot out of corners.
+hard_hat,Hard Hat,head,,,,,,,1,1,15,,false,,occupation,OSHA approved. Dented in three places already.
+jump_rope,Weighted Jump Rope,mainHand,,improvised,1d4,,DEX,near,,1,25,,false,perk:entangle=1,occupation,Two-pound handles. Double-unders are a war crime.
+collection_plate,Collection Plate,offHand,,,,,,,1,1,20,,false,resist:fear=1,occupation,Brass. Holds tithes. Holds the line.
+quarter_bag,Sack of Quarters,mainHand,,blunt,1d6,,STR,close,,3,25,,false,,occupation,"Forty dollars in quarters, knotted in a pillowcase."
+bite_sleeve,Bite Sleeve,offHand,,,,,,,2,2,60,,false,,occupation,Jute and leather. Built for German shepherds. Rated for worse.
+towel_whip,Rolled Gym Towel,mainHand,,improvised,1d2,,DEX,close,,0,1,,false,perk:stun=1,occupation,Wet. Rolled tight. Snaps like a whip.
+ski_pole,Ski Pole,mainHand,,blades,1d4,,DEX,close,,1,20,,false,resist:frost=1,occupation,Carbide tip. Snapped one off a skier who didn't need it anymore.
+grave_shovel,Grave Digger's Spade,mainHand,true,blunt,1d8,,STR,close,,4,15,,false,resist:fear=1,occupation,Square-nosed. You've dug a few. You're not scared of the dead.
+leaf_blower,Gas Leaf Blower,mainHand,true,improvised,1d4,,STR,near,,6,80,,false,perk:knockback=1,occupation,"Two-stroke engine. Blows leaves, blows smaller enemies across rooms."
+chamois,Chamois Cloth,offHand,,,,,,,,0,3,,false,perk:disarm=1,occupation,"Absorbs water. Absorbs blows, sort of. Very soft."
+memory_pillow,Memory Foam Pillow,offHand,,,,,,,1,1,50,,false,perk:restBonus=10,occupation,You have to feel it. Feel it. FEEL IT.
+diaper_bag,Diaper Bag,offHand,,,,,,,,2,30,,false,skill:first_aid=1; perk:carryWeight=10,occupation,Has everything. Wipes. Snacks. A tiny emergency.
+camera_flash,DSLR with Flash,mainHand,,improvised,1d3,,DEX,near,,2,500,,false,perk:blind=1,occupation,Smile! The flash is blinding. On purpose.
+fountain_pen,Fountain Pen,mainHand,,blades,1d3,,DEX,close,,0,50,,false,skill:deception=1,occupation,Gold nib. The pen is mightier. Test this.
+antique_lamp,Brass Antique Lamp,mainHand,,blunt,1d6,,STR,close,,3,40,,false,skill:appraisal=1,occupation; light,Victorian. Mostly. Rub it. Nothing.
+septic_hose,Septic Hose Nozzle,mainHand,,blunt,1d4,poison,STR,close,,3,15,,false,resist:disease=2,occupation,You know what's been through this. You do not care anymore.
+coconut_shells,Coconut Shell Halves,offHand,,,,,,,,0.5,2,,false,skill:deception=2,occupation; weird,Clip-clop. Monsters think a horse is coming. A horse is not coming.
+cheese_wire,Cheese Wire,mainHand,,blades,1d4,,DEX,close,,0,10,,false,perk:crit=1,occupation,"Two handles, one wire. Cuts a wheel of parm, cuts a throat."
+auction_paddle,Auction Paddle,mainHand,,blunt,1d3,,STR,close,,0.5,5,,false,skill:bartering=2,occupation,"Do I hear five? Five? I got five, now six, six, now seven."
+brass_knuckles,Brass Knuckles,mainHand,,unarmed,1d4,,STR,close,,0.5,20,,false,,occupation,Technically illegal in your state. Technically there's no state anymore.
+golf_balls,Bag of Golf Balls,mainHand,,thrown,1d3,,DEX,near,,1,10,,false,attack:thrown=1,occupation,Titleist Pro V1. Forty dollars a dozen. Fore.
+roman_candle,Roman Candle,mainHand,,thrown,1d6,fire,DEX,near,,1,10,,false,,occupation,Eight shots. Point away from face. Point at face.
+metal_wand,Metal Detector Wand,mainHand,,blunt,1d3,,STR,close,,1,30,,false,skill:perception=1; perk:findTraps=1,occupation,Beeps near metal. Beeps near traps. Beeps near your heart.
+pool_test_kit,Water Test Kit,offHand,,,,,,,,0.5,10,,false,resist:poison=1,occupation,Tells you the pH of things. Some of these things are acidic.
+ink_bottle,Bottle of India Ink,mainHand,,thrown,1d2,,DEX,near,,0.5,5,,false,perk:blind=1,occupation,Black and permanent. Ruins clothes. Ruins eyes.
+recorder,Plastic Recorder,mainHand,,blunt,1d2,,DEX,close,,0,2,,false,perk:annoy=1,occupation,Hot Cross Buns. Over and over. It makes things angry.
+red_card,Red Card,offHand,,,,,,,,0,1,,false,skill:intimidation=1,occupation,You're out of the game. Get out of the game.
+crash_helmet,Racing Helmet,head,,,,,,,2,2,80,,false,,occupation,Full-face. Fire-rated. You've hit walls at eighty in this.
+stiletto,Six-Inch Stiletto,mainHand,,blades,1d4,,DEX,close,,1,60,,false,skill:persuasion=1,occupation; performer,You can run in these. You can kill in these.
+vending_key,Vending Machine Key,offHand,,,,,,,,0,5,,false,perk:vendingAccess=1,occupation,"Opens every vending machine. They have them down here, somehow."
+ratchet,Ratchet Wrench,mainHand,,blunt,1d4,,STR,close,,1,10,,false,skill:trap_engineering=1,occupation,This is the bolt that holds the Zipper together. Was.
+tarot_deck,Tarot Deck,offHand,,,,,,,,0,15,,false,perk:firstRoomLuck=1; skill:deception=1,occupation; weird,You drew the Tower. Of course you drew the Tower.
+bullhorn,Bullhorn,offHand,,,,,,,,1,30,,false,skill:intimidation=2,occupation,LADIES AND GENTLEMEN. And whatever that is.
+lasso,Lariat,mainHand,,improvised,1d2,,DEX,near,,1,20,,false,perk:entangle=1,occupation,Thirty-five feet of nylon. You've roped worse than this.
+moving_dolly,Hand Truck,mainHand,true,blunt,1d8,,STR,close,,10,40,,false,perk:carryWeight=20,occupation,"Two wheels, one purpose. You can lift a piano. You can lift a monster."
+morphine_pump,Empty Morphine Pump,offHand,,,,,,,,0.5,10,,false,skill:first_aid=2,occupation,You sat with people at the end. This is just more of that.
+yanagiba,Yanagiba Knife,mainHand,,blades,1d8,,DEX,close,,1,150,,false,,occupation,Single-bevel. Takes a year to learn to sharpen.
+kickboard,Foam Kickboard,offHand,,,,,,,1,0.5,5,,false,swim=2,occupation,"Light, floaty, and better than nothing."
+scooter_battery,Scooter Battery Pack,mainHand,,thrown,1d4,lightning,STR,near,,3,50,,false,,occupation,Lithium-ion. Do not puncture. Puncture.
+tape_measure,25-Foot Tape Measure,mainHand,,improvised,1d3,,DEX,near,,1,15,,false,skill:perception=1,occupation,"The blade snaps back hard. Measures twice, hits once."
+earpiece,Radio Earpiece,head,,,,,,,,0,30,,false,perk:allyBonus=1; perk:initiative=1,occupation,Everyone report to the ballroom. Everyone is dead. Report anyway.
+duck_call,Duck Call,neck,,,,,,,,0,10,,false,perk:lure=1,occupation,Quack. Something heard you. Something is coming.
+mechanical_keyboard,Mechanical Keyboard,mainHand,,blunt,1d4,,STR,close,,2,150,,false,skill:intimidation:loud=1,occupation; nerd,Cherry MX Blues. Clicky enough to start a fight.
+key_cards,Stack of Hotel Key Cards,mainHand,,thrown,1d2,,DEX,near,,0,2,,false,skill:lockpicking=1,occupation,Most are demagnetized. One might open something.
+meat_slicer_blade,Deli Slicer Blade,mainHand,,thrown,1d8,,DEX,near,,2,40,,false,,occupation,Twelve-inch disc. You weren't supposed to take it out of the slicer.
+office_stapler,Heavy-Duty Stapler,mainHand,,blunt,1d4,,STR,close,,2,10,,false,,location,Swingline. Red. Someone wanted this back.
+fire_axe,Fire Axe From a Glass Case,mainHand,true,blades,1d10,,STR,close,,5,30,,false,,location,IN CASE OF EMERGENCY. This qualifies.
+umbrella,Golf Umbrella,mainHand,true,polearm,1d4,,DEX,close,,1,15,,false,resist:blind=1,location,Opens with a whoomp. Blocks a surprising amount.
+shopping_cart_rod,Shopping Cart Handle,mainHand,,blunt,1d6,,STR,close,,3,2,,false,,location,Wrenched off a cart with a bad wheel. It always had a bad wheel.
+cue_stick,Pool Cue,mainHand,true,polearm,1d6,,DEX,close,,1,25,,false,,location,Chalked. Warped. Still good for a break.
+dart_set,Set of Bar Darts,mainHand,,thrown,1d3,,DEX,near,,0,8,,false,attack:thrown=1,location,Three darts with American flag flights.
+pitchfork,Pitchfork,mainHand,true,polearm,1d8,,STR,close,,4,15,,false,,location,Three tines. Hay still stuck on.
+rolling_pin,Marble Rolling Pin,mainHand,,blunt,1d6,,STR,close,,3,20,,false,,location,Cold. Heavy. Perfect for pie crust and crushing.
+cast_iron_pan,Cast Iron Skillet,mainHand,,blunt,1d8,,STR,close,1,5,35,,false,,location,Seasoned for thirty years. Never washed with soap. Never will be.
+garden_hoe,Garden Hoe,mainHand,true,polearm,1d6,,STR,close,,3,10,,false,,location,Rusty edge. Good for weeds. Good for worse.
+weed_whacker,String Trimmer,mainHand,true,improvised,1d6,,DEX,close,,5,60,,false,,location,"Gas-powered. Spins at 10,000 RPM. Line nearly out."
+snow_shovel,Snow Shovel,mainHand,true,blunt,1d6,,STR,close,1,3,15,,false,,location,Wide plastic blade. Doubles as a shield.
+baseball_bat,Aluminum Baseball Bat,mainHand,,blunt,1d8,,STR,close,,2,30,,false,,location,Little League. Dented from the last game.
+hockey_stick,Hockey Stick,mainHand,true,blunt,1d6,,STR,close,,2,40,,false,,location,Taped blade. Taped handle. Taped together.
+lacrosse_stick,Lacrosse Stick,mainHand,true,polearm,1d4,,DEX,near,,1,50,,false,attack:thrown=1,location,Scoops rocks. Flings rocks. Hard.
+tennis_racket,Tennis Racket,mainHand,,blunt,1d4,,DEX,close,,1,60,,false,perk:deflect=1,location,Restrung last week. Can return a thrown object.
+golf_putter,Putter,mainHand,,blunt,1d4,,DEX,close,,1,80,,false,,location,Belly putter. Illegal on the tour. The tour is over.
+nunchucks_toy,Novelty Nunchucks,mainHand,,blunt,1d4,,DEX,close,,1,10,,false,,location; weird,"From a mall kiosk. Foam padding, mostly torn off."
+mall_katana,Mall Katana,mainHand,,blades,1d8,,DEX,close,,3,80,,false,,location; weird,Stainless steel. Decorative. Will break exactly when it matters.
+letter_opener,Brass Letter Opener,mainHand,,blades,1d3,,DEX,close,,0,10,,false,,location,Monogrammed. Very fancy. Very pointy.
+crowbar,Crowbar,mainHand,,blunt,1d6,,STR,close,,3,12,,false,skill:lockpicking=1,location,Opens crates. Opens doors. Opens heads.
+fire_poker,Fireplace Poker,mainHand,,blades,1d6,fire,STR,close,,2,20,,false,,location,"Black iron. One end glowing faintly, somehow."
+microphone_stand,Mic Stand,mainHand,true,polearm,1d6,,STR,close,,4,30,,false,,location,Chrome. Heavy base. Rockstar move.
+guitar,Acoustic Guitar,mainHand,true,blunt,1d6,,STR,close,,3,200,,false,skill:persuasion=1,location; performer,Still in tune. Not for long.
+trophy,Bowling Trophy,mainHand,,blunt,1d6,,STR,close,,2,10,,false,,location,"Third place, 2011 Mixed League. Little gold man on top is pointy."
+bar_stool,Bar Stool,mainHand,true,blunt,1d8,,STR,close,,6,20,,false,,location,Chrome legs. Vinyl seat. Bar fight classic.
+chair_folding,Folding Chair,mainHand,true,blunt,1d6,,STR,close,1,4,10,,false,,location,The wrestler's weapon. Unfolds into a small shield.
+fire_extinguisher_club,Empty Fire Extinguisher,mainHand,,blunt,1d8,,STR,close,,7,10,,false,,location,Discharged. Still dense.
+clothes_iron,Travel Iron,mainHand,,blunt,1d4,fire,STR,close,,1,15,,false,,location,Hot. On the cotton setting.
+hair_dryer,Hair Dryer on a Long Cord,mainHand,,improvised,1d4,,STR,near,,1,20,,false,,location; weird,Swing it by the cord. Like a mace.
+curling_iron,Curling Iron,mainHand,,blunt,1d4,fire,DEX,close,,0.5,30,,false,,location,Still plugged into nothing. Still hot.
+hand_mixer,Electric Hand Mixer,mainHand,,improvised,1d4,,DEX,close,,1,20,,false,,location; weird,The beaters spin. Who's powering it?
+meat_tenderizer,Meat Tenderizer,mainHand,,blunt,1d6,,STR,close,,1,12,,false,,location,Spiked aluminum head. Makes everything tender.
+corkscrew_wine,Rabbit Corkscrew,mainHand,,blades,1d4,,DEX,close,,1,25,,false,,location,Lever-action. Built for corks. Twists into anything.
+coat_rack,Coat Rack,mainHand,true,polearm,1d6,,STR,close,,5,30,,false,,location,Bentwood. Hooks on top. Medieval mace energy.
+paddle_canoe,Canoe Paddle,mainHand,true,blunt,1d6,,STR,close,,2,30,,false,swim=1,location,Wooden. Flat. Traditional spanking dimensions.
+bowling_pin_club,Bowling Pin,mainHand,,blunt,1d6,,STR,close,,2,5,,false,,location,Maple. Scuffed. A tenpin's revenge.
+treadmill_key,Treadmill Safety Key,neck,,,,,,,,0,1,,false,flee=1,location,"Magnetic. Clipped to your shirt. If you fall, everything stops."
+yardstick,Metal Yardstick,mainHand,,blades,1d3,,DEX,close,,0.5,3,,false,,location,Thirty-six inches of discipline.
+toilet_seat,Toilet Tank Lid,mainHand,,blunt,1d8,,STR,close,,8,5,,false,,location,Porcelain. Heavy. Classic.
+garden_gnome,Garden Gnome,mainHand,,thrown,1d6,,STR,near,,4,15,,false,,location; weird,Smiling. Concrete. Pointed hat.
+lawn_flamingo,Pink Lawn Flamingo,mainHand,,blades,1d3,,DEX,close,,1,5,,false,,location; weird,Two metal legs. Two metal stabs.
+tiki_torch,Tiki Torch,mainHand,true,polearm,1d4,fire,STR,close,,2,10,,false,,location; light,"Citronella. Lit. Repels mosquitoes and monsters, equally poorly."
+church_candle,Altar Candlestick,mainHand,,blunt,1d6,,STR,close,,3,60,,false,,location; light,Brass. Heavy. Very Clue.
+broomstick,Broom,mainHand,true,polearm,1d4,,STR,close,,1,5,,false,,location,Corn bristles. Witch adjacent.
+mop,Wet Mop,mainHand,true,polearm,1d4,,STR,close,,3,8,,false,perk:slip=1,location,Dripping. Leaves a slippery floor behind.
+plunger_toilet_big,Industrial Plunger,mainHand,,blunt,1d4,,STR,close,,1,5,,false,perk:disarm=1,location,Flange-head. Grips anything.
+tongs_bbq,BBQ Tongs,mainHand,,improvised,1d3,fire,DEX,close,,0.5,10,,false,,location,Still hot from the grill. Flip things.
+spatula,Grill Spatula,mainHand,,blades,1d4,,DEX,close,,0.5,8,,false,,location,Serrated edge. Flips burgers. Flips more.
+skewer_set,Metal Kebab Skewers,mainHand,,thrown,1d3,,DEX,near,,0.5,5,,false,attack:thrown=1,location,Fourteen inches each. Sharp. Greasy.
+bocce_ball,Bocce Ball,mainHand,,thrown,1d6,,STR,near,,2,10,,false,,location,Resin. Heavy. Rolls true.
+horseshoe_pit,Pitching Horseshoe,mainHand,,thrown,1d6,,STR,near,,2,5,,false,,location,Steel. Two and a half pounds.
+croquet_mallet,Croquet Mallet,mainHand,true,blunt,1d6,,STR,close,,2,20,,false,,location,Striped. Wooden. A garden party's last stand.
+cricket_bat,Cricket Bat,mainHand,true,blunt,1d8,,STR,close,,3,60,,false,,location,Willow. Flat face. Very British.
+paddle_pingpong,Ping Pong Paddle,mainHand,,blunt,1d2,,DEX,close,,0,10,,false,perk:deflect=1,location,Sandpaper face. Spin on everything.
+skateboard,Skateboard,mainHand,,blunt,1d6,,STR,close,,3,60,,false,flee=1,location,Kicktail chipped. Grip tape worn. Ride or swing.
+roller_skate,Single Roller Skate,mainHand,,blunt,1d4,,STR,close,,2,30,,false,,location; weird,"One skate, swung by the laces."
+pool_noodle,Pool Noodle,mainHand,,blunt,1,,STR,close,,0,2,,false,swim=1,location; weird,Foam. Purple. Absolutely useless as a weapon. Absolutely delightful.
+fishing_rod,Fishing Rod,mainHand,true,improvised,1d3,,DEX,near,,1,40,,false,perk:disarm=1,location,Hook still on the line. Snag things from across the room.
+harpoon_gun,Speargun,mainHand,,thrown,1d10,,DEX,near,,3,150,,false,,location,One spear. Reload takes a while.
+road_cone,Traffic Cone,mainHand,,blunt,1d3,,STR,close,,2,10,,false,,location; weird,Orange. Reflective stripe. Weighted base.
+stop_sign_pole,Stop Sign on a Pole,mainHand,true,polearm,1d8,,STR,close,,6,20,,false,,location,Ripped out of concrete. Still has concrete on it.
+bike_chain,Bike Chain,mainHand,,blunt,1d4,,DEX,near,,1,5,,false,,location,Greasy. Swings in a nasty arc.
+car_antenna,Car Antenna,mainHand,,blades,1d2,,DEX,close,,0,2,,false,,location,Snapped off. Whips like a switch.
+jumper_cables,Jumper Cables,mainHand,,improvised,1d4,lightning,DEX,near,,2,20,,false,,location,Red to positive. Black to the monster.
+spare_tire,Donut Spare Tire,offHand,,,,,,,2,8,30,,false,,location,Never meant for highway speeds or combat.
+hubcap,Chrome Hubcap,offHand,,,,,,,1,2,15,,false,,location,A small shield. Very shiny.
+mailbox,Mailbox on a Post,mainHand,true,blunt,1d8,,STR,close,,8,20,,false,,location; weird,Pulled out of the ground. Mail still in it.
+lawn_dart,Lawn Dart,mainHand,,thrown,1d6,,STR,near,,1,5,,false,,location; weird,Banned in 1988 for a reason. That reason is now useful.
+scissors_safety,Safety Scissors,mainHand,,blades,1d2,,DEX,close,,0,1,,false,,location; weird,Rounded tips. Kindergarten grade. Optimistic.
+glue_gun,Hot Glue Gun,mainHand,,improvised,1d3,fire,DEX,close,,0.5,10,,false,perk:entangle=1,location,Strings everywhere. Burns a little.
+staple_gun,Staple Gun,mainHand,,thrown,1d3,,DEX,near,,1,20,,false,,location,Fires half-inch staples. Not far. Not accurate.
+nail_gun,Cordless Nail Gun,mainHand,,thrown,1d6,,DEX,near,,4,150,,false,,location,Safety tip disabled. Don't ask.
+paint_roller,Paint Roller on an Extension Pole,mainHand,true,polearm,1d3,,STR,close,,2,10,,false,perk:blind=1,location,Still wet. Eggshell white.
+tv_remote,TV Remote,mainHand,,thrown,1d2,,DEX,near,,0,5,,false,,location; weird,Batteries in. Points at monsters. Nothing changes.
+laptop,"Laptop, Closed",mainHand,,blunt,1d4,,STR,close,1,2,800,,false,,location,Battery at 3%. You have unsaved work.
+bowling_ball_heavy,Sixteen-Pound Bowling Ball,mainHand,,thrown,1d10,,STR,near,,16,40,,false,,location,The heaviest one in the rack. Customized. Name on it: VERN.
+dumbbell,Dumbbell,mainHand,,blunt,1d6,,STR,close,,10,15,,false,,location,Twenty pounds. Hexagonal so it won't roll away.
+barbell_bar,Olympic Barbell,mainHand,true,polearm,1d10,,STR,close,,20,150,,false,,location,Forty-five pounds. Knurled grip. Nobody re-racked it.
+medicine_ball,Medicine Ball,mainHand,,thrown,1d6,,STR,near,,10,20,,false,,location,Leather. Fourteen pounds. Thump.
+jump_rope_gym,Speed Rope,mainHand,,improvised,1d3,,DEX,near,,0.5,10,,false,perk:entangle=1,location,Cable core. Leaves welts.
+foam_roller,Foam Roller,mainHand,,blunt,1d3,,STR,close,,1,20,,false,,location,Bumpy. Hurts so good. Mostly just hurts.
+resistance_band,Resistance Band,mainHand,,improvised,1d2,,DEX,near,,0,10,,false,perk:entangle=1,location,Heavy tension. Snaps hard.
+microscope,Microscope,mainHand,,blunt,1d6,,STR,close,,5,300,,false,,location; nerd,Binocular. Brass and steel. Very heavy for science.
+globe,Desk Globe,mainHand,,blunt,1d4,,STR,close,,3,30,,false,,location; nerd,Shows the world as it was. Which is to say: wrong.
+fire_alarm_bell,Fire Alarm Pull Handle,offHand,,,,,,,,0,1,,false,perk:stun=1,location,Pulled. Ringing somewhere far away.
+cash_register_drawer,Cash Register Drawer,mainHand,,blunt,1d6,,STR,close,,4,50,,false,skill:bartering=1,location,"Coins slide around inside. Heavy, and full of change."
+mannequin_arm,Mannequin Arm,mainHand,,blunt,1d4,,STR,close,,2,5,,false,,location; weird,Fiberglass. The hand is waving. It's always waving.
+cymbal,Crash Cymbal,offHand,,,,,,,1,2,80,,false,perk:stun=1,location,Bronze. Excellent shield. Terrible noise.
+tambourine,Tambourine,offHand,,,,,,,,0.5,10,,false,perk:annoy=1,location,Jingle. Jingle. Jingle.
+drumsticks,Pair of Drumsticks,mainHand,,blunt,1d3,,DEX,close,,0,10,,false,perk:initiative=1,location,Hickory. 5B. Two-hit combo.
+bingo_dauber,Bingo Dauber,mainHand,,improvised,1d2,,DEX,close,,0,2,,false,perk:blind=1,location; weird,Magenta. Dabs in eyes. Bingo.
+lightsaber_toy,Toy Laser Sword,mainHand,,blunt,1d2,,DEX,close,,0.5,20,,false,skill:intimidation=1,location; weird,Plastic. Lights up. Makes the noise. Nothing more.
+plastic_pitchfork,Plastic Devil Pitchfork,mainHand,,polearm,1d2,,STR,close,,0,3,,false,,location; weird,From a costume. Bends on contact.
+toy_sword,Foam LARP Sword,mainHand,,blunt,1d2,,DEX,close,,1,60,,false,skill:persuasion:larpers=1,location; weird,Handmade. Latex-coated. Its name is Dawnbringer.
+selfie_stick,Selfie Stick,mainHand,,blunt,1d3,,DEX,near,,0.5,10,,false,,location,Extends to forty inches. Phone holder still attached. Phone gone.
+squirt_bottle,Squirt Bottle,mainHand,,improvised,1,,DEX,near,,0,2,,false,perk:blind=1,location,For training cats. Works on more than cats.
+business_suit,Wrinkled Business Suit,chest,,,,,,,1,2,40,,false,skill:persuasion=1,clothing,Charcoal. Off the rack. You had a meeting.
+pencil_skirt,Pencil Skirt,legs,,,,,,,0,0.5,20,,false,flee=-1,clothing,You can take steps about four inches long.
+khakis,Pleated Khakis,legs,,,,,,,0,1,15,,false,,clothing,Business casual. The dungeon is not business casual.
+polo_shirt,Company Polo,chest,,,,,,,0,0.5,5,,false,,clothing,Embroidered logo of a company that no longer exists.
+lanyard_badge,Lanyard and ID Badge,neck,,,,,,,0,0,1,,false,,clothing,Your face looks terrible in the photo. It always will.
+footie_pajamas,Adult Footie Pajamas,chest,,,,,,,1,1,20,,false,resist:frost=1; skill:stealth=1,clothing; weird,"Fleece, full-body, with a butt flap. Very warm."
+fuzzy_slippers,Fuzzy Slippers,feet,,,,,,,0,0.5,5,,false,skill:stealth=1,clothing,Shaped like bunnies. The bunnies are judging you.
+silk_robe,Silk Kimono Robe,chest,,,,,,,0,0.5,30,,false,stat:CHA=1,clothing,Embroidered cranes. You felt powerful in it.
+towel_wrap,Bath Towel,chest,,,,,,,0,1,3,,false,,clothing; weird,Wrapped around the waist. Tucked tight. Hope.
+shower_cap,Shower Cap,head,,,,,,,0,0,1,,false,resist:disease=1,clothing; weird,Clear plastic. Elastic edge. Keeps things out of your hair.
+shower_shoes,Shower Shoes,feet,,,,,,,0,0,2,,false,resist:disease=1,clothing,Foam. Squeaky. Saved you from fungus once.
+scrubs_top,Scrubs Top,chest,,,,,,,0,0.5,10,,false,skill:first_aid=1,clothing,Ceil blue. A little bit of someone else's blood.
+scrubs_pants,Scrubs Pants,legs,,,,,,,0,0.5,10,,false,,clothing,Drawstring. Many pockets. All empty.
+crocs,Clogs With Charms,feet,,,,,,,0,0.5,25,,false,skill:stealth=-1,clothing,"Covered in little pins. A taco, a dog, a skull."
+choir_robe,Choir Robe,chest,,,,,,,0,1,30,,false,skill:persuasion=1,clothing,"Maroon, satin trim. You were mid-hymn."
+wedding_dress,Wedding Dress,chest,,,,,,,0,4,800,,false,stat:CHA=1; flee=-2,clothing,Train long enough to trip a monster. Or you.
+veil,Wedding Veil,head,,,,,,,0,0,80,,false,,clothing,Lace. Cathedral length. Gets caught on everything.
+bridesmaid_dress,Bridesmaid Dress,chest,,,,,,,0,1,120,,false,,clothing,Seafoam taffeta. The bride said you could wear it again. You won't.
+cummerbund,Cummerbund,legs,,,,,,,0,0,10,,false,,clothing,"Pleats facing up, so you can catch crumbs. True."
+apron,Grease-Stained Apron,chest,,,,,,,0,0.5,5,,false,resist:fire=1,clothing,Kiss the Cook. Nobody will.
+hairnet,Hairnet,head,,,,,,,0,0,1,,false,,clothing,Required by health code. The health code is dead.
+chef_whites,Chef's Jacket,chest,,,,,,,1,1,40,,false,skill:cooking=1; resist:fire=1,clothing,Double-breasted so you can flip it when one side gets dirty.
+non_slip_shoes,Non-Slip Kitchen Shoes,feet,,,,,,,0,1,30,,false,skill:dodge=1,clothing,Grip anything. Grease. Blood. Ichor.
+cargo_shorts,Cargo Shorts,legs,,,,,,,0,1,15,,false,perk:carryWeight=5,clothing,Eight pockets. Each one contains a receipt.
+fanny_pack,Fanny Pack,neck,,,,,,,0,0.5,10,,false,perk:carryWeight=5,clothing,Worn crossbody. It's fashion now. It was always fashion.
+socks_and_sandals,Socks and Sandals,feet,,,,,,,0,0.5,10,,false,resist:frost=1,clothing,White tube socks. Brown leather sandals. Absolute confidence.
+hawaiian_shirt,Hawaiian Shirt,chest,,,,,,,0,0.5,15,,false,stat:CHA=1,clothing,Parrots. Hibiscus. Unbuttoned to the sternum.
+sun_visor,Sun Visor,head,,,,,,,0,0,5,,false,resist:blind=1,clothing,Says MYRTLE BEACH. Keeps the glare off.
+bucket_hat,Bucket Hat,head,,,,,,,0,0,8,,false,resist:blind=1,clothing,Fishing lures stuck in the band.
+sports_jersey,Sports Jersey,chest,,,,,,,0,0.5,90,,false,skill:intimidation=1,clothing,"A star player's number. He's dead now, probably."
+foam_finger,Foam Finger,hands,,,,,,,0,0.5,5,,false,skill:intimidation=1,clothing; weird,WE'RE #1. You are not.
+face_paint,Team Face Paint,head,,,,,,,0,0,2,,false,skill:intimidation=1,clothing; weird,"Half blue, half orange. Sweat-streaked."
+letterman_jacket,Letterman Jacket,chest,,,,,,,1,2,60,,false,stat:STR=1,clothing,"Varsity, class of 2009. Still fits. Mostly."
+ugly_sweater,Ugly Christmas Sweater,chest,,,,,,,1,1,10,,false,resist:frost=1,clothing,Light-up reindeer. Batteries at 30%.
+santa_suit,Santa Suit,chest,,,,,,,1,3,40,,false,skill:persuasion=1,clothing; weird,"Red velvet, fake belly, real beard sweat."
+elf_hat,Elf Hat,head,,,,,,,0,0,5,,false,,clothing; weird,Jingle bell on the end. Cannot be silenced.
+pirate_hat,Plastic Pirate Hat,head,,,,,,,0,0,5,,false,,clothing; weird,From a birthday party. Not yours.
+witch_hat,Witch Hat,head,,,,,,,0,0,8,,false,skill:deception=1,clothing; weird,Pointy. Felt. Sold as Sexy Witch.
+cat_ears,Cat Ears Headband,head,,,,,,,0,0,5,,false,skill:perception=1,clothing; weird,Glittery. Your actual ears are elsewhere.
+superhero_cape,Costume Cape,neck,,,,,,,0,0.5,10,,false,stat:CHA=1,clothing; weird,Red satin. Velcro at the neck. You were going to fly someday.
+gorilla_suit,Gorilla Suit,chest,,,,,,,2,5,80,,false,skill:intimidation=2; skill:stealth=-2; resist:frost=1,clothing; weird,Full-body. Rubber hands. Very hot inside.
+inflatable_dino,Inflatable T-Rex Costume,chest,,,,,,,1,3,50,,false,skill:intimidation=1; flee=-1,clothing; weird,Fan-powered. The fan is still running. How?
+banana_suit,Banana Costume,chest,,,,,,,1,2,30,,false,skill:stealth=-3,clothing; weird,Bright yellow. Very visible. Monsters will think you're a snack.
+tuxedo_tshirt,Tuxedo T-Shirt,chest,,,,,,,0,0.5,10,,false,skill:persuasion=1,clothing,Says you want to be formal but you're here to party.
+sweatpants,Gray Sweatpants,legs,,,,,,,0,0.5,10,,false,skill:stealth=1,clothing,The softest thing left in the world.
+flannel_shirt,Flannel Shirt,chest,,,,,,,1,1,20,,false,resist:frost=1,clothing,Red check. Sleeves rolled. Smells like a campfire.
+work_boots,Steel-Toe Boots,feet,,,,,,,1,3,60,,false,attack:unarmed=1,clothing,Kicks are now weapons.
+denim_overalls,Denim Overalls,legs,,,,,,,1,2,30,,false,perk:carryWeight=5,clothing,"One strap undone, for flair."
+coveralls,Mechanic Coveralls,chest,,,,,,,1,2,30,,false,resist:fire=1,clothing,Name patch says DOUG. You are Doug now.
+leather_jacket,Leather Jacket,chest,,,,,,,2,3,150,,false,skill:intimidation=1,clothing,Broken in. Broke someone else in.
+biker_vest,Biker Vest,chest,,,,,,,1,1,60,,false,skill:intimidation=1,clothing,Patches from a club you were technically in.
+yoga_pants,Yoga Pants,legs,,,,,,,0,0.5,90,,false,skill:dodge=1,clothing,Four-way stretch. Squat-proof.
+sports_bra,Sports Bra,chest,,,,,,,0,0,40,,false,skill:athletics=1,clothing,High impact. Not this high.
+running_shoes,Running Shoes,feet,,,,,,,0,0.5,120,,false,flee=1,clothing,Carbon plate. Very fast. Very expensive.
+cycling_shorts,Padded Cycling Shorts,legs,,,,,,,0,0.5,60,,false,,clothing,Chamois-padded. Leave little to the imagination.
+cycling_cleats,Clip-In Cycling Shoes,feet,,,,,,,0,0.5,90,,false,skill:stealth=-2; flee=-1,clothing,Click click click on stone floors. Everyone hears.
+bike_helmet,Bike Helmet,head,,,,,,,1,0.5,40,,false,,clothing,Foam and plastic. Rated for one crash. You've had two.
+scuba_wetsuit,Wetsuit,chest,,,,,,,1,2,200,,false,swim=3; resist:frost=2,clothing,"Neoprene, 5mm. You were in the hotel pool."
+snorkel_mask,Snorkel Mask,eyes,,,,,,,0,0.5,25,,false,swim=2,clothing,Fogs up immediately. Breathe through your mouth.
+bikini,Bikini,chest,,,,,,,0,0,30,,false,,clothing; weird,"Not a lot of armor, frankly."
+speedo,Speedo,legs,,,,,,,0,0,25,,false,swim=1,clothing; weird,Bold. Aerodynamic. Unprotected.
+pool_floatie,Inflatable Arm Floaties,hands,,,,,,,0,0,3,,false,swim=2,clothing; weird,Duck-patterned. Proven to work.
+bathing_cap,Swim Cap,head,,,,,,,0,0,5,,false,swim=1,clothing,Rubber. Floral. Pinches.
+pajama_pants,Plaid Pajama Pants,legs,,,,,,,0,0.5,10,,false,skill:stealth=1,clothing,Elastic waist. Flannel. Warm.
+band_tshirt,Vintage Band T-Shirt,chest,,,,,,,0,0.5,35,,false,stat:CHA=1,clothing,A band nobody's heard of. You'll tell them about it.
+graphic_tee,Novelty Graphic Tee,chest,,,,,,,0,0.5,8,,false,,clothing; weird,"I'M WITH STUPID, with an arrow pointing at nothing now."
+mom_jeans,High-Waisted Jeans,legs,,,,,,,0,1,40,,false,,clothing,Ironic in 2016. Sincere now.
+skinny_jeans,Skinny Jeans,legs,,,,,,,0,1,50,,false,skill:dodge=-1,clothing,You can't bend your knees.
+fleece_vest,Fleece Vest,chest,,,,,,,1,0.5,80,,false,resist:frost=1,clothing; nerd,Company logo of a startup. The finance bro uniform.
+blazer,Navy Blazer,chest,,,,,,,1,1,90,,false,skill:persuasion=1,clothing,"Gold buttons. You were at a gala, or a funeral."
+loafers,Loafers,feet,,,,,,,0,1,90,,false,,clothing,No socks. Bold.
+high_heels,High Heels,feet,,,,,,,0,0.5,80,,false,stat:CHA=1; flee=-2,clothing,"Four-inch heels. Running is an option, technically."
+clip_on_tie,Clip-On Tie,neck,,,,,,,0,0,5,,false,perk:noChoke=1,clothing,Can't be used to strangle you. Thank God.
+silk_tie,Silk Necktie,neck,,,,,,,0,0,50,,false,skill:persuasion=1,clothing,Windsor knot. Something could grab it.
+reading_glasses,Reading Glasses,eyes,,,,,,,0,0,15,,false,skill:appraisal=1,clothing,+2.00 from the drugstore.
+sunglasses,Wraparound Sunglasses,eyes,,,,,,,0,0,20,,false,resist:blind=2,clothing,Oakleys. You look like a cop.
+trucker_hat,Trucker Hat,head,,,,,,,0,0,10,,false,,clothing,Mesh back. Says I'D RATHER BE FISHING. You would.
+beanie,Knit Beanie,head,,,,,,,0,0,10,,false,resist:frost=1,clothing,Hand-knit by someone who loved you.
+cowboy_hat,Cowboy Hat,head,,,,,,,0,0.5,60,,false,resist:blind=1; stat:CHA=1,clothing,Straw. Wide brim. Whole attitude.
+cowboy_boots,Cowboy Boots,feet,,,,,,,1,2,150,,false,,clothing,Pointed toe. Real leather. Loud on stone.
+hospital_bracelet,Hospital Wristband,neck,,,,,,,0,0,0,,false,,clothing; weird,"Your name, birth date, and NPO. Nothing by mouth."
+neck_brace,Neck Brace,neck,,,,,,,1,0.5,20,,false,skill:perception=-1,clothing; weird,Foam collar. You can't turn your head. Neither can anything else see you do it.
+arm_sling,Arm Sling,hands,,,,,,,0,0,10,,false,,clothing; weird,Your arm is fine. You just never took it off.
+eye_patch,Eye Patch,eyes,,,,,,,0,0,5,,false,skill:intimidation=1; attack:near=-1,clothing; weird,From a pirate party. You have both eyes.
+graduation_gown,Graduation Gown,chest,,,,,,,0,1,40,,false,,clothing; nerd,Black polyester. Tassel on the left. You'd just graduated.
+mortarboard,Graduation Cap,head,,,,,,,0,0,15,,false,attack:thrown=1,clothing; nerd,Can be thrown. Traditionally. Painfully.
+prom_dress,Sequined Prom Dress,chest,,,,,,,0,1,150,,false,stat:CHA=1; skill:stealth=-2,clothing,Catches the light like a disco ball.
+corsage,Wrist Corsage,hands,,,,,,,0,0,20,,false,stat:CHA=1,clothing,Wilting. Smells sweet.
+mascot_head,Mascot Head,head,,,,,,,1,3,200,,false,skill:intimidation=1; skill:perception=-2,clothing; weird,A giant smiling bird. Mesh eye holes. Can't see anything.
+mascot_body,Mascot Body Suit,chest,,,,,,,1,4,200,,false,resist:frost=1,clothing; weird,Feathers. Big feet. You were mid-dance.
+kilt,Kilt,legs,,,,,,,0,2,100,,false,stat:STR=1,clothing,Traditional. Fully traditional. Fully.
+lederhosen,Lederhosen,legs,,,,,,,1,2,120,,false,,clothing,"Suspenders, embroidered. You were at Oktoberfest."
+dirndl,Dirndl,chest,,,,,,,0,1,90,,false,stat:CHA=1,clothing,Bow on the left. You weren't sure what that meant.
+fake_mustache,Stick-On Mustache,head,,,,,,,0,0,2,,false,skill:deception=1,clothing; weird,Handlebar. Peeling at one corner.
+toga,Bedsheet Toga,chest,,,,,,,0,0.5,5,,false,,clothing; weird,Twin-size. Fitted. Somehow worked.
+leaf_crown,Plastic Laurel Crown,head,,,,,,,0,0,3,,false,stat:CHA=1,clothing; weird,Gold spray paint flaking.
+tracksuit,Velour Tracksuit,chest,,,,,,,1,1,60,,false,skill:athletics=1,clothing,Embroidered on the butt. Juicy.
+tracksuit_pants,Track Pants,legs,,,,,,,0,0.5,30,,false,flee=1,clothing,Snap-away sides. One snap left.
+headband,Rhinestone Headband,head,,,,,,,0,0,10,,false,stat:CHA=1,clothing,Pins the hair back. Pins a look in place.
+hard_hat_orange,Safety Hard Hat,head,,,,,,,1,1,15,,false,,clothing,Orange. Rated to OSHA standards. OSHA is gone.
+safety_goggles,Safety Goggles,eyes,,,,,,,0,0,5,,false,resist:blind=1,clothing,Anti-fog. Scratched to blindness on one side.
+reflective_vest,Reflective Vest,chest,,,,,,,0,0.5,5,,false,skill:stealth=-1,clothing,Neon yellow. Glows in the light.
+ear_muffs,Fuzzy Earmuffs,head,,,,,,,0,0,8,,false,resist:stun=1; skill:perception=-1,clothing,Pink. Muffles everything. Everything.
+parka,Puffy Parka,chest,,,,,,,2,3,180,,false,resist:frost=3; skill:dodge=-1,clothing,Down-filled. You were going skiing.
+moon_boots,Moon Boots,feet,,,,,,,1,2,60,,false,resist:frost=1,clothing,Silver. Huge. Squeak on every step.
+ski_goggles,Ski Goggles,eyes,,,,,,,0,0.5,90,,false,resist:blind=2,clothing,Mirrored. You look like a bug.
+mittens,Mittens,hands,,,,,,,0,0,10,,false,resist:frost=1; skill:lockpicking=-2,clothing,"No thumbs. Well, one thumb."
+sleep_mask,Satin Sleep Mask,eyes,,,,,,,0,0,10,,false,perk:restBonus=10,clothing,Pushed up on the forehead. Embroidered 'go away'.
+hair_curlers,Hair Curlers,head,,,,,,,0,0,3,,false,resist:stun=1,clothing; weird,Pink foam. Twelve of them.
+face_mask_sheet,Sheet Face Mask,head,,,,,,,0,0,5,,false,,clothing; weird,Cucumber extract. Makes you look like a serial killer.
+compression_socks,Compression Socks,feet,,,,,,,0,0,20,,false,skill:athletics=1,clothing,Knee-high. Medical grade. Your calves have never felt better.
+church_hat,Big Church Hat,head,,,,,,,0,1,80,,false,stat:CHA=1,clothing,"Wide, purple, with a feather. Respect it."
+sunday_dress,Sunday Dress,chest,,,,,,,0,1,60,,false,skill:persuasion=1,clothing,Floral. Pressed. Modest.
+wingtips,Wingtip Shoes,feet,,,,,,,0,1,120,,false,,clothing,Polished to a mirror. Click on tile.
+night_gown,Flannel Nightgown,chest,,,,,,,0,0.5,15,,false,resist:frost=1,clothing,Grandma-style. Ankle-length.
+boxers,Boxer Shorts,legs,,,,,,,0,0,5,,false,,clothing; humiliation,Hearts pattern. Just the boxers.
+tighty_whities,Briefs,legs,,,,,,,0,0,3,,false,,clothing; humiliation,Classic white. Less white than they were.
+garden_clogs,Garden Clogs,feet,,,,,,,0,0.5,15,,false,,clothing,Rubber. Muddy. Easy to slip on.
+garden_gloves,Gardening Gloves,hands,,,,,,,0,0,8,,false,resist:poison=1,clothing,Floral. Thorn-proof. Mostly.
+straw_sunhat,Straw Sunhat,head,,,,,,,0,0,15,,false,resist:blind=1,clothing,Huge brim. Ribbon tie.
+bolo_tie,Bolo Tie,neck,,,,,,,0,0,30,,false,stat:CHA=1,clothing,Turquoise slide. Silver tips. Western.
+lab_coat,Lab Coat,chest,,,,,,,1,1,30,,false,stat:INT=1,clothing,White. Pockets full of pens. Makes you feel smart.
+judge_robe,Judicial Robe,chest,,,,,,,0,1,80,,false,skill:intimidation=1,clothing,Black. Voluminous. Commanding.
+referee_shirt,Referee Shirt,chest,,,,,,,0,0.5,20,,false,skill:intimidation=1,clothing,Black and white stripes. Everyone hates you.
+clown_shoes,Clown Shoes,feet,,,,,,,0,2,40,,false,flee=-2; skill:stealth=-2,clothing; weird,Size 32. Honk on impact.
+clown_wig,Rainbow Clown Wig,head,,,,,,,0,0.5,15,,false,resist:stun=1,clothing; weird,Fluffy. Rainbow. Absorbs a surprising amount of blunt force.
+cardigan,Button-Up Cardigan,chest,,,,,,,1,1,30,,false,resist:frost=1,clothing,Pockets full of tissues and hard candy.
+zip_hoodie,Zip-Up Hoodie,chest,,,,,,,1,1,25,,false,skill:stealth=1,clothing,"Hood up. Hands in the front pocket. Invisible, sort of."

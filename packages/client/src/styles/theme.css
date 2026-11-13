@@ -1,0 +1,82 @@
+:root {
+  --bg: #0b0d0a;
+  --panel: #10130e;
+  --panel-head: #151a12;
+  --border: #283024;
+  --border-hi: #3b4834;
+  --text: #cdd8c2;
+  --dim: #7d8b74;
+  --faint: #4d5847;
+  --system: #ffb000;   /* System AI voice */
+  --check: #5fd7d7;    /* dice and checks */
+  --danger: #ff6b5f;
+  --good: #8fdc5f;
+  --mp: #6f9dff;
+  --xp: #c58cff;
+  --rarity-common: #cdd8c2;
+  --rarity-uncommon: #5fd75f;
+  --rarity-rare: #5f9fff;
+  --rarity-epic: #b56cff;
+  --rarity-legendary: #ffaf00;
+  --font: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --fs: 14px;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--fs);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--system);
+  color: var(--bg);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-hi);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fatal {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 16px;
+  color: var(--danger);
+}
+.fatal h1 {
+  font-size: 18px;
+}
+.fatal p {
+  color: var(--text);
+}
+.fatal li {
+  margin: 4px 0;
+  white-space: pre-wrap;
+}

@@ -1,0 +1,197 @@
+id,name,weight_STR,weight_DEX,weight_CON,weight_INT,weight_CHA,skill,item,age_min,age_max
+line_cook,line cook,2,3,3,1,1,cooking,chef_knife,19,58
+night_nurse,night-shift nurse,1,2,3,3,2,first_aid,trauma_shears,24,62
+roofer,roofer,3,3,3,1,1,athletics,framing_hammer,19,60
+accountant,accountant,1,1,1,4,2,appraisal,desk_calculator,24,66
+wrestling_coach,high-school wrestling coach,4,2,3,1,2,unarmed,coach_whistle,28,64
+tattoo_artist,tattoo artist,1,4,2,2,2,lockpicking,tattoo_gun,20,55
+failed_influencer,failed influencer,1,2,1,1,5,deception,ring_light,19,34
+retired_magician,retired magician,1,4,1,2,3,deception,trick_cane,55,79
+plumber,plumber,3,2,3,2,1,improvised,pipe_wrench,20,63
+debate_coach,debate coach,1,1,1,3,4,persuasion,laser_pointer,26,67
+bartender,bartender,2,2,2,1,4,bartering,bottle_opener_knife,21,59
+mall_cop,mall security guard,2,1,3,1,2,intimidation,mag_flashlight,19,70
+dental_hygienist,dental hygienist,1,3,2,3,2,perception,dental_pick,22,60
+ice_cream_driver,ice cream truck driver,2,2,2,1,3,stealth,ice_cream_scoop,19,72
+pest_control,pest control technician,2,2,3,2,1,trap_engineering,bug_sprayer,20,64
+mail_carrier,mail carrier,2,3,4,1,2,dodge,mail_satchel,20,65
+crossing_guard,school crossing guard,2,2,3,1,3,intimidation,stop_sign,18,80
+dog_groomer,dog groomer,1,3,2,1,3,persuasion,grooming_clippers,19,60
+substitute_teacher,substitute teacher,1,1,3,3,2,intimidation,red_pen,23,70
+uber_driver,rideshare driver,1,2,2,2,3,bartering,car_keys,19,70
+dmv_clerk,DMV clerk,1,1,4,2,2,intimidation,number_dispenser,22,67
+fry_cook,fast food fry cook,2,3,3,1,1,cooking,fry_basket,16,45
+barista,barista,1,3,2,2,3,cooking,espresso_tamper,18,40
+librarian,librarian,1,1,2,4,2,perception,date_stamp,24,72
+forklift_driver,forklift operator,3,2,3,1,1,athletics,safety_vest,19,65
+lunch_lady,school lunch lady,2,2,4,1,2,cooking,serving_ladle,30,75
+park_ranger,park ranger,2,2,3,2,2,perception,ranger_hat,23,65
+exterminator,termite inspector,2,2,3,2,1,trap_engineering,moisture_probe,21,62
+locksmith,locksmith,1,4,2,3,1,lockpicking,lockpick_set,20,70
+butcher,butcher,4,2,3,1,1,cooking,meat_cleaver,20,68
+electrician,electrician,2,3,2,3,1,trap_engineering,wire_strippers,20,65
+landscaper,landscaper,3,2,3,1,1,athletics,hedge_trimmers,18,62
+insurance_agent,insurance adjuster,1,1,2,4,3,appraisal,clipboard,25,66
+real_estate,real estate agent,1,1,2,2,5,persuasion,open_house_sign,24,70
+pharmacist,pharmacist,1,2,2,4,2,first_aid,pill_counter,25,68
+vet_tech,veterinary technician,2,3,3,2,2,first_aid,catchpole,20,60
+telemarketer,telemarketer,1,1,2,2,4,deception,headset,18,60
+sanitation_worker,sanitation worker,4,2,4,1,1,athletics,trash_grabber,19,64
+hvac_tech,HVAC technician,2,2,3,3,1,trap_engineering,refrigerant_can,20,65
+night_janitor,night janitor,2,2,3,2,1,stealth,push_broom,18,72
+golf_caddy,golf caddy,2,3,3,1,2,athletics,golf_driver,16,55
+security_guard,bank security guard,3,1,3,1,2,intimidation,baton,21,70
+paramedic,paramedic,2,3,3,3,1,first_aid,defibrillator,21,60
+optometrist,optometrist,1,2,1,4,2,perception,eye_chart,26,68
+wedding_dj,wedding DJ,1,2,2,1,4,persuasion,fog_machine,20,60
+tow_truck,tow truck driver,3,2,3,1,1,intimidation,tow_chain,20,68
+mortician,mortician,1,3,2,3,1,first_aid,embalming_trocar,25,72
+florist,florist,1,3,2,2,3,persuasion,floral_shears,20,70
+carpet_installer,carpet installer,3,2,3,1,1,athletics,knee_kicker,19,60
+crop_duster,crop duster pilot,1,3,2,2,2,perception,aviator_goggles,25,65
+hostess,restaurant host,1,2,2,1,4,persuasion,menu_stack,16,40
+car_salesman,used car salesman,1,1,2,2,5,deception,inflatable_tube_man,22,70
+seamstress,tailor,1,4,1,3,2,appraisal,sewing_shears,20,78
+piano_tuner,piano tuner,1,3,1,3,2,perception,tuning_hammer,25,78
+census_taker,census worker,1,2,3,2,3,persuasion,census_tablet,20,72
+bingo_caller,bingo caller,1,2,2,2,4,intimidation,bingo_cage,35,80
+lifeguard_job,lifeguard,2,3,3,1,2,athletics,rescue_tube,16,30
+zamboni_driver,ice rink attendant,2,2,3,1,2,athletics,ice_scraper,18,70
+claims_processor,claims processor,1,1,2,4,2,appraisal,paper_shredder_cassette,22,66
+dental_assistant,dental assistant,1,3,2,3,2,first_aid,saliva_ejector,20,60
+skydiving_instructor,skydiving instructor,2,3,3,1,3,athletics,parachute_pack,21,55
+cable_installer,cable installer,2,3,2,2,2,trap_engineering,coax_cable,19,62
+spa_masseuse,massage therapist,3,2,2,2,2,first_aid,massage_oil,20,65
+sommelier,sommelier,1,2,2,3,3,appraisal,wine_corkscrew,24,70
+yoga_instructor,yoga instructor,1,4,3,1,2,dodge,yoga_mat,20,65
+dry_cleaner,dry cleaner,1,2,3,2,2,appraisal,steam_iron,22,75
+day_trader,day trader,1,1,1,4,3,appraisal,stress_ball,22,50
+tollbooth,toll booth operator,1,2,4,1,2,bartering,coin_roll,20,75
+air_traffic,air traffic controller,1,2,2,4,2,perception,orange_wands,25,56
+oil_change,quick-lube mechanic,3,3,2,2,1,improvised,oil_filter_wrench,18,60
+hot_dog_vendor,hot dog vendor,2,2,3,1,3,bartering,hot_dog_tongs,19,75
+balloon_artist,balloon artist,1,4,1,2,3,deception,balloon_pump,18,70
+taxidermist,taxidermist,1,4,2,3,1,appraisal,skinning_knife,24,80
+blackjack_dealer,casino dealer,1,4,2,2,3,deception,card_shoe,21,65
+radio_host,late-night radio host,1,1,2,3,4,persuasion,microphone_boom,24,70
+weatherman,local weatherman,1,1,2,3,4,perception,weather_clicker,25,70
+roadie,concert roadie,4,2,3,1,1,athletics,gaffer_tape,19,55
+court_stenographer,court stenographer,1,4,2,3,1,perception,stenotype,24,70
+cashier,grocery cashier,1,3,3,1,2,appraisal,price_gun,16,75
+ferry_captain,ferry captain,2,2,3,2,2,athletics,boat_hook,28,70
+chimney_sweep,chimney sweep,2,3,3,1,2,athletics,chimney_brush,18,65
+beekeeper,beekeeper,1,3,2,3,2,perception,bee_smoker,20,80
+alpaca_farmer,alpaca farmer,2,2,3,1,2,persuasion,shepherds_crook,22,75
+sign_spinner,sign spinner,2,4,3,1,2,dodge,arrow_sign,16,30
+umpire,baseball umpire,2,1,3,2,2,intimidation,chest_protector,25,70
+plastic_surgeon,cosmetic surgeon,1,4,1,4,3,first_aid,scalpel,30,70
+nail_tech,nail technician,1,4,2,1,3,persuasion,nail_file,18,60
+dumpster_driver,garbage truck driver,3,2,4,1,1,athletics,work_gloves,21,65
+church_organist,church organist,1,3,2,3,2,perception,hymnal,30,85
+glassblower,glassblower,2,3,3,2,1,cooking,blowpipe,20,70
+pool_cleaner,pool cleaner,2,2,3,1,2,athletics,pool_skimmer,18,65
+bike_messenger,bike messenger,2,4,3,1,1,dodge,u_lock,18,40
+welder,welder,3,2,3,2,1,trap_engineering,welding_mask,19,65
+tour_guide,bus tour guide,1,1,2,2,4,persuasion,tour_flag,20,72
+spray_tanner,spray tan technician,1,3,2,1,3,deception,spray_tan_gun,18,50
+bounty_hunter,bail bondsman,3,2,3,2,2,intimidation,handcuffs,25,68
+scuba_instructor,scuba instructor,2,2,4,2,2,athletics,dive_knife,21,60
+bus_driver,city bus driver,2,2,4,1,2,intimidation,transit_badge,25,68
+podiatrist,podiatrist,1,3,1,4,2,first_aid,bone_mallet,28,70
+handyman,handyman,3,3,3,1,1,improvised,claw_hammer,20,75
+puppeteer,children's puppeteer,1,4,1,2,3,deception,sock_puppet,20,72
+judge,county judge,1,1,2,4,3,intimidation,gavel,40,80
+pawn_broker,pawn shop owner,2,1,2,3,3,bartering,jewelers_loupe,25,75
+ice_sculptor,ice sculptor,2,4,2,2,1,cooking,ice_chisel,22,65
+gondolier,theme park ride operator,1,2,3,1,3,persuasion,safety_bar_key,16,70
+miner,coal miner,4,1,4,1,1,athletics,headlamp,19,60
+farrier,farrier,4,2,3,1,1,unarmed,horseshoe,20,65
+blacksmith_renfaire,renaissance faire blacksmith,4,2,3,1,2,improvised,tongs_forge,22,70
+movie_projectionist,movie theater projectionist,1,2,2,3,1,stealth,film_reel,18,80
+crab_fisher,crab boat deckhand,4,2,4,1,1,athletics,crab_hook,19,55
+census_meter_reader,meter reader,1,2,3,2,1,stealth,meter_scanner,19,70
+massage_chair_sales,mall kiosk salesperson,1,2,1,1,5,persuasion,sample_spray,18,45
+astronomer,planetarium guide,1,1,2,4,2,perception,star_pointer,25,78
+pizza_delivery,pizza delivery driver,1,3,3,1,2,dodge,pizza_bag,16,55
+gas_station_clerk,overnight gas station clerk,2,2,3,1,2,intimidation,hot_dog_roller_rod,18,70
+clown,party clown,1,3,2,1,4,deception,seltzer_bottle,18,70
+paralegal,paralegal,1,1,2,4,2,appraisal,accordion_file,22,65
+truck_stop_waitress,diner waitress,1,3,3,1,3,persuasion,coffee_pot,18,70
+logger,logger,5,2,3,1,1,athletics,felling_axe,19,60
+oyster_shucker,oyster shucker,2,4,2,1,2,cooking,oyster_knife,19,65
+gas_meter_tech,gas company technician,2,2,3,3,1,trap_engineering,gas_sniffer,20,63
+caterer,wedding caterer,1,3,2,2,3,cooking,chafing_lid,20,65
+spin_instructor,spin class instructor,2,3,4,1,3,athletics,headset_mic,20,50
+casino_pit_boss,casino pit boss,2,1,2,3,3,intimidation,casino_chips,30,70
+window_washer,skyscraper window washer,3,3,3,1,1,athletics,squeegee,20,58
+travel_agent,travel agent,1,1,2,3,4,persuasion,brochure_rack,24,72
+bridal_shop,bridal shop consultant,1,2,2,2,4,persuasion,pin_cushion,20,65
+tree_surgeon,arborist,3,3,3,2,1,athletics,pole_saw,20,60
+tile_setter,tile setter,3,3,2,2,1,improvised,rubber_mallet,19,65
+bank_teller,bank teller,1,2,2,3,3,appraisal,cash_strap,19,65
+museum_docent,museum docent,1,1,2,4,3,appraisal,velvet_rope,50,85
+ice_road_trucker,long-haul trucker,3,1,4,1,2,intimidation,cb_radio,25,72
+quarry_worker,quarry worker,4,1,4,1,1,athletics,sledgehammer,19,62
+bowling_alley_tech,bowling alley mechanic,2,2,3,3,1,trap_engineering,pin_setter_part,20,70
+fortune_teller,boardwalk fortune teller,1,2,1,2,4,deception,crystal_ball,22,80
+drywall_hanger,drywall installer,4,2,3,1,1,improvised,drywall_saw,19,60
+sound_engineer,live sound engineer,1,3,2,3,1,perception,noise_headphones,20,65
+surveyor,land surveyor,2,2,3,3,1,perception,survey_tripod,21,68
+rug_doctor,carpet cleaner,2,2,3,1,2,improvised,carpet_spray,19,65
+glazier,window installer,3,3,2,2,1,athletics,suction_cup,19,62
+reiki_healer,reiki practitioner,1,2,2,1,4,first_aid,healing_crystal,24,70
+tattoo_removal,laser hair removal tech,1,3,2,2,3,first_aid,cosmetic_laser,20,55
+slot_tech,slot machine technician,1,3,2,3,1,trap_engineering,slot_keys,21,65
+pet_store,pet store clerk,1,2,2,2,3,persuasion,fish_net,16,40
+ups_driver,package delivery driver,3,3,3,1,2,athletics,box_cutter,21,60
+carnival_barker,carnival game operator,1,2,2,1,4,deception,ring_toss,18,70
+morning_dj,morning zoo radio DJ,1,1,2,2,4,persuasion,air_horn,22,65
+cobbler,shoe repairman,2,3,2,2,1,appraisal,cobbler_hammer,30,85
+taxicab,taxi driver,1,2,3,2,2,bartering,taxi_meter,21,75
+water_meter_reader,water treatment operator,2,1,3,3,1,perception,chlorine_tablets,22,65
+garbage_picker,recycling sorter,2,2,3,2,1,appraisal,magnet_stick,18,65
+crane_operator,crane operator,2,2,3,2,1,perception,hard_hat,22,65
+crossfit_coach,CrossFit coach,4,2,3,1,2,athletics,jump_rope,20,50
+church_pastor,small-town pastor,1,1,2,3,4,persuasion,collection_plate,28,80
+laundromat_owner,laundromat attendant,1,2,3,2,2,bartering,quarter_bag,20,75
+security_dog_handler,K-9 handler,3,2,3,1,2,intimidation,bite_sleeve,23,58
+locker_room_attendant,gym towel attendant,1,2,2,1,2,stealth,towel_whip,18,70
+ski_lift,ski lift operator,2,2,3,1,2,athletics,ski_pole,18,45
+cemetery_groundskeeper,cemetery groundskeeper,3,2,3,1,1,stealth,grave_shovel,20,75
+park_maintenance,parks and rec employee,2,2,3,2,2,athletics,leaf_blower,19,65
+car_wash,car wash attendant,1,3,3,1,2,dodge,chamois,16,50
+mattress_salesman,mattress store salesman,1,1,2,2,4,persuasion,memory_pillow,20,65
+nanny,live-in nanny,1,3,3,2,3,first_aid,diaper_bag,19,65
+wedding_photographer,wedding photographer,1,3,2,2,3,perception,camera_flash,20,65
+calligrapher,calligrapher,1,4,1,3,2,deception,fountain_pen,25,85
+taxidermy_dealer,antique dealer,1,2,1,4,3,appraisal,antique_lamp,35,85
+plumber_apprentice,septic tank pumper,3,1,4,1,1,athletics,septic_hose,19,65
+foley_artist,sound effects artist,1,3,2,3,2,deception,coconut_shells,22,70
+cheese_monger,cheesemonger,1,2,2,3,3,appraisal,cheese_wire,22,72
+auctioneer,livestock auctioneer,1,1,3,2,4,bartering,auction_paddle,25,78
+bouncer_job,nightclub bouncer,4,1,3,1,2,unarmed,brass_knuckles,21,55
+golf_pro,golf course pro,2,3,2,2,3,athletics,golf_balls,24,70
+fireworks_stand,fireworks stand operator,1,3,2,1,3,bartering,roman_candle,18,70
+security_tsa,airport security screener,1,2,3,2,2,perception,metal_wand,20,65
+hot_tub_salesman,hot tub repairman,2,2,3,2,2,improvised,pool_test_kit,20,65
+cartoonist,newspaper cartoonist,1,3,1,3,3,deception,ink_bottle,22,78
+music_teacher,middle school band teacher,1,3,2,3,2,perception,recorder,23,70
+ref,youth soccer referee,2,2,3,1,2,intimidation,red_card,16,65
+stunt_driver,stunt driver,2,3,3,1,2,dodge,crash_helmet,21,55
+drag_queen,drag performer,1,3,2,2,5,persuasion,stiletto,20,65
+vending_route,vending machine restocker,3,2,3,1,1,bartering,vending_key,20,65
+carny,carnival ride mechanic,2,2,3,2,1,trap_engineering,ratchet,18,70
+psychic_medium,psychic medium,1,1,2,2,4,deception,tarot_deck,25,85
+rodeo_announcer,rodeo announcer,1,1,3,2,4,intimidation,bullhorn,25,75
+cattle_rancher,cattle rancher,3,2,4,1,1,athletics,lasso,20,80
+moving_company,furniture mover,5,1,3,1,1,athletics,moving_dolly,19,55
+hospice_nurse,hospice nurse,1,2,3,3,3,first_aid,morphine_pump,25,65
+sushi_chef,sushi chef,1,4,2,2,2,cooking,yanagiba,20,70
+swim_coach,swim coach,2,3,3,1,2,athletics,kickboard,22,65
+rideshare_scooter,e-scooter charger,1,3,2,2,1,stealth,scooter_battery,18,35
+drywall_inspector,building inspector,1,1,2,4,2,perception,tape_measure,28,70
+event_planner,wedding planner,1,2,2,3,4,persuasion,earpiece,24,65
+taxidermy_hunter,hunting guide,3,3,3,2,1,stealth,duck_call,22,70
+code_monkey,software developer,1,1,1,4,1,appraisal,mechanical_keyboard,20,60
+night_auditor,hotel night auditor,1,2,3,3,2,stealth,key_cards,20,70
+deli_worker,deli counter worker,2,3,2,1,2,cooking,meat_slicer_blade,16,70

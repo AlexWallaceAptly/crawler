@@ -1,0 +1,115 @@
+/* Status bar, ticker and input — the fixed chrome around the panels. */
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 4px 10px;
+  background: var(--panel-head);
+  border: 1px solid var(--border);
+}
+.statusLeft,
+.statusRight {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-items: center;
+}
+.floor {
+  color: var(--system);
+  font-weight: bold;
+  letter-spacing: 0.06em;
+}
+.meter {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  white-space: nowrap;
+}
+.meterLabel {
+  color: var(--dim);
+}
+.meterEmpty {
+  color: var(--faint);
+}
+
+.ticker {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--system);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tickerLabel {
+  color: var(--dim);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+.tickerText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tickerIdle {
+  color: var(--faint);
+}
+
+.input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+.form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.prompt {
+  color: var(--system);
+  font-weight: bold;
+}
+.field {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--text);
+  font: inherit;
+  caret-color: var(--system);
+  padding: 4px 0;
+}
+.field::placeholder {
+  color: var(--faint);
+}
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.btn {
+  background: transparent;
+  border: 1px solid var(--border-hi);
+  padding: 2px 10px;
+  cursor: pointer;
+  color: var(--text);
+}
+.btn:hover,
+.btn:focus-visible {
+  border-color: var(--system);
+  color: var(--system);
+  outline: none;
+}
+.primary {
+  border-color: var(--system);
+  color: var(--system);
+}

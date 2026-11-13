@@ -1,0 +1,119 @@
+/*
+ * Multi-panel text dashboard. Each region is named so a later art layer can sit
+ * behind or around the panels without rewriting them.
+ */
+.app {
+  display: grid;
+  height: 100dvh;
+  padding: 8px;
+  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "status status"
+    "main   side"
+    "ticker side"
+    "input  side";
+}
+
+.narrow {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  grid-template-areas:
+    "status"
+    "main"
+    "side"
+    "ticker"
+    "input";
+}
+
+.main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  min-width: 0;
+}
+.split {
+  flex-direction: row;
+}
+.grow {
+  flex: 1;
+}
+.mini {
+  flex: 0 0 auto;
+  max-height: 7.5em;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  overflow-y: auto;
+}
+.side > section {
+  flex: 0 0 auto;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  background: var(--bg);
+  z-index: 2;
+}
+
+.linkBtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--dim);
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.linkBtn:hover {
+  color: var(--system);
+}
+
+/* Narrow screens: side panels become tabs under the main log. */
+.tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 34dvh;
+  border: 1px solid var(--border);
+  background: var(--panel);
+}
+.tabBar {
+  flex: 0 0 auto;
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-head);
+  overflow-x: auto;
+}
+.tab {
+  flex: 1;
+  background: none;
+  border: 0;
+  border-right: 1px solid var(--border);
+  padding: 4px 6px;
+  cursor: pointer;
+  color: var(--dim);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.tab:last-child {
+  border-right: 0;
+}
+.tabOn {
+  color: var(--system);
+  background: var(--panel);
+}
+.tabBody {
+  overflow: auto;
+  padding: 6px 8px;
+}

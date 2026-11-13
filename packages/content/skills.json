@@ -1,0 +1,122 @@
+[
+  { "id": "blades", "name": "Blades", "category": "weapon", "stat": "DEX", "weaponType": "blades",
+    "description": "Knives, swords, and anything you can stab with that wasn't designed for salad.",
+    "perks": [
+      { "rank": 5, "text": "Blade crits also cause bleeding.", "modifiers": [{ "to": "perk:bladeBleed", "value": 1 }] },
+      { "rank": 10, "text": "Crit range with blades expands by 1.", "modifiers": [{ "to": "critRange:blades", "value": 1 }] },
+      { "rank": 15, "text": "+2 damage with blades.", "modifiers": [{ "to": "damage:blades", "value": 2 }] }
+    ] },
+  { "id": "blunt", "name": "Blunt Weapons", "category": "weapon", "stat": "STR", "weaponType": "blunt",
+    "description": "Hammers, clubs, maces. The honest way to solve problems.",
+    "perks": [
+      { "rank": 5, "text": "Blunt crits stun for 1 round.", "modifiers": [{ "to": "perk:bluntStun", "value": 1 }] },
+      { "rank": 10, "text": "+2 damage with blunt weapons.", "modifiers": [{ "to": "damage:blunt", "value": 2 }] },
+      { "rank": 15, "text": "Ignore 3 points of damage reduction.", "modifiers": [{ "to": "armorPierce:blunt", "value": 3 }] }
+    ] },
+  { "id": "polearms", "name": "Polearms", "category": "weapon", "stat": "STR", "weaponType": "polearm",
+    "description": "Long sticks with bad intentions on the end.",
+    "perks": [
+      { "rank": 5, "text": "Polearms can hit enemies at near range.", "modifiers": [{ "to": "perk:polearmReach", "value": 1 }] },
+      { "rank": 10, "text": "+2 defense while wielding a polearm.", "modifiers": [{ "to": "defense:polearm", "value": 2 }] }
+    ] },
+  { "id": "bows", "name": "Bows", "category": "weapon", "stat": "DEX", "weaponType": "bow",
+    "description": "Pointy sticks, delivered at a respectful distance.",
+    "perks": [
+      { "rank": 5, "text": "+2 to hit at far range.", "modifiers": [{ "to": "attack:far", "value": 2 }] },
+      { "rank": 10, "text": "Crit range with bows expands by 1.", "modifiers": [{ "to": "critRange:bow", "value": 1 }] }
+    ] },
+  { "id": "thrown", "name": "Thrown Weapons", "category": "weapon", "stat": "DEX", "weaponType": "thrown",
+    "description": "Darts, knives, bricks, and the occasional sandwich.",
+    "perks": [
+      { "rank": 5, "text": "+2 damage with thrown weapons.", "modifiers": [{ "to": "damage:thrown", "value": 2 }] }
+    ] },
+  { "id": "unarmed", "name": "Unarmed Combat", "category": "weapon", "stat": "STR", "weaponType": "unarmed",
+    "description": "Fists, elbows, knees, and teeth if it comes to that.",
+    "perks": [
+      { "rank": 5, "text": "Unarmed damage becomes 1d6.", "modifiers": [{ "to": "perk:unarmedD6", "value": 1 }] },
+      { "rank": 10, "text": "Unarmed damage becomes 1d8.", "modifiers": [{ "to": "perk:unarmedD8", "value": 1 }] }
+    ] },
+  { "id": "improvised", "name": "Improvised Weapons", "category": "weapon", "stat": "STR", "weaponType": "improvised",
+    "description": "Plungers, kettlebells, a microwave you found. If it's in your hand, it's a weapon.",
+    "perks": [
+      { "rank": 5, "text": "+2 to hit with improvised weapons.", "modifiers": [{ "to": "attack:improvised", "value": 2 }] },
+      { "rank": 10, "text": "Improvised weapon crits deal triple dice.", "modifiers": [{ "to": "perk:improvisedTripleCrit", "value": 1 }] }
+    ] },
+  { "id": "light_armor", "name": "Light Armor", "category": "defense", "stat": "DEX",
+    "description": "Leather, padding, and hope.",
+    "perks": [
+      { "rank": 5, "text": "+1 defense in light armor.", "modifiers": [{ "to": "defense:lightArmor", "value": 1 }] }
+    ] },
+  { "id": "heavy_armor", "name": "Heavy Armor", "category": "defense", "stat": "CON",
+    "description": "Wearing a car door and calling it fashion.",
+    "perks": [
+      { "rank": 5, "text": "Reduce all physical damage by 1.", "modifiers": [{ "to": "dr:physical", "value": 1 }] }
+    ] },
+  { "id": "shields", "name": "Shields", "category": "defense", "stat": "STR",
+    "description": "Holding a big thing between you and the bad thing.",
+    "perks": [
+      { "rank": 5, "text": "+1 defense with a shield.", "modifiers": [{ "to": "defense:shield", "value": 1 }] }
+    ] },
+  { "id": "dodge", "name": "Dodge", "category": "defense", "stat": "DEX",
+    "description": "The ancient art of not being where the axe is.",
+    "perks": [
+      { "rank": 5, "text": "+1 defense.", "modifiers": [{ "to": "defense", "value": 1 }] },
+      { "rank": 10, "text": "+2 to flee.", "modifiers": [{ "to": "flee", "value": 2 }] }
+    ] },
+  { "id": "stealth", "name": "Stealth", "category": "utility", "stat": "DEX",
+    "description": "Being quiet. Being small. Being somewhere else.",
+    "perks": [
+      { "rank": 5, "text": "First attack from stealth always crits.", "modifiers": [{ "to": "perk:ambushCrit", "value": 1 }] }
+    ] },
+  { "id": "perception", "name": "Perception", "category": "utility", "stat": "INT",
+    "description": "Noticing the trap before the trap notices you.",
+    "perks": [
+      { "rank": 5, "text": "Always see trap rooms on the map once adjacent.", "modifiers": [{ "to": "perk:trapSense", "value": 1 }] }
+    ] },
+  { "id": "lockpicking", "name": "Lockpicking", "category": "utility", "stat": "DEX",
+    "description": "Opening things that other people closed for a reason.",
+    "perks": [] },
+  { "id": "trap_engineering", "name": "Trap Engineering", "category": "utility", "stat": "INT",
+    "description": "Understanding, disarming, and occasionally building nasty little machines.",
+    "perks": [] },
+  { "id": "first_aid", "name": "First Aid", "category": "utility", "stat": "INT",
+    "description": "Bandages, pressure, and saying 'you'll be fine' convincingly.",
+    "perks": [
+      { "rank": 5, "text": "Healing items restore 25% more.", "modifiers": [{ "to": "healing:items", "value": 25 }] }
+    ] },
+  { "id": "cooking", "name": "Cooking", "category": "utility", "stat": "INT",
+    "description": "Turning dungeon meat into dungeon cuisine.",
+    "perks": [
+      { "rank": 5, "text": "Cooked food lasts 2 extra rooms.", "modifiers": [{ "to": "food:rooms", "value": 2 }] }
+    ] },
+  { "id": "explosives_handling", "name": "Explosives Handling", "category": "utility", "stat": "DEX",
+    "description": "Throwing things that go boom, ideally away from your face.",
+    "perks": [
+      { "rank": 5, "text": "Explosives never fumble on a natural 1.", "modifiers": [{ "to": "perk:noFumble", "value": 1 }] }
+    ] },
+  { "id": "athletics", "name": "Athletics", "category": "utility", "stat": "STR",
+    "description": "Climbing, swimming, shoving doors, carrying a dead friend.",
+    "perks": [] },
+  { "id": "appraisal", "name": "Appraisal", "category": "utility", "stat": "INT",
+    "description": "Knowing what something is and roughly what it's worth to a desperate person.",
+    "perks": [] },
+  { "id": "spellcasting", "name": "Spellcasting", "category": "utility", "stat": "INT",
+    "description": "General talent for reading tomes without your eyes melting.",
+    "perks": [
+      { "rank": 5, "text": "Spells cost 1 less MP (minimum 1).", "modifiers": [{ "to": "mpCost", "value": -1 }] }
+    ] },
+  { "id": "persuasion", "name": "Persuasion", "category": "social", "stat": "CHA",
+    "description": "Getting people to do things with words instead of hammers.",
+    "perks": [] },
+  { "id": "intimidation", "name": "Intimidation", "category": "social", "stat": "CHA",
+    "description": "Getting people to do things with words that imply hammers.",
+    "perks": [] },
+  { "id": "deception", "name": "Deception", "category": "social", "stat": "CHA",
+    "description": "Lying. Just lying. Very well.",
+    "perks": [] },
+  { "id": "bartering", "name": "Bartering", "category": "social", "stat": "CHA",
+    "description": "Paying less than the sticker price in a store run by a demon.",
+    "perks": [
+      { "rank": 5, "text": "Shop prices are 10% lower.", "modifiers": [{ "to": "shop:discount", "value": 10 }] }
+    ] }
+]

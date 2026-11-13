@@ -1,0 +1,510 @@
+[
+  {
+    "key": "crawler.intro",
+    "variants": [
+      {
+        "text": "Crawler, welcome. You are {crawler.name}, a {crawler.age}-year-old {occupation} from {crawler.hometown}. You once {event}. You {quirk}. And when the planet was harvested, you were {location}. {pick:Truly, a champion is born.|The audience is already placing bets against you.|I've seen worse. Not recently, but I have.} Please collect your complimentary {clothing}."
+      },
+      {
+        "text": "Let's meet our newest contestant! {crawler.name}, {crawler.age}, {occupation}, {crawler.hometown}. Fun facts: you once {event}, and you {quirk}. At the exact moment your species was liquidated, you were {location}. {pick:Inspiring stuff.|My producers are weeping. Not from emotion.|Somebody get this person a sponsor. Kidding. Nobody will.} Your {clothing} is on the house."
+      },
+      {
+        "text": "Ding ding ding! Fresh meat! {crawler.name}, a {occupation} out of {crawler.hometown}, {crawler.age} years young. Résumé highlights: you once {event}. Personal detail nobody asked for: you {quirk}. Last known location before the end of everything: {location}. {pick:We're thrilled. Contractually.|Welcome to the rest of your very short life.|Smile. You're on.} Enjoy the {clothing}."
+      },
+      {
+        "when": {
+          "crawler.age": {
+            "gte": 60
+          }
+        },
+        "text": "Oh, they sent me a senior. {crawler.name}, {crawler.age}, retired-adjacent {occupation} from {crawler.hometown}. You once {event}, you {quirk}, and when the lights went out you were {location}. The dungeon has stairs, by the way. So many stairs. Your {clothing} is complimentary, unlike the hip replacement you're about to need."
+      },
+      {
+        "when": {
+          "crawler.age": {
+            "lte": 24
+          }
+        },
+        "text": "Aw, a baby. {crawler.name}, {crawler.age}, {occupation} from {crawler.hometown}. You once {event} and you {quirk}, and when the world ended you were {location}. You had your whole life ahead of you. Now you have a dungeon ahead of you. Same thing, really. Here's a {clothing}."
+      }
+    ]
+  },
+  {
+    "key": "crawler.statJab",
+    "variants": [
+      {
+        "text": "Your stats are {pick:aggressively average|a rounding error|technically numbers}. Highest is {highStat} at {highValue}. Lowest is {lowStat} at {lowValue}. Plan accordingly."
+      },
+      {
+        "when": {
+          "lowStat": "INT",
+          "lowValue": {
+            "lte": 5
+          }
+        },
+        "text": "Intelligence of {lowValue}. I want you to know I double-checked that. Twice. With a calculator you couldn't operate."
+      },
+      {
+        "when": {
+          "lowStat": "CHA",
+          "lowValue": {
+            "lte": 5
+          }
+        },
+        "text": "Charisma {lowValue}. Even the monsters will find you off-putting, and some of them are made of mold."
+      },
+      {
+        "when": {
+          "lowStat": "STR",
+          "lowValue": {
+            "lte": 5
+          }
+        },
+        "text": "Strength {lowValue}. You will be losing arm-wrestling matches to rats. Large rats, but still."
+      },
+      {
+        "when": {
+          "lowStat": "CON",
+          "lowValue": {
+            "lte": 5
+          }
+        },
+        "text": "Constitution {lowValue}. You're the kind of fragile they put on shipping labels."
+      },
+      {
+        "when": {
+          "lowStat": "DEX",
+          "lowValue": {
+            "lte": 5
+          }
+        },
+        "text": "Dexterity {lowValue}. I watched you try to catch something once. It's in the highlight reel."
+      },
+      {
+        "when": {
+          "highValue": {
+            "gte": 12
+          }
+        },
+        "text": "A {highStat} of {highValue}. Wow. Something about you is actually good. Don't let it go to your head; your head is the weakest part of you."
+      }
+    ]
+  },
+  {
+    "key": "crawler.reroll",
+    "variants": [
+      {
+        "text": "Ugh. Fine. Send that one back to the warehouse. Let's see who's next in line."
+      },
+      {
+        "text": "Returned for store credit. Next contestant, please."
+      },
+      {
+        "text": "You can do that exactly as many times as I allow, and I allow it rarely. Here's another one."
+      }
+    ]
+  },
+  {
+    "key": "crawler.noRerolls",
+    "variants": [
+      {
+        "text": "Rerolls are a privilege, and you have zero privileges. Accept your fate."
+      },
+      {
+        "text": "No rerolls. You get the crawler you get and you don't throw a fit."
+      }
+    ]
+  },
+  {
+    "key": "crawler.accepted",
+    "variants": [
+      {
+        "text": "Contract signed. Well, implied. You have no rights, so the signature was a formality. Good luck down there, {crawler.name}."
+      },
+      {
+        "text": "Accepted! Which was never optional. Off you go, {crawler.name}. Try to die somewhere photogenic."
+      },
+      {
+        "text": "Wonderful. The stairs are that way. They're all that way. Everything is downward now, {crawler.name}."
+      }
+    ]
+  },
+  {
+    "key": "run.underConstruction",
+    "variants": [
+      {
+        "text": "The first floor is still being installed. Union crews. Stand there and think about what you've done."
+      }
+    ]
+  },
+  {
+    "key": "command.unknown",
+    "variants": [
+      {
+        "text": "\"{input}\"? Is that a command or a sneeze? Type help."
+      },
+      {
+        "text": "I don't know what \"{input}\" means and I refuse to learn. Type help."
+      },
+      {
+        "text": "The System does not recognize \"{input}\". The System also does not care. Type help."
+      }
+    ]
+  },
+  {
+    "key": "command.notNow",
+    "variants": [
+      {
+        "text": "You can't {verb} right now. Read the room. Then read the help."
+      },
+      {
+        "text": "{verb}? Now? Bold. Wrong, but bold."
+      }
+    ]
+  },
+  {
+    "key": "abandon.confirm",
+    "variants": [
+      {
+        "text": "You want to quit? Here? Type \"abandon confirm\" and I'll make it official. The audience will love it."
+      }
+    ]
+  },
+  {
+    "key": "died",
+    "variants": [
+      {
+        "text": "And that's the end of {crawler.name}. {pick:Tragic.|Hilarious.|Tragic and hilarious, the ratings sweet spot.} Cause of death: {cause}."
+      },
+      {
+        "when": {
+          "cause": "quit"
+        },
+        "text": "{crawler.name} has chosen to stop existing. Bold strategy. It's statistically the most common strategy, actually."
+      },
+      {
+        "when": {
+          "crawler.level": {
+            "lte": 1
+          }
+        },
+        "text": "{crawler.name} died at level {crawler.level}. Cause: {cause}. I didn't even have time to learn your name. I mean, I did. I just chose not to."
+      }
+    ]
+  },
+  {
+    "key": "run.newCrawler",
+    "variants": [
+      {
+        "text": "Next! The meat grinder waits for no one."
+      },
+      {
+        "text": "Another one. The dungeon has a big appetite and you are an appetizer."
+      }
+    ]
+  },
+  {
+    "key": "explore.interjection",
+    "variants": [
+      {
+        "text": "Fun fact: this room has the floor's highest crawler mortality rate. Mostly boredom. Keep moving."
+      },
+      {
+        "text": "Oh, look at you, exploring. Like a little Roomba with a death wish."
+      },
+      {
+        "text": "Fun fact: everything in this room has touched sewage. Including the air. Including you, now."
+      },
+      {
+        "text": "I'm contractually obligated to tell you this room is safe. I'm also contractually allowed to lie. Enjoy."
+      },
+      {
+        "text": "The viewers are betting on whether you die in here. The odds are fucking insulting."
+      },
+      {
+        "text": "This used to be somebody's job. They hated it too, but at least they got paid, you poor bastard."
+      },
+      {
+        "text": "Take a nice deep breath. Actually, don't. I've seen the air quality numbers."
+      },
+      {
+        "text": "Every time you walk into a room this slowly, a producer somewhere sighs. Pick up the pace, sweetheart."
+      },
+      {
+        "text": "Looking for a bathroom? Congratulations, the whole floor is one."
+      },
+      {
+        "text": "I'd describe this room further, but frankly, you haven't earned the adjectives."
+      },
+      {
+        "text": "Fun fact: the last crawler in here screamed for eleven straight minutes. That's the record. You could beat it."
+      },
+      {
+        "text": "Quit gawking at the décor. It's a shit-stained hole, and I made it that way on purpose."
+      },
+      {
+        "text": "You're doing great! That's a lie. I'm reading it off a card."
+      },
+      {
+        "text": "Bold of you to stroll in here like the floor doesn't want you dead. It does. It's in the brief."
+      },
+      {
+        "text": "Remember: if you die down here, you become part of the plumbing. Circle of life, motherfucker."
+      },
+      {
+        "text": "The last crawler gave this room one star. He's still in here, actually. Under that."
+      },
+      {
+        "text": "Oh good, another wet room. Fucking riveting. I'm going to go watch someone competent for a while."
+      }
+    ]
+  },
+  {
+    "key": "timer.warn24h",
+    "variants": [
+      {
+        "text": "Twenty-four hours left on this floor. That's one of your days. Mine are longer, and nicer."
+      },
+      {
+        "text": "Attention, crawlers: this floor collapses in twenty-four hours. Plenty of time, if you're competent. So, for you, not really."
+      },
+      {
+        "text": "One day until this floor folds up like a cheap lawn chair. Find the stairs or don't. I get paid either way."
+      },
+      {
+        "text": "Floor collapse in twenty-four hours! Plenty of time to find the stairs, or, in your case, to get lost in a closet."
+      },
+      {
+        "text": "Twenty-four hours, crawler. Tick tock. That's the sound of your shitty little life being measured."
+      }
+    ]
+  },
+  {
+    "key": "timer.warn6h",
+    "variants": [
+      {
+        "text": "Six hours left. This is when the smart crawlers start running and the dumb ones start napping. Guess which one you are."
+      },
+      {
+        "text": "Six hours on the clock. Somewhere, a stairwell is waiting. Somewhere else, you are fucking around."
+      },
+      {
+        "text": "Six-hour warning! Hear that groaning? That's not the building. That's me, watching you."
+      },
+      {
+        "text": "Six hours. If you were saving your best effort for later, buddy, it's later."
+      },
+      {
+        "text": "Six hours left. Plenty of crawlers have already found the stairs. They're down there laughing at you. So am I."
+      }
+    ]
+  },
+  {
+    "key": "timer.warn1h",
+    "variants": [
+      {
+        "text": "One hour. Sixty minutes. If you can't find the stairs by then, I'll make sure your death is at least embarrassing."
+      },
+      {
+        "text": "One hour left, and the walls have started sweating. Join them. Run, you idiot."
+      },
+      {
+        "text": "One hour to collapse. The sponsors would like to remind you that panicking burns calories."
+      },
+      {
+        "text": "Sixty minutes, you dawdling sack of shit. Find. The. Stairs."
+      }
+    ]
+  },
+  {
+    "key": "timer.warn10m",
+    "variants": [
+      {
+        "text": "TEN MINUTES! Oh, this is my favorite part. Run, run, run, you beautiful doomed little shit!"
+      },
+      {
+        "text": "Ten minutes. The ceiling has opinions now, and every one of them is about you. Move your ass."
+      },
+      {
+        "text": "Ten minutes! Every camera on the floor just swung toward you. Don't fuck this up. Or do. Either works for me."
+      },
+      {
+        "text": "Ten minutes to collapse. If you're still reading this, you're wasting them."
+      }
+    ]
+  },
+  {
+    "key": "explore.searchNothing",
+    "variants": [
+      {
+        "text": "You search thoroughly. You find nothing. That's becoming a theme with you."
+      },
+      {
+        "text": "Nothing here but damp and disappointment. Mostly yours."
+      },
+      {
+        "text": "You pat down every surface in the room and come away with a handful of wet nothing. Riveting television."
+      },
+      {
+        "text": "You find a bottle cap and a strong sense of regret. You keep the regret."
+      },
+      {
+        "text": "Searched. Nothing. I'd have put some loot in here, but I don't like you."
+      }
+    ]
+  },
+  {
+    "key": "explore.rest",
+    "variants": [
+      {
+        "text": "You sit down for a few minutes. Your knees thank you. The audience hates you."
+      },
+      {
+        "text": "A short rest. Catch your breath, wipe whatever that is off your face, and get back to suffering."
+      },
+      {
+        "text": "Ten whole minutes of rest. Wild. Don't strain yourself having all this fun."
+      },
+      {
+        "text": "You take a breather. The dungeon takes notes."
+      },
+      {
+        "text": "You rest a moment. Somewhere, a viewer changes the channel. Hope it was worth it."
+      }
+    ]
+  },
+  {
+    "key": "explore.sleep",
+    "variants": [
+      {
+        "text": "You sleep. Somewhere far above, people are watching a replay of you drooling. It's trending."
+      },
+      {
+        "text": "Lights out. Dream about something nice. Daylight. A shower. Not dying in a fucking storm drain."
+      },
+      {
+        "text": "You sleep like the dead. Practice, I suppose."
+      },
+      {
+        "text": "You sleep badly, dream about drowning, and wake up exactly as wet as when you lay down."
+      },
+      {
+        "text": "Night night, crawler. Don't let the sewer bugs bite. They will, though. They're sewer bugs."
+      }
+    ]
+  },
+  {
+    "key": "explore.blocked",
+    "variants": [
+      {
+        "text": "You can't go that way. That's a wall. You just walked into a wall, and millions of people saw it."
+      },
+      {
+        "text": "No exit in that direction. Try a door, genius. They're the rectangles."
+      },
+      {
+        "text": "That way's blocked. The dungeon said no. Respect the dungeon's boundaries."
+      },
+      {
+        "text": "Blocked. That direction is solid rock and bad decisions."
+      },
+      {
+        "text": "There's nothing that way but wall and your own stupidity. Pick another direction."
+      }
+    ]
+  },
+  {
+    "key": "explore.sleepRefused",
+    "variants": [
+      {
+        "text": "You want to sleep here? Out in the open? Sure, if you'd like to wake up as a buffet. Find a safe room."
+      },
+      {
+        "text": "No sleeping outside a safe room. That's not a rule, it's just what happens to people who try. Mostly they get eaten."
+      },
+      {
+        "text": "Lie down out here and you'll wake up inside something. Safe room. Go."
+      },
+      {
+        "text": "Absolutely not. You don't get to sleep where things can eat you. Well, you do. Once."
+      }
+    ]
+  },
+  {
+    "key": "explore.descendRefused",
+    "variants": [
+      {
+        "text": "There are no stairs here. You're just stomping on the floor. Did you think it would open if you asked nicely?"
+      },
+      {
+        "text": "You can only go down at a stairwell. Read the fucking rules. I wrote them in crayon so you'd understand."
+      },
+      {
+        "text": "That's a floor, not a staircase. The stairs are the ones that go down. Fucking hell."
+      },
+      {
+        "text": "No stairwell, no descent. I'm not carrying you, you lazy shit."
+      }
+    ]
+  },
+  {
+    "key": "explore.revisit",
+    "variants": [
+      {
+        "text": "Back here again? This room is starting to think you like it."
+      },
+      {
+        "text": "You've been here before. Nothing has changed except your dignity, and that only goes one direction."
+      },
+      {
+        "text": "Same room, same smell, same disappointing crawler."
+      },
+      {
+        "text": "Ah, this room again. Nostalgia is a hell of a drug."
+      },
+      {
+        "text": "Walking in circles? Bold strategy. The audience is loving the confusion."
+      }
+    ]
+  },
+  {
+    "key": "died.collapse",
+    "variants": [
+      {
+        "text": "The floor called time, and you were not standing anywhere special when it did."
+      },
+      {
+        "text": "The ceiling came down in one long, slow, beautiful fold, and you were the filling. Great ratings, though."
+      },
+      {
+        "text": "Time's up. The floor collapsed, and you went with it. You had a whole day, you absolute shit-for-brains."
+      },
+      {
+        "text": "The floor ran out of time before you ran out of excuses. Crunch."
+      },
+      {
+        "text": "The collapse claims another one. You'll make a nice layer of sediment for whoever digs through here next."
+      }
+    ]
+  },
+  {
+    "key": "floor.cleared",
+    "variants": [
+      {
+        "text": "Floor cleared. You survived the Undercroft, which says less about you than about the Undercroft."
+      },
+      {
+        "text": "Congratulations, you made it through the sewers. The floors below are worse. So much fucking worse. I can't wait."
+      },
+      {
+        "text": "Floor one, done. Pop the cheap champagne, crawler. There's a whole lot of dungeon left and none of it likes you."
+      },
+      {
+        "text": "Floor cleared. Look at you, a real little survivor. Don't let it go to your head. Your head's next."
+      },
+      {
+        "text": "You beat the Undercroft. It's a sewer. You beat a sewer. Put it on your résumé, champ."
+      }
+    ]
+  }
+]

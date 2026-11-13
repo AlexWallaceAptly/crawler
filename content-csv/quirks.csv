@@ -1,0 +1,200 @@
+id,name,phrase,kind,text,statMod_STR,statMod_DEX,statMod_CON,statMod_INT,statMod_CHA,modifiers,tags
+cant_swim,Can't Swim,cannot swim,flaw,-5 to any swimming or water check.,,,,,,swim=-5,
+talks_to_objects,Talks to Objects,talk to inanimate objects,mixed,+1 Perception (the objects tell you things). -1 CHA.,,,,,-1,skill:perception=1,weird
+compulsive_liar,Compulsive Liar,are a compulsive liar,mixed,"+2 Deception, -1 Persuasion.",,,,,,skill:deception=2; skill:persuasion=-1,social
+darts,Freakishly Good at Darts,are freakishly good at darts,perk,+2 to hit with thrown weapons.,,,,,,attack:thrown=2,
+allergic,Allergic to Almost Everything,are allergic to almost everything,flaw,-2 to resist poison and disease.,,,,,,resist:poison=-2; resist:disease=-2,weird
+ambidextrous,Ambidextrous,"are ambidextrous, which you mention constantly",perk,+1 DEX.,,1,,,,,
+sleepwalker,Sleepwalker,sleepwalk,mixed,Sleeping restores 1 extra MP per level. Sometimes you wake up somewhere else.,,,,,,perk:sleepwalk=1,weird
+iron_stomach,Iron Stomach,have eaten gas station sushi without consequence,perk,+3 to resist poison. Food buffs last 1 extra room.,,,,,,resist:poison=3; food:rooms=1,
+loud,Incapable of Whispering,are physically incapable of whispering,flaw,-3 Stealth.,,,,,,skill:stealth=-3,
+lucky_socks,Superstitious,never change your lucky socks,mixed,"+1 to all checks on the first room of each floor. -1 CHA, because of the socks.",,,,,-1,perk:firstRoomLuck=1,weird
+night_owl,Night Owl,have not seen a sunrise on purpose in eleven years,perk,+1 Perception in dark rooms.,,,,,,skill:perception:dark=1,
+fainter,Faints at the Sight of Blood,"faint at the sight of blood, including your own",flaw,"-2 to resist fear. Cruel, given where you are.",,,,,,resist:fear=-2,humiliation
+gym_rat,Gym Rat,have opinions about protein,perk,"+1 STR, -1 INT.",1,,,-1,,,
+afraid_of_birds,Afraid of Birds,"are terrified of birds, all of them, even the small ones",flaw,-2 to resist fear.,,,,,,resist:fear=-2,
+human_calculator,Human Calculator,can do long division in your head and want everyone to know,perk,+2 Appraisal.,,,,,,skill:appraisal=2,nerd
+mouth_breather,Mouth Breather,"breathe through your mouth, loudly",flaw,-2 Stealth.,,,,,,skill:stealth=-2,humiliation
+cat_reflexes,Cat Reflexes,"always land on your feet, except emotionally",perk,+1 Dodge.,,,,,,skill:dodge=1,
+bad_knees,Bad Knees,have knees that predict the weather,flaw,-1 to flee attempts.,,,,,,flee=-1,
+chronic_apologizer,Chronic Apologizer,apologize to furniture you bump into,mixed,"+1 Persuasion, -1 Intimidation.",,,,,,skill:persuasion=1; skill:intimidation=-1,social
+resting_scowl,Resting Scowl,have a face that looks angry while you're happy,mixed,"+2 Intimidation, -1 Persuasion.",,,,,,skill:intimidation=2; skill:persuasion=-1,social
+hoarder,Pack Rat,keep every receipt you've ever received,mixed,"+1 Appraisal. -1 DEX, from the weight in your pockets.",,-1,,,,skill:appraisal=1,weird
+insomniac,Insomniac,have not slept more than five hours since 2014,mixed,"+1 Perception, -1 CON.",,,-1,,,skill:perception=1,
+garlic_breath,Permanent Garlic Breath,smell like garlic no matter what you eat,mixed,"-1 CHA. +1 to resist disease, because nothing wants to get close.",,,,,-1,resist:disease=1,weird; humiliation
+lead_foot,Lead Foot,have never once driven the speed limit,perk,+1 to flee attempts.,,,,,,flee=1,
+pain_tolerance,High Pain Tolerance,once finished a shift with a broken toe,perk,+1 CON.,,,1,,,,
+sweaty,Excessive Sweater,sweat through every shirt you have ever owned,flaw,-1 CHA.,,,,,-1,,humiliation
+good_with_kids,Good With Kids,are great with children and have no idea why,perk,+1 Persuasion.,,,,,,skill:persuasion=1,social
+conspiracy_brain,Conspiracy Brain,have a corkboard with red string at home,mixed,"+2 Perception, -1 CHA.",,,,,-1,skill:perception=2,weird
+photographic_memory,Photographic Memory,remember every phone number you've ever dialed,perk,+1 INT.,,,,1,,,nerd
+klutz,Klutz,have broken more glasses than you've drunk from,flaw,-1 DEX.,,-1,,,,,humiliation
+haggler,Born Haggler,"have never paid sticker price for anything, including a funeral",perk,+2 Bartering.,,,,,,skill:bartering=2,social
+deep_voice,Radio Voice,have a voice that sounds like a late-night DJ,perk,+1 CHA.,,,,,1,,social
+squeaky_voice,Squeaky Voice,have a voice that cracks under stress,flaw,-2 Intimidation.,,,,,,skill:intimidation=-2,humiliation
+night_terrors,Night Terrors,"scream in your sleep, loudly, every night",flaw,-2 Stealth while resting. Sometimes wakes things up.,,,,,,skill:stealth=-2; perk:nightTerrors=1,weird
+picky_eater,Picky Eater,won't eat anything that touches anything else,flaw,Food buffs last 1 fewer room.,,,,,,food:rooms=-1,
+bottomless_pit,Bottomless Stomach,can eat a whole rotisserie chicken in a parking lot,perk,Food buffs last 2 extra rooms.,,,,,,food:rooms=2,glutton
+strong_swimmer,Strong Swimmer,swam the 200 free in high school and have shoulders to prove it,perk,+3 to swimming checks.,,,,,,swim=3,athlete
+motion_sick,Motion Sickness,get carsick on escalators,flaw,-1 CON.,,,-1,,,,
+hypochondriac,Hypochondriac,have diagnosed yourself with 41 diseases on the internet,mixed,"+1 First Aid, -1 to resist fear.",,,,,,skill:first_aid=1; resist:fear=-1,
+lock_nerd,Lock Hobbyist,watch lockpicking videos to fall asleep,perk,+2 Lockpicking.,,,,,,skill:lockpicking=2,nerd
+neat_freak,Neat Freak,alphabetized your spice rack twice,mixed,"+1 Perception, -1 to resist disease (you've never built up an immune system).",,,,,,skill:perception=1; resist:disease=-1,
+gambler,Compulsive Gambler,bet on which raindrop will hit the bottom of the window first,mixed,+1 to all checks on the first room of each floor. -1 INT.,,,,-1,,perk:firstRoomLuck=1,social
+bad_liar,Terrible Liar,"turn red when you lie, even about your age",flaw,-3 Deception.,,,,,,skill:deception=-3,humiliation
+honest_face,Honest Face,have the kind of face people tell secrets to,perk,+2 Persuasion.,,,,,,skill:persuasion=2,social
+tiny_bladder,Tiny Bladder,know every public restroom within ten miles of your home,flaw,-1 CON.,,,-1,,,,humiliation
+tall,Very Tall,are six-foot-seven and get asked about basketball daily,mixed,"+1 STR, -2 Stealth.",1,,,,,skill:stealth=-2,
+short,Very Short,are five-foot-nothing and have heard every joke,mixed,"+2 Stealth, -1 STR.",-1,,,,,skill:stealth=2,
+nose_for_trouble,Bloodhound Nose,can smell rain coming and lies being told,perk,+1 Perception.,,,,,,skill:perception=1,
+pyromaniac,Mild Pyromaniac,like fire a normal-ish amount,mixed,+1 to hit with thrown weapons. -1 to resist fire.,,,,,,attack:thrown=1; resist:fire=-1,weird
+fireproof,Burn Scar Club,have burned yourself on every stove you've touched and built a tolerance,perk,+2 to resist fire.,,,,,,resist:fire=2,survivor
+cold_blooded,Always Cold,wear a hoodie in July,mixed,"+2 to resist cold, -1 to resist fire.",,,,,,resist:frost=2; resist:fire=-1,
+always_hot,Always Hot,wear shorts in January,mixed,"+2 to resist fire, -1 to resist cold.",,,,,,resist:fire=2; resist:frost=-1,
+hiccups,Chronic Hiccups,"have had the hiccups, on and off, since 2019",flaw,-2 Stealth.,,,,,,skill:stealth=-2,humiliation; weird
+two_left_feet,Two Left Feet,"have never once danced well, even alone",flaw,-1 Dodge.,,,,,,skill:dodge=-1,humiliation
+dancer_feet,Light on Your Feet,took tap until you were sixteen,perk,"+1 Dodge, +1 Stealth.",,,,,,skill:dodge=1; skill:stealth=1,performer
+brawler_knuckles,Calloused Knuckles,have punched more drywall than drywall installers,perk,+1 to hit unarmed.,,,,,,attack:unarmed=1,brawler
+butterfingers,Butterfingers,have dropped every phone you've ever owned,flaw,-1 to hit with thrown weapons.,,,,,,attack:thrown=-1,humiliation
+eagle_eye,Eagle Eye,can read a license plate from a football field away,perk,+1 to hit at near range.,,,,,,attack:near=1,
+nearsighted,Nearsighted,lost your glasses in the apocalypse,flaw,-1 to hit at near range. -1 Perception.,,,,,,attack:near=-1; skill:perception=-1,
+iron_lungs,Iron Lungs,"can hold your breath for three minutes, and have, at parties",perk,"+2 to swimming checks, +1 to resist poison.",,,,,,swim=2; resist:poison=1,
+smoker_lungs,Pack-a-Day Lungs,have smoked since the ninth grade,flaw,"-1 CON, -1 to flee attempts.",,,-1,,,flee=-1,
+coffee_addict,Coffee Dependent,cannot form sentences before your second cup,mixed,Potions that haste you last 1 extra round. -1 INT until you've had something caffeinated.,,,,-1,,perk:caffeine=1,
+mom_friend,The Mom Friend,"carry band-aids, snacks, and a phone charger at all times",perk,+2 First Aid.,,,,,,skill:first_aid=2,social
+grudge_holder,Holds Grudges,still remember who didn't invite you to their sixth birthday,mixed,+1 to hit enemies that have hurt you. -1 Persuasion.,,,,,,perk:grudge=1; skill:persuasion=-1,
+show_off,Show-Off,can't do anything without saying 'watch this' first,mixed,"+1 CHA, -1 Stealth.",,,,,1,skill:stealth=-1,performer
+quick_learner,Quick Learner,picked up guitar in a weekend and quit in a week,perk,Gain 10% more XP.,,,,,,perk:xpBonus=10,
+slow_learner,Slow Learner,took your driver's test five times,flaw,"Gain 10% less XP. +1 CON, because you're stubborn.",,,1,,,perk:xpBonus=-10,
+animal_whisperer,Animal Whisperer,get followed home by stray dogs constantly,perk,+2 Persuasion against beasts.,,,,,,skill:persuasion:beasts=2,weird
+animal_magnet,Mosquito Magnet,get bitten by every insect in a five-mile radius,flaw,-1 to resist poison and disease.,,,,,,resist:poison=-1; resist:disease=-1,
+leftovers_king,Leftover Connoisseur,have eaten pizza that was nine days old and lived,perk,+2 to resist poison.,,,,,,resist:poison=2,glutton
+germaphobe,Germaphobe,carry hand sanitizer in three pockets,mixed,"+2 to resist disease, -1 CHA.",,,,,-1,resist:disease=2,
+mechanic_hands,Grease Monkey,have rebuilt a carburetor on a kitchen table,perk,+1 Trap Engineering.,,,,,,skill:trap_engineering=1,
+diy_disaster,DIY Disaster,have caused three home insurance claims with YouTube tutorials,mixed,+1 Trap Engineering. Traps you build have a 10% chance to go off on you.,,,,,,skill:trap_engineering=1; perk:trapBackfire=10,humiliation
+morning_person,Aggressive Morning Person,wake up at 4:45 without an alarm,perk,+1 to all checks in the first room after resting.,,,,,,perk:restedLuck=1,
+sarcastic,Unable to Stop Being Sarcastic,have never said 'great' and meant it,mixed,"+1 Deception, -1 Persuasion.",,,,,,skill:deception=1; skill:persuasion=-1,social
+optimist,Relentless Optimist,have said 'it could be worse' during a flood,perk,+2 to resist fear.,,,,,,resist:fear=2,
+pessimist,Doomer,have been waiting for this exact apocalypse,mixed,"+1 to resist fear, -1 CHA.",,,,,-1,resist:fear=1,
+crier,Crier,"cry at commercials, weddings, and parking tickets",mixed,+1 Persuasion. -1 Intimidation.,,,,,,skill:persuasion=1; skill:intimidation=-1,humiliation
+laugher,Nervous Laugher,"laugh at funerals, mostly by accident",flaw,"-1 Persuasion, -1 Stealth.",,,,,,skill:persuasion=-1; skill:stealth=-1,humiliation
+handy_with_knots,Knot Expert,can tie forty knots and use two,perk,"+1 Trap Engineering, +1 Athletics.",,,,,,skill:trap_engineering=1; skill:athletics=1,nerd
+strong_grip,Vise Grip,open jars for the whole building,perk,+1 STR.,1,,,,,,
+noodle_arms,Noodle Arms,"have never won an arm-wrestling match, including against a child",flaw,-1 STR.,-1,,,,,,humiliation
+deep_sleeper,Deep Sleeper,slept through a car crashing into your house,mixed,Resting restores 25% more HP. -2 Perception while resting.,,,,,,perk:restBonus=25; skill:perception:resting=-2,
+light_sleeper,Light Sleeper,wake up if a moth lands on the window,mixed,Can't be surprised while resting. Resting restores 10% less HP.,,,,,,perk:noAmbush=1; perk:restBonus=-10,
+road_rager,Road Rage,have followed a man to his house over a lane change,mixed,+1 STR when below half HP. -1 INT.,,,,-1,,perk:rage=1,brawler
+peacemaker,Peacemaker,have broken up fights at three different Applebee's,perk,"+1 Persuasion, +1 Intimidation.",,,,,,skill:persuasion=1; skill:intimidation=1,social
+bookworm,Bookworm,"read the dictionary for fun once, in fourth grade",mixed,"+1 INT, -1 STR.",-1,,,1,,,nerd
+jock,Former Jock,still wear your letterman jacket,mixed,"+1 STR, -1 INT.",1,,,-1,,,athlete
+foodie,Foodie,have opinions about artisanal mustard,perk,+2 Cooking.,,,,,,skill:cooking=2,
+burns_toast,Can't Cook,"have burned water, technically",flaw,-2 Cooking.,,,,,,skill:cooking=-2,humiliation
+trash_talker,Trash Talker,talk trash at kids' soccer games,mixed,"+2 Intimidation, -1 CHA.",,,,,-1,skill:intimidation=2,brawler
+famous_lookalike,Celebrity Lookalike,get stopped at airports for a famous person you won't name,perk,+1 CHA.,,,,,1,,social
+forgettable_face,Forgettable Face,have been introduced to your coworkers four times,mixed,"+2 Stealth, -1 CHA.",,,,,-1,skill:stealth=2,
+loud_chewer,Loud Chewer,have been asked to leave a library for chewing,flaw,"-1 Stealth, -1 CHA.",,,,,-1,skill:stealth=-1,humiliation
+sleep_talker,Sleep Talker,"reveal secrets in your sleep, including other people's",flaw,-1 Deception.,,,,,,skill:deception=-1,weird
+scavenger,Scavenger,check the coin return of every vending machine,perk,+10% chance to find extra loot.,,,,,,perk:lootBonus=10,
+unlucky,Born Unlucky,have been struck by a foul ball four times,flaw,-1 to all checks on the first room of each floor.,,,,,,perk:firstRoomLuck=-1,humiliation
+lucky,Weirdly Lucky,found a hundred-dollar bill in a library book,perk,"+5% chance to find extra loot, +1 Dodge.",,,,,,perk:lootBonus=5; skill:dodge=1,
+claustrophobic,Claustrophobic,"can't take elevators, crawlspaces, or long hugs",flaw,-2 to resist fear in small rooms.,,,,,,resist:fear:small=-2,
+afraid_of_dark,Afraid of the Dark,still sleep with a nightlight,flaw,-2 to resist fear in dark rooms.,,,,,,resist:fear:dark=-2,humiliation
+vertigo,Afraid of Heights,got stuck on a step ladder once,flaw,-2 Athletics when climbing.,,,,,,skill:athletics:climb=-2,
+climber,Climber,have climbed every water tower in your county,perk,+2 Athletics when climbing.,,,,,,skill:athletics:climb=2,athlete
+sprinter,Sprinter,ran the 100 in eleven seconds in high school and have been jogging on it since,perk,+2 to flee attempts.,,,,,,flee=2,athlete
+skinny_jeans,Fashion Victim,refuse to wear anything comfortable,mixed,"+1 CHA, -1 Dodge.",,,,,1,skill:dodge=-1,
+manspreader,Takes Up Space,sit like you're being paid by the square foot,mixed,"+1 Intimidation, -1 Stealth.",,,,,,skill:intimidation=1; skill:stealth=-1,
+whistler,Compulsive Whistler,"whistle when you're nervous, which is always",flaw,-2 Stealth.,,,,,,skill:stealth=-2,
+hummer,Hummer,hum the same four bars of a song constantly,mixed,"+1 to resist fear, -1 Stealth.",,,,,,resist:fear=1; skill:stealth=-1,
+pun_master,Pun Enthusiast,cannot let a pun go by,mixed,"+1 CHA against intelligent monsters, -1 CHA against people.",,,,,,perk:punCHA=1,weird
+lactose,Lactose Intolerant,eat cheese anyway,flaw,Dairy-based food gives no buff.,,,,,,perk:noDairy=1,humiliation
+hot_sauce,Hot Sauce Fiend,carry hot sauce in your bag,perk,+1 to resist fire. Food heals 1 extra HP.,,,,,,resist:fire=1; food:heal=1,glutton
+spatial,Perfect Sense of Direction,have never once used GPS,perk,Always know which way the stairs are.,,,,,,perk:findStairs=1,
+lost_always,No Sense of Direction,got lost in your own apartment complex,flaw,-1 Perception. The map takes longer to fill in.,,,,,,skill:perception=-1; perk:mapPenalty=1,humiliation
+moody,Moody,swing between joy and despair before lunch,mixed,Randomly +1 or -1 to all checks each floor.,,,,,,perk:moodSwing=1,
+stoic,Stoic,"cried once, in 1997, at a Lassie rerun",perk,+1 to resist fear.,,,,,,resist:fear=1,
+loyal,Loyal to a Fault,have helped every friend move,perk,+1 to all checks when helping an ally.,,,,,,perk:allyBonus=1,social
+lone_wolf,Lone Wolf,eat lunch in your car,mixed,+1 to all checks when alone. -1 Persuasion.,,,,,,perk:soloBonus=1; skill:persuasion=-1,
+lefty,Left-Handed,have smeared ink on every page you've ever written,mixed,"+1 to hit in the first round of combat. -1 Appraisal, because tools are built for righties.",,,,,,perk:firstStrike=1; skill:appraisal=-1,
+old_injury,Old Football Injury,have a knee that clicks,flaw,-1 Athletics.,,,,,,skill:athletics=-1,
+tattooed,Covered in Tattoos,have a tattoo you regret on each limb,mixed,"+1 Intimidation, -1 Persuasion with authority figures.",,,,,,skill:intimidation=1; skill:persuasion:authority=-1,
+trust_fund,Trust Fund Baby,have never checked a price tag,mixed,Start with 50 extra gold. -1 Bartering.,,,,,,perk:startGold=50; skill:bartering=-1,
+broke,Chronically Broke,have overdrafted on a gum purchase,mixed,+1 Bartering. Start with 10 less gold.,,,,,,skill:bartering=1; perk:startGold=-10,
+penny_pincher,Penny Pincher,reuse tea bags three times,perk,Shop prices are 5% lower.,,,,,,perk:shopDiscount=5,
+impulse_buyer,Impulse Buyer,own four air fryers,flaw,"Shop prices are 5% higher, because you look interested.",,,,,,perk:shopDiscount=-5,humiliation
+reads_manuals,Reads the Manual,"read the terms and conditions, all of them",perk,"+1 Trap Engineering, +1 Perception against traps.",,,,,,skill:trap_engineering=1; skill:perception:traps=1,nerd
+skips_manuals,Never Reads Instructions,assembled a crib upside down and it held,mixed,"+1 Improvised, -1 Trap Engineering.",,,,,,skill:improvised=1; skill:trap_engineering=-1,
+caffeine_immune,Caffeine Immune,can drink espresso and nap,mixed,Haste effects on you last 1 round less. +1 to resist poison.,,,,,,perk:caffeine=-1; resist:poison=1,
+allergic_cats,Allergic to Cats,"sneeze near cats, cat-adjacent monsters, and photos of cats",flaw,-1 to all checks near feline enemies.,,,,,,perk:catAllergy=1,weird
+drama_kid,Drama Kid,did community theater and still project,mixed,"+2 Deception, -1 Stealth.",,,,,,skill:deception=2; skill:stealth=-1,performer
+introvert,Introvert,have faked a phone call to avoid a neighbor,mixed,"+1 Perception, -1 Persuasion.",,,,,,skill:perception=1; skill:persuasion=-1,
+extrovert,Extrovert,"talk to strangers in elevators, on purpose",mixed,"+1 Persuasion, -1 Perception.",,,,,,skill:persuasion=1; skill:perception=-1,social
+eats_fast,Eats Like It's a Race,finish meals before others sit down,perk,Eating food doesn't use your turn in combat.,,,,,,perk:fastEater=1,glutton
+slow_eater,Slow Eater,have let three pizzas go cold,flaw,Eating takes a full turn and then some. -1 Dodge on the turn you eat.,,,,,,perk:slowEater=1,
+heavy_drinker,High Tolerance,can outdrink a fraternity,mixed,"+2 to resist poison, -1 INT.",,,,-1,,resist:poison=2,
+lightweight,Lightweight,got drunk on cough syrup once,flaw,-2 to resist poison.,,,,,,resist:poison=-2,humiliation
+weird_flexible,Double-Jointed,"can bend your thumb all the way back and do, at parties",perk,"+1 DEX, +1 to escape grapples.",,1,,,,perk:escapeGrapple=1,weird
+stiff,Not Flexible,"can't touch your toes, never could",flaw,-1 Dodge.,,,,,,skill:dodge=-1,
+math_phobe,Bad at Math,split restaurant checks with a calculator and a prayer,flaw,-2 Appraisal.,,,,,,skill:appraisal=-2,
+good_aim,Good Arm,won stuffed animals at every carnival,perk,+1 to hit with thrown weapons.,,,,,,attack:thrown=1,
+slow_reflexes,Slow Reflexes,still haven't caught a ball thrown to you in 2003,flaw,-1 to initiative.,,,,,,perk:initiative=-1,
+fast_reflexes,Fast Twitch,"catch flies with chopsticks, but only by accident",perk,+1 to initiative.,,,,,,perk:initiative=1,
+narcoleptic,Mild Narcolepsy,fall asleep in waiting rooms and movie theaters,flaw,Small chance each combat to lose your first turn.,,,,,,perk:napChance=5,weird
+seen_some_things,Seen Some Things,have worked a hospital ER on a full moon,perk,+2 to resist fear.,,,,,,resist:fear=2,survivor
+helicopter_parent,Overprotective,have bubble-wrapped a houseplant,mixed,"+1 First Aid, -1 STR.",-1,,,,,skill:first_aid=1,
+podcaster,Has a Podcast,"have a podcast, which you'll tell everyone about",mixed,"+1 CHA with audiences, -1 Stealth.",,,,,,perk:audienceCHA=1; skill:stealth=-1,performer
+fidgeter,Fidgeter,clicked a pen until a coworker took it,mixed,"+1 Lockpicking, -1 Stealth.",,,,,,skill:lockpicking=1; skill:stealth=-1,
+sweet_tooth,Sweet Tooth,eat birthday cake for breakfast,mixed,Sugary food heals 2 extra HP. -1 CON.,,,-1,,,perk:sugarHeal=2,glutton
+vegan_evangelist,Vegan,will mention it,mixed,+1 CON. Meat-based food gives no buff.,,,1,,,perk:noMeat=1,
+carnivore,All-Meat Diet,have not eaten a vegetable on purpose since 2016,mixed,Meat food lasts 1 extra room. -1 to resist disease.,,,,,,perk:meatBonus=1; resist:disease=-1,glutton
+cheapskate_tipper,Bad Tipper,tip in loose change and compliments,flaw,-1 Persuasion with shopkeepers.,,,,,,skill:persuasion:shops=-1,
+big_tipper,Big Tipper,tip forty percent and want credit for it,perk,+1 Persuasion with shopkeepers.,,,,,,skill:persuasion:shops=1,social
+outdoorsy,Outdoorsy,own three tents and use one,perk,"+1 CON, +1 Perception outdoors.",,,1,,,skill:perception:outdoors=1,
+indoor_cat,Indoor Cat,consider the mailbox 'outside',flaw,-1 CON.,,,-1,,,,
+mime_body,Weirdly Good Mime,can pretend to be trapped in a box very convincingly,mixed,"+1 Deception, -1 CHA. Mimes make people uncomfortable.",,,,,-1,skill:deception=1,weird; performer
+selective_hearing,Selective Hearing,can hear a chip bag from three rooms but not your name,mixed,"+1 Perception for loot, -1 Perception for danger.",,,,,,skill:perception:loot=1; skill:perception:danger=-1,
+monotone,Monotone,have read a birthday card like a hostage statement,flaw,"-1 Persuasion, -1 Deception.",,,,,,skill:persuasion=-1; skill:deception=-1,
+fast_talker,Fast Talker,can explain a timeshare in nine seconds,perk,"+1 Deception, +1 Bartering.",,,,,,skill:deception=1; skill:bartering=1,social
+always_late,Always Late,missed your own surprise party,flaw,-1 to initiative.,,,,,,perk:initiative=-1,humiliation
+early_bird,Always Early,arrive at airports four hours early,perk,+1 to initiative.,,,,,,perk:initiative=1,
+superstitious_salt,Throws Salt,"throw salt over your shoulder, constantly, even at restaurants",mixed,+1 to resist curses. -1 CHA.,,,,,-1,resist:curse=1,weird
+knuckle_cracker,Knuckle Cracker,crack every joint in your body before meetings,mixed,"+1 to hit unarmed, -1 CHA.",,,,,-1,attack:unarmed=1,
+hairy,Extremely Hairy,clog drains on a professional level,mixed,"+1 to resist cold, -1 CHA.",,,,,-1,resist:frost=1,humiliation
+sunburn,Burns in Minutes,burn under fluorescent light,flaw,-1 to resist fire.,,,,,,resist:fire=-1,
+iron_bladder,Iron Bladder,have driven Phoenix to Denver without a stop,perk,+1 CON.,,,1,,,,
+bird_brain,Easily Distracted,"walked into a room and forgot why, then forgot the room",flaw,-1 INT.,,,,-1,,,
+hyperfocus,Hyperfocus,have accidentally spent nine hours on a spreadsheet,mixed,+2 to checks you've already failed once. -1 Perception.,,,,,,perk:retryBonus=2; skill:perception=-1,
+nimble_fingers,Nimble Fingers,can do a coin roll across your knuckles,perk,"+1 Lockpicking, +1 DEX.",,1,,,,skill:lockpicking=1,
+butterfly_stomach,Nervous Stomach,"throw up before big events, including bowling",flaw,"-1 to resist fear, -1 CON.",,,-1,,,resist:fear=-1,humiliation
+eats_anything,Eats Anything,ate a bug on a dare and asked for another,perk,Monster meat is safe for you to eat.,,,,,,perk:monsterMeat=1,glutton; weird
+grandma_remedies,Grandma's Remedies,cure everything with Vicks and onions,perk,"+1 First Aid, +1 to resist disease.",,,,,,skill:first_aid=1; resist:disease=1,
+calm_hands,Steady Hands,have built a ship in a bottle,perk,"+1 First Aid, +1 Lockpicking.",,,,,,skill:first_aid=1; skill:lockpicking=1,nerd
+shaky_hands,Shaky Hands,can't thread a needle or hold a full cup,flaw,"-1 Lockpicking, -1 First Aid.",,,,,,skill:lockpicking=-1; skill:first_aid=-1,
+competitive,Too Competitive,flipped a Monopoly board at a funeral reception,mixed,+1 to hit against bosses. -1 CHA.,,,,,-1,perk:bossHit=1,brawler
+quitter,Gives Up Easy,quit three gyms in January,flaw,-1 to retry failed checks.,,,,,,perk:retryBonus=-1,humiliation
+backseat_driver,Backseat Driver,tell other people how to do everything,mixed,Allies get +1 to checks you advise on. -1 CHA.,,,,,-1,perk:allyBonus=1,social
+dog_person,Dog Person,have more photos of your dog than your family,perk,+2 Persuasion with canine creatures.,,,,,,skill:persuasion:canine=2,
+smells_fear,Smells Fear,can tell when someone is about to cry,perk,"+1 Intimidation, +1 Perception.",,,,,,skill:intimidation=1; skill:perception=1,
+oversharer,Oversharer,have told a cashier about your divorce,flaw,"-1 Deception, -1 Stealth.",,,,,,skill:deception=-1; skill:stealth=-1,social
+secret_keeper,Vault,"have never repeated a secret, even under pressure",perk,"+1 Deception, +1 to resist charm.",,,,,,skill:deception=1; resist:charm=1,
+easily_charmed,Easily Charmed,have bought a timeshare and two vacuums from door-to-door salesmen,flaw,-2 to resist charm.,,,,,,resist:charm=-2,humiliation
+iron_will,Stubborn as a Mule,have never once admitted being wrong,perk,+2 to resist charm.,,,,,,resist:charm=2,
+weird_luck_pennies,Picks Up Pennies,"pick up every penny you see, heads or tails",perk,Find extra gold in each room.,,,,,,perk:goldBonus=1,
+graceful_faller,Graceful Faller,fall down stairs with real style,perk,Take half damage from falls.,,,,,,perk:fallDamage=50,
+bad_back,Bad Back,threw out your back sneezing,flaw,-1 STR. Carry weight reduced.,-1,,,,,perk:carryWeight=-10,
+pack_mule,Pack Mule,"carry all the groceries in one trip, always",perk,Carry weight increased.,,,,,,perk:carryWeight=20,
+spiders_ok,Spider Friend,let spiders live in your house rent-free,perk,+2 to resist fear against bugs and spiders.,,,,,,resist:fear:bugs=2,weird
+spider_phobic,Terrified of Spiders,burned down a shed because of one spider,flaw,-3 to resist fear against spiders.,,,,,,resist:fear:bugs=-3,humiliation
+trivia_brain,Trivia Brain,know the middle name of every president,perk,+1 INT. Identify monster weaknesses more often.,,,,1,,perk:monsterLore=1,nerd
+small_talk,Weather Talker,can talk about weather for twenty minutes,perk,+1 Persuasion.,,,,,,skill:persuasion=1,social
+cant_whistle,Can't Snap,"cannot snap your fingers or whistle, and people notice",flaw,-1 CHA.,,,,,-1,,humiliation
+mumbler,Mumbler,"have been asked 'what?' 40,000 times",flaw,"-1 Persuasion, +1 Stealth.",,,,,,skill:persuasion=-1; skill:stealth=1,
+power_napper,Power Napper,can nap anywhere in under two minutes,perk,Short rests restore extra HP.,,,,,,perk:shortRestBonus=1,
+bruise_easy,Bruises Like a Peach,bruise from looking at doorframes,flaw,-1 CON.,,,-1,,,,
+unkillable_vibe,Cockroach Energy,have survived three motorcycle accidents and a cruise,perk,"Once per floor, drop to 1 HP instead of 0.",,,,,,perk:lastStand=1,survivor
+tea_snob,Tea Snob,own a gooseneck kettle and a thermometer for it,mixed,"+1 INT, -1 CHA.",,,,1,-1,,
+plant_parent,Plant Parent,have forty houseplants with names,perk,+1 to identify herbs and fungi.,,,,,,perk:herbLore=1,
+road_trip_bladder,Gas Station Gourmand,can rank every gas station chain by taquito,perk,Gas-station food gives 1 extra HP.,,,,,,perk:gasStationFood=1,glutton
+hand_talker,Talks With Hands,knocked over a waiter gesturing,mixed,"+1 Persuasion, -1 Stealth.",,,,,,skill:persuasion=1; skill:stealth=-1,
+poker_face,Poker Face,"didn't react when you won $5,000 at bingo",perk,+2 Deception.,,,,,,skill:deception=2,
+emoji_face,Face Shows Everything,have never won a hand of poker,flaw,-2 Deception.,,,,,,skill:deception=-2,humiliation

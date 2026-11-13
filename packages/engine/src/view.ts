@@ -1,0 +1,140 @@
+/**
+ * UI-facing projection of the world. Panels render from this, never from raw state.
+ */
+import type { Content } from "./content/load";
+import { STATS, type Stat } from "./content/schemas";
+import { derive, xpToNext } from "./rules/derived";
+import { EQUIP_SLOTS, type EquipSlot, type Phase, type World } from "./state";
+
+export interface Bar {
+  current: number;
+  max: number;
+}
+
+export interface ItemView {
+  uid: string;
+  name: string;
+  rarity: string;
+  detail: string[];
+  equippedIn?: EquipSlot;
+  qty: number;
+}
+
+export interface ViewModel {
+  phase: Phase;
+  status: {
+    floor: number | null;
+    district: string | null;
+    timer: string | null;
+    hp: Bar | null;
+    mp: Bar | null;
+    xp: Bar | null;
+    level: number | null;
+  };
+  character: null | {
+    name: string;
+    subtitle: string;
+    race: string;
+    charClass: string;
+    level: number;
+    stats: { stat: Stat; value: number; base: number }[];
+    derived: { label: string; value: string }[];
+    skills: { name: string; rank: number }[];
+    spells: { name: string; level: number; cooldown: number }[];
+    quirk: { name: string; text: string };
+    unspentStatPoints: number;
+    gold: number;
+  };
+  equipment: { slot: EquipSlot; label: string; item: ItemView | null }[];
+  inventory: ItemView[];
+  effects: { name: string; kind: "buff" | "debuff"; remaining: number; stacks: number }[];
+  minimap: string[] | null;
+  account: { legacyPoints: number; rerolls: number; runs: number; deaths: number; bestFloor: number };
+}
+
+const SLOT_LABELS: Record<EquipSlot, string> = {
+  mainHand: "Main", offHand: "Off", head: "Head", eyes: "Eyes", chest: "Chest", hands: "Hands", legs: "Legs",
+  feet: "Feet", back: "Back", belt: "Belt", neck: "Neck", ring1: "Ring", ring2: "Ring",
+};
+
+export function view(world: World, content: Content): ViewModel {
+  const { game, account } = world;
+  const c = game.crawler;
+  const accountView = {
+    legacyPoints: account.legacyPoints, rerolls: account.rerolls, runs: account.runs,
+    deaths: account.deaths, bestFloor: account.bestFloor,
+  };
+  if (!c) {
+    return {
+      phase: game.phase,
+      status: { floor: null, district: null, timer: null, hp: null, mp: null, xp: null, level: null },
+      character: null, equipment: [], inventory: [], effects: [], minimap: null, account: accountView,
+    };
+  }
+  const d = derive(c, content);
+  const slotOf = new Map(Object.entries(c.equipment).map(([slot, uid]) => [uid, slot as EquipSlot]));
+
+  const itemView = (uid: string): ItemView | null => {
+    const it = c.inventory.find((i) => i.uid === uid);
+    if (!it) return null;
+    const detail: string[] = [];
+    if (it.damage) detail.push(`${it.damage}${it.damageType && it.damageType !== "physical" ? ` ${it.damageType}` : ""} (${it.stat ?? "STR"}${it.weaponType ? `, ${it.weaponType}` : ""})`);
+    if (it.twoHanded) detail.push("two-handed");
+    if (it.armor) detail.push(`armor ${it.armor}`);
+    for (const m of it.modifiers) detail.push(`${m.value >= 0 ? "+" : ""}${m.value} ${m.to.replace(/^(skill|stat):/, "")}`);
+    if (it.flavor) detail.push(it.flavor);
+    const slot = slotOf.get(it.uid);
+    return { uid: it.uid, name: it.name, rarity: it.rarity, detail, qty: it.qty, ...(slot ? { equippedIn: slot } : {}) };
+  };
+
+  const occ = content.backstory.occupations.byId[c.backstory.occupation];
+  const quirk = content.backstory.quirks.byId[c.backstory.quirk];
+
+  return {
+    phase: game.phase,
+    status: {
+      floor: null,
+      district: null,
+      timer: null,
+      hp: { current: c.hp, max: d.maxHP },
+      mp: { current: c.mp, max: d.maxMP },
+      xp: { current: c.xp, max: xpToNext(c.level) },
+      level: c.level,
+    },
+    character: {
+      name: c.name,
+      subtitle: `${c.age}, ${occ?.name ?? "unknown"}, ${c.hometown}`,
+      race: c.race ? (c.race) : "Human (unchosen)",
+      charClass: c.charClass ?? "None yet",
+      level: c.level,
+      stats: STATS.map((s) => ({ stat: s, value: d.stats[s], base: c.baseStats[s] })),
+      derived: [
+        { label: "Defense", value: String(d.defense) },
+        { label: "Init", value: `+${d.initiativeBonus}` },
+        { label: "Regen", value: `${d.hpRegen} HP / ${d.mpRegen} MP` },
+        { label: "Carry", value: `${Math.round(d.carried * 10) / 10}/${d.carryLimit}` },
+      ],
+      skills: Object.entries(c.skills)
+        .map(([id, s]) => ({ name: content.skills.byId[id]?.name ?? id, rank: s.rank }))
+        .sort((a, b) => b.rank - a.rank || a.name.localeCompare(b.name)),
+      spells: Object.entries(c.spells).map(([id, s]) => ({ name: id, level: s.level, cooldown: s.cooldown })),
+      quirk: { name: quirk?.name ?? "", text: quirk?.text ?? "" },
+      unspentStatPoints: c.unspentStatPoints,
+      gold: c.gold,
+    },
+    equipment: EQUIP_SLOTS.map((slot) => ({
+      slot,
+      label: SLOT_LABELS[slot],
+      item: c.equipment[slot] ? itemView(c.equipment[slot]!) : null,
+    })),
+    inventory: c.inventory.map((it) => itemView(it.uid)!).filter(Boolean),
+    effects: c.statuses.map((s) => ({
+      name: content.statusEffects.byId[s.id]?.name ?? s.id,
+      kind: content.statusEffects.byId[s.id]?.kind ?? "debuff",
+      remaining: s.remaining,
+      stacks: s.stacks,
+    })),
+    minimap: null,
+    account: accountView,
+  };
+}

@@ -1,0 +1,206 @@
+﻿id,phrase,plus,minus,tags
+spelling_bee,won a state spelling bee by correctly spelling a word nobody has used since,INT,STR,nerd
+house_fire,walked out of a house fire carrying a cat and a toaster,CON,CHA,survivor
+touring_band,spent three years as the bassist in a touring band nobody remembers,CHA,INT,performer
+prepper_uncle,"were raised by a doomsday-prepper uncle who was, it turns out, onto something",CON,CHA,survivor; weird
+hotdog_contest,placed fourth in a regional hot dog eating contest,CON,DEX,glutton
+mime_school,"dropped out of mime school, which is impressive because nobody tells you you're failing",DEX,CHA,performer; weird
+lightning,got struck by lightning at a mini-golf course and kept playing,CON,INT,survivor; weird
+cult,briefly joined a cult and left because the snacks were bad,CHA,INT,social; weird
+parkour,were a semi-professional parkour guy for one humid summer,DEX,INT,athlete
+jury_foreman,served as jury foreman on a trial about a stolen emu,INT,DEX,nerd
+bar_fight,won a bar fight against a man dressed as a sports mascot,STR,CHA,brawler
+game_show,"lost on a daytime game show in the first round, on live television",CHA,CON,performer; humiliation
+regional_yoyo,"took third place at a regional yo-yo championship, and still bring it up",DEX,CHA,performer; nerd
+mall_santa,worked four Decembers as a mall Santa and were bitten by a child named Brayden,CON,CHA,performer; survivor
+ate_glowstick,"bit into a glow stick at age six and have glowed slightly, emotionally, ever since",CON,INT,weird
+lottery_lost,won forty thousand dollars on a scratch-off and lost the ticket in a car wash,CON,INT,humiliation
+pie_eating,"were disqualified from a pie-eating contest for using your hands, which you still dispute",CON,CHA,glutton; humiliation
+chess_park,"hustled chess in a park for two summers and lost to a pigeon once, sort of",INT,STR,nerd
+llama_spit,"got spat on by a llama at a petting zoo and spat back, winning",CON,CHA,brawler; weird
+trivia_champ,anchored a bar trivia team called Quiz Khalifa to six straight wins,INT,CON,nerd; social
+storm_chaser,chased tornadoes for a year in a Honda Civic,CON,INT,survivor
+marathon_dnf,ran twenty-five miles of a marathon and quit within sight of the finish,CON,CHA,athlete; humiliation
+local_news,were interviewed on the local news about a sinkhole and became a meme,CHA,CON,humiliation; performer
+escape_room,got locked in an escape room for six hours after the staff went home,INT,CHA,survivor; nerd
+hoa_president,"served two terms as HOA president and made enemies of everyone, including the mailman",CHA,DEX,social
+juggling,"learned to juggle chainsaws, then chose not to, which is the wise part",DEX,CON,performer
+raised_by_wolves,"were raised by a single dad who acted like a wolf, which is not the same thing as being raised by wolves",STR,CHA,weird; survivor
+rodeo_clown,spent a summer as a rodeo clown and got trampled with real dignity,CON,INT,performer; survivor
+bake_off,won a church bake-off with a store-bought pie and never confessed,CHA,INT,social
+dog_show,handled a basset hound to Best in Breed at a county dog show,CHA,STR,performer
+sleep_study,volunteered for a sleep study and didn't sleep for four days,CON,INT,weird; survivor
+cruise_ship,"got left behind on a Caribbean island by a cruise ship and swam after it, briefly",CON,INT,survivor; humiliation
+arm_wrestling,took a county arm-wrestling title from a man named Tiny,STR,INT,brawler; athlete
+bigfoot_hunter,hosted a Bigfoot-hunting podcast with eleven listeners,CHA,STR,weird; performer
+roller_derby,played roller derby under the name Crème Brutal,STR,INT,athlete; brawler
+quiz_bowl,"captained your high school quiz bowl team to a regional final, then froze on a question about mollusks",INT,CHA,nerd; humiliation
+haunted_house,worked at a haunted house attraction and actually scared a man into the hospital,CHA,DEX,performer
+food_poisoning,survived a gas station burrito that killed a lesser person,CON,CHA,glutton; survivor
+taxidermy,"took a weekend taxidermy class and did one raccoon, which still watches you",DEX,CHA,weird
+renaissance_faire,worked the turkey leg stand at a renaissance faire and learned to fight with a turkey leg,STR,INT,performer; brawler
+air_guitar,competed in a national air guitar championship and placed with dignity,CHA,STR,performer
+lost_in_corn,got lost in a corn maze overnight and came out a different person,CON,CHA,survivor; weird
+pageant_kid,were a child beauty pageant contestant and know eight ways to smile,CHA,STR,performer
+garage_band,played drums in a garage band that broke up over the band name,DEX,INT,performer
+bowling_300,bowled a perfect 300 game with nobody watching,DEX,CHA,athlete
+competitive_eater,ate seventy-one chicken wings in twelve minutes for a T-shirt,CON,DEX,glutton
+volunteer_firefighter,were a volunteer firefighter in a town with one fire a year,STR,INT,survivor
+spelling_loss,lost a spelling bee on the word 'their' in front of your entire family,INT,CHA,nerd; humiliation
+swallowed_coin,swallowed a quarter at nine and waited three days to get your money back,CON,INT,weird; glutton
+infomercial,appeared in an infomercial for a knife that cuts shoes,CHA,DEX,performer
+moose_collision,hit a moose with your car and both of you walked away,CON,DEX,survivor
+grand_jury,"served on a grand jury and leaked nothing, despite everything",INT,CHA,nerd
+bull_riding,rode a mechanical bull for eight seconds on a bet and threw up on second nine,CON,INT,athlete; humiliation
+stand_up,bombed at an open mic so badly the host apologized to the crowd,CHA,CON,performer; humiliation
+hunting_cabin,spent a winter snowed into a hunting cabin with only canned peaches,CON,CHA,survivor
+math_olympiad,qualified for a math olympiad and got food poisoning the morning of,INT,CON,nerd
+pool_hustler,hustled pool at truck stops across three states,DEX,CHA,brawler
+cheer_captain,captained a cheer squad to nationals and still do the clap sometimes,DEX,INT,athlete; performer
+paintball,"got shot by your own team in a paintball tournament, eleven times",CON,CHA,humiliation
+tattoo_typo,got a tattoo with a typo and decided to live with it,CON,INT,humiliation
+alien_abduction,"claim you were abducted by aliens, and the aliens claim nothing",CHA,INT,weird
+dog_walker,walked nine dogs at once through a thunderstorm and lost zero dogs,STR,INT,athlete
+scouts,earned every Scout merit badge except Personal Fitness,INT,STR,nerd
+kickboxing,took kickboxing at the Y and broke the instructor's nose by accident,STR,CHA,brawler
+reality_show,were on a dating reality show and got eliminated in the first episode for being 'too much',CHA,INT,performer; humiliation
+hot_wing_challenge,finished a hot wing challenge and lost the feeling in your face for a week,CON,CHA,glutton
+wilderness_camp,were sent to a wilderness camp for teens and left the most well-adjusted counselor,CON,CHA,survivor
+fishing_record,caught a state-record catfish and the state lost the paperwork,STR,CHA,athlete
+tornado_bathtub,rode out a tornado in a bathtub and the bathtub landed in a neighbor's yard,CON,INT,survivor; weird
+mascot,"were the mascot for a minor-league baseball team, the Fighting Gourds",DEX,CHA,performer; athlete
+witness_protection,"might be in witness protection, but you're not allowed to say",INT,CHA,weird
+library_fines,owe the public library $340 in fines and are proud of it,INT,CHA,nerd
+debate_finals,"lost a state debate final by arguing the wrong side, very well",CHA,INT,nerd; humiliation
+blood_drive,gave blood every eight weeks for a decade and got one cookie each time,CON,STR,survivor
+model_trains,built a model railroad that took up your entire basement and your marriage,INT,CHA,nerd
+bouncer,worked the door at a country bar and turned away a man on a horse,STR,DEX,brawler
+cereal_box,were the face on a regional cereal box in 1998,CHA,INT,performer
+karate_kid,got a black belt at a strip-mall dojo with very generous standards,DEX,INT,athlete; brawler
+lifeguard,were a lifeguard for six summers and saved one man who was standing up,CON,INT,athlete
+polar_plunge,"did a polar plunge, forgot your towel, and walked home",CON,INT,survivor; humiliation
+hitchhiked,hitchhiked across four states with a man who only played polka,CON,CHA,survivor; weird
+choir_solo,got the solo in the church choir and hit the note that ended the service early,CHA,DEX,performer
+sword_collection,own a collection of mall swords and have taken lessons for none of them,STR,INT,weird
+retail_black_friday,worked six Black Fridays and were trampled for a waffle maker,CON,CHA,survivor
+sumo_suit,won a sumo-suit wrestling tournament at a corporate retreat,STR,CHA,brawler
+hoarder_grandma,cleaned out your grandmother's house and found a live raccoon and three Rolexes,STR,CHA,survivor
+lie_detector,"passed a lie detector test while lying, which proves something",CHA,CON,social
+forklift_cert,got forklift certified and mention it on every date,STR,CHA,nerd
+monster_truck,rode in a monster truck at the county fair and touched something holy,CON,INT,weird
+open_water,swam the length of a lake on a dare and climbed out at the wrong town,CON,INT,athlete
+crossword,"finished a Sunday crossword in pen, in eleven minutes, in front of witnesses",INT,STR,nerd
+food_truck,ran a food truck that sold only grilled cheese and went broke selling grilled cheese,CON,INT,glutton
+county_fair,won a blue ribbon for a rabbit that was not yours,CHA,INT,social
+quinceanera,choreographed a cousin's quinceañera dance that went viral for the wrong reasons,DEX,CHA,performer
+backyard_wrestling,did backyard wrestling as a teen and went through a folding table on camera,CON,INT,brawler; humiliation
+house_flipper,flipped a house and it flipped back,INT,CHA,humiliation
+cat_lady,were briefly responsible for fourteen cats due to a misunderstanding,CON,CHA,weird
+lumberjack_games,competed in lumberjack games and won the log roll by refusing to fall,DEX,INT,athlete
+deep_fryer,reached into a deep fryer for a dropped ring and got it,CON,INT,survivor; weird
+middle_school_play,"played a tree in the school play and stole the show, somehow",CHA,STR,performer
+night_school,went to night school for six years and never picked a major,INT,CHA,nerd
+fake_psychic,ran a psychic hotline for three weeks and were right twice,CHA,INT,social; weird
+demolition_derby,won a demolition derby in your mom's minivan,CON,CHA,brawler
+spa_retreat,went on a silent meditation retreat and got asked to leave for humming,CON,CHA,humiliation
+broken_elevator,spent a holiday weekend trapped in an elevator with your boss,CON,CHA,survivor
+ghost_tour,led ghost tours in a town with no documented ghosts,CHA,STR,performer
+cliff_dive,"cliff-dived in Mexico and landed in a way that made the locals clap, then wince",DEX,INT,athlete
+hot_air_balloon,crashed a hot air balloon into a megachurch parking lot,CON,CHA,survivor; humiliation
+garage_sale,sold your parents' wedding album at a garage sale for a dollar,CHA,INT,social
+bull_in_shop,let a pig loose in a Walmart as a senior prank and got away with it,DEX,CHA,weird
+quarterback,were a second-string high school quarterback for four undefeated seasons of bench,STR,INT,athlete
+tickle_fight,lost a sibling tickle fight so badly you were hospitalized,CON,DEX,humiliation
+self_published,"self-published a fantasy trilogy and sold forty copies, thirty to your aunt",INT,STR,nerd
+museum_night,spent a night locked in a natural history museum and became friends with a guard,CON,STR,weird
+online_poker,won a small online poker tournament in your underwear,INT,CON,social
+drag_brunch,hosted drag brunch for two years and never once missed a cue,CHA,STR,performer
+roadkill_cook,cooked roadkill for a dare and it was honestly fine,CON,CHA,glutton; survivor
+bee_swarm,got swarmed by bees at a wedding and kept dancing,CON,CHA,survivor
+lost_luggage,lived out of an airline lost-luggage voucher for nine days in Cleveland,CON,CHA,survivor
+coupon_queen,bought four hundred dollars of groceries for six dollars with coupons,INT,CHA,nerd
+monkey_bars,broke both arms on the monkey bars at twenty-eight,CON,DEX,humiliation
+ice_road,drove an ice road one winter and don't talk about it,CON,CHA,survivor
+pool_shark,sank a nine-ball break shot at a bachelor party and peaked,DEX,INT,athlete
+diner_regular,ate at the same diner every day for eleven years and they named a sandwich after you,CON,DEX,glutton; social
+cornhole,went semi-pro at cornhole and lost a sponsorship over a tweet,DEX,CHA,athlete
+farm_kid,grew up on a farm and have pulled a calf out of a cow by hand,STR,CHA,survivor
+jeopardy,were on Jeopardy and wagered everything on Final Jeopardy about opera,INT,CON,nerd; humiliation
+wedding_crasher,crashed eleven weddings and caught two bouquets,CHA,INT,social
+hypnotized,were hypnotized at a county fair and still cluck at certain words,CHA,INT,weird; humiliation
+viral_video,went viral falling off a trampoline into a kiddie pool,CON,CHA,humiliation
+ham_radio,got your ham radio license and talked to a man in Finland about sausages,INT,STR,nerd
+storm_drain,chased a ball into a storm drain at eight and came out a mile away,DEX,CHA,survivor
+alligator,"wrestled an alligator at a roadside attraction, technically a small one",STR,INT,brawler
+toastmaster,won a Toastmasters award and give toasts unprompted,CHA,DEX,social
+stuck_in_chimney,got stuck in a chimney trying to surprise your kids on Christmas,CON,CHA,humiliation
+pyramid_scheme,sold essential oils in a pyramid scheme and made it to the second-lowest level,CHA,INT,social; humiliation
+crowd_surf,crowd-surfed at a festival and the crowd stopped paying attention,CHA,CON,humiliation
+eagle_scout_fire,started a campfire with two sticks and then the woods,INT,CHA,survivor
+dance_marathon,danced for thirty-one hours at a charity dance marathon,CON,INT,athlete
+poetry_slam,won a poetry slam with a poem about your ex's mother,CHA,STR,performer
+fireworks,lost an eyebrow to fireworks and never grew it back right,CON,CHA,survivor; humiliation
+duck_attack,were chased across a golf course by geese and you still hear them,DEX,CHA,humiliation
+casino_ban,got banned from a riverboat casino for counting cards badly,INT,CHA,nerd
+canoe_trip,flipped a canoe on a church youth trip and saved the youth pastor,STR,CHA,survivor
+puzzle_record,completed a five-thousand-piece puzzle and found one piece missing,INT,CHA,nerd
+speed_dating,"went speed dating and got proposed to, once, by a man in a cape",CHA,DEX,social; weird
+moonshine,helped your grandpa run moonshine and can still smell it in the rain,CON,INT,survivor
+skydiving,went skydiving and your chute opened on the second try,CON,INT,survivor
+gas_station_hero,stopped a gas station robbery with a hot dog roller,STR,INT,brawler
+soap_opera,had a three-episode arc on a soap opera as Nurse #2,CHA,STR,performer
+magic_cards,own every card from a 1995 collectible card game and know their stats,INT,STR,nerd
+puppet_show,"ran a puppet show at children's birthday parties and made a child cry with joy, then fear",CHA,STR,performer
+open_casket,fell into an open grave at a funeral while delivering the eulogy,CON,CHA,humiliation
+road_trip,drove cross-country with a dead GPS and only got lost in Ohio,INT,CHA,survivor
+tree_sit,"sat in a tree for two months to save it, and they cut down the next one",CON,CHA,survivor; weird
+sheriff_deputy,were deputized for one afternoon during a cow emergency,STR,INT,weird
+water_polo,played water polo in college and learned to fight underwater,STR,INT,athlete; brawler
+ballet_dropout,danced ballet for twelve years and quit two weeks before the recital,DEX,CHA,athlete
+parade_float,drove a parade float into a lake on the Fourth of July,CON,CHA,humiliation
+grocery_bagger,"were state champion grocery bagger, a real competition, look it up",DEX,CHA,athlete; nerd
+hostage,were briefly held hostage at a bank and talked the robber into a payment plan,CHA,STR,survivor; social
+butterfly_farm,ran a butterfly farm that went bankrupt in a very beautiful way,INT,CON,weird
+bar_mitzvah,danced the hora so hard at a bar mitzvah the chair broke,STR,CHA,performer
+debt_collector_beat,out-talked six debt collectors in one afternoon,CHA,CON,social
+truck_driving,drove a semi for two years and know every Waffle House by heart,CON,CHA,survivor
+prom_king,"were prom king and the queen was your cousin, which nobody explained",CHA,INT,humiliation
+oil_rig,worked an oil rig for one rotation and quit by helicopter,STR,CHA,survivor
+spelunking,got wedged in a cave for nine hours and did your taxes in your head,INT,CON,survivor; nerd
+dumpster_diving,furnished an entire apartment from dumpsters behind a university,INT,CHA,survivor
+backyard_rocket,built a model rocket that reached the next county,INT,CHA,nerd
+gym_class,did one hundred pull-ups in eighth grade gym and never again,STR,INT,athlete
+bridesmaid,were a bridesmaid nine times and gave a toast that ended a marriage,CHA,CON,social; humiliation
+drone_crash,crashed a drone into a governor's press conference,INT,CHA,humiliation
+nascar_pit,worked a NASCAR pit crew for one season and changed a tire in 4.1 seconds,DEX,CHA,athlete
+psychology_study,"were in a psychology study about obedience and passed, or failed",INT,CHA,weird
+zoo_keeper,cleaned the elephant enclosure at a zoo for a summer,STR,CHA,survivor
+amish_vacation,vacationed in Amish country and got really good at butter,STR,INT,weird
+twin_switch,"switched places with your twin for a week and nobody noticed, including you",CHA,INT,weird
+food_critic,wrote restaurant reviews for a free newspaper and were feared in three zip codes,INT,STR,nerd
+ice_fishing,fell through ice while ice fishing and caught a fish on the way back up,CON,INT,survivor
+gold_panning,panned for gold for a summer and found $12 and a wedding ring,DEX,CHA,weird
+church_lockin,survived a church lock-in where the pizza never came,CON,CHA,survivor
+pole_vault,pole vaulted at a state meet and landed outside the pit,DEX,CON,athlete; humiliation
+kidney_stone,passed a kidney stone during a job interview and got the job,CON,CHA,survivor
+time_capsule,dug up your own time capsule and were disappointed in yourself,INT,CHA,humiliation
+banjo_contest,won a banjo contest by default when the other banjo broke,DEX,STR,performer
+viral_recipe,posted a casserole recipe that got four thousand angry comments,INT,CHA,humiliation
+boxing_gym,sparred at a boxing gym for three years and never fought a real match,STR,CHA,brawler
+sinkhole,fell into a sinkhole while jogging and jogged out,CON,INT,survivor; athlete
+civil_war_reenactor,"died forty-one times as a Civil War reenactor, each one Oscar-worthy",CON,INT,performer
+ghost_hunting,bought a ghost-hunting kit online and detected only your own microwave,INT,CHA,weird
+waterbed,grew up on a waterbed and have perfect balance and bad dreams,DEX,CON,weird
+sold_kidney,tried to sell a kidney online to pay a phone bill and were scammed,CHA,INT,humiliation
+pancake_record,flipped 400 pancakes in an hour for charity,DEX,INT,glutton; athlete
+pool_party,rescued a kid at a pool party and the kid was mad about it,STR,CHA,survivor
+scrabble_club,ran a Scrabble club and got banned from your own club,INT,CHA,nerd
+fair_ride,got stuck at the top of a Ferris wheel for four hours with a church group,CON,CHA,survivor
+renfest_knight,jousted at a renaissance faire and actually got hit,CON,INT,athlete
+sasquatch_cast,own a plaster cast of a footprint you are 70% sure is Bigfoot,CHA,INT,weird
+camp_counselor,"were a camp counselor who lost a camper for twenty minutes, and found him in a canoe",INT,CHA,survivor
+divorce_party,threw your own divorce party and it was the best party of your life,CHA,CON,social
+paper_route,had a paper route as a kid and were chased by the same dog every day for four years,DEX,CHA,athlete
+hand_model,were a hand model until a cooking accident,DEX,CON,performer
+hunger_strike,went on a hunger strike over a parking ticket and lasted until lunch,CHA,CON,humiliation
+stuntman,were a stunt double for a local car dealership commercial,CON,INT,performer; athlete
