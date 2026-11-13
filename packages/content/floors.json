@@ -3,6 +3,10 @@
     "id": "undercroft",
     "name": "The Undercroft",
     "floor": 1,
+    "rooms": 60,
+    "width": 12,
+    "height": 9,
+    "days": 5,
     "roomNames": {
       "adjectives": [
         "Weeping",

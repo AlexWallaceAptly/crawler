@@ -21,6 +21,21 @@ function Line({ e }: { e: GameEvent }) {
       return <div className={`${s.line} ${s.check}`}>{e.text}</div>;
     case "crawlerCreated":
       return <div className={`${s.line} ${s.divider}`}>── NEW CRAWLER: {e.name} ──</div>;
+    case "roomEntered":
+      return (
+        <div className={`${s.line} ${s.room}`}>
+          <div className={s.roomName}>
+            ▌{e.name.toUpperCase()}
+            {e.badge && <span className={s.roomBadge}> [{e.badge}]</span>}
+          </div>
+          {e.lines.map((l, i) => (
+            <div key={i} className={s.narrator}>{l}</div>
+          ))}
+          <div className={s.exits}>Exits: {e.exits.length ? e.exits.join(", ") : "none"}.</div>
+        </div>
+      );
+    case "floorCleared":
+      return <div className={`${s.line} ${s.divider}`}>── FLOOR {e.floor} CLEARED ──</div>;
     case "died":
       return <div className={`${s.line} ${s.death}`}>── DEAD ({e.cause}) ──</div>;
     default:

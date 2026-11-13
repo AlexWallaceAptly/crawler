@@ -3,6 +3,7 @@
  */
 import type { Content } from "./content/load";
 import { STATS, type Stat } from "./content/schemas";
+import { formatTimer, renderMap, roomBadge } from "./explore";
 import { derive, xpToNext } from "./rules/derived";
 import { EQUIP_SLOTS, type EquipSlot, type Phase, type World } from "./state";
 
@@ -26,6 +27,8 @@ export interface ViewModel {
     floor: number | null;
     district: string | null;
     timer: string | null;
+    /** Current room name, with its badge if the type is player-visible ("SAFE ROOM"). */
+    room: string | null;
     hp: Bar | null;
     mp: Bar | null;
     xp: Bar | null;
@@ -67,7 +70,7 @@ export function view(world: World, content: Content): ViewModel {
   if (!c) {
     return {
       phase: game.phase,
-      status: { floor: null, district: null, timer: null, hp: null, mp: null, xp: null, level: null },
+      status: { floor: null, district: null, timer: null, room: null, hp: null, mp: null, xp: null, level: null },
       character: null, equipment: [], inventory: [], effects: [], minimap: null, account: accountView,
     };
   }
@@ -90,12 +93,17 @@ export function view(world: World, content: Content): ViewModel {
   const occ = content.backstory.occupations.byId[c.backstory.occupation];
   const quirk = content.backstory.quirks.byId[c.backstory.quirk];
 
+  const floor = game.floor;
+  const room = floor ? floor.rooms[floor.currentRoom]! : null;
+  const badge = room ? roomBadge(room) : undefined;
+
   return {
     phase: game.phase,
     status: {
-      floor: null,
-      district: null,
-      timer: null,
+      floor: floor ? floor.floor : null,
+      district: null, // one district per floor until Floor 2
+      timer: floor ? formatTimer(floor.timeLeft) : null,
+      room: room ? (badge ? `${room.name} [${badge}]` : room.name) : null,
       hp: { current: c.hp, max: d.maxHP },
       mp: { current: c.mp, max: d.maxMP },
       xp: { current: c.xp, max: xpToNext(c.level) },
@@ -134,7 +142,7 @@ export function view(world: World, content: Content): ViewModel {
       remaining: s.remaining,
       stacks: s.stacks,
     })),
-    minimap: null,
+    minimap: floor ? renderMap(floor) : null,
     account: accountView,
   };
 }

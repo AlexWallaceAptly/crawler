@@ -231,6 +231,13 @@ export const FloorThemeSchema = z.strictObject({
   name: z.string(),
   /** Dungeon floor number this theme is used on. */
   floor: z.number().int().min(1),
+  /** How many rooms to carve. */
+  rooms: z.number().int().min(10),
+  /** Grid dimensions the rooms are carved into. */
+  width: z.number().int().min(4),
+  height: z.number().int().min(4),
+  /** Collapse timer in game days. */
+  days: z.number().positive(),
   roomNames: z.strictObject({
     adjectives: LinePool.min(5),
     nouns: ShapePools,
@@ -250,6 +257,8 @@ export const FloorThemeSchema = z.strictObject({
     npc: LinePool.default([]),
     empty: LinePool.default([]),
   }),
+}).refine((t) => t.rooms <= t.width * t.height * 0.7, {
+  message: "rooms must fit the grid with slack (<= 70% of cells) or the walk jams",
 });
 export type FloorTheme = z.infer<typeof FloorThemeSchema>;
 

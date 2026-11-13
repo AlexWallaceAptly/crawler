@@ -25,8 +25,9 @@ export function StatusBar({ view }: { view: ViewModel }) {
     <header className={s.status} style={{ gridArea: "status" }}>
       <div className={s.statusLeft}>
         <span className={s.floor}>{st.floor ? `FLOOR ${st.floor}` : "PRE-SHOW"}</span>
-        <span>District: {st.district ?? "—"}</span>
-        <span>Timer: {st.timer ?? "—"}</span>
+        {st.room && <span>{st.room}</span>}
+        {st.district && <span>District: {st.district}</span>}
+        <span>Collapse: {st.timer ?? "—"}</span>
       </div>
       <div className={s.statusRight}>
         <Meter label="HP" bar={st.hp} color="var(--danger)" />

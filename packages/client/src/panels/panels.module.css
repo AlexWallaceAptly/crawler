@@ -101,6 +101,23 @@
   padding-top: 6px;
   margin-top: 6px;
 }
+.room {
+  margin-top: 4px;
+}
+.roomName {
+  color: var(--accent, var(--system));
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+.roomBadge {
+  color: var(--xp);
+  font-size: 12px;
+}
+.exits {
+  color: var(--dim);
+  font-size: 13px;
+  margin-top: 2px;
+}
 
 /* ---- sheets ---- */
 .kv {

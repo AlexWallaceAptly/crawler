@@ -68,3 +68,17 @@ Assumptions made where [the spec](docs/SPEC.md) is silent or ambiguous. Newest m
 - Room shapes are a fixed trio (`corridor`/`chamber`/`small`): both name nouns and opening lines are keyed by shape, enforced by a strict object rather than a free record so a typo'd shape fails validation.
 - `typeLines` covers exactly the six special room types (`stairwell`, `safe`, `treasure`, `puzzle`, `npc`, `empty`), each defaulting to an empty array — a theme may omit lines for a type and the describer just skips the closing line.
 - New narration keys: `explore.interjection`, `timer.warn24h/6h/1h/10m`, `explore.searchNothing`, `explore.rest`, `explore.sleep`, `explore.blocked`, `explore.sleepRefused`, `explore.descendRefused`, `explore.revisit`, `died.collapse`, `floor.cleared`. Collapse death gets its own `died.collapse` key rather than a `when` clause on `died`, since it fires from the timer, not combat.
+
+## Milestone 3: floor generation and exploration
+
+- Grid is 12×9 (108 cells) for 60 rooms — ~55% density reads as tunnels with real dead ends; the spec's 14×10/120 example is denser than plays well. Grid size, room count and timer days live on the theme in `floors.json`.
+- Carving is a branching random walk: 22% of steps (or any dead end) jump the cursor to a random carved room, which is what creates branches. Loops connect an extra 10–15% of adjacent unlinked pairs. Connectivity holds by construction; the 100-floor test re-proves it with BFS anyway.
+- Stairwells (3–5) are placed greedily at the point maximizing min(distance from start, distance from other stairwells). Safe rooms are 1 per 15 rooms; the first is the tutorial one, forced 4–8 steps from the start; none may sit adjacent to a stairwell (spec).
+- The start room is forced corridor/empty so turn one is never an ambush.
+- Room types stay hidden from the player except safe rooms and stairwells, which get badges in the room header and status bar; lair/trap/event rooms generate now but behave as flavor until M4/M7.
+- Descriptions are opening (by shape) + one sight + one sound *or* smell (50/50) + a type line if the theme has one; cached on the room at first entry so revisits read the same (spec).
+- Revisits print the room name and exits only, plus a `explore.revisit` jab 30% of the time; first visits get an `explore.interjection` 10% of the time.
+- `look` and `map` are free; move 10m, search 15m, rest 1h, sleep 8h per spec. Rest heals 25% of max HP/MP (spec leaves it open); sleep fully heals but only in safe rooms. Search finds nothing until the M5 loot tables — it still spends the 15 minutes, which is the joke.
+- All time flows through `advanceTime()`: warnings fire once per threshold (tracked in `floor.warned`), and at zero anyone off a stairwell dies (`died.collapse`, counts as a death) while anyone on one is auto-descended (floor cleared, not a death).
+- `descend` ends the run as a win until Floor 2 exists: `floorCleared` event, bestFloor=2, phase → dead so `new` works; `deaths` is not incremented.
+- SAVE_VERSION bumped to 2 (GameState grew `floor`); v1 saves are discarded per the existing policy.

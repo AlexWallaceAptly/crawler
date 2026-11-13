@@ -1,8 +1,8 @@
-import type { Rarity, Slot, StatBlock, Modifier } from "./content/schemas";
+import type { Rarity, RoomShape, Slot, StatBlock, Modifier } from "./content/schemas";
 import type { GameEvent } from "./events";
 
 /** Bump when the save shape changes incompatibly; old saves are discarded (see DECISIONS.md). */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 export const ACCOUNT_VERSION = 1;
 export const LOG_LIMIT = 300;
 
@@ -86,6 +86,50 @@ export interface Crawler {
   achievements: string[];
 }
 
+// ---------------------------------------------------------------- floors
+
+export const DIRS = ["north", "east", "south", "west"] as const;
+export type Dir = (typeof DIRS)[number];
+
+/** What a room *is*. Lair/trap/event get mechanics in later milestones; until then they just read spooky. */
+export type RoomType =
+  | "corridor" | "chamber" | "empty"
+  | "lair" | "trap" | "treasure" | "puzzle" | "event" | "npc"
+  | "safe" | "stairwell";
+
+export interface Room {
+  /** Index into FloorState.rooms. */
+  id: number;
+  x: number;
+  y: number;
+  type: RoomType;
+  shape: RoomShape;
+  name: string;
+  /** Neighboring room ids by direction. */
+  exits: Partial<Record<Dir, number>>;
+  visited: boolean;
+  /** Spotted from an adjacent room; drawn as "?" on the map. */
+  seen: boolean;
+  searched: boolean;
+  /** Description lines, generated on first entry and cached so revisits read the same. */
+  desc: string[] | null;
+}
+
+export interface FloorState {
+  floor: number;
+  /** Theme id in floors.json. */
+  theme: string;
+  width: number;
+  height: number;
+  rooms: Room[];
+  startRoom: number;
+  currentRoom: number;
+  /** Game minutes until the floor collapses. */
+  timeLeft: number;
+  /** Warning thresholds (in minutes) that have already fired. */
+  warned: number[];
+}
+
 export interface NarratorState {
   recent: string[];
   /** -10 contempt .. +10 grudging respect */
@@ -100,6 +144,7 @@ export interface GameState {
   /** Game minutes elapsed this run. */
   clock: number;
   crawler: Crawler | null;
+  floor: FloorState | null;
   log: GameEvent[];
   nextEventId: number;
   narrator: NarratorState;
@@ -141,6 +186,7 @@ export function newGameState(): GameState {
     turn: 0,
     clock: 0,
     crawler: null,
+    floor: null,
     log: [],
     nextEventId: 1,
     narrator: { recent: [], mood: 0 },

@@ -1,5 +1,5 @@
 import type { CheckResult } from "./rules/checks";
-import type { Phase } from "./state";
+import type { Dir, Phase } from "./state";
 
 /**
  * Everything the UI prints comes from these. The client routes each type to panels;
@@ -16,6 +16,11 @@ export type GameEventBody =
   | { type: "error"; text: string }
   | { type: "check"; result: CheckResult; text: string }
   | { type: "crawlerCreated"; name: string }
+  /** The room block the log prints: name header, cached description, exits. Empty lines on a revisit. */
+  | { type: "roomEntered"; name: string; badge?: string; lines: string[]; exits: Dir[]; first: boolean }
+  /** Collapse countdown crossing a threshold (the spoken line arrives as narration). */
+  | { type: "timerWarning"; label: string; minutesLeft: number }
+  | { type: "floorCleared"; floor: number }
   | { type: "phaseChanged"; from: Phase; to: Phase }
   | { type: "died"; cause: string }
   | { type: "stateChanged" };
