@@ -1,8 +1,8 @@
-import type { Rarity, RoomShape, Slot, StatBlock, Modifier } from "./content/schemas";
+import type { EnemyAttack, RangeBand, Rarity, RoomShape, Slot, StatBlock, Modifier } from "./content/schemas";
 import type { GameEvent } from "./events";
 
 /** Bump when the save shape changes incompatibly; old saves are discarded (see DECISIONS.md). */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const ACCOUNT_VERSION = 1;
 export const LOG_LIMIT = 300;
 
@@ -51,6 +51,8 @@ export interface StatusInstance {
   id: string;
   remaining: number;
   stacks: number;
+  /** A status applied during the current round starts counting down next round. */
+  fresh?: boolean;
 }
 
 export interface Backstory {
@@ -111,8 +113,52 @@ export interface Room {
   /** Spotted from an adjacent room; drawn as "?" on the map. */
   seen: boolean;
   searched: boolean;
+  /** Trap rooms only: which trap, and whether it has already gone off or been disarmed. */
+  trap?: string;
+  trapSprung?: boolean;
   /** Description lines, generated on first entry and cached so revisits read the same. */
   desc: string[] | null;
+}
+
+// ---------------------------------------------------------------- combat
+
+/** A live enemy. Everything is resolved at spawn (family + mods baked in) so the state stays flat JSON. */
+export interface Enemy {
+  uid: string;
+  familyId: string;
+  /** Mods baked into the display name: "Rabid Sump Rat". */
+  name: string;
+  level: number;
+  tier: "mob" | "elite";
+  stats: StatBlock;
+  maxHP: number;
+  hp: number;
+  armor: number;
+  defense: number;
+  attacks: (EnemyAttack & { ready: number })[];
+  ai: string[];
+  preferRange: RangeBand;
+  talkable: boolean;
+  /** Distance from the crawler. */
+  range: RangeBand;
+  statuses: StatusInstance[];
+  regen: number;
+  fleeBelow: number;
+  initiative: number;
+  xp: number;
+  /** Set when the enemy left the fight alive; no XP from these. */
+  fate?: "fled" | "pacified";
+}
+
+export interface CombatState {
+  enemies: Enemy[];
+  round: number;
+  /** The crawler's rolled initiative for this fight. */
+  playerInitiative: number;
+  /** Number of step-a-band minor actions used this round. */
+  minorActionsUsed: number;
+  /** Room the crawler came from; a successful flee retreats there. */
+  fromRoom: number;
 }
 
 export interface FloorState {
@@ -145,6 +191,7 @@ export interface GameState {
   clock: number;
   crawler: Crawler | null;
   floor: FloorState | null;
+  combat: CombatState | null;
   log: GameEvent[];
   nextEventId: number;
   narrator: NarratorState;
@@ -187,6 +234,7 @@ export function newGameState(): GameState {
     clock: 0,
     crawler: null,
     floor: null,
+    combat: null,
     log: [],
     nextEventId: 1,
     narrator: { recent: [], mood: 0 },

@@ -82,3 +82,16 @@ Assumptions made where [the spec](docs/SPEC.md) is silent or ambiguous. Newest m
 - All time flows through `advanceTime()`: warnings fire once per threshold (tracked in `floor.warned`), and at zero anyone off a stairwell dies (`died.collapse`, counts as a death) while anyone on one is auto-descended (floor cleared, not a death).
 - `descend` ends the run as a win until Floor 2 exists: `floorCleared` event, bestFloor=2, phase → dead so `new` works; `deaths` is not incremented.
 - SAVE_VERSION bumped to 2 (GameState grew `floor`); v1 saves are discarded per the existing policy.
+
+## Milestone 4: Combat
+
+- Floor 1 encounter odds are first-entry 35% in chambers, 8% in corridors, guaranteed elite encounters in lairs, and 15% in event/NPC/puzzle rooms; revisit odds are lower. Safe rooms and stairwells do not spawn encounters. This makes lairs legible high-risk content while keeping ordinary exploration uncertain.
+- Combat groups use one randomly selected floor family. Mobs use that family's group-size range; an elite lair encounter has one elite and a 40% chance of one or two supporting mobs. Enemy levels are `floor * 4 + random(-1, 2)`, with family stats shifted from the floor baseline.
+- Initiative ties go to the crawler. Enemies above the crawler act before the crawler at the start of each round; the rest act after. The initiative order stays fixed. Combat rounds cost one game minute.
+- Enemy damage adds `floor(stat / 4)` rather than the crawler's `floor(stat / 2)` so early crawlers retain a damage edge against groups. Enemy damage still respects crawler damage-reduction and damage-type resistance modifiers.
+- A close-range attack can spend a minor action to close one band. If the enemy remains out of reach, the attempt still ends the turn so the fight cannot deadlock at near range. `Hasted` permits two movement minor actions per round; `Slowed` permits none.
+- Status duration is counted after the affected combatant gets its first turn. Newly applied statuses keep their full duration through the round in which they land. Travel still ticks and expires statuses once per room moved.
+- Talkable enemies use a medium CHA + Persuasion check; success pacifies them and awards half XP. A successful flee leaves combat without XP; failure gives each living enemy a free attack. Fled enemies do not award XP.
+- Enemy mods are selected without replacement and baked into their spawned state. The first combat content set has seven Floor 1 families and a small mod table; broader family coverage and balance tuning are deferred to Milestone 13.
+- `scripts/sim.ts` runs a headless Floor 1 policy. Its outcomes vary with `Math.random`; it is a reachability/playability check, not a seeded balance benchmark.
+- Local M4 acceptance passed: scripted suite and typecheck are clean; a 500-run Floor 1 simulation produced both stair clears and deaths with zero stuck runs. The observed clear rate is a balance snapshot, not a target for this milestone.

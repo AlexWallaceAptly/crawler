@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createEngine } from "../src/engine";
 import { loadContent } from "../src/content/load";
-import { resetRng } from "../src/rng";
+import { resetRng, setRandomSource } from "../src/rng";
 import { rawContent } from "@crawler/content";
 import type { World } from "../src/state";
 import type { GameEvent, GameEventType } from "../src/events";
@@ -55,6 +55,7 @@ describe("exploring floor 1", () => {
 
   it("revisits reuse the cached description and send an empty block", () => {
     const world = freshRun();
+    setRandomSource(() => 0.99); // keep this room-entry test out of random encounters
     const floor = world.game.floor!;
     const start = floor.rooms[floor.currentRoom]!;
     const dir = (Object.keys(start.exits) as (keyof typeof start.exits)[])[0]!;
@@ -146,6 +147,29 @@ describe("exploring floor 1", () => {
     expect(of(swept.events, "floorCleared")).toHaveLength(1);
     expect(of(swept.events, "died")).toHaveLength(0);
     expect(swept.world.account.bestFloor).toBe(2);
+  });
+
+  it("an unspotted, unavoided trap hurts and only fires once", async () => {
+    const { StepContext } = await import("../src/step");
+    const { springTrap } = await import("../src/explore");
+    const { forceDice, setRandomSource } = await import("../src/rng");
+    const world = freshRun();
+    const floor = world.game.floor!;
+    const room = floor.rooms[floor.currentRoom]!;
+    room.type = "trap";
+    room.trap = "scald_vent";
+    const ctx = new StepContext(world, content);
+    const before = ctx.crawler.hp;
+    setRandomSource(() => 0.99); // no status proc; d20s and damage come from forceDice
+    forceDice(1, 1, 3, 4); // spot nat 1, avoid nat 1, 2d6 = 7
+    springTrap(ctx, room);
+    expect(ctx.crawler.hp).toBeLessThan(before);
+    expect(room.trapSprung).toBe(true);
+    expect(ctx.events.filter((e) => e.type === "check")).toHaveLength(2);
+    // second entry: nothing happens, no dice needed
+    const hpAfter = ctx.crawler.hp;
+    springTrap(ctx, room);
+    expect(ctx.crawler.hp).toBe(hpAfter);
   });
 
   it("the whole exploring world survives a JSON save/restore round-trip", () => {

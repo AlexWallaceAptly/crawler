@@ -5,6 +5,10 @@
  */
 import type { FloorTheme } from "./content/schemas";
 import { chance, pick } from "./rng";
+import { dcFor, describeCheck, resolveCheck, type DcTier } from "./rules/checks";
+import { rollDice } from "./rules/dice";
+import { collectModifiers, derive, modTotal } from "./rules/derived";
+import { applyStatus, decrementStatuses, tickStatuses } from "./rules/effects";
 import { killCrawler, type StepContext } from "./step";
 import { MINUTES_PER_DAY } from "./gen/floor";
 import type { Dir, FloorState, Room } from "./state";
@@ -126,6 +130,75 @@ export function enterRoom(ctx: StepContext, roomId: number, kind: "first" | "rev
   });
   if (kind === "revisit" && chance(0.3)) ctx.say("explore.revisit");
   if (first && chance(0.1)) ctx.say("explore.interjection");
+}
+
+/**
+ * Out of combat, statuses run their course per room moved: tick once, count down once.
+ * (In combat the round loop owns this.) Walking while bleeding is a plan, not a cure.
+ */
+export function tickTravelStatuses(ctx: StepContext): void {
+  const c = ctx.crawler;
+  if (c.statuses.length === 0) return;
+  for (const t of tickStatuses(c.statuses, ctx.content)) {
+    const max = derive(c, ctx.content).maxHP;
+    c.hp = Math.min(max, c.hp - t.amount);
+    if (t.amount > 0) ctx.describe(`${t.status} costs you ${t.amount} HP on the way.`);
+  }
+  if (c.hp <= 0) {
+    killCrawler(ctx, "their own wounds");
+    return;
+  }
+  for (const name of decrementStatuses(c.statuses, ctx.content)) {
+    ctx.describe(`You are no longer ${name.toLowerCase()}.`);
+  }
+}
+
+// ---------------------------------------------------------------- traps
+
+/** First entry to a trap room: spot it (INT + Perception) or eat it (avoid halves nothing — it's dodge or damage). */
+export function springTrap(ctx: StepContext, room: Room): void {
+  if (!room.trap || room.trapSprung) return;
+  room.trapSprung = true;
+  const theme = ctx.content.floors.get(ctx.game.floor!.theme);
+  const trap = theme.trapTypes.find((t) => t.id === room.trap);
+  if (!trap) return;
+  const c = ctx.crawler;
+  const d = derive(c, ctx.content);
+  const mods = collectModifiers(c, ctx.content);
+  const floorNo = ctx.game.floor!.floor;
+
+  const spot = resolveCheck({
+    label: `Spot the ${trap.name}`,
+    modifier: d.stats.INT + (c.skills["perception"]?.rank ?? 0) + modTotal(mods, "skill:perception"),
+    dc: dcFor(trap.spotTier as DcTier, floorNo),
+  });
+  ctx.emit({ type: "check", result: spot, text: describeCheck(spot) });
+  if (spot.success) {
+    ctx.describe(trap.spotted);
+    return;
+  }
+  const avoid = resolveCheck({
+    label: `Avoid the ${trap.name}`,
+    modifier: d.stats[trap.avoidStat] + (c.skills["dodge"]?.rank ?? 0),
+    dc: dcFor(trap.avoidTier as DcTier, floorNo),
+  });
+  ctx.emit({ type: "check", result: avoid, text: describeCheck(avoid) });
+  if (avoid.success) {
+    ctx.describe(trap.avoided);
+    return;
+  }
+  let dmg = rollDice(trap.dice).total;
+  if (avoid.outcome === "critFailure") dmg *= 2;
+  dmg = Math.max(1, dmg - modTotal(mods, "damageReduction", `resist:${trap.damageType}`));
+  c.hp -= dmg;
+  ctx.describe(trap.triggered);
+  ctx.describe(`${dmg} ${trap.damageType} damage${avoid.outcome === "critFailure" ? " (critical failure — doubled)" : ""}.`);
+  if (trap.status && c.hp > 0 && chance(trap.status.chance)) {
+    const def = ctx.content.statusEffects.get(trap.status.id);
+    applyStatus(c.statuses, def, trap.status.duration);
+    ctx.describe(`You are ${def.name.toLowerCase()}.`);
+  }
+  if (c.hp <= 0) killCrawler(ctx, `a ${trap.name.toLowerCase()}`);
 }
 
 // ---------------------------------------------------------------- map

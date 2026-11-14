@@ -21,6 +21,10 @@ export type GameEventBody =
   /** Collapse countdown crossing a threshold (the spoken line arrives as narration). */
   | { type: "timerWarning"; label: string; minutesLeft: number }
   | { type: "floorCleared"; floor: number }
+  | { type: "combatStarted"; names: string[] }
+  /** One line of fight play-by-play; routed to the battle log only. */
+  | { type: "combatLine"; text: string; actor: "you" | "enemy" | "status" }
+  | { type: "combatEnded"; outcome: "victory" | "fled" | "talked"; xp?: number }
   | { type: "phaseChanged"; from: Phase; to: Phase }
   | { type: "died"; cause: string }
   | { type: "stateChanged" };

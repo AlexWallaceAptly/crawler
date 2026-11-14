@@ -1,47 +1,208 @@
 [
-  { "id": "bleeding", "name": "Bleeding", "kind": "debuff", "defaultDuration": 3, "stacking": "stack", "maxStacks": 5,
+  {
+    "id": "bleeding",
+    "name": "Bleeding",
+    "kind": "debuff",
+    "defaultDuration": 3,
+    "stacking": "stack",
+    "maxStacks": 3,
     "description": "Losing the red stuff. 1d4 damage per stack each round.",
-    "tick": [{ "kind": "damage", "value": "1d4", "damageType": "physical" }] },
-  { "id": "burning", "name": "Burning", "kind": "debuff", "defaultDuration": 2, "stacking": "refresh",
+    "tick": [
+      {
+        "kind": "damage",
+        "value": "1d3",
+        "damageType": "physical"
+      }
+    ]
+  },
+  {
+    "id": "burning",
+    "name": "Burning",
+    "kind": "debuff",
+    "defaultDuration": 2,
+    "stacking": "refresh",
     "description": "On fire. 1d6 fire damage each round.",
-    "tick": [{ "kind": "damage", "value": "1d6", "damageType": "fire" }] },
-  { "id": "poisoned", "name": "Poisoned", "kind": "debuff", "defaultDuration": 4, "stacking": "extend",
+    "tick": [
+      {
+        "kind": "damage",
+        "value": "1d6",
+        "damageType": "fire"
+      }
+    ]
+  },
+  {
+    "id": "poisoned",
+    "name": "Poisoned",
+    "kind": "debuff",
+    "defaultDuration": 4,
+    "stacking": "extend",
     "description": "1d4 poison damage each round and -2 to attack rolls.",
-    "tick": [{ "kind": "damage", "value": "1d4", "damageType": "poison" }],
-    "modifiers": [{ "to": "attack", "value": -2 }] },
-  { "id": "stunned", "name": "Stunned", "kind": "debuff", "defaultDuration": 1, "stacking": "ignore",
+    "tick": [
+      {
+        "kind": "damage",
+        "value": "1d3",
+        "damageType": "poison"
+      }
+    ],
+    "modifiers": [
+      {
+        "to": "attack",
+        "value": -2
+      }
+    ]
+  },
+  {
+    "id": "stunned",
+    "name": "Stunned",
+    "kind": "debuff",
+    "defaultDuration": 1,
+    "stacking": "ignore",
     "description": "Loses their next turn and drools a little.",
-    "flags": ["skipTurn"] },
-  { "id": "blinded", "name": "Blinded", "kind": "debuff", "defaultDuration": 2, "stacking": "refresh",
+    "flags": [
+      "skipTurn"
+    ]
+  },
+  {
+    "id": "blinded",
+    "name": "Blinded",
+    "kind": "debuff",
+    "defaultDuration": 2,
+    "stacking": "refresh",
     "description": "-5 to attack rolls and -3 defense.",
-    "modifiers": [{ "to": "attack", "value": -5 }, { "to": "defense", "value": -3 }] },
-  { "id": "slowed", "name": "Slowed", "kind": "debuff", "defaultDuration": 3, "stacking": "refresh",
+    "modifiers": [
+      {
+        "to": "attack",
+        "value": -5
+      },
+      {
+        "to": "defense",
+        "value": -3
+      }
+    ]
+  },
+  {
+    "id": "slowed",
+    "name": "Slowed",
+    "kind": "debuff",
+    "defaultDuration": 3,
+    "stacking": "refresh",
     "description": "No minor actions, -2 defense.",
-    "modifiers": [{ "to": "defense", "value": -2 }],
-    "flags": ["noMinor"] },
-  { "id": "hasted", "name": "Hasted", "kind": "buff", "defaultDuration": 3, "stacking": "refresh",
+    "modifiers": [
+      {
+        "to": "defense",
+        "value": -2
+      }
+    ],
+    "flags": [
+      "noMinor"
+    ]
+  },
+  {
+    "id": "hasted",
+    "name": "Hasted",
+    "kind": "buff",
+    "defaultDuration": 3,
+    "stacking": "refresh",
     "description": "An extra minor action each turn and +2 defense.",
-    "modifiers": [{ "to": "defense", "value": 2 }],
-    "flags": ["extraMinor"] },
-  { "id": "feared", "name": "Feared", "kind": "debuff", "defaultDuration": 2, "stacking": "refresh",
+    "modifiers": [
+      {
+        "to": "defense",
+        "value": 2
+      }
+    ],
+    "flags": [
+      "extraMinor"
+    ]
+  },
+  {
+    "id": "feared",
+    "name": "Feared",
+    "kind": "debuff",
+    "defaultDuration": 2,
+    "stacking": "refresh",
     "description": "Can only try to flee or cower. -2 defense.",
-    "modifiers": [{ "to": "defense", "value": -2 }],
-    "flags": ["fleeOnly"] },
-  { "id": "charmed", "name": "Charmed", "kind": "debuff", "defaultDuration": 2, "stacking": "refresh",
+    "modifiers": [
+      {
+        "to": "defense",
+        "value": -2
+      }
+    ],
+    "flags": [
+      "fleeOnly"
+    ]
+  },
+  {
+    "id": "charmed",
+    "name": "Charmed",
+    "kind": "debuff",
+    "defaultDuration": 2,
+    "stacking": "refresh",
     "description": "Won't attack whoever charmed them. Thinks they're neat.",
-    "flags": ["noAttackCharmer"] },
-  { "id": "shielded", "name": "Shielded", "kind": "buff", "defaultDuration": 3, "stacking": "refresh",
+    "flags": [
+      "noAttackCharmer"
+    ]
+  },
+  {
+    "id": "shielded",
+    "name": "Shielded",
+    "kind": "buff",
+    "defaultDuration": 3,
+    "stacking": "refresh",
     "description": "Absorbs damage. Reduces all incoming damage by 3.",
-    "modifiers": [{ "to": "dr", "value": 3 }] },
-  { "id": "regenerating", "name": "Regenerating", "kind": "buff", "defaultDuration": 3, "stacking": "refresh",
+    "modifiers": [
+      {
+        "to": "dr",
+        "value": 3
+      }
+    ]
+  },
+  {
+    "id": "regenerating",
+    "name": "Regenerating",
+    "kind": "buff",
+    "defaultDuration": 3,
+    "stacking": "refresh",
     "description": "Heals 1d6 each round. Gross to watch.",
-    "tick": [{ "kind": "heal", "value": "1d6" }] },
-  { "id": "confused", "name": "Confused", "kind": "debuff", "defaultDuration": 1, "stacking": "refresh",
+    "tick": [
+      {
+        "kind": "heal",
+        "value": "1d6"
+      }
+    ]
+  },
+  {
+    "id": "confused",
+    "name": "Confused",
+    "kind": "debuff",
+    "defaultDuration": 1,
+    "stacking": "refresh",
     "description": "Attacks a random target, possibly a friend, possibly the floor. -2 defense.",
-    "modifiers": [{ "to": "defense", "value": -2 }],
-    "flags": ["randomTarget"] },
-  { "id": "invisible", "name": "Invisible", "kind": "buff", "defaultDuration": 2, "stacking": "refresh",
+    "modifiers": [
+      {
+        "to": "defense",
+        "value": -2
+      }
+    ],
+    "flags": [
+      "randomTarget"
+    ]
+  },
+  {
+    "id": "invisible",
+    "name": "Invisible",
+    "kind": "buff",
+    "defaultDuration": 2,
+    "stacking": "refresh",
     "description": "Can't be targeted until you attack. Enemies swing at where you probably are. +5 stealth.",
-    "modifiers": [{ "to": "skill:stealth", "value": 5 }],
-    "flags": ["untargetable", "breaksOnAttack"] }
+    "modifiers": [
+      {
+        "to": "skill:stealth",
+        "value": 5
+      }
+    ],
+    "flags": [
+      "untargetable",
+      "breaksOnAttack"
+    ]
+  }
 ]

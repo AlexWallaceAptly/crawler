@@ -118,6 +118,35 @@
   font-size: 13px;
   margin-top: 2px;
 }
+.fightYou {
+  color: var(--text);
+}
+.fightEnemy {
+  color: var(--danger);
+}
+.fightStatus {
+  color: var(--dim);
+  font-style: italic;
+}
+.enemyStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-head);
+  font-size: 13px;
+}
+.enemyName {
+  color: var(--danger);
+}
+.enemyElite {
+  color: var(--xp);
+  font-weight: bold;
+}
+.enemyMeta {
+  color: var(--dim);
+}
 
 /* ---- sheets ---- */
 .kv {

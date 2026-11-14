@@ -1,0 +1,340 @@
+[
+  {
+    "id": "sump_rat",
+    "name": "Sump Rat",
+    "floor": 1,
+    "description": "A rat the size of a footstool, with strong opinions about your ankles. It has survived down here on cardboard and spite.",
+    "stats": {
+      "STR": 3,
+      "DEX": 5,
+      "CON": 3,
+      "INT": 1,
+      "CHA": 1
+    },
+    "hpBase": 5,
+    "armor": 0,
+    "attacks": [
+      {
+        "name": "Incisor Lottery",
+        "dice": "1d4",
+        "damageType": "physical",
+        "stat": "DEX",
+        "range": "close",
+        "status": {
+          "id": "bleeding",
+          "chance": 0.2
+        }
+      },
+      {
+        "name": "Tail Flick",
+        "dice": "1d3",
+        "damageType": "physical",
+        "stat": "DEX",
+        "range": "close"
+      }
+    ],
+    "ai": [
+      "flee_below_20",
+      "attack"
+    ],
+    "groupSize": [
+      1,
+      3
+    ],
+    "xp": 6,
+    "tags": [
+      "beast",
+      "swarm"
+    ]
+  },
+  {
+    "id": "mold_shambler",
+    "name": "Mold Shambler",
+    "floor": 1,
+    "description": "Somebody died down here a long time ago and the mold kept the shape as a souvenir. It walks like a complaint being filed.",
+    "stats": {
+      "STR": 5,
+      "DEX": 2,
+      "CON": 7,
+      "INT": 1,
+      "CHA": 1
+    },
+    "hpBase": 10,
+    "armor": 1,
+    "attacks": [
+      {
+        "name": "Wet Hug",
+        "dice": "1d6",
+        "damageType": "physical",
+        "stat": "STR",
+        "range": "close",
+        "status": {
+          "id": "poisoned",
+          "chance": 0.25,
+          "duration": 2
+        }
+      },
+      {
+        "name": "Spore Cough",
+        "dice": "1d4",
+        "damageType": "poison",
+        "stat": "STR",
+        "range": "near",
+        "cooldown": 2
+      }
+    ],
+    "ai": [
+      "special_if_ready",
+      "attack"
+    ],
+    "groupSize": [
+      1,
+      2
+    ],
+    "xp": 10,
+    "tags": [
+      "undead",
+      "plant"
+    ]
+  },
+  {
+    "id": "scrap_goblin",
+    "name": "Scrap Goblin",
+    "floor": 1,
+    "description": "Three feet of rust, string and bad intentions. Everything it owns is stolen, including several of its teeth.",
+    "stats": {
+      "STR": 3,
+      "DEX": 5,
+      "CON": 3,
+      "INT": 4,
+      "CHA": 3
+    },
+    "hpBase": 6,
+    "armor": 1,
+    "attacks": [
+      {
+        "name": "Hurled Debris",
+        "dice": "1d6",
+        "damageType": "physical",
+        "stat": "DEX",
+        "range": "near"
+      },
+      {
+        "name": "Shiv Jab",
+        "dice": "1d4",
+        "damageType": "physical",
+        "stat": "DEX",
+        "range": "close"
+      }
+    ],
+    "ai": [
+      "flee_below_40",
+      "keep_range",
+      "attack"
+    ],
+    "preferRange": "near",
+    "talkable": true,
+    "groupSize": [
+      1,
+      3
+    ],
+    "xp": 8,
+    "tags": [
+      "goblinoid",
+      "talkable"
+    ]
+  },
+  {
+    "id": "pipe_snake",
+    "name": "Pipe Snake",
+    "floor": 1,
+    "description": "It lives in the pipes. It is shaped like the pipes. By the time you work out which pipe is a snake, the snake has worked out which ankle is yours.",
+    "stats": {
+      "STR": 4,
+      "DEX": 6,
+      "CON": 3,
+      "INT": 1,
+      "CHA": 1
+    },
+    "hpBase": 7,
+    "armor": 0,
+    "attacks": [
+      {
+        "name": "Fang Deposit",
+        "dice": "1d6",
+        "damageType": "physical",
+        "stat": "DEX",
+        "range": "close",
+        "status": {
+          "id": "poisoned",
+          "chance": 0.3,
+          "duration": 3
+        }
+      },
+      {
+        "name": "Constrictor Special",
+        "dice": "1d4",
+        "damageType": "physical",
+        "stat": "STR",
+        "range": "close",
+        "status": {
+          "id": "slowed",
+          "chance": 0.3,
+          "duration": 2
+        }
+      }
+    ],
+    "ai": [
+      "flee_below_20",
+      "attack"
+    ],
+    "groupSize": [
+      1,
+      2
+    ],
+    "xp": 9,
+    "tags": [
+      "beast"
+    ]
+  },
+  {
+    "id": "drain_leech",
+    "name": "Drain Leech",
+    "floor": 1,
+    "description": "A glistening black tube with one job. It is extremely good at its job. Its job is you.",
+    "stats": {
+      "STR": 2,
+      "DEX": 4,
+      "CON": 4,
+      "INT": 1,
+      "CHA": 1
+    },
+    "hpBase": 4,
+    "armor": 0,
+    "attacks": [
+      {
+        "name": "Latch On",
+        "dice": "1d3",
+        "damageType": "physical",
+        "stat": "DEX",
+        "range": "close",
+        "status": {
+          "id": "bleeding",
+          "chance": 0.3,
+          "duration": 3
+        }
+      }
+    ],
+    "ai": [
+      "attack"
+    ],
+    "groupSize": [
+      1,
+      3
+    ],
+    "xp": 5,
+    "tags": [
+      "beast",
+      "swarm"
+    ]
+  },
+  {
+    "id": "fuse_imp",
+    "name": "Fuse Imp",
+    "floor": 1,
+    "description": "A fist-sized gremlin that chews wiring for the buzz. It glows faintly, smells like burnt hair, and hates you specifically.",
+    "stats": {
+      "STR": 2,
+      "DEX": 6,
+      "CON": 2,
+      "INT": 5,
+      "CHA": 2
+    },
+    "hpBase": 5,
+    "armor": 0,
+    "attacks": [
+      {
+        "name": "Arc Flash",
+        "dice": "2d4",
+        "damageType": "lightning",
+        "stat": "DEX",
+        "range": "near",
+        "cooldown": 3,
+        "status": {
+          "id": "stunned",
+          "chance": 0.2,
+          "duration": 1
+        }
+      },
+      {
+        "name": "Spark Slap",
+        "dice": "1d4",
+        "damageType": "lightning",
+        "stat": "DEX",
+        "range": "close"
+      }
+    ],
+    "ai": [
+      "special_if_ready",
+      "keep_range",
+      "attack"
+    ],
+    "preferRange": "near",
+    "groupSize": [
+      1,
+      2
+    ],
+    "xp": 11,
+    "tags": [
+      "spark"
+    ]
+  },
+  {
+    "id": "gutter_crab",
+    "name": "Gutter Crab",
+    "floor": 1,
+    "description": "A crab in a shell of fused bottle caps and pipe fittings. It has been pinching things in the dark for decades and sees no reason to stop with you.",
+    "stats": {
+      "STR": 5,
+      "DEX": 2,
+      "CON": 6,
+      "INT": 1,
+      "CHA": 1
+    },
+    "hpBase": 8,
+    "armor": 3,
+    "attacks": [
+      {
+        "name": "Claw Clamp",
+        "dice": "1d6+1",
+        "damageType": "physical",
+        "stat": "STR",
+        "range": "close"
+      },
+      {
+        "name": "Shell Check",
+        "dice": "1d4",
+        "damageType": "physical",
+        "stat": "STR",
+        "range": "close",
+        "status": {
+          "id": "slowed",
+          "chance": 0.25,
+          "duration": 1
+        }
+      }
+    ],
+    "ai": [
+      "attack"
+    ],
+    "groupSize": [
+      1,
+      2
+    ],
+    "xp": 10,
+    "tags": [
+      "beast",
+      "armored"
+    ]
+  }
+]

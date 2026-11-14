@@ -16,7 +16,10 @@ const ROUTES: Record<GameEventType, LogPanel[]> = {
   roomEntered: ["log"],
   timerWarning: ["ticker"],
   floorCleared: ["log", "ticker"],
-  died: ["log", "ticker"],
+  combatStarted: ["log", "battle"],
+  combatLine: ["battle"],
+  combatEnded: ["log", "battle"],
+  died: ["log", "ticker", "battle"],
   phaseChanged: [],
   stateChanged: [],
 };

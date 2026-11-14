@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc -p packages/engine && tsc -p packages/content && tsc -p packages/client && tsc -p packages/server && tsc -p scripts",
     "build": "npm run validate && npm -w @crawler/client run build",
-    "check": "npm run validate && npm run typecheck && npm test"
+    "check": "npm run validate && npm run typecheck && npm test",
+    "sim": "tsx scripts/sim.ts"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",

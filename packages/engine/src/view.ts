@@ -51,6 +51,10 @@ export interface ViewModel {
   equipment: { slot: EquipSlot; label: string; item: ItemView | null }[];
   inventory: ItemView[];
   effects: { name: string; kind: "buff" | "debuff"; remaining: number; stacks: number }[];
+  combat: null | {
+    round: number;
+    enemies: { uid: string; name: string; hp: Bar; range: string; statuses: string[]; elite: boolean }[];
+  };
   minimap: string[] | null;
   account: { legacyPoints: number; rerolls: number; runs: number; deaths: number; bestFloor: number };
 }
@@ -71,7 +75,7 @@ export function view(world: World, content: Content): ViewModel {
     return {
       phase: game.phase,
       status: { floor: null, district: null, timer: null, room: null, hp: null, mp: null, xp: null, level: null },
-      character: null, equipment: [], inventory: [], effects: [], minimap: null, account: accountView,
+      character: null, equipment: [], inventory: [], effects: [], combat: null, minimap: null, account: accountView,
     };
   }
   const d = derive(c, content);
@@ -142,6 +146,21 @@ export function view(world: World, content: Content): ViewModel {
       remaining: s.remaining,
       stacks: s.stacks,
     })),
+    combat: game.combat
+      ? {
+          round: game.combat.round,
+          enemies: game.combat.enemies
+            .filter((e) => e.hp > 0)
+            .map((e) => ({
+              uid: e.uid,
+              name: e.name,
+              hp: { current: e.hp, max: e.maxHP },
+              range: e.range,
+              statuses: e.statuses.map((s) => content.statusEffects.byId[s.id]?.name ?? s.id),
+              elite: e.tier === "elite",
+            })),
+        }
+      : null,
     minimap: floor ? renderMap(floor) : null,
     account: accountView,
   };

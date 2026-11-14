@@ -248,6 +248,24 @@ export const FloorThemeSchema = z.strictObject({
     sounds: LinePool.min(5),
     smells: LinePool.min(5),
   }),
+  /** Traps that trap rooms on this floor roll from. */
+  trapTypes: z.array(z.strictObject({
+    id: IdSchema,
+    name: z.string(),
+    dice: DiceSchema,
+    damageType: DamageTypeSchema.default("physical"),
+    status: z.strictObject({
+      id: IdSchema,
+      chance: z.number().min(0).max(1),
+      duration: z.number().int().min(1).optional(),
+    }).optional(),
+    spotTier: DcTierSchema,
+    avoidTier: DcTierSchema,
+    avoidStat: z.enum(["DEX", "INT"]),
+    spotted: z.string(),
+    triggered: z.string(),
+    avoided: z.string(),
+  })).default([]),
   /** Extra closing lines by special room type; empty array = no extra line. */
   typeLines: z.strictObject({
     stairwell: LinePool.default([]),
@@ -261,6 +279,74 @@ export const FloorThemeSchema = z.strictObject({
   message: "rooms must fit the grid with slack (<= 70% of cells) or the walk jams",
 });
 export type FloorTheme = z.infer<typeof FloorThemeSchema>;
+
+// ---------------------------------------------------------------- enemies
+
+export const RANGE_BANDS = ["close", "near", "far"] as const;
+export const RangeBandSchema = z.enum(RANGE_BANDS);
+export type RangeBand = z.infer<typeof RangeBandSchema>;
+
+const OnHitStatusSchema = z.strictObject({
+  id: IdSchema,
+  chance: z.number().min(0).max(1),
+  duration: z.number().int().min(1).optional(),
+});
+
+export const EnemyAttackSchema = z.strictObject({
+  name: z.string(),
+  dice: DiceSchema,
+  damageType: DamageTypeSchema.default("physical"),
+  /** Stat added to the hit roll and half-added to damage. */
+  stat: StatSchema,
+  range: RangeBandSchema,
+  /** Rounds between uses; attacks with a cooldown are "specials" to the AI. */
+  cooldown: z.number().int().min(1).optional(),
+  status: OnHitStatusSchema.optional(),
+});
+export type EnemyAttack = z.infer<typeof EnemyAttackSchema>;
+
+/** AI priority tokens, checked in order each enemy turn. */
+const AiTokenSchema = z.string().regex(/^(flee_below_\d+|special_if_ready|keep_range|attack)$/);
+
+export const EnemyFamilySchema = z.strictObject({
+  id: IdSchema,
+  name: z.string(),
+  /** Which floor's encounter table rolls this family. */
+  floor: z.number().int().min(1),
+  /** Codex line. */
+  description: z.string(),
+  /** Baseline stats at the floor's typical level; shifted 1 per level away from it. */
+  stats: StatBlockSchema,
+  hpBase: z.number().min(1),
+  /** Added to defense (spec formula). */
+  armor: z.number().default(0),
+  attacks: z.array(EnemyAttackSchema).min(1),
+  ai: z.array(AiTokenSchema).min(1),
+  preferRange: RangeBandSchema.default("close"),
+  talkable: z.boolean().default(false),
+  groupSize: z.tuple([z.number().int().min(1), z.number().int().min(1)]),
+  /** Base XP per kill, scaled by level. */
+  xp: z.number().min(0),
+  tags: z.array(z.string()).default([]),
+});
+export type EnemyFamily = z.infer<typeof EnemyFamilySchema>;
+
+export const EnemyModSchema = z.strictObject({
+  id: IdSchema,
+  /** Name prefix: "Rabid Sump Rat". */
+  name: z.string(),
+  hpMult: z.number().positive().default(1),
+  damageBonus: z.number().default(0),
+  armorBonus: z.number().default(0),
+  defenseBonus: z.number().default(0),
+  initiativeBonus: z.number().default(0),
+  regen: z.number().default(0),
+  fleeBelow: z.number().min(0).max(1).optional(),
+  talkable: z.boolean().optional(),
+  statusOnHit: OnHitStatusSchema.optional(),
+  weight: z.number().positive().default(1),
+});
+export type EnemyMod = z.infer<typeof EnemyModSchema>;
 
 // ---------------------------------------------------------------- narration
 

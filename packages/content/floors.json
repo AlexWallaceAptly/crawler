@@ -275,6 +275,105 @@
         "Bare concrete, nothing else. Even the dust looks like it's thinking about leaving.",
         "Nothing here. Not even rats, and the rats go everywhere."
       ]
-    }
+    },
+    "trapTypes": [
+      {
+        "id": "scald_vent",
+        "name": "Scald Vent",
+        "dice": "2d6",
+        "damageType": "fire",
+        "spotTier": "easy",
+        "avoidTier": "medium",
+        "avoidStat": "DEX",
+        "spotted": "The tiles ahead are cleaner than the rest. Boiled clean. You find the vent and wedge it shut with a rag.",
+        "triggered": "A valve snaps open with a shriek and the corridor fills with live steam.",
+        "avoided": "A valve snaps open with a shriek. You drop flat and the steam combs over you, close enough to iron your shirt."
+      },
+      {
+        "id": "rust_spikes",
+        "name": "Rust Spike Grate",
+        "dice": "1d8",
+        "damageType": "physical",
+        "status": {
+          "id": "bleeding",
+          "chance": 0.5,
+          "duration": 2
+        },
+        "spotTier": "medium",
+        "avoidTier": "medium",
+        "avoidStat": "DEX",
+        "spotted": "One floor grate sits a half-inch proud of the others. Underneath, something waits with the patience of scrap metal.",
+        "triggered": "The grate flips and a bed of rusted spikes comes up to meet you like an old friend with knives.",
+        "avoided": "The grate flips under your heel and you throw yourself sideways as the spikes punch up through empty air."
+      },
+      {
+        "id": "sump_sinkhole",
+        "name": "Sump Sinkhole",
+        "dice": "2d4",
+        "damageType": "physical",
+        "status": {
+          "id": "slowed",
+          "chance": 0.6,
+          "duration": 2
+        },
+        "spotTier": "medium",
+        "avoidTier": "easy",
+        "avoidStat": "DEX",
+        "spotted": "The concrete here sags like a stage prop. You skirt the edge and hear the hollow space under it sigh.",
+        "triggered": "The floor opens like a trapdoor with no opinion about what happens to you next, and you ride the rubble down.",
+        "avoided": "The floor drops away. You lunge, catch the lip, and haul yourself out with all the grace of laundry."
+      },
+      {
+        "id": "live_wire",
+        "name": "Live Wire",
+        "dice": "2d6",
+        "damageType": "lightning",
+        "status": {
+          "id": "stunned",
+          "chance": 0.4,
+          "duration": 1
+        },
+        "spotTier": "easy",
+        "avoidTier": "hard",
+        "avoidStat": "INT",
+        "spotted": "A cable hangs across the passage at neck height, humming a note you feel in your teeth. You limbo under it with dignity intact.",
+        "triggered": "The cable kisses your shoulder and every muscle you own files a formal resignation.",
+        "avoided": "You trace the cable back to a junction box and flip the breaker, feeling briefly like a professional."
+      },
+      {
+        "id": "gas_pocket",
+        "name": "Gas Pocket",
+        "dice": "1d6",
+        "damageType": "poison",
+        "status": {
+          "id": "poisoned",
+          "chance": 0.6,
+          "duration": 3
+        },
+        "spotTier": "medium",
+        "avoidTier": "medium",
+        "avoidStat": "INT",
+        "spotted": "The air ahead shimmers wrong, and the rats have chewed a detour around this stretch. Smart rats. You follow their route.",
+        "triggered": "You taste rotten eggs a half-second before the pocket of sewer gas folds around your head like a bag.",
+        "avoided": "You catch the smell in time, pull your collar over your face, and sprint through the worst of it."
+      },
+      {
+        "id": "flood_valve",
+        "name": "Flood Valve",
+        "dice": "1d6",
+        "damageType": "physical",
+        "status": {
+          "id": "slowed",
+          "chance": 0.5,
+          "duration": 1
+        },
+        "spotTier": "easy",
+        "avoidTier": "medium",
+        "avoidStat": "DEX",
+        "spotted": "A tripwire runs to a wheel valve the size of a dinner table. You step over the wire, insulted on its behalf.",
+        "triggered": "Something clicks, a valve spins, and a wall of black water takes you off your feet and introduces you to the floor.",
+        "avoided": "Something clicks. You grab a pipe as the water hits, and it only steals your footing and a little of your pride."
+      }
+    ]
   }
 ]

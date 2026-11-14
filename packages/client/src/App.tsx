@@ -4,7 +4,7 @@ import { useGame } from "./useGame";
 import { eventsFor } from "./router";
 import { readPref, writePref } from "./storage";
 import { Panel } from "./panels/Panel";
-import { LogView } from "./panels/LogView";
+import { EnemyStrip, LogView } from "./panels/LogView";
 import { CharacterSheet, EffectsList, EquipmentList, InventoryList, MiniMap } from "./panels/Sheets";
 import { StatusBar } from "./panels/StatusBar";
 import { Ticker } from "./panels/Ticker";
@@ -96,6 +96,7 @@ export function App({ engine }: { engine: Engine }) {
               </button>
             )}
           >
+            <EnemyStrip view={view} />
             <LogView events={battle} />
           </Panel>
           <Panel id="log-mini" title="Event log" collapsible={false} className={split && !narrow ? s.grow : s.mini}>

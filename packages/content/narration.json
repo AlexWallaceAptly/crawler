@@ -506,5 +506,164 @@
         "text": "You beat the Undercroft. It's a sewer. You beat a sewer. Put it on your résumé, champ."
       }
     ]
+  },
+  {
+    "key": "combat.start",
+    "variants": [
+      {
+        "text": "Initiative, crawlers. That's the part where we find out who flinches first."
+      },
+      {
+        "text": "Oh good, a fight. Try to make it watchable this time."
+      },
+      {
+        "text": "Combat engaged. The viewers at home are instructed to place their bets now."
+      }
+    ]
+  },
+  {
+    "key": "combat.playerMiss",
+    "variants": [
+      {
+        "text": "You swing with everything you have. The air is devastated."
+      },
+      {
+        "text": "A miss. Bold choice. Very avant-garde."
+      },
+      {
+        "text": "That attack had the accuracy of a weather forecast."
+      }
+    ]
+  },
+  {
+    "key": "combat.crit",
+    "variants": [
+      {
+        "text": "Now THAT is content. Do it again."
+      },
+      {
+        "text": "Critical hit! Somewhere upstairs, a producer just spilled their drink."
+      },
+      {
+        "text": "Beautiful. Disgusting. I'm putting that one on the highlight reel."
+      }
+    ]
+  },
+  {
+    "key": "combat.critFail",
+    "variants": [
+      {
+        "text": "I have watched a lot of crawlers fight. That was something else. Something worse."
+      },
+      {
+        "text": "Critical failure. The {target} looks embarrassed for you. The {target} is right."
+      },
+      {
+        "text": "You'll want to pretend that didn't happen. The replay disagrees."
+      }
+    ]
+  },
+  {
+    "key": "combat.kill",
+    "variants": [
+      {
+        "text": "The {target} is down. Don't gloat. Actually, do, it's good television."
+      },
+      {
+        "text": "Kill confirmed. The {target}'s family will be notified by absolutely nobody."
+      },
+      {
+        "text": "One less {target} in the world. The world will cope."
+      }
+    ]
+  },
+  {
+    "key": "combat.victory",
+    "variants": [
+      {
+        "text": "Fight's over, and somehow you're the one still standing. +{xp} XP. Don't spend it all on personality."
+      },
+      {
+        "text": "Victory. The cleanup crew thanks you for keeping the pieces large. +{xp} XP."
+      },
+      {
+        "text": "You won. I had money on the other outcome, so this is bittersweet. +{xp} XP."
+      }
+    ]
+  },
+  {
+    "key": "combat.fleeSuccess",
+    "variants": [
+      {
+        "text": "And there goes the hero, exiting at speed. The audience loves a coward with good cardio."
+      },
+      {
+        "text": "You successfully run away. Your ancestors are mortified, but alive people usually are."
+      },
+      {
+        "text": "Tactical withdrawal, they call it. The monsters call it lunch leaving early."
+      }
+    ]
+  },
+  {
+    "key": "combat.fleeFail",
+    "variants": [
+      {
+        "text": "You tried to run and the dungeon said no. Enjoy the free parting gift."
+      },
+      {
+        "text": "Flee attempt failed. Turns out they have legs too. Who knew."
+      },
+      {
+        "text": "You turned your back. They noticed. That's the whole story of what just happened."
+      }
+    ]
+  },
+  {
+    "key": "combat.talkSuccess",
+    "variants": [
+      {
+        "text": "Unbelievable. You talked your way out. The viewers hate it, I'm fascinated, carry on."
+      },
+      {
+        "text": "Diplomacy, in this economy? It works. Fight's off."
+      },
+      {
+        "text": "You negotiated with a monster and WON. Put it on your résumé above the bowling."
+      }
+    ]
+  },
+  {
+    "key": "combat.talkFail",
+    "variants": [
+      {
+        "text": "They've heard your pitch and their counteroffer is violence."
+      },
+      {
+        "text": "Talking didn't work. Some audiences are tough. This one has teeth."
+      }
+    ]
+  },
+  {
+    "key": "combat.enemyFled",
+    "variants": [
+      {
+        "text": "The {target} just left. You scared it off or bored it, and honestly both count."
+      },
+      {
+        "text": "There goes the {target}, exiting your encounter and my broadcast. Rude."
+      }
+    ]
+  },
+  {
+    "key": "combat.cantReach",
+    "variants": [
+      {
+        "text": "You can't reach it from here. Walk, then stab. In that order."
+      },
+      {
+        "text": "Wrong range, genius. Close the distance or throw something."
+      }
+    ]
   }
 ]

@@ -147,6 +147,9 @@ export function generateFloor(theme: FloorTheme): FloorState {
     room.type = room === start ? pick(["corridor", "empty"] as const) : weightedKey(TYPE_WEIGHTS);
   }
   for (const room of rooms) room.shape = shapeFor(room.type);
+  for (const room of rooms) {
+    if (room.type === "trap" && theme.trapTypes.length > 0) room.trap = pick(theme.trapTypes).id;
+  }
 
   // --- names: adjective + shape noun, dodging duplicates where the pools allow ---
   const used = new Set<string>();

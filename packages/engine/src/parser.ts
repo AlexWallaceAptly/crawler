@@ -19,6 +19,12 @@ const VERBS: Record<string, string> = {
   search: "search", loot: "search",
   rest: "rest", sleep: "sleep", nap: "sleep",
   descend: "descend", down: "descend", stairs: "descend",
+  attack: "attack", a: "attack", hit: "attack", kill: "attack", fight: "attack",
+  flee: "flee", run: "flee", escape: "flee",
+  advance: "advance", approach: "advance", closer: "advance",
+  retreat: "retreat", back: "retreat",
+  talk: "talk", parley: "talk", negotiate: "talk",
+  use: "use", drink: "use", eat: "use", quaff: "use",
 };
 
 const DIR_WORDS: Record<string, Dir> = {
@@ -58,6 +64,19 @@ export function parseCommand(input: string, _world: World): ParseResult {
       return { ok: true, action: { type: "sleep" } };
     case "descend":
       return { ok: true, action: { type: "descend" } };
+    case "attack":
+      return { ok: true, action: arg ? { type: "attack", target: arg } : { type: "attack" } };
+    case "flee":
+      return { ok: true, action: { type: "flee" } };
+    case "advance":
+      return { ok: true, action: { type: "advance" } };
+    case "retreat":
+      return { ok: true, action: { type: "retreat" } };
+    case "talk":
+      return { ok: true, action: { type: "talk" } };
+    case "use":
+      if (!arg) return { ok: false, reason: "unknown", input: text };
+      return { ok: true, action: { type: "use", item: arg } };
     case "accept":
       return { ok: true, action: { type: "accept" } };
     case "reroll":
@@ -89,6 +108,23 @@ export function availableCommands(world: World): CommandOption[] {
     if (world.account.rerolls > 0) out.push({ label: `Reroll (${world.account.rerolls} left)`, input: "reroll" });
   }
   if (phase === "dead") out.push({ label: "Next crawler", input: "new", primary: true });
+  if (phase === "combat" && world.game.combat) {
+    const foes = world.game.combat.enemies.filter((e) => e.hp > 0);
+    for (const e of foes.slice(0, 4)) {
+      out.push({ label: `Attack ${e.name}`, input: `attack ${e.name.toLowerCase()}`, primary: foes.indexOf(e) === 0 });
+    }
+    const statuses = world.game.crawler?.statuses ?? [];
+    const minorLimit = statuses.some((s) => s.id === "slowed") ? 0 : statuses.some((s) => s.id === "hasted") ? 2 : 1;
+    if (world.game.combat.minorActionsUsed < minorLimit) {
+      if (foes.some((e) => e.range !== "close")) out.push({ label: "Advance", input: "advance" });
+      if (foes.some((e) => e.range !== "far")) out.push({ label: "Retreat", input: "retreat" });
+    }
+    if (foes.some((e) => e.talkable)) out.push({ label: "Talk", input: "talk" });
+    const crawler = world.game.crawler;
+    const potion = crawler?.inventory.find((i) => i.kind === "consumable" && i.tags.includes("healing"));
+    if (potion) out.push({ label: `Use ${potion.name}`, input: `use ${potion.name.toLowerCase()}` });
+    out.push({ label: "Flee", input: "flee" });
+  }
   const floor = world.game.floor;
   if (phase === "exploring" && floor) {
     const room = floor.rooms[floor.currentRoom]!;

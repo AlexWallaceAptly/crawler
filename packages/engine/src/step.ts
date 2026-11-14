@@ -4,7 +4,10 @@ import type { Content } from "./content/load";
 import type { GameEvent, GameEventBody } from "./events";
 import { generateCrawler, introContext } from "./gen/backstory";
 import { generateFloor } from "./gen/floor";
-import { advanceTime, clearFloor, enterRoom, formatTimer, renderMap, TIME_COST } from "./explore";
+import { advanceTime, clearFloor, enterRoom, formatTimer, renderMap, springTrap, tickTravelStatuses, TIME_COST } from "./explore";
+import {
+  aliveEnemies, combatSummary, maybeEncounter, playerAttack, playerFlee, playerStep, playerTalk, playerUseItem,
+} from "./combat";
 import { narrate } from "./narrate/narrator";
 import { derive } from "./rules/derived";
 import { LOG_LIMIT, type Crawler, type FloorState, type Phase, type Room, type World } from "./state";
@@ -44,11 +47,19 @@ export class StepContext {
   describe(text: string): void {
     this.emit({ type: "narration", voice: "narrator", text });
   }
+  /** One line of combat play-by-play (battle log). */
+  fight(text: string, actor: "you" | "enemy" | "status"): void {
+    this.emit({ type: "combatLine", text, actor });
+  }
   info(text: string, lines?: string[]): void {
     this.emit(lines ? { type: "info", text, lines } : { type: "info", text });
   }
   error(text: string): void {
     this.emit({ type: "error", text });
+  }
+  /** Re-reads the phase after a mutating call; TS can't see mutations through narrowing. */
+  dead(): boolean {
+    return this.game.phase === "dead";
   }
   setPhase(to: Phase): void {
     const from = this.game.phase;
@@ -73,6 +84,8 @@ export const HELP_LINES = [
   "rest                 catch your breath (1 hour, heals a little)",
   "sleep                safe rooms only (8 hours, full heal)",
   "descend              take a stairwell down, ending the floor",
+  "attack [name]        in combat; also: advance / retreat / flee / talk",
+  "use <item>           drink or eat something from your pack",
   "accept / reroll      during crawler creation",
   "abandon              end this crawler's run (asks to confirm)",
   "new                  start the next crawler after death",
@@ -126,6 +139,10 @@ const handlers: Handlers = {
   look: {
     phases: ["exploring", "combat"],
     run(ctx) {
+      if (ctx.game.phase === "combat") {
+        ctx.info("You're a little busy:", combatSummary(ctx));
+        return;
+      }
       const floor = ctx.game.floor;
       if (!floor) {
         ctx.describe("A featureless gray void. Somewhere, a contractor is on lunch break.");
@@ -145,7 +162,72 @@ const handlers: Handlers = {
       }
       advanceTime(ctx, TIME_COST.move);
       if (ctx.game.phase === "dead") return; // the floor ran out mid-step
-      enterRoom(ctx, dest, floor.rooms[dest]!.visited ? "revisit" : "first");
+      const target = floor.rooms[dest]!;
+      const firstVisit = !target.visited;
+      // out-of-combat regen per room moved (spec: Derived values)
+      const c = ctx.crawler;
+      const d = derive(c, ctx.content);
+      c.hp = Math.min(d.maxHP, c.hp + d.hpRegen);
+      c.mp = Math.min(d.maxMP, c.mp + d.mpRegen);
+      tickTravelStatuses(ctx);
+      if (ctx.dead()) return;
+      enterRoom(ctx, dest, firstVisit ? "first" : "revisit");
+      if (firstVisit && target.type === "trap") {
+        springTrap(ctx, target);
+        if (ctx.dead()) return;
+      }
+      maybeEncounter(ctx, target, firstVisit);
+    },
+  },
+  attack: {
+    phases: ["combat"],
+    run(ctx, action) {
+      const foes = aliveEnemies(ctx);
+      const target = action.target
+        ? foes.find((e) => e.name.toLowerCase().includes(action.target!.toLowerCase()))
+        : foes[0];
+      if (!target) {
+        ctx.error(action.target ? `Nothing here called "${action.target}".` : "Nothing left to hit.");
+        return;
+      }
+      playerAttack(ctx, target);
+    },
+  },
+  flee: {
+    phases: ["combat"],
+    run(ctx) {
+      playerFlee(ctx);
+    },
+  },
+  advance: {
+    phases: ["combat"],
+    run(ctx) {
+      playerStep(ctx, -1);
+    },
+  },
+  retreat: {
+    phases: ["combat"],
+    run(ctx) {
+      playerStep(ctx, 1);
+    },
+  },
+  talk: {
+    phases: ["combat"],
+    run(ctx) {
+      playerTalk(ctx);
+    },
+  },
+  use: {
+    phases: ["exploring", "combat"],
+    run(ctx, action) {
+      const c = ctx.crawler;
+      const name = action.item.toLowerCase();
+      const item = c.inventory.find((i) => i.kind === "consumable" && i.name.toLowerCase().includes(name));
+      if (!item) {
+        ctx.error(`You don't have anything like "${action.item}".`);
+        return;
+      }
+      playerUseItem(ctx, item);
     },
   },
   map: {
@@ -179,6 +261,9 @@ const handlers: Handlers = {
       const d = derive(c, ctx.content);
       c.hp = Math.min(d.maxHP, c.hp + Math.ceil(d.maxHP * 0.25));
       c.mp = Math.min(d.maxMP, c.mp + Math.ceil(d.maxMP * 0.25));
+      // An hour of pressure and swearing: every status runs down by 2 rounds' worth.
+      for (const s of c.statuses) s.remaining -= 2;
+      c.statuses = c.statuses.filter((s) => s.remaining > 0);
       ctx.say("explore.rest");
     },
   },
@@ -196,6 +281,7 @@ const handlers: Handlers = {
       const d = derive(c, ctx.content);
       c.hp = d.maxHP;
       c.mp = d.maxMP;
+      c.statuses = [];
       ctx.say("explore.sleep");
     },
   },
@@ -229,6 +315,7 @@ const handlers: Handlers = {
 };
 
 export function killCrawler(ctx: StepContext, cause: string, key = "died"): void {
+  ctx.game.combat = null;
   ctx.account.deaths += 1;
   ctx.say(key, { cause });
   ctx.emit({ type: "died", cause });

@@ -7,6 +7,8 @@ import skills from "./skills.json";
 import statusEffects from "./statusEffects.json";
 import narration from "./narration.json";
 import floors from "./floors.json";
+import enemies from "./enemies.json";
+import enemyMods from "./enemyMods.json";
 import occupations from "./backstory/occupations.json";
 import backstoryEvents from "./backstory/events.json";
 import quirks from "./backstory/quirks.json";
@@ -20,6 +22,8 @@ export const rawContent = {
   "statusEffects.json": statusEffects,
   "narration.json": narration,
   "floors.json": floors,
+  "enemies.json": enemies,
+  "enemyMods.json": enemyMods,
   "backstory/occupations.json": occupations,
   "backstory/events.json": backstoryEvents,
   "backstory/quirks.json": quirks,

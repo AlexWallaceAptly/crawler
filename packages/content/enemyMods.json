@@ -1,0 +1,12 @@
+[
+  { "id": "rabid", "name": "Rabid", "damageBonus": 2, "defenseBonus": -2, "weight": 3 },
+  { "id": "armored", "name": "Armored", "armorBonus": 2, "weight": 2 },
+  { "id": "enormous", "name": "Enormous", "hpMult": 1.6, "defenseBonus": -2, "damageBonus": 1, "weight": 2 },
+  { "id": "tiny", "name": "Tiny", "hpMult": 0.6, "defenseBonus": 3, "weight": 2 },
+  { "id": "venomous", "name": "Venomous", "statusOnHit": { "id": "poisoned", "chance": 0.3, "duration": 2 }, "weight": 2 },
+  { "id": "cowardly", "name": "Cowardly", "fleeBelow": 0.5, "weight": 2 },
+  { "id": "regenerating", "name": "Regenerating", "regen": 2, "weight": 1 },
+  { "id": "chatty", "name": "Chatty", "talkable": true, "weight": 1 },
+  { "id": "greasy", "name": "Greasy", "defenseBonus": 2, "weight": 2 },
+  { "id": "sluggish", "name": "Sluggish", "initiativeBonus": -4, "hpMult": 1.2, "weight": 2 }
+]

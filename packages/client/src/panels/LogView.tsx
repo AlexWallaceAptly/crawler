@@ -1,6 +1,24 @@
 import { useEffect, useRef } from "react";
-import type { GameEvent } from "@crawler/engine";
+import type { GameEvent, ViewModel } from "@crawler/engine";
 import s from "./panels.module.css";
+
+/** Live enemy readout pinned above the battle log. */
+export function EnemyStrip({ view }: { view: ViewModel }) {
+  if (!view.combat || view.combat.enemies.length === 0) return null;
+  return (
+    <div className={s.enemyStrip}>
+      {view.combat.enemies.map((e) => (
+        <span key={e.uid}>
+          <span className={e.elite ? s.enemyElite : s.enemyName}>{e.name}</span>{" "}
+          <span className={s.enemyMeta}>
+            {e.hp.current}/{e.hp.max} · {e.range}
+            {e.statuses.length > 0 && ` · ${e.statuses.join(", ")}`}
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+}
 
 function Line({ e }: { e: GameEvent }) {
   switch (e.type) {
@@ -36,6 +54,20 @@ function Line({ e }: { e: GameEvent }) {
       );
     case "floorCleared":
       return <div className={`${s.line} ${s.divider}`}>── FLOOR {e.floor} CLEARED ──</div>;
+    case "combatStarted":
+      return <div className={`${s.line} ${s.divider}`}>── COMBAT: {e.names.join(", ")} ──</div>;
+    case "combatLine":
+      return (
+        <div className={`${s.line} ${e.actor === "you" ? s.fightYou : e.actor === "enemy" ? s.fightEnemy : s.fightStatus}`}>
+          {e.text}
+        </div>
+      );
+    case "combatEnded":
+      return (
+        <div className={`${s.line} ${s.divider}`}>
+          ── {e.outcome === "victory" ? `VICTORY${e.xp ? ` (+${e.xp} XP)` : ""}` : e.outcome === "fled" ? "ESCAPED" : "TALKED DOWN"} ──
+        </div>
+      );
     case "died":
       return <div className={`${s.line} ${s.death}`}>── DEAD ({e.cause}) ──</div>;
     default:

@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
   ConsumableSchema,
+  EnemyFamilySchema,
+  EnemyModSchema,
   FloorThemeSchema,
   FormativeEventSchema,
   ItemBaseSchema,
@@ -12,6 +14,8 @@ import {
   SkillSchema,
   StatusEffectSchema,
   type Consumable,
+  type EnemyFamily,
+  type EnemyMod,
   type FloorTheme,
   type FormativeEvent,
   type ItemBase,
@@ -30,6 +34,8 @@ export const CONTENT_FILES = {
   "statusEffects.json": z.array(StatusEffectSchema),
   "narration.json": z.array(NarrationSchema),
   "floors.json": z.array(FloorThemeSchema),
+  "enemies.json": z.array(EnemyFamilySchema),
+  "enemyMods.json": z.array(EnemyModSchema),
   "backstory/occupations.json": z.array(OccupationSchema),
   "backstory/events.json": z.array(FormativeEventSchema),
   "backstory/quirks.json": z.array(QuirkSchema),
@@ -55,6 +61,8 @@ export interface Content {
   statusEffects: Table<StatusEffect>;
   narration: Record<string, NarrationTemplate>;
   floors: Table<FloorTheme>;
+  enemies: Table<EnemyFamily>;
+  enemyMods: Table<EnemyMod>;
   backstory: {
     occupations: Table<Occupation>;
     events: Table<FormativeEvent>;
@@ -133,6 +141,8 @@ export function loadContent(raw: RawContent): Content {
     statusEffects: table("statusEffects.json", p["statusEffects.json"], problems),
     narration,
     floors: table("floors.json", p["floors.json"], problems),
+    enemies: table("enemies.json", p["enemies.json"], problems),
+    enemyMods: table("enemyMods.json", p["enemyMods.json"], problems),
     backstory: {
       occupations: table("backstory/occupations.json", p["backstory/occupations.json"], problems),
       events: table("backstory/events.json", p["backstory/events.json"], problems),
