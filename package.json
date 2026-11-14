@@ -13,11 +13,13 @@
     "typecheck": "tsc -p packages/engine && tsc -p packages/content && tsc -p packages/client && tsc -p packages/server && tsc -p scripts",
     "build": "npm run validate && npm -w @crawler/client run build",
     "check": "npm run validate && npm run typecheck && npm test",
-    "sim": "tsx scripts/sim.ts"
+    "sim": "tsx scripts/sim.ts",
+    "deploy": "BASE_PATH=/crawler/ npm run build && gh-pages -d packages/client/dist -m \"Deploy to GitHub Pages\""
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
     "concurrently": "^10.0.6",
+    "gh-pages": "^6.3.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"
