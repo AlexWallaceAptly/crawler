@@ -235,8 +235,7 @@ export function renderMap(floor: FloorState): string[] {
     }
     cell.push(row, below);
   }
-  const lines = cell.map((row) => row.join("").replace(/\s+$/, ""));
-  while (lines.length && lines[lines.length - 1] === "") lines.pop();
-  while (lines.length && lines[0] === "") lines.shift();
-  return lines;
+  cell.pop(); // no connector row below the last rank
+  // Full grid at full width, not trimmed to what's explored: the map keeps a stable frame as it fills in.
+  return cell.map((row) => row.join(""));
 }

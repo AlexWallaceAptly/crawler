@@ -5,6 +5,7 @@ import { eventsFor } from "./router";
 import { readPref, writePref } from "./storage";
 import { Panel } from "./panels/Panel";
 import { EnemyStrip, LogView } from "./panels/LogView";
+import { MobileShell } from "./panels/Mobile";
 import { CharacterSheet, EffectsList, EquipmentList, InventoryList, MiniMap } from "./panels/Sheets";
 import { StatusBar } from "./panels/StatusBar";
 import { Ticker } from "./panels/Ticker";
@@ -23,27 +24,10 @@ function useNarrow(query = "(max-width: 899px)") {
   return narrow;
 }
 
-const SIDE_TABS = ["Character", "Equipment", "Effects", "Map"] as const;
-type SideTab = (typeof SIDE_TABS)[number];
-
-function SidePanel({ tab, view }: { tab: SideTab; view: ViewModel }) {
-  switch (tab) {
-    case "Character":
-      return <CharacterSheet view={view} />;
-    case "Equipment":
-      return <EquipmentList view={view} />;
-    case "Effects":
-      return <EffectsList view={view} />;
-    case "Map":
-      return <MiniMap view={view} />;
-  }
-}
-
 export function App({ engine }: { engine: Engine }) {
   const { world, view, commands, submit, resetEverything } = useGame(engine);
   const narrow = useNarrow();
   const [inventoryOpen, setInventoryOpen] = useState(false);
-  const [tab, setTab] = useState<SideTab>(() => readPref("sideTab", "Character"));
   const [split, setSplit] = useState<boolean>(() => readPref("combatSplit", false));
 
   const log = useMemo(() => eventsFor("log", world.game.log), [world.game.log]);
@@ -76,10 +60,19 @@ export function App({ engine }: { engine: Engine }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const pickTab = (t: SideTab) => {
-    setTab(t);
-    writePref("sideTab", t);
-  };
+  // Phones get the full-screen map-first shell instead of the panel dashboard.
+  if (narrow) {
+    return (
+      <MobileShell
+        view={view}
+        log={log}
+        battle={battle}
+        commands={commands}
+        submit={submit}
+        onLocal={onLocal}
+      />
+    );
+  }
 
   const main = (
     <div className={`${s.main} ${inCombat && split && !narrow ? s.split : ""}`} style={{ gridArea: "main" }}>
@@ -124,20 +117,7 @@ export function App({ engine }: { engine: Engine }) {
     </div>
   );
 
-  const side = narrow ? (
-    <div className={s.tabs} style={{ gridArea: "side" }}>
-      <div className={s.tabBar} role="tablist">
-        {SIDE_TABS.map((t) => (
-          <button key={t} role="tab" aria-selected={tab === t} className={`${s.tab} ${tab === t ? s.tabOn : ""}`} onClick={() => pickTab(t)}>
-            {t}
-          </button>
-        ))}
-      </div>
-      <div className={s.tabBody}>
-        <SidePanel tab={tab} view={view} />
-      </div>
-    </div>
-  ) : (
+  const side = (
     <aside className={s.side} style={{ gridArea: "side" }}>
       <Panel id="character" title="Character">
         <CharacterSheet view={view} />
@@ -155,7 +135,7 @@ export function App({ engine }: { engine: Engine }) {
   );
 
   return (
-    <div className={`${s.app} ${narrow ? s.narrow : ""}`}>
+    <div className={s.app}>
       <StatusBar view={view} />
       {main}
       {side}
