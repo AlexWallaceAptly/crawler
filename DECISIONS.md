@@ -358,3 +358,14 @@ These are available to every crawler, so early fights aren't just trading swings
   - Whether the free round-1 retreat through the entry door needs a cost.
   - Whether trap rooms should host fights (their `arenaHazard` is already wired).
   - Whether arenas should persist per room, so caltrops you placed are still there on the rematch.
+
+### Combat art pass
+
+- **First art set.** It's installed under `packages/client/public/combat/`: floors, door, units, obstacles, terrain, hazards, UI overlays and six status icons. The source folders were renamed to the singular names the code expects. Status icons are renamed to status ids: the "shock" icon is `stunned` and the "freeze" icon is `slowed`, since there's no frozen status. Art the board can't use yet (flat clutter, connecting pipe pieces) stays in the repo-root `sprites/` folder.
+- **Cropped sprites are fine.** Each layer scales to fit its square, so there's no need for 128×128 canvases.
+- **Floor variants are weighted.** `arena.floorWeights` (one integer per variant, validated) picks a variant from a stable position hash. The Undercroft uses 10/1/3/1, so the plain flagstone dominates and moss, grate and brick are accents instead of a patchwork.
+- **21 props are new obstacles:** appliances, storage, bathroom fixtures and the trash can. Tall ones (fridge, shelf, rack, file cabinet, toilet stall, shower) block sight. They're in the Undercroft's obstacle list at half or quarter weight, so the original eight still make up about 70% of picks.
+- **Highlights** use the `ui/` sprites (move at 55% opacity, aiming targets at 70%), with the old CSS tints as the fallback. They draw under units, so an attackable enemy is framed rather than hidden. `Sprite` gained a `fallback` element for this.
+- **Status icons:** up to two on a unit's top-right corner plus "+N", with a first-letter badge for statuses that have no art. The unit view carries `statusIds` for this.
+- **The crawler** gets an amber selection ring at its feet, because the art reads as a monster.
+- **Small debris hazards** (caltrops, tacks, glass, marbles, barbed wire, spikes, trip wire) get a CSS dark outline and a slight brightening, so they read on grey stone at 44px without editing the art.

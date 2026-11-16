@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 /**
  * A PNG from public/ with a fallback chain: try each name in order, then show the
@@ -17,12 +17,15 @@ interface SpriteProps {
   className?: string;
   glyphClassName?: string;
   title?: string;
+  /** Rendered instead of the glyph when no image loads (e.g. a CSS stand-in). */
+  fallback?: ReactNode;
 }
 
-export function Sprite({ paths, glyph, className, glyphClassName, title }: SpriteProps) {
+export function Sprite({ paths, glyph, className, glyphClassName, title, fallback }: SpriteProps) {
   const [, bump] = useState(0);
   const path = paths.find((p) => !failed.has(spriteUrl(p)));
   if (!path) {
+    if (fallback !== undefined) return <>{fallback}</>;
     return glyph ? <span className={glyphClassName} title={title}>{glyph}</span> : null;
   }
   const url = spriteUrl(path);

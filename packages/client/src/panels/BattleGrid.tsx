@@ -16,6 +16,22 @@ interface Props {
   className?: string;
 }
 
+/** Small, low-contrast debris hazards get a dark outline so they read on stone. */
+const OUTLINED_HAZARDS = new Set(["caltrops", "tacks", "broken_glass", "marbles", "barbed_wire", "rust_spikes", "trip_wire"]);
+
+/** A highlight: the ui/ sprite if it exists, otherwise a CSS tint. */
+function Highlight({ kind }: { kind: "move" | "attack" | "target" }) {
+  const css = kind === "move" ? s.hlMove : kind === "attack" ? s.hlAttack : s.hlTarget;
+  return (
+    <Sprite
+      paths={[`combat/ui/${kind}`]}
+      glyph=""
+      className={`${s.overlay} ${kind === "move" ? s.overlayMove : kind === "target" ? s.overlayTarget : ""}`}
+      fallback={<span className={`${s.hl} ${css}`} />}
+    />
+  );
+}
+
 function featureFolder(kind: string): string {
   return kind === "obstacle" ? "obstacle" : kind === "terrain" ? "terrain" : "hazard";
 }
@@ -69,9 +85,6 @@ export function BattleGrid({ view, submit, armed, onArmedDone, className }: Prop
             const target = armed ? armedTargets.has(t.coord) : false;
             const cls = [
               s.cell,
-              t.move && !armed ? s.move : "",
-              t.attack && !armed ? s.attack : "",
-              target ? s.target : "",
               armed && !target ? s.dimmed : "",
               t.tap || target ? s.tappable : "",
             ].join(" ");
@@ -91,13 +104,17 @@ export function BattleGrid({ view, submit, armed, onArmedDone, className }: Prop
                 )}
                 {t.hazard && (
                   <Sprite paths={[`combat/hazard/${t.hazard.id}`]} glyph={t.hazard.glyph}
-                    className={s.layer} glyphClassName={`${s.glyph} ${s.hazard}`} />
+                    className={`${s.layer} ${OUTLINED_HAZARDS.has(t.hazard.id) ? s.outlined : ""}`}
+                    glyphClassName={`${s.glyph} ${s.hazard}`} />
                 )}
                 {it && !u && (
                   <Sprite paths={[`combat/item/${it.sprite}`, "combat/item/junk_pile"]} glyph="$"
                     className={`${s.layer} ${s.item}`} glyphClassName={`${s.glyph} ${s.itemGlyph}`} />
                 )}
                 {u && <Unit u={u} />}
+                {!armed && t.move && <Highlight kind="move" />}
+                {!armed && t.attack && <Highlight kind="attack" />}
+                {target && <Highlight kind="target" />}
               </button>
             );
           }),
@@ -122,8 +139,22 @@ function Unit({ u }: { u: GridUnitView }) {
         className={s.unitImg}
         glyphClassName={`${s.glyph} ${s.unitGlyph}`}
       />
+      {u.kind === "crawler" && <span className={s.ring} />}
       {u.mark && <span className={s.mark}>{u.mark}</span>}
-      {u.statuses.length > 0 && <span className={s.status}>{u.statuses.length}</span>}
+      {u.statusIds.length > 0 && (
+        <span className={s.statusIcons}>
+          {u.statusIds.slice(0, 2).map((id, i) => (
+            <Sprite
+              key={id}
+              paths={[`combat/status/${id}`]}
+              glyph={(u.statuses[i] ?? id).charAt(0).toUpperCase()}
+              className={s.statusIcon}
+              glyphClassName={s.statusGlyph}
+            />
+          ))}
+          {u.statusIds.length > 2 && <span className={s.statusMore}>+{u.statusIds.length - 2}</span>}
+        </span>
+      )}
       <span className={s.hp}><span style={{ width: `${pct * 100}%` }} className={pct < 0.35 ? s.hpLow : s.hpOk} /></span>
     </span>
   );

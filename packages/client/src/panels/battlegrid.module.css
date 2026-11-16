@@ -89,25 +89,43 @@
   font-size: calc(var(--cell) * 0.4);
 }
 
-/* highlights: the engine marks these; we only paint them */
-.move::after,
-.attack::after,
-.target::after {
-  content: "";
+/* highlights: the engine marks these; we only paint them (ui/ sprites, CSS if missing) */
+/* under the units (z 2), over floor/feature/hazard layers, so brackets frame an enemy without hiding it */
+.overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  pointer-events: none;
+  z-index: 1;
+}
+.overlayMove {
+  opacity: 0.55;
+}
+.overlayTarget {
+  opacity: 0.7;
+}
+.hl {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 1;
 }
-.move::after {
+.hlMove {
   background: rgba(95, 215, 215, 0.13);
   box-shadow: inset 0 0 0 1px rgba(95, 215, 215, 0.35);
 }
-.attack::after {
+.hlAttack {
   box-shadow: inset 0 0 0 2px var(--danger);
 }
-.target::after {
+.hlTarget {
   background: rgba(255, 176, 0, 0.2);
   box-shadow: inset 0 0 0 2px var(--system);
+}
+.outlined {
+  filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) brightness(1.25);
 }
 .dimmed {
   filter: brightness(0.55);
@@ -157,13 +175,58 @@
   color: var(--text);
   text-shadow: 0 0 2px #000, 0 0 2px #000;
 }
-.status {
+.statusIcons {
   position: absolute;
   top: 1px;
-  right: 2px;
+  right: 1px;
+  display: flex;
+  gap: 1px;
+  z-index: 4;
+}
+.statusIcon {
+  width: max(9px, calc(var(--cell) * 0.26));
+  height: max(9px, calc(var(--cell) * 0.26));
+  image-rendering: pixelated;
+}
+.statusGlyph {
+  width: max(9px, calc(var(--cell) * 0.26));
+  height: max(9px, calc(var(--cell) * 0.26));
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: max(8px, calc(var(--cell) * 0.2));
+  color: #fff;
+  background: rgba(197, 140, 255, 0.85);
+  border-radius: 2px;
+}
+.statusMore {
+  font-size: max(8px, calc(var(--cell) * 0.18));
   color: var(--xp);
   text-shadow: 0 0 2px #000;
+}
+/* you: an amber selection ring around the crawler's feet, so it never reads as one more monster */
+.ring {
+  position: absolute;
+  left: 3%;
+  right: 3%;
+  bottom: 3%;
+  height: 32%;
+  border-radius: 50%;
+  border: 2px solid var(--system);
+  box-shadow: 0 0 5px var(--system);
+  opacity: 0.85;
+  z-index: 1;
+  pointer-events: none;
+}
+.you::before {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 6%;
+  height: 26%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 176, 0, 0.35), transparent 70%);
 }
 .hp {
   position: absolute;

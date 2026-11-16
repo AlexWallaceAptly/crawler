@@ -537,6 +537,12 @@
     },
     "arena": {
       "floorVariants": 4,
+      "floorWeights": [
+        10,
+        1,
+        3,
+        1
+      ],
       "obstacles": [
         {
           "id": "pillar",
@@ -569,6 +575,90 @@
         {
           "id": "shopping_cart",
           "weight": 1
+        },
+        {
+          "id": "tool_chest",
+          "weight": 0.5
+        },
+        {
+          "id": "shelf",
+          "weight": 0.5
+        },
+        {
+          "id": "rack",
+          "weight": 0.5
+        },
+        {
+          "id": "file_cabinet",
+          "weight": 0.5
+        },
+        {
+          "id": "trash_can",
+          "weight": 0.5
+        },
+        {
+          "id": "workbench",
+          "weight": 0.25
+        },
+        {
+          "id": "washer",
+          "weight": 0.25
+        },
+        {
+          "id": "dryer",
+          "weight": 0.25
+        },
+        {
+          "id": "fridge",
+          "weight": 0.25
+        },
+        {
+          "id": "freezer",
+          "weight": 0.25
+        },
+        {
+          "id": "stove",
+          "weight": 0.25
+        },
+        {
+          "id": "dish_sink",
+          "weight": 0.25
+        },
+        {
+          "id": "cot",
+          "weight": 0.25
+        },
+        {
+          "id": "chair",
+          "weight": 0.25
+        },
+        {
+          "id": "stall",
+          "weight": 0.25
+        },
+        {
+          "id": "toilet",
+          "weight": 0.25
+        },
+        {
+          "id": "sink",
+          "weight": 0.25
+        },
+        {
+          "id": "urinal",
+          "weight": 0.15
+        },
+        {
+          "id": "trough_sink",
+          "weight": 0.15
+        },
+        {
+          "id": "shower",
+          "weight": 0.15
+        },
+        {
+          "id": "bathtub",
+          "weight": 0.15
         }
       ],
       "terrain": [

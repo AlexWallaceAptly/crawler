@@ -42,7 +42,10 @@ export interface GridUnitView {
   mark?: string;
   hp: { current: number; max: number };
   tier?: string;
+  /** Status names, for tooltips. */
   statuses: string[];
+  /** Status ids, for icons (combat/status/<id>.png). */
+  statusIds: string[];
 }
 
 export interface GridView {
@@ -58,9 +61,20 @@ export interface GridView {
   items: { x: number; y: number; coord: string; name: string; sprite: string }[];
 }
 
-function floorVariant(theme: string, variants: number, p: Pos): string {
+/**
+ * Which floor sprite a tile shows: a stable hash of its position (so the board
+ * doesn't reshuffle every turn), weighted by the theme's floorWeights.
+ */
+export function floorVariant(theme: string, variants: number, p: Pos, weights?: number[]): string {
   const h = ((p.x * 73856093) ^ (p.y * 19349663)) >>> 0;
-  return `${theme}_${1 + (h % Math.max(1, variants))}`;
+  const w = weights && weights.length === variants ? weights : new Array<number>(Math.max(1, variants)).fill(1);
+  const total = w.reduce((a, b) => a + b, 0);
+  let roll = h % total;
+  for (let i = 0; i < w.length; i++) {
+    if (roll < w[i]!) return `${theme}_${i + 1}`;
+    roll -= w[i]!;
+  }
+  return `${theme}_1`;
 }
 
 function enemyGlyph(content: Content, e: Enemy): string {
@@ -73,13 +87,14 @@ export function gridView(combat: CombatState, crawler: Crawler, themeId: string,
   if (!a) return undefined;
   const theme = content.floors.byId[themeId];
   const variants = theme?.arena.floorVariants ?? 1;
+  const weights = theme?.arena.floorWeights;
   const field = pathField(a, content, a.crawler, { blocked: (p) => occupied(combat, p, "crawler") });
   // Before your first command of the round, the whole move is still ahead of you.
   const speed = speedOf(crawler, content);
   const moveLeft = combat.turnBegun ? a.moveLeft : speed;
   const live = combat.enemies.filter((e) => e.hp > 0 && e.pos);
   const tiles: GridTileView[] = allTiles(a).map((p) => {
-    const t: GridTileView = { x: p.x, y: p.y, coord: coord(p), floor: floorVariant(themeId, variants, p) };
+    const t: GridTileView = { x: p.x, y: p.y, coord: coord(p), floor: floorVariant(themeId, variants, p, weights) };
     const f = featureAt(a, content, p);
     if (f) t.feature = { id: f.id, name: f.name, kind: f.kind, glyph: f.glyph };
     const hz = hazardAt(a, p);
@@ -109,12 +124,14 @@ export function gridView(combat: CombatState, crawler: Crawler, themeId: string,
     id: "crawler", kind: "crawler", x: a.crawler.x, y: a.crawler.y, sprite: "crawler", glyph: "@",
     label: crawler.name, hp: { current: crawler.hp, max: d.maxHP },
     statuses: crawler.statuses.map((s) => content.statusEffects.byId[s.id]?.name ?? s.id),
+    statusIds: crawler.statuses.map((s) => s.id),
   }];
   for (const e of live) {
     units.push({
       id: e.uid, kind: "enemy", x: e.pos!.x, y: e.pos!.y, sprite: e.familyId, glyph: enemyGlyph(content, e),
       label: e.name, ...(e.mark ? { mark: e.mark } : {}), hp: { current: e.hp, max: e.maxHP }, tier: e.tier,
       statuses: e.statuses.map((s) => content.statusEffects.byId[s.id]?.name ?? s.id),
+      statusIds: e.statuses.map((s) => s.id),
     });
   }
   return {

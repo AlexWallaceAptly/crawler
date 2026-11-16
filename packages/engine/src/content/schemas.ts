@@ -332,6 +332,8 @@ export const FloorThemeSchema = z.strictObject({
   arena: z.strictObject({
     /** Floor sprite variants: `<theme id>_1.png` .. `<theme id>_N.png`. */
     floorVariants: z.number().int().min(1).default(1),
+    /** How often each variant shows up (same length as floorVariants); equal if omitted. */
+    floorWeights: z.array(z.number().int().min(0)).optional(),
     obstacles: WeightedIdsSchema.default([]),
     terrain: WeightedIdsSchema.default([]),
     hazards: WeightedIdsSchema.default([]),
@@ -361,6 +363,9 @@ export const FloorThemeSchema = z.strictObject({
   }),
 }).refine((t) => t.rooms <= t.width * t.height * 0.7, {
   message: "rooms must fit the grid with slack (<= 70% of cells) or the walk jams",
+}).refine((t) => !t.arena.floorWeights || (t.arena.floorWeights.length === t.arena.floorVariants && t.arena.floorWeights.some((w) => w > 0)), {
+  message: "arena.floorWeights needs one weight per floor variant (and at least one above zero)",
+  path: ["arena", "floorWeights"],
 });
 export type FloorTheme = z.infer<typeof FloorThemeSchema>;
 

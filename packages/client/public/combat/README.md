@@ -1,45 +1,46 @@
 # Combat sprites (grid mode)
 
-Every sprite here is optional. Until a file exists, the board draws a text glyph,
-so art can land one file at a time.
+Every sprite here is optional. Until a file exists, the board draws a text glyph (or, for highlights, a CSS tint), so art can land one file at a time.
 
 ## Format
 
-- 128x128 PNG, in the same painted pixel-art style as `../tiles/`. The board shows them at 30-56px with `image-rendering: pixelated`.
-- **Floor tiles** (`floor/`) are opaque, full-bleed and seamless, with no frame.
-- **Everything else** is transparent: the subject centred in about 96px, lit from the top-left, with a 1-2px dark outline so it reads at 32px.
-- The file name is the JSON id, in snake_case. Variants are `<id>_2.png`, `<id>_3.png`.
+- **Any size works.** Each image is scaled to fit its board square (30-56px on screen, with `image-rendering: pixelated`). Images cropped to the subject are fine, but every sprite then fills its square, so a rat is drawn as big as a crab.
+- **Floor tiles** (`floor/`) are opaque and top-down, filling the square with no frame. A 1px dark gap separates squares, so perfect seams aren't needed. Keep them low-contrast so things on top read.
+- **Everything else** is transparent PNG.
+- **Names.** The file name is the JSON id in snake_case. Status icons are named by status id.
 
 ## Folders
 
-| Folder | Named after | Source of ids |
+| Folder | Named after | Used for |
 | --- | --- | --- |
-| `floor/` | `<theme>_<n>` (variant n = 1..floorVariants) and `door` | `floors.json` → `arena.floorVariants` |
-| `obstacle/` | feature id | `arenaFeatures.json` (kind `obstacle`) |
-| `terrain/` | feature id | `arenaFeatures.json` (kind `terrain`) |
-| `hazard/` | feature id | `arenaFeatures.json` (kind `hazard`) |
-| `unit/` | `crawler`, or the enemy family id | `enemies.json` |
-| `item/` | item or consumable id; `junk_pile` is the generic fallback | `items/*.json` |
-| `ui/` | overlay name | — |
-| `status/` | status id | `statusEffects.json` |
+| `floor/` | `<theme>_<n>` (n = 1..`floorVariants`), plus `door` | Ground under each square, and door tiles on the board edge. `floors.json` → `arena.floorWeights` sets how often each variant appears (Undercroft: 10/1/3/1, so `_1` is the main tile and the rest are accents). |
+| `obstacle/` | `arenaFeatures.json` id (kind `obstacle`) | Pillars, crates and props; they block movement, and some block sight |
+| `terrain/` | `arenaFeatures.json` id (kind `terrain`) | Sludge (slow ground) |
+| `hazard/` | `arenaFeatures.json` id (kind `hazard`) | Standing and thrown hazards. Small debris (caltrops, tacks, glass, marbles, barbed wire, spikes, trip wire) gets a CSS dark outline so it reads on stone. |
+| `unit/` | `crawler`, or the enemy family id | Units. The crawler also gets an amber selection ring. |
+| `item/` | Item or consumable id; `junk_pile` is the fallback | Loose junk lying on the board |
+| `ui/` | `move`, `attack`, `target` | Walkable tiles, enemies you can hit, and tiles you can pick while aiming a throw/shove/dash. Drawn under units. |
+| `status/` | Status id | Up to two icons on a unit's top-right corner, plus a "+N" count. A status with no icon shows its first letter. |
 
-## Needed for the first playable (16)
+## What's here
 
-| Folder | Sprites |
-| --- | --- |
-| floor | `undercroft_1`, `door` |
-| obstacle | `pillar` (blocks movement and sight), `rubble` (movement only), `crate` |
-| terrain | `sludge` |
-| hazard | `steam_vent`, `caltrops` |
-| unit | `crawler` (a body, not the minimap chevron), `sump_rat`, `mold_shambler`, `scrap_goblin`, `pipe_snake`, `drain_leech`, `fuse_imp`, `gutter_crab` |
+| Folder | Have | Still missing |
+| --- | --- | --- |
+| floor | `undercroft_1`-`_4`, `door` | Sets for later floor themes |
+| obstacle | All 29 obstacles: pillar, rubble, crate, barrel, pipe_cluster, dead_boiler, lockers, shopping_cart, plus the props fridge, freezer, washer, dryer, stove, dish_sink, tool_chest, shelf, rack, file_cabinet, workbench, cot, chair, bathtub, shower, stall, sink, toilet, trough_sink, urinal, trash_can | — |
+| terrain | `sludge` | — |
+| hazard | All 14 | — |
+| unit | `crawler` + all 7 Floor 1 families | Floor 2+ families |
+| item | `junk_pile` | Per-item icons (optional) |
+| ui | `move`, `attack`, `target` | — |
+| status | `bleeding`, `burning`, `confused`, `poisoned`, `stunned` (the "shock" icon), `slowed` (the "freeze" icon) | `blinded`, `hasted`, `feared`, `charmed`, `shielded`, `regenerating`, `invisible`, `braced` |
 
-## Nice to have
+Also still missing: the minimap tile `../tiles/workshop.png` (glyph ⚒ until then).
 
-| Folder | Sprites |
-| --- | --- |
-| floor | `undercroft_2`, `undercroft_3`, `undercroft_4` |
-| obstacle | `barrel`, `pipe_cluster`, `dead_boiler`, `lockers`, `shopping_cart` |
-| hazard | `live_wire`, `gas_leak`, `rust_spikes`, `tacks`, `barbed_wire`, `broken_glass`, `marbles`, `oil_slick`, `glue`, `fire`, `smoke`, `trip_wire` |
-| item (on the floor) | `junk_pile`, then one per junk id (see `items/consumables.json` and `items/bases.json`, tag `junk`) |
-| ui | `move`, `attack`, `target` (CSS highlights stand in for these) |
-| status | the 14 statuses in `statusEffects.json` |
+## Not used yet
+
+Art in the repo-root `sprites/` folder that the board can't use yet:
+- **Flat clutter** (papers, debris, pizza box, food tray, rags, bottles, box, trash bag), the floor drain, vents, and the pipe grate. These need a non-blocking "decoration" feature kind.
+- **The pipe set** (straight, elbow, T, cross, valve, gauge, duct). This needs pieces that connect to their neighbours.
+
+Some clutter could double as item icons by renaming: `rags` → `item/oily_rags`, `papers` → `item/old_magazines`, `trash_bag` → `item/plastic_bag`.

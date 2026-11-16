@@ -6,6 +6,9 @@ import {
   bandOf, coord, dist, index, lineOfSight, pathField, parseCoord, blocksMove,
 } from "../src/grid/geometry";
 import { generateEnemy } from "../src/gen/enemy";
+import { floorVariant } from "../src/grid/view";
+import { loadContent } from "../src/content/load";
+import { rawContent } from "@crawler/content";
 import { parseCommand } from "../src/parser";
 import { forceDice, resetRng, setRandomSource } from "../src/rng";
 import { DIRS, type ArenaState, type Dir, type Room } from "../src/state";
@@ -53,6 +56,34 @@ describe("grid geometry", () => {
     expect(coord({ x: 2, y: 3 })).toBe("c4");
     expect(parseCoord("c4")).toEqual({ x: 2, y: 3 });
     expect(parseCoord("rat")).toBeNull();
+  });
+});
+
+describe("board art hooks", () => {
+  it("floor variants follow the theme's weights and stay put", () => {
+    const counts = [0, 0, 0, 0];
+    for (let y = 0; y < 60; y++) for (let x = 0; x < 60; x++) {
+      const v = floorVariant("undercroft", 4, { x, y }, [10, 1, 3, 1]);
+      counts[Number(v.split("_")[1]) - 1]!++;
+      expect(floorVariant("undercroft", 4, { x, y }, [10, 1, 3, 1])).toBe(v);
+    }
+    const share = counts.map((n) => n / 3600);
+    expect(share[0]).toBeGreaterThan(0.55);
+    expect(share[2]).toBeGreaterThan(share[1]!);
+    expect(counts.every((n) => n > 0)).toBe(true);
+  });
+
+  it("floorWeights must match floorVariants", () => {
+    const bad = JSON.parse(JSON.stringify(rawContent)) as Record<string, { arena: { floorWeights: number[] } }[]>;
+    bad["floors.json"]![0]!.arena.floorWeights = [1, 2];
+    expect(() => loadContent(bad as never)).toThrow(/floorWeights/);
+  });
+
+  it("units carry status ids for icons", () => {
+    const world = gridWorld(["@a"], [testEnemy({ statuses: [{ id: "bleeding", remaining: 2, stacks: 1 }] })]);
+    const rat = engine.view(world).combat!.grid!.units.find((u) => u.kind === "enemy")!;
+    expect(rat.statusIds).toEqual(["bleeding"]);
+    expect(rat.statuses).toEqual(["Bleeding"]);
   });
 });
 
