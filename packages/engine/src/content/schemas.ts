@@ -23,6 +23,9 @@ export const PartialStatBlockSchema = StatBlockSchema.partial();
 export const IdSchema = z.string().regex(/^[a-z0-9_]+$/, "ids must be lowercase snake_case");
 export const DiceSchema = z.string().refine(isDice, { message: "not a valid dice expression (e.g. 2d6+1)" });
 export const DcTierSchema = z.enum(DC_TIER_NAMES as [string, ...string[]]);
+/** Inclusive [min, max]. */
+export const IntRangeSchema = z.tuple([z.number().int().min(0), z.number().int().min(0)])
+  .refine(([a, b]) => a <= b, { message: "range min must be <= max" });
 
 export const RARITIES = ["common", "uncommon", "rare", "epic", "legendary"] as const;
 export const RaritySchema = z.enum(RARITIES);
@@ -266,6 +269,18 @@ export const FloorThemeSchema = z.strictObject({
     triggered: z.string(),
     avoided: z.string(),
   })).default([]),
+  /**
+   * Encounter makeup. Ordinary fights are packs of weak minions (possibly two
+   * families); elites lead lairs, sometimes with escorts.
+   */
+  encounters: z.strictObject({
+    pack: IntRangeSchema.default([2, 4]),
+    corridorPack: IntRangeSchema.default([2, 3]),
+    /** Chance a pack mixes in a second family even when the first could fill it. */
+    mixedChance: z.number().min(0).max(1).default(0.35),
+    eliteAloneChance: z.number().min(0).max(1).default(0.5),
+    eliteEscorts: IntRangeSchema.default([1, 2]),
+  }).prefault({}),
   /** Extra closing lines by special room type; empty array = no extra line. */
   typeLines: z.strictObject({
     stairwell: LinePool.default([]),
@@ -324,7 +339,12 @@ export const EnemyFamilySchema = z.strictObject({
   ai: z.array(AiTokenSchema).min(1),
   preferRange: RangeBandSchema.default("close"),
   talkable: z.boolean().default(false),
+  /** How many of this family a pack can hold (packs may mix in a second family). */
   groupSize: z.tuple([z.number().int().min(1), z.number().int().min(1)]),
+  /** Grid mode: tiles moved per turn. The crawler moves 4. */
+  speed: z.number().int().min(1).max(8).default(4),
+  /** One or two characters drawn when there's no sprite; defaults to the first letter. */
+  glyph: z.string().min(1).max(2).optional(),
   /** Base XP per kill, scaled by level. */
   xp: z.number().min(0),
   tags: z.array(z.string()).default([]),

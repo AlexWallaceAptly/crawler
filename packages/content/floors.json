@@ -7,6 +7,22 @@
     "width": 12,
     "height": 9,
     "days": 5,
+    "encounters": {
+      "pack": [
+        2,
+        4
+      ],
+      "corridorPack": [
+        2,
+        3
+      ],
+      "mixedChance": 0.35,
+      "eliteAloneChance": 0.5,
+      "eliteEscorts": [
+        1,
+        2
+      ]
+    },
     "roomNames": {
       "adjectives": [
         "Weeping",

@@ -10,7 +10,7 @@
  */
 import type { Content } from "./content/load";
 import type { Consumable, Effect, EnemyAttack, RangeBand } from "./content/schemas";
-import { generateGroup } from "./gen/enemy";
+import { assignMarks, generateGroup, type EncounterKind } from "./gen/enemy";
 import { enterRoom, advanceTime, TIME_COST } from "./explore";
 import { dcFor } from "./rules/checks";
 import { rollDice } from "./rules/dice";
@@ -40,15 +40,15 @@ export function inCombat(ctx: StepContext): boolean {
 /** Encounter odds by room type. Lairs always fight (elite); corridors roll every entry. */
 export function maybeEncounter(ctx: StepContext, room: Room, firstVisit: boolean, cameFrom?: number): boolean {
   if (ctx.game.phase !== "exploring") return false;
-  let elite = false;
+  let kind: EncounterKind = room.type === "corridor" ? "corridor" : "pack";
   let p = 0;
-  if (room.type === "lair") { p = firstVisit ? 1 : 0.2; elite = firstVisit; }
+  if (room.type === "lair") { p = firstVisit ? 1 : 0.2; if (firstVisit) kind = "elite"; }
   else if (room.type === "chamber") p = firstVisit ? 0.35 : 0.06;
   else if (room.type === "corridor") p = 0.08;
   else if (room.type === "event" || room.type === "npc" || room.type === "puzzle") p = firstVisit ? 0.15 : 0.05;
   if (p <= 0 || !chance(p)) return false;
   const floor = ctx.game.floor!;
-  const enemies = generateGroup(floor.floor, elite, ctx.content);
+  const enemies = generateGroup(floor.floor, kind, ctx.content);
   if (enemies.length === 0) return false;
   startCombat(ctx, enemies, { fromRoom: cameFrom ?? floor.currentRoom });
   return true;
@@ -67,6 +67,7 @@ export function startCombat(ctx: StepContext, enemies: Enemy[], opts: StartOptio
   const playerInit = d20() + d.initiativeBonus;
   for (const e of enemies) e.initiative += d20() + e.stats.DEX;
   enemies.sort((a, b) => b.initiative - a.initiative);
+  if (!enemies.some((e) => e.mark)) assignMarks(enemies);
 
   ctx.game.combat = {
     mode: opts.mode ?? combatModeOf(ctx.account),
@@ -81,7 +82,7 @@ export function startCombat(ctx: StepContext, enemies: Enemy[], opts: StartOptio
   ctx.emit({ type: "combatStarted", names: enemies.map((e) => e.name) });
   ctx.say("combat.start");
   for (const e of enemies) {
-    ctx.fight(`${e.name} — level ${e.level}${e.tier === "elite" ? " ELITE" : ""}, ${e.range} range.`, "enemy");
+    ctx.fight(`${e.name} — level ${e.level}${e.tier === "elite" ? " ELITE" : e.tier === "minion" ? " minion" : ""}, ${e.range} range.`, "enemy");
   }
   // Ambush: anyone who beat your initiative gets their round-1 turn now.
   for (const e of enemies) {

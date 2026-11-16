@@ -135,6 +135,8 @@ export interface Room {
 
 // ---------------------------------------------------------------- combat
 
+export type EnemyTier = "minion" | "mob" | "elite";
+
 /** A live enemy. Everything is resolved at spawn (family + mods baked in) so the state stays flat JSON. */
 export interface Enemy {
   uid: string;
@@ -142,7 +144,12 @@ export interface Enemy {
   /** Mods baked into the display name: "Rabid Sump Rat". */
   name: string;
   level: number;
-  tier: "mob" | "elite";
+  /** minion: weak pack filler; mob: a standard foe; elite: a lair boss-lite. */
+  tier: EnemyTier;
+  /** Letter that tells same-named enemies apart ("Sump Rat B"); also in the name. */
+  mark?: string;
+  /** Grid mode: tiles per turn. */
+  speed: number;
   stats: StatBlock;
   maxHP: number;
   hp: number;

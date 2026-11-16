@@ -53,7 +53,7 @@ export interface ViewModel {
   effects: { name: string; kind: "buff" | "debuff"; remaining: number; stacks: number }[];
   combat: null | {
     round: number;
-    enemies: { uid: string; name: string; hp: Bar; range: string; statuses: string[]; elite: boolean }[];
+    enemies: { uid: string; name: string; hp: Bar; range: string; statuses: string[]; elite: boolean; tier: string; mark?: string }[];
   };
   minimap: string[] | null;
   /** Structured map for the tile minimap; `minimap` stays as the text/fallback form. */
@@ -160,6 +160,8 @@ export function view(world: World, content: Content): ViewModel {
               range: e.range,
               statuses: e.statuses.map((s) => content.statusEffects.byId[s.id]?.name ?? s.id),
               elite: e.tier === "elite",
+              tier: e.tier,
+              ...(e.mark ? { mark: e.mark } : {}),
             })),
         }
       : null,

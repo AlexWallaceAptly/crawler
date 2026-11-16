@@ -23,7 +23,7 @@ function testEnemy(over: Partial<Enemy> = {}): Enemy {
     maxHP: 10, hp: 10, armor: 0, defense: 12,
     attacks: [{ name: "Bite", dice: "1d4", damageType: "physical", stat: "DEX", range: "close", ready: 0 }],
     ai: ["attack"], preferRange: "close", talkable: false, range: "close",
-    statuses: [], regen: 0, fleeBelow: 0, initiative: 5, xp: 10,
+    statuses: [], regen: 0, fleeBelow: 0, initiative: 5, xp: 10, speed: 4,
     ...over,
   };
 }
@@ -105,6 +105,12 @@ describe("scripted fights", () => {
     let { world } = engine.newWorld();
     ({ world } = engine.step(world, { type: "accept" }));
     world.game.crawler!.hp = 500;
+    // pin the crawler: a random kit's defense or weapon dice would shift the forced dice
+    world.game.crawler!.baseStats = { STR: 10, DEX: 6, CON: 8, INT: 4, CHA: 8 };
+    world.game.crawler!.inventory = [];
+    world.game.crawler!.equipment = {};
+    world.game.crawler!.skills = {};
+    world.account.settings = { combatMode: "bands" };
     const ctx = new StepContext(world, content);
     const enemy = testEnemy();
     enemy.hp = 100;
@@ -246,6 +252,7 @@ describe("milestone 4b fixes", () => {
     ({ world } = engine.step(world, { type: "go", dir }));
     expect(world.game.phase).toBe("combat");
     expect(world.game.combat!.fromRoom).toBe(start.id);
+    world.game.crawler!.statuses = []; // the ambush round is live dice; don't let a poison tick eat the forced roll
     forceDice(20, 1);
     ({ world } = engine.step(world, { type: "flee" }));
     expect(world.game.phase).toBe("exploring");

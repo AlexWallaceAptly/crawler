@@ -122,3 +122,28 @@ Inserted before Milestone 5 at the player's request (see the build-order row in 
 - **Duct tape** is tagged `bind` (a crafting part), not `healing`. The heal button and the sim no longer burn it as a potion; it still heals 1d4 if used directly.
 - **Crafted weapons** can carry `onHit` (a status with a chance), which `resolvePlayerHit` applies on any hit that doesn't kill.
 - `SAVE_VERSION` is 4: `CombatState` gained `mode` and `turnBegun`. Version-3 run saves are discarded and accounts are kept.
+
+### Mob packs
+
+- **Ordinary fights are packs, never a lone enemy.** Chambers and other rooms roll `pack` (2-4 enemies on Floor 1) and corridors roll `corridor` (2-3). Lairs still roll an elite on the first visit. The ranges live on the floor theme as `encounters` in `floors.json`.
+- **Minion tier.** Pack members are minions:
+  - Two levels below a mob (minimum 1), so stats shift down 2.
+  - 60% of a mob's HP multiplier and 60% of its XP.
+  - No mods.
+  
+  A Floor 1 rat minion has about 5 HP and dies to one good hit. Mob and elite are unchanged; the boss tier arrives with Milestone 9.
+- **Two families per pack at most.** The first family fills what its `groupSize` allows. A second family fills the rest, or joins anyway 35% of the time (`mixedChance`). If two small families still come up short of 2, the first family is topped up past its cap rather than leaving a lone enemy. Family `groupSize` now means "how many of this family a pack can hold": rats and leeches 2-4, goblins 2-3, the rest 1-2.
+- **Elites** are alone half the time (`eliteAloneChance`). Otherwise 1-2 minion escorts of the same family join them, instead of full mobs.
+- **Marks.** Same-named enemies get letters at combat start ("Sump Rat A", "Sump Rat B"), stored in `Enemy.mark` and baked into the name, so `attack rat b` works in both modes. Name matching prefers an exact name, then a substring.
+- **Speed.** Families have `speed` (tiles per grid turn; the crawler has 4): rat and imp 5, goblin and snake 4, leech and crab 3, shambler 2. They also have an optional fallback `glyph`.
+- **Balance snapshot** (bands mode, Floor 1):
+
+  | | Enemies per encounter | XP | Total enemy HP | Sim clear rate |
+  | --- | --- | --- | --- | --- |
+  | Before | 1.7 | 24 | 23 | 28% (300 runs) |
+  | After | 3.0 | 20 | 18 | 41% (400 runs) |
+
+  Packs hit more often but die faster; tuning is Milestone 13's job.
+- **Test flakes fixed along the way:**
+  - The explore revisit test could walk into a lair, where the guaranteed elite fight blocked the walk back.
+  - The initiative test used the random crawler's kit, so a missed ambush shifted the forced dice.

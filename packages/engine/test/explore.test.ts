@@ -60,6 +60,8 @@ describe("exploring floor 1", () => {
     const start = floor.rooms[floor.currentRoom]!;
     const dir = (Object.keys(start.exits) as (keyof typeof start.exits)[])[0]!;
     const back = { north: "south", south: "north", east: "west", west: "east" }[dir] as typeof dir;
+    // a lair or trap next door would start a fight or spring on entry; this test is about descriptions
+    floor.rooms[start.exits[dir]!]!.type = "empty";
 
     const out = engine.step(world, { type: "go", dir });
     const descAway = out.world.game.floor!.rooms[out.world.game.floor!.currentRoom]!.desc;
