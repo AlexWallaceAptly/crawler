@@ -336,3 +336,25 @@ These are available to every crawler, so early fights aren't just trading swings
   - Armor and healing: magazine armor, strapped trash-lid shield, duct-tape splint.
   - Tests check that every input can be filled by some item in the content, and that the first safe room's kit makes a nail bat.
 - **Client:** a recipe book sheet (mobile menu → Recipes, and in the desktop inventory overlay) with ✓ for recipes you can make now, a "make" button at a bench, and the hints. Learned recipes also print as a log divider and show in the System AI ticker.
+
+### Sim and balance snapshot (end of Milestone 4b)
+
+- `npm run sim -- <runs> [--mode grid|bands|both] [--craft]`.
+  - `--craft` adds a policy: pick up everything, try any makeable recipe (up to 3) at each new bench, wield the hardest-hitting weapon, and throw junk at packs of 2+ in the first two rounds.
+  - The auto-player only drinks potions that can be used in combat.
+  - A stuck run now reports its last log lines.
+- **Snapshot** (400 runs each, Floor 1):
+
+  | Configuration | Clear rate | Rounds per fight | Damage per fight | Flee rate | Crafted per run | Stuck |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | Grid | 35% | 4.8 | 16.4 | 33% | — | 0 |
+  | Bands | 40% | 5.0 | 15.9 | 25% | — | 0 |
+  | Grid + crafting | 37% | 4.5 | 14.9 | — | 5.2 | 0 |
+  | Bands + crafting | 44% | 4.8 | 14.8 | — | 5.4 | 0 |
+
+  Grid sits within the ±10-point target of bands, and both fall inside the 3-6 rounds per fight target. Tuning toward the spec's 30-60% Floor 3 target is Milestone 13's job.
+- **Open questions for after the playtest:**
+  - Keep bands as a text-only mode or drop it.
+  - Whether the free round-1 retreat through the entry door needs a cost.
+  - Whether trap rooms should host fights (their `arenaHazard` is already wired).
+  - Whether arenas should persist per room, so caltrops you placed are still there on the rematch.

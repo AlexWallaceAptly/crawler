@@ -184,7 +184,25 @@ flee       = DEX check vs highest enemy (d20 + DEX); fail = enemies get a free a
 
 Range is three bands: **close**, **near**, **far**. Melee needs close, thrown and most spells reach near, bows reach far. Moving one band is a minor action.
 
-Status effects are data (`statusEffects.json`): each has a duration in rounds, a tick effect and stacking rules. Starter set: bleeding, burning, poisoned, stunned, blinded, slowed, hasted, feared, charmed, shielded, regenerating.
+Status effects are data (`statusEffects.json`): each has a duration in rounds, a tick effect and stacking rules. Starter set: bleeding, burning, poisoned, stunned, blinded, slowed, hasted, feared, charmed, shielded, regenerating (plus confused, invisible and braced).
+
+### Grid mode (Milestone 4b)
+
+Fights can also play on a small tactical board. Which mode an account uses is a setting (`set combat grid|bands`); grid is the default. Both modes share every roll above. Bands remain the abstract layer content is written in.
+
+- **Arena.** A board shaped like the room (corridor 9×4, small 6×6, chamber 8×8) with a door on each edge that has an exit.
+  - Single-tile obstacles, terrain and hazards come from `arenaFeatures.json`, picked by the floor theme.
+  - The crawler starts inside the door they came through; enemies start across the room, or close if they won initiative.
+- **Distance.** It's 8-way (Chebyshev), and bands come from it: close ≤ 1 tile, near 2-3, far 4+. Anything beyond close range needs line of sight; pillars, crates and smoke block it, units don't.
+- **Turn.** The minor action becomes movement: the crawler moves 4 tiles, enemies move their family's `speed`, slowed caps movement at 1 and hasted adds 2. Moving never ends the turn; an action does. Attacking something out of reach walks you into reach first.
+- **Maneuvers** anyone can use:
+  - **Shove:** STR contest. The target is pushed a tile into whatever is there, or slams into an obstacle for 1d4.
+  - **Throw junk:** up to 3 tiles away. Splash hits the 3×3 around where it lands, and hazards like caltrops, glue, fire and smoke stay on the board.
+  - **Dash:** double movement; ends the turn.
+  - **Defend:** braced, +4 defense and can't be shoved.
+  - **Pick up and wield:** junk lying on the board, for a tile of movement each.
+- **The pack bonus is the one positional rule.** A melee enemy gets +1 to hit for each other enemy next to you, up to +2.
+- **Flee.** Reach a door and roll DEX against enemies within 3 tiles that can see you; with none, you're out automatically. The door you came in by leads back; any other door leads onward.
 
 ### Death and the hybrid run model
 
@@ -352,6 +370,18 @@ The System AI comments on each option as it's shown (one line each, template-dri
 
 Every weapon, armor piece and trinket is built as **base + material + rarity + affixes**, then named and described. Consumables come from fixed tables with scaled potency. A small hand-written set of "oddities" breaks the rules on purpose.
 
+Milestone 4b pulled a slice of this forward for junk and crafting: room contents from loot tables (`lootTables.json`), `take`/`drop`/`equip`/`unequip`, the carry limit as a hard cap, consumable stacking, and an item's `onHit` status and `crafted` upgrade list. The generator itself (materials, rarity, affixes) stays in Milestone 5. When it lands, crafted upgrade prefixes become an affix group.
+
+### Junk and crafting
+
+Rooms are littered with junk (tape, glue, rope, tacks, nails, barbed wire, pipes, bats, rags, bottles) for the crawler to combine at a **workbench**. Every safe room has one, plus 1-2 workshop rooms per floor.
+
+- **Discovery, not a menu.** `combine bat tacks tape`. If some recipe in `recipes.json` uses exactly those things, it's made and added to the recipe book; if not, the System AI mocks you and five minutes pass. The book shows hints for unknown recipes whose parts you're carrying.
+- **Recipes are tag-based:** any blunt weapon + anything sharp + anything that binds.
+  - **Outputs.** A recipe either upgrades an item in place (Nail-Studded, Barbed, Live-Wired: damage, on-hit statuses, damage type) or makes something new (pipe spear, caltrop pouch, molotov, magazine armor).
+  - **Limits.** Each upgrade applies once per item, and an item takes at most two.
+  - **Checks.** Some recipes roll one (Tinkering, Trap Engineering, Explosives Handling); failing ruins a part, but you learn the recipe anyway.
+
 ### Equipment slots
 
 Head, eyes, chest, legs, feet, hands, neck, ring x2, back, belt, main hand, off hand. Two-handed weapons fill both hands. Eyes holds goggles, glasses, masks and patches, so they stack with a hat or helmet. Full-face gear (welding or racing helmets, mascot heads) stays in head.
@@ -512,7 +542,9 @@ generateFloor(floorDef):
 
 ### Safe rooms
 
-Safe rooms are no-combat zones. They contain: a bed (sleep 8 hours, full heal), a toilet and shower (yes, really; small buffs), a shop run by an NPC with a randomized personality, and the place to open loot boxes. Floor 3's first safe room also holds the Selection Booth.
+Safe rooms are no-combat zones. They contain: a bed (sleep 8 hours, full heal), a toilet and shower (yes, really; small buffs), a shop run by an NPC with a randomized personality, a workbench for crafting, and the place to open loot boxes. Floor 3's first safe room also holds the Selection Booth. Floor 1's first safe room always has the parts for a first craft (a pipe, tacks, tape).
+
+Every room type also rolls junk from the floor theme's loot settings (`floors.json` → `loot`). Treasure rooms and lairs hold the most and corridors the least. Some of it lies in plain sight and some only turns up with `search`.
 
 ### Time and the collapse timer
 
@@ -528,7 +560,7 @@ The System AI announces remaining time at 24 hours, 6 hours, 1 hour and 10 minut
 
 ### Exploration UI
 
-- `look` prints the room description: theme fragments + contents + exits.
+- `look` prints the room description: theme fragments + contents (what's on the floor, a workbench) + exits.
 - `map` prints an ASCII grid of explored rooms: `@` you, `S` safe room, `>` stairwell, `!` boss lair, `?` seen but unvisited.
 - Room descriptions are generated once and cached so revisiting reads the same.
 
@@ -552,8 +584,9 @@ generateEnemy(family, tier, floor, district):
 
 | Tier | HP mult | Mods | Notes |
 | --- | --- | --- | --- |
-| Mob | 1 | 0-1 | Groups of 1-6 |
-| Elite | 2.5 | 1-2 | Alone or with mobs; drops a bronze or silver box |
+| Minion | 0.6 | 0 | Two levels below a mob, 60% XP. Ordinary encounters are packs of 2-4 minions (2-3 in corridors), from up to two families (`floors.json` → `encounters`) |
+| Mob | 1 | 0-1 | A standard foe. Floor 1 fields only minion packs and elites; Floor 2 (Milestone 9) sets its own mix |
+| Elite | 2.5 | 1-2 | Alone or with 1-2 minion escorts; drops a bronze or silver box |
 | District boss | 6 | 2 | One per district on Floors 2-3; Claude-run; gold box |
 | Quest boss | 10 | 3 | Floor 3 quest finale; Claude-run; platinum box |
 
@@ -599,7 +632,7 @@ Response shape (validated with Zod; any invalid response is retried once, then f
 }
 ```
 
-Bounded effect menu for rulings: damage (dice up to `2d10 + floor*2`), apply a status from `statusEffects.json` (max 3 rounds), move range band, change or destroy an arena feature, grant advantage (+5) on the next roll, or nothing. Claude can't invent stats, heal the boss beyond its abilities, or end the fight outright.
+Bounded effect menu for rulings: damage (dice up to `2d10 + floor*2`), apply a status from `statusEffects.json` (max 3 rounds), move range band (in grid mode: push or pull up to 3 tiles), change or destroy an arena feature (in grid mode: a tile of the board), grant advantage (+5) on the next roll, or nothing. In grid mode the boss prompt includes the ASCII board that `look` prints. Claude can't invent stats, heal the boss beyond its abilities, or end the fight outright.
 
 ### Server details
 
@@ -705,6 +738,9 @@ All content lives in `packages/content/*.json` and is validated by Zod schemas a
 | `events.json` | Event room templates | 40 |
 | `narration.json` | System AI templates | every event key |
 | `statusEffects.json`, `unlocks.json` | Rules data | 11 / 15 |
+| `arenaFeatures.json` | Grid-combat obstacles, terrain and hazards | 20+ |
+| `lootTables.json` | Weighted item tables (room junk now; drops and boxes later) | 5+ |
+| `recipes.json` | Crafting recipes | 19+ |
 
 ### Core types
 
@@ -760,6 +796,8 @@ interface EnemyFamily {
   id: string; name: string; floors: number[]; statProfile: StatBlock; hpBase: number; armor: number;
   attacks: { id: string; name: string; damage: Dice; range: string; effects?: Effect[] }[];
   ai: string[]; talkable: boolean; groupSize: [number, number]; lootTable: string; tags: string[];
+  speed: number;   // grid tiles per turn (the crawler moves 4)
+  glyph?: string;  // drawn when there's no sprite
 }
 
 interface Achievement {
@@ -813,6 +851,6 @@ These are out of scope for the first build. The engine should leave room for the
 - **Fame and audience**: viewers, followers, sponsors, fan boxes, benefactor boxes, AI mood tied to ratings.
 - **Floors 4+**: new themes, celestial boxes, bigger boss tiers, more complex quests.
 - **Pet sentience and pet classes.**
-- **Crafting**: needed for the Junk Engineer class to reach its full design; first build gives it pre-made gadgets.
+- **Advanced crafting**: basic junk crafting landed in Milestone 4b. The Junk Engineer class gets crafting perks (bench-free crafting, Tinkering ranks, gadget recipes) in Milestone 11.
 - **Other crawlers**: rival and party NPC crawlers who share the floor.
 - **Claude flavor beyond bosses**: optional live narration for event rooms, NPC conversations and shop haggling.
