@@ -1,6 +1,8 @@
 import type { Action } from "./actions";
+import type { Content } from "./content/load";
+import { minorLimit } from "./combat";
 import { isAllowed } from "./step";
-import type { Dir, World } from "./state";
+import { combatModeOf, COMBAT_MODES, type CombatMode, type Dir, type World } from "./state";
 
 export type ParseResult = { ok: true; action: Action } | { ok: false; reason: "empty" | "unknown"; input: string };
 
@@ -25,6 +27,8 @@ const VERBS: Record<string, string> = {
   retreat: "retreat", back: "retreat",
   talk: "talk", parley: "talk", negotiate: "talk",
   use: "use", drink: "use", eat: "use", quaff: "use",
+  wait: "wait", pass: "wait", end: "wait",
+  set: "set", setting: "set", settings: "set",
 };
 
 const DIR_WORDS: Record<string, Dir> = {
@@ -85,6 +89,17 @@ export function parseCommand(input: string, _world: World): ParseResult {
       return { ok: true, action: { type: "abandon", confirm: arg === "confirm" || arg === "yes" } };
     case "new":
       return { ok: true, action: { type: "newCrawler" } };
+    case "wait":
+      return { ok: true, action: { type: "wait" } };
+    case "set": {
+      // "set combat grid" / "set combat bands" (also "set grid")
+      const words = arg.split(" ").filter((w) => w !== "combat" && w !== "mode" && w !== "to");
+      const value = words[0] === "band" ? "bands" : words[0];
+      if (words.length !== 1 || !COMBAT_MODES.includes(value as CombatMode)) {
+        return { ok: false, reason: "unknown", input: text };
+      }
+      return { ok: true, action: { type: "set", key: "combat", value: value as CombatMode } };
+    }
     default:
       return { ok: false, reason: "unknown", input: text };
   }
@@ -100,7 +115,7 @@ export interface CommandOption {
 }
 
 /** Every valid command for the current state, shown as clickable buttons. */
-export function availableCommands(world: World): CommandOption[] {
+export function availableCommands(world: World, content: Content): CommandOption[] {
   const out: CommandOption[] = [];
   const phase = world.game.phase;
   if (phase === "creation") {
@@ -114,8 +129,7 @@ export function availableCommands(world: World): CommandOption[] {
       out.push({ label: `Attack ${e.name}`, input: `attack ${e.name.toLowerCase()}`, primary: foes.indexOf(e) === 0 });
     }
     const statuses = world.game.crawler?.statuses ?? [];
-    const minorLimit = statuses.some((s) => s.id === "slowed") ? 0 : statuses.some((s) => s.id === "hasted") ? 2 : 1;
-    if (world.game.combat.minorActionsUsed < minorLimit) {
+    if (world.game.combat.minorActionsUsed < minorLimit(statuses, content)) {
       if (foes.some((e) => e.range !== "close")) out.push({ label: "Advance", input: "advance" });
       if (foes.some((e) => e.range !== "far")) out.push({ label: "Retreat", input: "retreat" });
     }
@@ -123,6 +137,7 @@ export function availableCommands(world: World): CommandOption[] {
     const crawler = world.game.crawler;
     const potion = crawler?.inventory.find((i) => i.kind === "consumable" && i.tags.includes("healing"));
     if (potion) out.push({ label: `Use ${potion.name}`, input: `use ${potion.name.toLowerCase()}` });
+    out.push({ label: "Wait", input: "wait" });
     out.push({ label: "Flee", input: "flee" });
   }
   const floor = world.game.floor;

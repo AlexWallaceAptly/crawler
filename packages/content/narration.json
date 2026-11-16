@@ -665,5 +665,34 @@
         "text": "Wrong range, genius. Close the distance or throw something."
       }
     ]
+  },
+  {
+    "key": "settings.changed",
+    "variants": [
+      {
+        "when": {
+          "value": "grid"
+        },
+        "text": "Grid mode. Next fight, you'll get a nice little board to die on. Squares! Very civilized."
+      },
+      {
+        "when": {
+          "value": "grid"
+        },
+        "text": "Tactical grid enabled. Now your bad decisions come with coordinates."
+      },
+      {
+        "when": {
+          "value": "bands"
+        },
+        "text": "Range bands it is. Close, near, far. Three whole concepts. Don't strain anything."
+      },
+      {
+        "when": {
+          "value": "bands"
+        },
+        "text": "Fine, no board. The next fight is back to vibes and vague distances."
+      }
+    ]
   }
 ]

@@ -1,4 +1,4 @@
-import type { Dir } from "./state";
+import type { CombatMode, Dir } from "./state";
 
 /** Player commands. The parser turns typed text into these; buttons submit text too. */
 export type Action =
@@ -18,7 +18,10 @@ export type Action =
   | { type: "retreat" }
   | { type: "talk" }
   | { type: "use"; item: string }
+  | { type: "wait" }
   | { type: "help" }
+  /** Account preference; free, allowed any time. */
+  | { type: "set"; key: "combat"; value: CombatMode }
   | { type: "abandon"; confirm: boolean };
 
 export type ActionType = Action["type"];

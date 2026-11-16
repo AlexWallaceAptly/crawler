@@ -2,11 +2,20 @@ import type { EnemyAttack, RangeBand, Rarity, RoomShape, Slot, StatBlock, Modifi
 import type { GameEvent } from "./events";
 
 /** Bump when the save shape changes incompatibly; old saves are discarded (see DECISIONS.md). */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export const ACCOUNT_VERSION = 1;
 export const LOG_LIMIT = 300;
 
 export type Phase = "creation" | "exploring" | "combat" | "dead";
+
+/**
+ * How fights play. "bands" is the original abstract close/near/far model; "grid" is
+ * the Milestone 4b tactical arena. Chosen per account, fixed per fight.
+ */
+export type CombatMode = "bands" | "grid";
+export const COMBAT_MODES: readonly CombatMode[] = ["grid", "bands"];
+/** Used when the account has never picked a mode. */
+export const DEFAULT_COMBAT_MODE: CombatMode = "bands";
 
 export type EquipSlot = Exclude<Slot, "ring"> | "ring1" | "ring2";
 export const EQUIP_SLOTS: EquipSlot[] = [
@@ -34,6 +43,10 @@ export interface ItemInstance {
   qty: number;
   flavor?: string;
   tags: string[];
+  /** Weapons: a status that may land on a hit (crafted upgrades add these). */
+  onHit?: { id: string; chance: number; duration?: number };
+  /** Recipe ids already applied to this item as upgrades (each applies once). */
+  crafted?: string[];
 }
 
 export interface SkillState {
@@ -151,13 +164,20 @@ export interface Enemy {
 }
 
 export interface CombatState {
+  /** Fixed when the fight starts; changing the setting mid-fight only affects the next one. */
+  mode: CombatMode;
   enemies: Enemy[];
   round: number;
   /** The crawler's rolled initiative for this fight. */
   playerInitiative: number;
-  /** Number of step-a-band minor actions used this round. */
+  /** Number of step-a-band minor actions used this round (bands mode). */
   minorActionsUsed: number;
-  /** Room the crawler came from; a successful flee retreats there. */
+  /**
+   * Set once the crawler's turn has started this round (statuses ticked). Makes the
+   * turn start idempotent: a rejected command or a grid move doesn't tick twice.
+   */
+  turnBegun: boolean;
+  /** Room the crawler came from; fleeing back the way you came lands there. */
   fromRoom: number;
 }
 
@@ -197,8 +217,14 @@ export interface GameState {
   narrator: NarratorState;
 }
 
+export interface AccountSettings {
+  combatMode: CombatMode;
+}
+
 export interface AccountState {
   version: number;
+  /** Player preferences that outlive a crawler. Optional so older accounts still load. */
+  settings?: AccountSettings;
   legacyPoints: number;
   rerolls: number;
   unlocks: string[];
@@ -224,6 +250,10 @@ export function newAccount(): AccountState {
     deaths: 0,
     codex: { enemies: [], items: [], achievements: [] },
   };
+}
+
+export function combatModeOf(account: AccountState): CombatMode {
+  return account.settings?.combatMode ?? DEFAULT_COMBAT_MODE;
 }
 
 export function newGameState(): GameState {

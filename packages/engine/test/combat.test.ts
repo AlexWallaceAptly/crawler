@@ -3,6 +3,7 @@ import { createEngine } from "../src/engine";
 import { loadContent } from "../src/content/load";
 import { StepContext } from "../src/step";
 import { maybeEncounter, startCombat } from "../src/combat";
+import { itemFromRef } from "../src/gen/item";
 import { applyStatus } from "../src/rules/effects";
 import { forceDice, resetRng, setRandomSource } from "../src/rng";
 import { rawContent } from "@crawler/content";
@@ -43,8 +44,9 @@ function fightWorld(enemies: Enemy[] = [testEnemy()]): World {
   c.equipment = { mainHand: "w1" };
   c.hp = 34; // 10 + 3*8 + 2*1
   c.mp = 13;
+  world.account.settings = { combatMode: "bands" };
   world.game.combat = {
-    enemies, round: 1, playerInitiative: 15, minorActionsUsed: 0,
+    mode: "bands", enemies, round: 1, playerInitiative: 15, minorActionsUsed: 0, turnBegun: false,
     fromRoom: world.game.floor!.currentRoom,
   };
   world.game.phase = "combat";
@@ -226,6 +228,97 @@ describe("scripted fights", () => {
     const started = maybeEncounter(ctx, room, true);
     expect(started).toBe(true);
     expect(ctx.game.combat!.enemies.some((e) => e.tier === "elite")).toBe(true);
+  });
+});
+
+describe("milestone 4b fixes", () => {
+  it("fleeing goes back to the room you came from, not the one you were jumped in", () => {
+    let { world } = engine.newWorld();
+    ({ world } = engine.step(world, { type: "accept" }));
+    world.account.settings = { combatMode: "bands" };
+    world.game.crawler!.hp = 500;
+    const floor = world.game.floor!;
+    const start = floor.rooms[floor.currentRoom]!;
+    const dir = (Object.keys(start.exits) as (keyof typeof start.exits)[])[0]!;
+    const lair = floor.rooms[start.exits[dir]!]!;
+    lair.type = "lair"; // guaranteed fight on first entry
+    lair.visited = false;
+    ({ world } = engine.step(world, { type: "go", dir }));
+    expect(world.game.phase).toBe("combat");
+    expect(world.game.combat!.fromRoom).toBe(start.id);
+    forceDice(20, 1);
+    ({ world } = engine.step(world, { type: "flee" }));
+    expect(world.game.phase).toBe("exploring");
+    expect(world.game.floor!.currentRoom).toBe(start.id);
+  });
+
+  it("thrown items hit the enemy, not the thrower", () => {
+    const world = fightWorld([testEnemy({ hp: 50, maxHP: 50 })]);
+    world.game.crawler!.inventory.push(itemFromRef(content, "pepper_spray"));
+    forceDice(1); // the rat's swing back misses
+    const { world: w } = engine.step(world, { type: "use", item: "pepper spray" });
+    expect(w.game.combat!.enemies[0]!.statuses.some((s) => s.id === "blinded")).toBe(true);
+    expect(w.game.crawler!.statuses.some((s) => s.id === "blinded")).toBe(false);
+    expect(w.game.crawler!.inventory.some((i) => i.baseId === "pepper_spray")).toBe(false);
+  });
+
+  it("thrown items refuse to fire with nothing to throw them at", () => {
+    let { world } = engine.newWorld();
+    ({ world } = engine.step(world, { type: "accept" }));
+    world.game.crawler!.inventory.push(itemFromRef(content, "pepper_spray"));
+    const { world: w, events } = engine.step(world, { type: "use", item: "pepper spray" });
+    expect(of(events, "error")).toHaveLength(1);
+    expect(w.game.crawler!.inventory.some((i) => i.baseId === "pepper_spray")).toBe(true);
+  });
+
+  it("mana restores MP, not HP", () => {
+    let { world } = engine.newWorld();
+    ({ world } = engine.step(world, { type: "accept" }));
+    const c = world.game.crawler!;
+    c.inventory.push(itemFromRef(content, "mana_potion"));
+    c.mp = 0;
+    const hp = c.hp;
+    const { world: w } = engine.step(world, { type: "use", item: "mana potion" });
+    expect(w.game.crawler!.mp).toBeGreaterThan(0);
+    expect(w.game.crawler!.hp).toBe(hp);
+  });
+
+  it("a rejected attack doesn't tick statuses twice when you try again", () => {
+    const world = fightWorld([
+      testEnemy({ uid: "ghost", name: "Ghost Rat", statuses: [{ id: "invisible", remaining: 3, stacks: 1 }] }),
+      testEnemy({ uid: "e2", name: "Plain Rat" }),
+    ]);
+    world.game.crawler!.statuses = [{ id: "poisoned", remaining: 3, stacks: 1 }];
+    forceDice(3); // one poison tick
+    const r1 = engine.step(world, { type: "attack", target: "ghost" });
+    expect(of(r1.events, "error")).toHaveLength(1);
+    expect(r1.world.game.crawler!.hp).toBe(31);
+    forceDice(1, 1, 1); // retry: player miss, two rat misses — and no second poison roll
+    const r2 = engine.step(r1.world, { type: "attack", target: "plain" });
+    expect(r2.world.game.crawler!.hp).toBe(31);
+  });
+
+  it("set combat is free and sticks to the account", () => {
+    let { world } = engine.newWorld();
+    ({ world } = engine.step(world, { type: "accept" }));
+    const turn = world.game.turn;
+    const r = engine.input(world, "set combat grid");
+    expect(r.world.account.settings?.combatMode).toBe("grid");
+    expect(r.world.game.turn).toBe(turn);
+    const back = engine.input(r.world, "set combat bands");
+    expect(back.world.account.settings?.combatMode).toBe("bands");
+  });
+
+  it("the combat mode is locked when the fight starts", () => {
+    const world = fightWorld();
+    const r = engine.input(world, "set combat grid");
+    expect(r.world.game.combat!.mode).toBe("bands");
+  });
+
+  it("saves from before Milestone 4b are discarded, the account survives", () => {
+    const { world } = engine.newWorld();
+    expect(engine.restore({ ...world.game, version: 3 }, world.account)).toBeNull();
+    expect(engine.restoreAccount(world.account)).not.toBeNull();
   });
 });
 

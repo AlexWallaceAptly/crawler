@@ -52,7 +52,7 @@ export function createEngine(content: Content): Engine {
       ]);
       return { world: draft, events };
     },
-    commands: (world) => availableCommands(world),
+    commands: (world) => availableCommands(world, content),
     view: (world) => view(world, content),
   };
   return engine;

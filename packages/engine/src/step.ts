@@ -6,7 +6,8 @@ import { generateCrawler, introContext } from "./gen/backstory";
 import { generateFloor } from "./gen/floor";
 import { advanceTime, clearFloor, enterRoom, formatTimer, renderMap, springTrap, tickTravelStatuses, TIME_COST } from "./explore";
 import {
-  aliveEnemies, combatSummary, maybeEncounter, playerAttack, playerFlee, playerStep, playerTalk, playerUseItem,
+  aliveEnemies, combatSummary, findEnemy, maybeEncounter, playerAttack, playerFlee, playerStep, playerTalk,
+  playerUseItem, playerWait,
 } from "./combat";
 import { narrate } from "./narrate/narrator";
 import { derive } from "./rules/derived";
@@ -84,10 +85,11 @@ export const HELP_LINES = [
   "rest                 catch your breath (1 hour, heals a little)",
   "sleep                safe rooms only (8 hours, full heal)",
   "descend              take a stairwell down, ending the floor",
-  "attack [name]        in combat; also: advance / retreat / flee / talk",
+  "attack [name]        in combat; also: advance / retreat / flee / talk / wait",
   "use <item>           drink or eat something from your pack",
   "accept / reroll      during crawler creation",
   "abandon              end this crawler's run (asks to confirm)",
+  "set combat grid|bands  how the next fight plays (tactical grid or range bands)",
   "new                  start the next crawler after death",
 ];
 
@@ -154,38 +156,19 @@ const handlers: Handlers = {
   go: {
     phases: ["exploring"],
     run(ctx, action) {
-      const { floor, room } = here(ctx);
+      const { room } = here(ctx);
       const dest = room.exits[action.dir];
       if (dest === undefined) {
         ctx.say("explore.blocked", { dir: action.dir });
         return;
       }
-      advanceTime(ctx, TIME_COST.move);
-      if (ctx.game.phase === "dead") return; // the floor ran out mid-step
-      const target = floor.rooms[dest]!;
-      const firstVisit = !target.visited;
-      // out-of-combat regen per room moved (spec: Derived values)
-      const c = ctx.crawler;
-      const d = derive(c, ctx.content);
-      c.hp = Math.min(d.maxHP, c.hp + d.hpRegen);
-      c.mp = Math.min(d.maxMP, c.mp + d.mpRegen);
-      tickTravelStatuses(ctx);
-      if (ctx.dead()) return;
-      enterRoom(ctx, dest, firstVisit ? "first" : "revisit");
-      if (firstVisit && target.type === "trap") {
-        springTrap(ctx, target);
-        if (ctx.dead()) return;
-      }
-      maybeEncounter(ctx, target, firstVisit);
+      travel(ctx, dest);
     },
   },
   attack: {
     phases: ["combat"],
     run(ctx, action) {
-      const foes = aliveEnemies(ctx);
-      const target = action.target
-        ? foes.find((e) => e.name.toLowerCase().includes(action.target!.toLowerCase()))
-        : foes[0];
+      const target = action.target ? findEnemy(ctx, action.target) : aliveEnemies(ctx)[0];
       if (!target) {
         ctx.error(action.target ? `Nothing here called "${action.target}".` : "Nothing left to hit.");
         return;
@@ -296,6 +279,19 @@ const handlers: Handlers = {
       clearFloor(ctx);
     },
   },
+  wait: {
+    phases: ["combat"],
+    run(ctx) {
+      playerWait(ctx);
+    },
+  },
+  set: {
+    phases: "any",
+    run(ctx, action) {
+      ctx.account.settings = { ...ctx.account.settings, combatMode: action.value };
+      ctx.say("settings.changed", { setting: "combat", value: action.value });
+    },
+  },
   help: {
     phases: "any",
     run(ctx) {
@@ -313,6 +309,35 @@ const handlers: Handlers = {
     },
   },
 };
+
+/**
+ * Walk into a neighboring room: time, travel regen and statuses, the room block,
+ * first-visit traps, then the encounter roll. Shared by `go` and fleeing out a side door.
+ */
+export function travel(ctx: StepContext, dest: number): void {
+  const floor = ctx.game.floor!;
+  const cameFrom = floor.currentRoom;
+  advanceTime(ctx, TIME_COST.move);
+  if (ctx.game.phase === "dead") return; // the floor ran out mid-step
+  const target = floor.rooms[dest]!;
+  const firstVisit = !target.visited;
+  // out-of-combat regen per room moved (spec: Derived values)
+  const c = ctx.crawler;
+  const d = derive(c, ctx.content);
+  c.hp = Math.min(d.maxHP, c.hp + d.hpRegen);
+  c.mp = Math.min(d.maxMP, c.mp + d.mpRegen);
+  tickTravelStatuses(ctx);
+  if (ctx.dead()) return;
+  enterRoom(ctx, dest, firstVisit ? "first" : "revisit");
+  if (firstVisit && target.type === "trap") {
+    springTrap(ctx, target);
+    if (ctx.dead()) return;
+  }
+  maybeEncounter(ctx, target, firstVisit, cameFrom);
+}
+
+/** Actions that don't advance the turn counter (no game effect). */
+const FREE_ACTIONS = new Set<ActionType>(["help", "set"]);
 
 export function killCrawler(ctx: StepContext, cause: string, key = "died"): void {
   ctx.game.combat = null;
@@ -355,7 +380,7 @@ export function step(world: World, action: Action, content: Content, echo?: stri
     ctx.say("command.notNow", { verb: action.type });
   } else {
     handler.run(ctx, action);
-    if (action.type !== "help") draft.game.turn += 1;
+    if (!FREE_ACTIONS.has(action.type)) draft.game.turn += 1;
   }
   ctx.emit({ type: "stateChanged" });
   return { world: draft, events: commitEvents(draft, ctx.events) };

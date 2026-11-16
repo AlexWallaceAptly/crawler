@@ -101,3 +101,24 @@ Assumptions made where [the spec](docs/SPEC.md) is silent or ambiguous. Newest m
 - The minimap now renders from `view.mapGrid` (structured cells from `mapGrid()` in `explore.ts`) as PNG tiles in `packages/client/public/tiles/<kind>.png`. `view.minimap` (ASCII) is kept for the `map` command and as the fallback when no grid exists. A tile whose PNG is missing falls back to an ASCII glyph, so art can land incrementally.
 - Spoiler rule: a room's true type is shown only once visited. Seen-but-unvisited rooms use the `unknown` tile (the ASCII map already hid everything but `?`). The player marker is a `player.png` overlay on the current room. Room connectors are CSS bars, not images.
 - Tile URLs use `import.meta.env.BASE_URL` so the GitHub Pages `/crawler/` base works. `trap-sprung.png` is optional and falls back to `trap.png`.
+
+## Milestone 4b: grid combat, mob packs, junk and crafting
+
+Inserted before Milestone 5 at the player's request (see the build-order row in SPEC.md). Built on the `grid-combat-crafting` branch.
+
+### Combat refactor and fixes
+
+- **Two combat modes, one rulebook.** `combat.ts` keeps every roll shared: `resolvePlayerHit`, `enemyDefense`, `enemyStrike`, `fleeContest`, `freeSwings`, `applyItemEffects` and `damageCrawler`. "bands" is the original model, and "grid" is the tactical arena. The mode is stored on `CombatState` when the fight starts, so changing the setting mid-fight only affects the next one.
+- **The toggle** lives on the account (`account.settings.combatMode`), so it outlives a crawler. The field is optional, so older accounts still load without an `ACCOUNT_VERSION` bump. `set combat grid|bands` is a free action allowed in any phase, and like `help` it doesn't advance the turn counter.
+- **Fleeing goes back where you came from.** `startCombat` used to record `fromRoom` after `enterRoom` had already moved the crawler, so a "clean getaway" left you standing in the ambush room. The `go` handler now passes the previous room through `travel()` → `maybeEncounter()` → `startCombat()`.
+- **Items hit what they're aimed at.** Effects with `target: "target"` hit the first targetable enemy (bands) and `all_enemies` hit every enemy. Untargeted, `self` and `all_allies` effects hit the crawler. Pepper spray no longer blinds the user.
+  - Out of combat, an item whose every effect needs an enemy is refused and not consumed.
+  - Items with no effects ("junk" parts) are refused with a hint to combine them.
+  - `heal` with `flag: "mp"` restores MP, `loot` with `flag: "gold"` adds gold, and `xp` adds XP.
+  - `stat` buffs still wait for Milestone 5.
+- **The turn start is idempotent.** `beginTurn()` (formerly `playerTurnStart`) sets `combat.turnBegun`, which resets at the end of the round. A command rejected after the start (e.g. an untargetable target) no longer ticks poison a second time when the player tries again.
+- **A failed flee keeps the turn order.** Free swings replace the slower enemies' turns as before, but the round now closes through `closeRound()`, so faster enemies still open the next round.
+- **Minor-action buttons read status flags** (`noMinor`, `extraMinor`) instead of the ids `slowed`/`hasted`.
+- **Duct tape** is tagged `bind` (a crafting part), not `healing`. The heal button and the sim no longer burn it as a potion; it still heals 1d4 if used directly.
+- **Crafted weapons** can carry `onHit` (a status with a chance), which `resolvePlayerHit` applies on any hit that doesn't kill.
+- `SAVE_VERSION` is 4: `CombatState` gained `mode` and `turnBegun`. Version-3 run saves are discarded and accounts are kept.

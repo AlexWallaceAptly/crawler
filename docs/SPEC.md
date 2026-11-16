@@ -787,6 +787,7 @@ Build in 13 milestones, each ending in something playable or testable. Don't sta
 | 2 | Character creation + UI shell: backstory generator, stat gen, starting kit, command parser, buttons, save/load | New crawler appears with roast; refresh keeps the save |
 | 3 | Floor 1: map generator, room types, descriptions, `look`/`map`/`go`, game clock, collapse timer, stairwells | 100 generated floors all pass reachability test; timer kills you off-stairs |
 | 4 | Combat: initiative, actions, range bands, status effects, enemy families, priority AI, flee | Scripted fight tests; a Floor 1 run is winnable and losable |
+| 4b | Grid combat (account toggle, grid default), mob packs and minions, junk seeding with a minimal inventory (take/drop/equip, weight), crafting at workbenches | Scripted grid fights and arena property tests pass; recipes craft from seeded junk; the sim runs both combat modes with zero stuck runs |
 | 5 | Items: generator, rarity, affixes, equip slots, inventory, weight, consumables | 1,000 generated items all valid; equipping changes derived stats |
 | 6 | Progression: XP and levels, stat points, skills with use-XP, spells and tomes, MP | Skills rank up from use; a spell levels after N casts |
 | 7 | Rewards: achievements engine, counters, loot boxes, safe rooms, shops, narration templates, AI mood | 20 achievements fire correctly in tests; boxes only open in safe rooms |
