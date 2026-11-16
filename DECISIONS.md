@@ -369,3 +369,8 @@ These are available to every crawler, so early fights aren't just trading swings
 - **Status icons:** up to two on a unit's top-right corner plus "+N", with a first-letter badge for statuses that have no art. The unit view carries `statusIds` for this.
 - **The crawler** gets an amber selection ring at its feet, because the art reads as a monster.
 - **Small debris hazards** (caltrops, tacks, glass, marbles, barbed wire, spikes, trip wire) get a CSS dark outline and a slight brightening, so they read on grey stone at 44px without editing the art.
+- **Furniture and carts:** 23 more obstacles (carts, tables, benches, the vise workbench). They're low furniture, so they block movement but not sight.
+  - **Undercroft:** the 18 industrial and creepy pieces join its list at weight 0.25, so the original eight are now about 59% of obstacle picks.
+  - **Floor 2:** park and wood benches, the padded bench, the café table and stools, and the food-service cart are defined but held back for the Drowned Mall.
+  - **File size:** the masters were 180-314px (1.6 MB), so the published copies are resized to fit 128px with Lanczos (607 KB). The masters stay in `sprites/furniture_carts/`.
+  - Every arena feature now has art.

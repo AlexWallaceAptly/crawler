@@ -659,6 +659,78 @@
         {
           "id": "bathtub",
           "weight": 0.15
+        },
+        {
+          "id": "bin_cart",
+          "weight": 0.25
+        },
+        {
+          "id": "flatbed_dolly",
+          "weight": 0.25
+        },
+        {
+          "id": "janitor_cart",
+          "weight": 0.25
+        },
+        {
+          "id": "laundry_cart",
+          "weight": 0.25
+        },
+        {
+          "id": "tool_cart",
+          "weight": 0.25
+        },
+        {
+          "id": "utility_cart",
+          "weight": 0.25
+        },
+        {
+          "id": "wire_basket_cart",
+          "weight": 0.25
+        },
+        {
+          "id": "surgical_cart",
+          "weight": 0.25
+        },
+        {
+          "id": "bloody_table",
+          "weight": 0.25
+        },
+        {
+          "id": "heavy_steel_table",
+          "weight": 0.25
+        },
+        {
+          "id": "steel_table",
+          "weight": 0.25
+        },
+        {
+          "id": "steel_trough_table",
+          "weight": 0.25
+        },
+        {
+          "id": "folding_table",
+          "weight": 0.25
+        },
+        {
+          "id": "small_table",
+          "weight": 0.25
+        },
+        {
+          "id": "office_desk",
+          "weight": 0.25
+        },
+        {
+          "id": "vise_workbench",
+          "weight": 0.25
+        },
+        {
+          "id": "concrete_bench",
+          "weight": 0.25
+        },
+        {
+          "id": "slatted_steel_bench",
+          "weight": 0.25
         }
       ],
       "terrain": [

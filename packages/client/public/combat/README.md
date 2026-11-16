@@ -27,7 +27,7 @@ Every sprite here is optional. Until a file exists, the board draws a text glyph
 | Folder | Have | Still missing |
 | --- | --- | --- |
 | floor | `undercroft_1`-`_4`, `door` | Sets for later floor themes |
-| obstacle | All 29 obstacles: pillar, rubble, crate, barrel, pipe_cluster, dead_boiler, lockers, shopping_cart, plus the props fridge, freezer, washer, dryer, stove, dish_sink, tool_chest, shelf, rack, file_cabinet, workbench, cot, chair, bathtub, shower, stall, sink, toilet, trough_sink, urinal, trash_can | — |
+| obstacle | All 52 obstacles: the original eight (pillar, rubble, crate, barrel, pipe_cluster, dead_boiler, lockers, shopping_cart), 21 props (appliances, storage, bathroom fixtures, trash_can), and 23 pieces of furniture (carts, tables, benches, the vise workbench) | — |
 | terrain | `sludge` | — |
 | hazard | All 14 | — |
 | unit | `crawler` + all 7 Floor 1 families | Floor 2+ families |
@@ -36,6 +36,12 @@ Every sprite here is optional. Until a file exists, the board draws a text glyph
 | status | `bleeding`, `burning`, `confused`, `poisoned`, `stunned` (the "shock" icon), `slowed` (the "freeze" icon) | `blinded`, `hasted`, `feared`, `charmed`, `shielded`, `regenerating`, `invisible`, `braced` |
 
 Also still missing: the minimap tile `../tiles/workshop.png` (glyph ⚒ until then).
+
+## Masters vs. published copies
+
+The furniture set (`sprites/furniture_carts/`) was drawn at 180-314px. The copies in `obstacle/` are resized to fit 128px; it's a cleaner downscale than the browser's, and a third of the download. To change one, edit the master and re-export at 128px or smaller.
+
+Four of the furniture pieces (park_bench, wood_bench, padded_bench, round_table_stools) and the food_service_cart are defined in `arenaFeatures.json` but not in the Undercroft's list. They're waiting for the Floor 2 food courts.
 
 ## Not used yet
 
