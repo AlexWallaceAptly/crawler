@@ -590,7 +590,8 @@
           "id": "gas_leak",
           "weight": 1
         }
-      ]
+      ],
+      "scrap": "arena_scrap"
     }
   }
 ]

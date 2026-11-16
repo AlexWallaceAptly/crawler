@@ -8,7 +8,7 @@ import type { CombatState, Crawler, Enemy, Pos } from "../state";
 import { derive } from "../rules/derived";
 import { hasFlag } from "../rules/effects";
 import {
-  allTiles, columnLabels, coord, exitAt, featureAt, hazardAt, index, occupied, pathField, reaches, same,
+  allTiles, columnLabels, coord, dist, exitAt, featureAt, hazardAt, index, occupied, pathField, reaches, same,
 } from "./geometry";
 import { speedOf } from "./units";
 import type { RangeBand } from "../content/schemas";
@@ -93,8 +93,12 @@ export function gridView(combat: CombatState, crawler: Crawler, themeId: string,
     if (foe) {
       if (reaches(a, content, a.crawler, p, weaponReach) && !hasFlag(foe.statuses, content, "untargetable")) t.attack = true;
       t.tap = `attack ${t.coord}`;
+    } else if (same(p, a.crawler) && x) {
+      t.tap = "flee";
+    } else if (a.items.some((it) => same(it, p)) && dist(p, a.crawler) <= 1 && (!combat.turnBegun || a.moveLeft > 0)) {
+      t.tap = `take ${a.items.find((it) => same(it, p))!.item.name.toLowerCase()}`;
     } else if (same(p, a.crawler)) {
-      if (x) t.tap = "flee";
+      // standing still: nothing to tap
     } else if (t.move) {
       t.tap = `move ${t.coord}`;
     }

@@ -204,5 +204,25 @@
       "untargetable",
       "breaksOnAttack"
     ]
+  },
+  {
+    "id": "braced",
+    "name": "Braced",
+    "kind": "buff",
+    "description": "Feet planted, guard up: +4 defense and you can't be shoved. Ends when your next turn starts.",
+    "defaultDuration": 1,
+    "tick": [],
+    "modifiers": [
+      {
+        "to": "defense",
+        "value": 4
+      }
+    ],
+    "stacking": "refresh",
+    "maxStacks": 1,
+    "flags": [
+      "noShove",
+      "endsOnTurnStart"
+    ]
   }
 ]

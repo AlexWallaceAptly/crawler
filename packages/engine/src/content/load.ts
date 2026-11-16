@@ -199,6 +199,11 @@ function checkReferences(c: Content, problems: string[]): void {
     for (const e of cons.effects) {
       if (e.statusId) ref(`items/consumables.json "${cons.id}".effects`, "status", c.statusEffects.has(e.statusId), e.statusId);
     }
+    if (cons.hazard) {
+      const f = c.arenaFeatures.byId[cons.hazard.id];
+      if (!f) problems.push(`items/consumables.json "${cons.id}".hazard: unknown arena feature "${cons.hazard.id}"`);
+      else if (f.kind !== "hazard") problems.push(`items/consumables.json "${cons.id}".hazard: "${f.id}" is a ${f.kind}, not a hazard`);
+    }
   }
   for (const f of c.arenaFeatures.all) {
     for (const eff of [f.enter, f.stay]) {
@@ -227,6 +232,7 @@ function checkReferences(c: Content, problems: string[]): void {
     for (const [type, rl] of Object.entries(t.loot.rooms)) {
       if (rl) ref(`${where}.rooms.${type}.table`, "loot table", c.lootTables.has(rl.table), rl.table);
     }
+    if (t.arena.scrap) ref(`floors.json "${t.id}".arena.scrap`, "loot table", c.lootTables.has(t.arena.scrap), t.arena.scrap);
     if (t.loot.workshopTable) ref(`${where}.workshopTable`, "loot table", c.lootTables.has(t.loot.workshopTable), t.loot.workshopTable);
     for (const f of t.loot.firstSafe) ref(`${where}.firstSafe`, "item", itemRefExists(c, f.item), f.item);
   }

@@ -26,6 +26,10 @@ import { coord, parseCoord, reaches } from "./grid/geometry";
 import { runEnemyTurnGrid } from "./grid/ai";
 import { approachTarget, gridFlee } from "./grid/play";
 import { ageHazards, crawlerSpeed, packBonus, standInHazard, syncBands } from "./grid/units";
+import { dropTurnStatuses } from "./maneuvers";
+import { rollLoot } from "./gen/loot";
+import { addToPile } from "./inventory";
+import { int } from "./rng";
 
 export const BAND: Record<RangeBand, number> = { close: 0, near: 1, far: 2 };
 export const BANDS: RangeBand[] = ["close", "near", "far"];
@@ -91,12 +95,21 @@ export function startCombat(ctx: StepContext, enemies: Enemy[], opts: StartOptio
   };
   if (mode === "grid") {
     const room = floor.rooms[floor.currentRoom]!;
+    const theme = ctx.content.floors.get(floor.theme);
+    // The room's loose junk ends up underfoot, plus a little scrap. It goes back on the floor when the fight ends.
+    const items = room.items ?? [];
+    delete room.items;
+    if (theme.arena.scrap) {
+      const table = ctx.content.lootTables.get(theme.arena.scrap);
+      for (let n = int(0, 2); n > 0; n--) items.push(rollLoot(table, ctx.content));
+    }
     ctx.game.combat.arena = buildArena({
       room,
-      theme: ctx.content.floors.get(floor.theme),
+      theme,
       entry: entrySide(room, fromRoom),
       enemies,
       ambushers: new Set(enemies.filter((e) => e.initiative > playerInit).map((e) => e.uid)),
+      items,
     }, ctx.content);
     syncBands(ctx);
   }
@@ -169,6 +182,7 @@ export function beginTurn(ctx: StepContext): boolean {
   const combat = ctx.game.combat!;
   if (combat.turnBegun) return true;
   combat.turnBegun = true;
+  dropTurnStatuses(ctx);
   const c = ctx.crawler;
   for (const t of tickStatuses(c.statuses, ctx.content)) {
     c.hp = Math.min(derive(c, ctx.content).maxHP, c.hp - t.amount);
@@ -836,6 +850,14 @@ export function checkVictory(ctx: StepContext): void {
 }
 
 export function endCombat(ctx: StepContext): void {
+  // Whatever junk is still lying on the board goes back on the room's floor.
+  const arena = ctx.game.combat?.arena;
+  const floor = ctx.game.floor;
+  if (arena && arena.items.length && floor) {
+    const room = floor.rooms[floor.currentRoom]!;
+    room.items ??= [];
+    for (const it of arena.items) addToPile(room.items, it.item);
+  }
   ctx.game.combat = null;
 }
 

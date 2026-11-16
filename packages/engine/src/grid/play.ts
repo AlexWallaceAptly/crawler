@@ -41,13 +41,13 @@ function spend(ctx: StepContext, path: Pos[]): number {
   return spent;
 }
 
-/** `move c4` or `move ne 2`. Doesn't end the turn. */
-export function gridMove(ctx: StepContext, to: TileRef): void {
+/**
+ * Route for `move`/`dash`: a tile ("c4") or a direction with a step count. Returns
+ * the affordable steps, or a reason it can't be done.
+ */
+export function planPath(ctx: StepContext, to: TileRef, budget: number): Pos[] | string {
   const a = arenaOf(ctx);
-  if (a.moveLeft <= 0) {
-    ctx.error("You're out of movement this turn. Act, or `wait`.");
-    return;
-  }
+  if (budget <= 0) return "You're out of movement this turn. Act, or `wait`.";
   let path: Pos[];
   if ("dir" in to) {
     path = [];
@@ -61,37 +61,30 @@ export function gridMove(ctx: StepContext, to: TileRef): void {
       path.push(next);
       at = next;
     }
-    if (path.length === 0) {
-      ctx.error("Something's in the way.");
-      return;
-    }
+    if (path.length === 0) return "Something's in the way.";
   } else {
-    if (!inBounds(a, to)) {
-      ctx.error(`${coord(to)} isn't on the board.`);
-      return;
-    }
-    if (same(to, a.crawler)) {
-      ctx.error("You're already standing there. Impressive commitment.");
-      return;
-    }
+    if (!inBounds(a, to)) return `${coord(to)} isn't on the board.`;
+    if (same(to, a.crawler)) return "You're already standing there. Impressive commitment.";
     const field = crawlerField(ctx);
     const cost = field.cost[index(a, to)]!;
-    if (cost === Infinity) {
-      ctx.error(`You can't get to ${coord(to)} from here.`);
-      return;
-    }
-    if (cost > a.moveLeft) {
-      ctx.error(`${coord(to)} is ${cost} movement away; you have ${a.moveLeft} left this turn.`);
-      return;
-    }
+    if (cost === Infinity) return `You can't get to ${coord(to)} from here.`;
+    if (cost > budget) return `${coord(to)} is ${cost} movement away; you have ${budget}.`;
     path = pathTo(a, field, to);
   }
-  const steps = affordable(a, ctx.content, path, a.moveLeft);
-  if (steps.length === 0) {
-    ctx.error(`That costs ${stepCost(a, ctx.content, path[0]!)} movement; you have ${a.moveLeft} left.`);
+  const steps = affordable(a, ctx.content, path, budget);
+  if (steps.length === 0) return `That costs ${stepCost(a, ctx.content, path[0]!)} movement; you have ${budget}.`;
+  return steps;
+}
+
+/** `move c4` or `move ne 2`. Doesn't end the turn. */
+export function gridMove(ctx: StepContext, to: TileRef): void {
+  const a = arenaOf(ctx);
+  const plan = planPath(ctx, to, a.moveLeft);
+  if (typeof plan === "string") {
+    ctx.error(plan);
     return;
   }
-  spend(ctx, steps);
+  spend(ctx, plan);
   if (ctx.game.phase !== "combat") return;
   ctx.fight(`You move to ${coord(a.crawler)}${a.moveLeft > 0 ? ` (${a.moveLeft} movement left)` : ""}.`, "you");
 }

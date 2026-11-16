@@ -268,3 +268,37 @@ Inserted before Milestone 5 at the player's request (see the build-order row in 
   - **Existing items join through tags only:** duct tape, gaffer tape, superglue, jacks, chains, hammers, hairspray, the bat, the crowbar, the existing lighter fluid, and so on.
 - **Craft tags:** `bind sharp haft cord elastic pouch weight battery wire fuel wick bottle spark padding plate hammer`. An item's effective tags also include its weapon type and `weapon` / `armor` / `slot:<slot>`. Item details list its parts and weight.
 - A test keeps a fully explored, seeded floor's save under 250 KB.
+
+### Maneuvers and hazards
+
+These are available to every crawler, so early fights aren't just trading swings.
+
+- **`shove [name]`.** Opposed d20 + STR + athletics against the target's d20 + max(STR, DEX); you must be adjacent (grid fights auto-approach first).
+  - **Win:** the target is pushed one tile directly away. If something is on that tile, its `enter` effect fires. If the push hits the board edge, an obstacle or another unit, the target slams into it for 1d4 and stays put.
+  - **Bands:** a win pushes it out one band.
+  - A braced target (`noShove`) doesn't budge.
+- **`throw <item> [at <tile|name>]`.**
+  - **Grid:**
+    - Range is 3 tiles with line of sight, and a throw always lands on the tile (no roll).
+    - `target` effects hit whoever is standing there.
+    - `all_enemies` effects hit the 3×3 around the tile, including you if you're inside it (a molotov at your feet is your problem).
+    - A consumable with a `hazard` field leaves that hazard in a `single`, `plus` or `square` shape. It replaces any hazard already there and never lands on an obstacle.
+    - With no target given, it picks the nearest enemy you can hit.
+  - **Bands:** `target` hits the named (or first) enemy, `all_enemies` hits them all, and hazards are ignored.
+  - **`use`** on a throwable in a grid fight means throwing it at the nearest target.
+  - **Hazard throwables:** caltrops (jacks, the caltrop pouch), marbles (ball bearings, the bag of marbles), oil (lotion), glue (superglue, glue trap), trip wire, smoke (blocks sight, 3 rounds), and fire (molotov 3×3, aerosol torch, lighter fluid; 3 rounds).
+- **`dash <tile>`** (grid): move up to your remaining movement plus your speed again; it ends the turn.
+- **`defend`**: the new `braced` status gives +4 defense and blocks shoves. Its new `endsOnTurnStart` flag drops it when your next turn begins.
+- **Loose junk on the board.** The room's floor items, plus 0-2 scrap from the theme's `arena.scrap` table, are scattered on free tiles when a grid fight starts.
+  - `take` (or tapping the tile) picks up something on your tile or an adjacent one, for 1 tile of movement. It's refused if you can't carry it.
+  - `wield` readies a weapon for another tile of movement.
+  - When the fight ends, whatever is still on the board goes back on the room's floor.
+- **Buttons:** Shove, Throw <item> (the first two throwables) and Dash carry `targets`, so they arm and wait for a tile. Defend is a plain button. Take buttons appear for junk within reach.
+- **Snapshot** (300 runs each):
+
+  | Mode | Clear rate | Rounds per fight | Stuck |
+  | --- | --- | --- | --- |
+  | Grid | 39% | 4.6 | 0 |
+  | Bands | 37% | 4.9 | 0 |
+
+  The sim doesn't shove, throw or craft yet.

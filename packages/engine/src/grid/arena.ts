@@ -16,7 +16,7 @@
 import type { Content } from "../content/load";
 import type { FloorTheme, RoomShape } from "../content/schemas";
 import { int, pick, shuffle, weightedPick } from "../rng";
-import { DIRS, type ArenaExit, type ArenaState, type Dir, type Enemy, type Pos, type Room } from "../state";
+import { DIRS, type ArenaExit, type ArenaState, type Dir, type Enemy, type ItemInstance, type Pos, type Room } from "../state";
 import { allTiles, blocksMove, dist, index, inBounds, pathField, same } from "./geometry";
 
 const SIZES: Record<RoomShape, [number, number]> = { corridor: [9, 4], small: [6, 6], chamber: [8, 8] };
@@ -55,6 +55,8 @@ export interface ArenaPlan {
   enemies: Enemy[];
   /** Enemies that won initiative spawn close. */
   ambushers: Set<string>;
+  /** Loose junk to scatter on the floor (the room's items, plus scrap). */
+  items?: ItemInstance[];
 }
 
 export function buildArena(plan: ArenaPlan, content: Content): ArenaState {
@@ -161,6 +163,13 @@ function layout(plan: ArenaPlan, content: Content, furnish: boolean): ArenaState
     e.pos = { ...p };
     taken.add(index(a, p));
     if (!ambushers.has(e.uid)) last = p;
+  }
+  // loose junk: each stack on its own free tile
+  for (const item of plan.items ?? []) {
+    const spots = open().filter((p) => !a.items.some((it) => same(it, p)));
+    if (spots.length === 0) break;
+    const p = pick(spots);
+    a.items.push({ x: p.x, y: p.y, item });
   }
   return a;
 }

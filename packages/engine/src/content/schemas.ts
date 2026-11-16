@@ -225,6 +225,12 @@ export const ConsumableSchema = z.strictObject({
   value: z.number().min(0),
   generate: z.boolean().default(true),
   tags: z.array(z.string()).default([]),
+  /** Grid fights: thrown, it leaves this arena hazard behind (bands mode just applies the effects). */
+  hazard: z.strictObject({
+    id: IdSchema,
+    /** single tile, a plus of five, or the 3x3 square. */
+    shape: z.enum(["single", "plus", "square"]).default("single"),
+  }).optional(),
 });
 export type Consumable = z.infer<typeof ConsumableSchema>;
 
@@ -329,6 +335,8 @@ export const FloorThemeSchema = z.strictObject({
     obstacles: WeightedIdsSchema.default([]),
     terrain: WeightedIdsSchema.default([]),
     hazards: WeightedIdsSchema.default([]),
+    /** Loot table for 0-2 extra pickups lying on the board (pipes, glass). */
+    scrap: IdSchema.optional(),
   }).prefault({}),
   /**
    * Encounter makeup. Ordinary fights are packs of weak minions (possibly two

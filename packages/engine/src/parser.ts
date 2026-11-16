@@ -3,7 +3,9 @@ import type { Content } from "./content/load";
 import { minorLimit } from "./combat";
 import { isAllowed } from "./step";
 import { COMBAT_MODES, type CombatMode, type Dir, type World } from "./state";
-import { DIR8, parseCoord, type Dir8 } from "./grid/geometry";
+import { allTiles, coord, DIR8, dist, index, occupied, parseCoord, pathField, type Dir8 } from "./grid/geometry";
+import { isThrowable, throwTargets } from "./maneuvers";
+import { speedOf } from "./grid/units";
 
 export type ParseResult = { ok: true; action: Action } | { ok: false; reason: "empty" | "unknown"; input: string };
 
@@ -32,6 +34,10 @@ const VERBS: Record<string, string> = {
   use: "use", drink: "use", eat: "use", quaff: "use",
   wait: "wait", pass: "wait", end: "wait",
   take: "take", get: "take", grab: "take", pick: "take", pocket: "take",
+  shove: "shove", push: "shove", barge: "shove", kick: "shove",
+  throw: "throw", toss: "throw", chuck: "throw", lob: "throw", hurl: "throw",
+  dash: "dash", sprint: "dash", charge: "dash",
+  defend: "defend", brace: "defend", block: "defend", guard: "defend",
   drop: "drop", discard: "drop", ditch: "drop",
   equip: "equip", wield: "equip", wear: "equip", hold: "equip", ready: "equip",
   unequip: "unequip", remove: "unequip", doff: "unequip", unwield: "unequip",
@@ -137,6 +143,20 @@ export function parseCommand(input: string, world: World): ParseResult {
       return { ok: true, action: { type: "newCrawler" } };
     case "wait":
       return { ok: true, action: { type: "wait" } };
+    case "shove":
+      return { ok: true, action: arg ? { type: "shove", target: arg } : { type: "shove" } };
+    case "throw": {
+      const at = / at (.+)$/.exec(arg);
+      const item = at ? arg.slice(0, at.index) : arg;
+      if (!item) return { ok: false, reason: "unknown", input: text };
+      return { ok: true, action: at ? { type: "throw", item, at: at[1]! } : { type: "throw", item } };
+    }
+    case "dash": {
+      const to = parseTileRef(arg);
+      return to ? { ok: true, action: { type: "dash", to } } : { ok: false, reason: "unknown", input: text };
+    }
+    case "defend":
+      return { ok: true, action: { type: "defend" } };
     case "take": {
       const what = arg.replace(/^up /, "").replace(/^the /, "");
       if (!what) return { ok: false, reason: "unknown", input: text };
@@ -201,8 +221,38 @@ export function availableCommands(world: World, content: Content): CommandOption
     }
     if (foes.some((e) => e.talkable)) out.push({ label: "Talk", input: "talk" });
     const crawler = world.game.crawler;
-    const potion = crawler?.inventory.find((i) => i.kind === "consumable" && i.tags.includes("healing"));
+    const potion = crawler?.inventory.find((i) => i.kind === "consumable" && i.tags.includes("healing") &&
+      content.items.consumables.byId[i.baseId]?.usableInCombat !== false);
     if (potion) out.push({ label: `Use ${potion.name}`, input: `use ${potion.name.toLowerCase()}` });
+    const throwables = (crawler?.inventory ?? []).filter((i) => {
+      const def = i.kind === "consumable" ? content.items.consumables.byId[i.baseId] : undefined;
+      return def && isThrowable(def) && (def.usableInCombat || def.hazard);
+    });
+    if (grid) {
+      const a = combat.arena!;
+      const live = foes.filter((e) => e.pos);
+      out.push({ label: "Shove", input: "shove", targets: live.map((e) => coord(e.pos!)) });
+      const throwAt = throwTargets(a, content).map(coord);
+      for (const t of throwables.slice(0, 2)) {
+        out.push({ label: `Throw ${t.name}`, input: `throw ${t.name.toLowerCase()} at`, targets: throwAt });
+      }
+      const budget = (combat.turnBegun ? a.moveLeft : speedOf(crawler!, content)) + speedOf(crawler!, content);
+      const field = pathField(a, content, a.crawler, { blocked: (p) => occupied(combat, p, "crawler") });
+      const dashTo = allTiles(a).filter((p) => {
+        const c = field.cost[index(a, p)]!;
+        return c > 0 && c <= budget;
+      }).map(coord);
+      if (dashTo.length) out.push({ label: "Dash", input: "dash", targets: dashTo });
+      const canStoop = !combat.turnBegun || a.moveLeft > 0;
+      for (const it of a.items.filter((n) => dist(n, a.crawler) <= 1).slice(0, 2)) {
+        if (canStoop) out.push({ label: `Take ${it.item.name}`, input: `take ${it.item.name.toLowerCase()}` });
+      }
+    } else {
+      const first = foes[0];
+      if (first && first.range === "close") out.push({ label: `Shove ${first.name}`, input: `shove ${first.name.toLowerCase()}` });
+      for (const t of throwables.slice(0, 2)) out.push({ label: `Throw ${t.name}`, input: `throw ${t.name.toLowerCase()}` });
+    }
+    out.push({ label: "Defend", input: "defend" });
     out.push({ label: "Wait", input: "wait" });
     out.push({ label: "Flee", input: "flee" });
   }

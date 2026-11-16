@@ -11,7 +11,8 @@ import {
 } from "./combat";
 import { gridAdvance, gridMove, gridRetreat } from "./grid/play";
 import { seedFloorLoot } from "./gen/loot";
-import { addToPile, dropItem, equipItem, takeItems, unequipItem } from "./inventory";
+import { addToPile, dropItem, equipItem, findItems, takeItems, unequipItem } from "./inventory";
+import { gridDash, isThrowable, playerDefend, playerShove, playerThrow, takeInArena } from "./maneuvers";
 import { renderArena } from "./grid/view";
 import { narrate } from "./narrate/narrator";
 import { derive } from "./rules/derived";
@@ -91,6 +92,9 @@ export const HELP_LINES = [
   "descend              take a stairwell down, ending the floor",
   "attack [name]        in combat; also: advance / retreat / flee / talk / wait",
   "move c4 / move ne 2  grid fights: walk to a tile, or steps in a direction (n ne e se s sw w nw)",
+  "shove [name]         push something a tile (into the caltrops, ideally) or a band",
+  "throw <item> at <x>  thrown junk; on the board, at a tile or enemy within 3",
+  "dash c4 / defend     run twice as far (ends turn) / brace: +4 defense until your turn",
   "use <item>           drink or eat something from your pack",
   "take <item> / take all   pick things up (weight limit applies); drop <item>",
   "equip <item> / unequip   wield or wear gear (mid-fight: costs your move or minor action)",
@@ -228,9 +232,15 @@ const handlers: Handlers = {
     run(ctx, action) {
       const c = ctx.crawler;
       const name = action.item.toLowerCase();
-      const item = c.inventory.find((i) => i.kind === "consumable" && i.name.toLowerCase().includes(name));
+      const item = findItems(c.inventory.filter((i) => i.kind === "consumable"), name)[0];
       if (!item) {
         ctx.error(`You don't have anything like "${action.item}".`);
+        return;
+      }
+      // On the board, using something you'd throw means throwing it at the nearest target.
+      const def = ctx.content.items.consumables.byId[item.baseId];
+      if (isGrid(ctx) && def && isThrowable(def) && (def.hazard || def.effects.some((e) => e.target === "target" || e.target === "all_enemies"))) {
+        playerThrow(ctx, item);
         return;
       }
       playerUseItem(ctx, item);
@@ -312,9 +322,44 @@ const handlers: Handlers = {
     },
   },
   take: {
-    phases: ["exploring"],
+    phases: ["exploring", "combat"],
     run(ctx, action) {
-      takeItems(ctx, action.item);
+      if (ctx.game.phase !== "combat") return takeItems(ctx, action.item);
+      if (beginTurn(ctx)) takeInArena(ctx, action.item);
+    },
+  },
+  shove: {
+    phases: ["combat"],
+    run(ctx, action) {
+      const target = action.target ? findEnemy(ctx, action.target) : aliveEnemies(ctx)[0];
+      if (!target) {
+        ctx.error(action.target ? `Nothing here called "${action.target}".` : "Nothing left to shove.");
+        return;
+      }
+      playerShove(ctx, target);
+    },
+  },
+  throw: {
+    phases: ["exploring", "combat"],
+    run(ctx, action) {
+      const item = findItems(ctx.crawler.inventory.filter((i) => i.kind === "consumable"), action.item)[0];
+      if (!item) {
+        ctx.error(`You don't have anything like "${action.item}" to throw.`);
+        return;
+      }
+      playerThrow(ctx, item, action.at);
+    },
+  },
+  dash: {
+    phases: ["combat"],
+    run(ctx, action) {
+      if (beginTurn(ctx)) gridDash(ctx, action.to);
+    },
+  },
+  defend: {
+    phases: ["combat"],
+    run(ctx) {
+      if (beginTurn(ctx)) playerDefend(ctx);
     },
   },
   drop: {

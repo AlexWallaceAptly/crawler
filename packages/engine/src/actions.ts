@@ -20,6 +20,10 @@ export type Action =
   | { type: "talk" }
   | { type: "use"; item: string }
   | { type: "wait" }
+  | { type: "shove"; target?: string }
+  | { type: "throw"; item: string; at?: string }
+  | { type: "dash"; to: TileRef }
+  | { type: "defend" }
   | { type: "take"; item: string }
   | { type: "drop"; item: string }
   | { type: "equip"; item: string }
