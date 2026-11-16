@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Engine, ViewModel } from "@crawler/engine";
+import type { CommandOption, Engine } from "@crawler/engine";
 import { useGame } from "./useGame";
 import { eventsFor } from "./router";
 import { readPref, writePref } from "./storage";
@@ -10,6 +10,7 @@ import { CharacterSheet, EffectsList, EquipmentList, InventoryList, MiniMap } fr
 import { StatusBar } from "./panels/StatusBar";
 import { Ticker } from "./panels/Ticker";
 import { InputBar } from "./panels/InputBar";
+import { BattleGrid } from "./panels/BattleGrid";
 import s from "./App.module.css";
 
 function useNarrow(query = "(max-width: 899px)") {
@@ -29,6 +30,10 @@ export function App({ engine }: { engine: Engine }) {
   const narrow = useNarrow();
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [split, setSplit] = useState<boolean>(() => readPref("combatSplit", false));
+  /** A grid command waiting for the player to pick a tile. */
+  const [armed, setArmed] = useState<CommandOption | null>(null);
+  useEffect(() => setArmed(null), [view.phase, world.game.turn]);
+  const otherMode = view.settings.combatMode === "grid" ? "bands" : "grid";
 
   const log = useMemo(() => eventsFor("log", world.game.log), [world.game.log]);
   const battle = useMemo(() => eventsFor("battle", world.game.log), [world.game.log]);
@@ -54,7 +59,10 @@ export function App({ engine }: { engine: Engine }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setInventoryOpen(false);
+      if (e.key === "Escape") {
+        setInventoryOpen(false);
+        setArmed(null);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -70,6 +78,8 @@ export function App({ engine }: { engine: Engine }) {
         commands={commands}
         submit={submit}
         onLocal={onLocal}
+        armed={armed}
+        setArmed={setArmed}
       />
     );
   }
@@ -89,6 +99,9 @@ export function App({ engine }: { engine: Engine }) {
               </button>
             )}
           >
+            {view.combat?.grid && (
+              <BattleGrid view={view} submit={submit} armed={armed} onArmedDone={() => setArmed(null)} />
+            )}
             <EnemyStrip view={view} />
             <LogView events={battle} />
           </Panel>
@@ -97,7 +110,17 @@ export function App({ engine }: { engine: Engine }) {
           </Panel>
         </>
       ) : (
-        <Panel id="log" title="Event log" collapsible={false} className={s.grow}>
+        <Panel
+          id="log"
+          title="Event log"
+          collapsible={false}
+          className={s.grow}
+          extra={view.character && (
+            <button className={s.linkBtn} title="How the next fight plays" onClick={() => submit(`set combat ${otherMode}`)}>
+              combat: {view.settings.combatMode} ⇄
+            </button>
+          )}
+        >
           <LogView events={log} />
         </Panel>
       )}
@@ -144,6 +167,8 @@ export function App({ engine }: { engine: Engine }) {
         commands={commands}
         onSubmit={submit}
         onLocal={onLocal}
+        onArm={setArmed}
+        armed={armed}
         extraButtons={view.character ? [{ label: inventoryOpen ? "Close inventory" : "Inventory", input: "inventory" }] : []}
       />
     </div>

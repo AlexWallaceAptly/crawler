@@ -8,9 +8,12 @@ interface Props {
   /** Client-side commands (inventory overlay etc). Return true if handled. */
   onLocal: (text: string) => boolean;
   extraButtons?: CommandOption[];
+  /** Grid fights: buttons that need a tile arm instead of submitting. */
+  onArm?: (c: CommandOption | null) => void;
+  armed?: CommandOption | null;
 }
 
-export function InputBar({ commands, onSubmit, onLocal, extraButtons = [] }: Props) {
+export function InputBar({ commands, onSubmit, onLocal, extraButtons = [], onArm, armed }: Props) {
   const [text, setText] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [cursor, setCursor] = useState(-1);
@@ -66,8 +69,12 @@ export function InputBar({ commands, onSubmit, onLocal, extraButtons = [] }: Pro
       </form>
       <div className={s.buttons}>
         {[...commands, ...extraButtons].map((c) => (
-          <button key={c.label} className={`${s.btn} ${c.primary ? s.primary : ""}`} onClick={() => run(c.input)}>
-            {c.label}
+          <button
+            key={c.label}
+            className={`${s.btn} ${c.primary || armed?.label === c.label ? s.primary : ""}`}
+            onClick={() => (c.targets && onArm ? onArm(armed?.label === c.label ? null : c) : run(c.input))}
+          >
+            {c.label}{c.targets && onArm ? " ⌖" : ""}
           </button>
         ))}
       </div>

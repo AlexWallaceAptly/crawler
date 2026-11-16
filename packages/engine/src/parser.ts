@@ -154,6 +154,11 @@ export interface CommandOption {
   input: string;
   /** Visual emphasis for the primary choice. */
   primary?: boolean;
+  /**
+   * Grid fights: this command needs a tile. Clicking the button arms it, and
+   * tapping one of these coordinates submits `${input} ${coord}`.
+   */
+  targets?: string[];
 }
 
 /** Every valid command for the current state, shown as clickable buttons. */

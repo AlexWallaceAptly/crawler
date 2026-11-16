@@ -1,0 +1,191 @@
+/* The grid-combat board: a CSS grid of layered tiles (floor, door, feature, hazard, item, unit). */
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+}
+.board {
+  --label: 14px;
+  /* fit the width on phones, the height on short screens, never huge */
+  --cell: min(calc((100vw - 40px) / var(--cols)), calc(42dvh / var(--rows)), 56px);
+  display: grid;
+  gap: 1px;
+  padding: 4px;
+  border: 2px solid var(--border-hi);
+  background: #070806;
+  image-rendering: pixelated;
+  user-select: none;
+}
+.label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--faint);
+}
+.cell {
+  position: relative;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  width: var(--cell);
+  height: var(--cell);
+  background: #151a12;
+  overflow: hidden;
+  cursor: default;
+  font-family: var(--font);
+  touch-action: manipulation;
+}
+.cell:nth-child(odd) {
+  background: #13170f;
+}
+.tappable {
+  cursor: pointer;
+}
+.floor,
+.layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+.layer {
+  object-fit: contain;
+}
+.item {
+  inset: 22%;
+  width: 56%;
+  height: 56%;
+}
+.glyph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--cell) * 0.55);
+  line-height: 1;
+  pointer-events: none;
+}
+.feature {
+  color: var(--dim);
+  background: rgba(255, 255, 255, 0.04);
+}
+.hazard {
+  color: var(--danger);
+  opacity: 0.85;
+}
+.door {
+  color: var(--system);
+  font-weight: bold;
+}
+.itemGlyph {
+  color: var(--rarity-legendary);
+  font-size: calc(var(--cell) * 0.4);
+}
+
+/* highlights: the engine marks these; we only paint them */
+.move::after,
+.attack::after,
+.target::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.move::after {
+  background: rgba(95, 215, 215, 0.13);
+  box-shadow: inset 0 0 0 1px rgba(95, 215, 215, 0.35);
+}
+.attack::after {
+  box-shadow: inset 0 0 0 2px var(--danger);
+}
+.target::after {
+  background: rgba(255, 176, 0, 0.2);
+  box-shadow: inset 0 0 0 2px var(--system);
+}
+.dimmed {
+  filter: brightness(0.55);
+}
+.cell:hover.tappable::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.06);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* units */
+.unit {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.unitImg {
+  position: absolute;
+  inset: 4%;
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.unitGlyph {
+  font-weight: bold;
+}
+.you .unitGlyph {
+  color: var(--system);
+}
+.foe .unitGlyph {
+  color: var(--danger);
+}
+.elite {
+  box-shadow: inset 0 0 0 2px var(--rarity-legendary);
+}
+.mark {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  font-size: max(9px, calc(var(--cell) * 0.22));
+  font-weight: bold;
+  color: var(--text);
+  text-shadow: 0 0 2px #000, 0 0 2px #000;
+}
+.status {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  font-size: max(8px, calc(var(--cell) * 0.2));
+  color: var(--xp);
+  text-shadow: 0 0 2px #000;
+}
+.hp {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 3px;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.7);
+}
+.hp > span {
+  display: block;
+  height: 100%;
+}
+.hpOk {
+  background: var(--good);
+}
+.hpLow {
+  background: var(--danger);
+}
+.hint {
+  font-size: 11px;
+  color: var(--dim);
+  text-align: center;
+  padding: 0 8px;
+}

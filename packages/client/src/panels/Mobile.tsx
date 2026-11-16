@@ -9,6 +9,7 @@ import { EnemyStrip, LogView } from "./LogView";
 import { CharacterSheet, EffectsList, EquipmentList, InventoryList } from "./Sheets";
 import { InputBar } from "./InputBar";
 import { MiniMapGrid } from "./MiniMapGrid";
+import { BattleGrid } from "./BattleGrid";
 import s from "./mobile.module.css";
 
 type Screen = "map" | "log" | "battle" | "character" | "equipment" | "effects" | "inventory";
@@ -31,9 +32,11 @@ interface ShellProps {
   commands: CommandOption[];
   submit: (text: string) => void;
   onLocal: (text: string) => boolean;
+  armed: CommandOption | null;
+  setArmed: (c: CommandOption | null) => void;
 }
 
-export function MobileShell({ view, log, battle, commands, submit, onLocal }: ShellProps) {
+export function MobileShell({ view, log, battle, commands, submit, onLocal, armed, setArmed }: ShellProps) {
   const [screen, setScreen] = useState<Screen>("map");
   const [menuOpen, setMenuOpen] = useState(false);
   const inCombat = view.phase === "combat";
@@ -83,11 +86,22 @@ export function MobileShell({ view, log, battle, commands, submit, onLocal }: Sh
               {m.label}
             </button>
           ))}
+          <button
+            className={s.menuItem}
+            onClick={() => {
+              submit(`set combat ${view.settings.combatMode === "grid" ? "bands" : "grid"}`);
+              setMenuOpen(false);
+            }}
+          >
+            Combat: {view.settings.combatMode === "grid" ? "Grid" : "Bands"} ⇄
+          </button>
         </nav>
       )}
 
       {current === "map" && <NavView view={view} log={log} commands={commands} submit={submit} />}
-      {current === "battle" && <BattleView view={view} battle={battle} commands={commands} submit={submit} />}
+      {current === "battle" && (
+        <BattleView view={view} battle={battle} commands={commands} submit={submit} armed={armed} setArmed={setArmed} />
+      )}
       {current === "log" && (
         <div className={s.logScreen}>
           <div className={s.logScroll}>
@@ -175,20 +189,35 @@ function DirBtn({ cmd, glyph, name, submit }: { cmd?: CommandOption; glyph: stri
   );
 }
 
-/** Combat on a phone: enemies up top, the blow-by-blow, and big thumb buttons. */
-function BattleView({ view, battle, commands, submit }: { view: ViewModel; battle: GameEvent[]; commands: CommandOption[]; submit: (t: string) => void }) {
+interface BattleProps {
+  view: ViewModel;
+  battle: GameEvent[];
+  commands: CommandOption[];
+  submit: (t: string) => void;
+  armed: CommandOption | null;
+  setArmed: (c: CommandOption | null) => void;
+}
+
+/** Combat on a phone: the board (grid mode) or the enemy strip, the blow-by-blow, and big thumb buttons. */
+function BattleView({ view, battle, commands, submit, armed, setArmed }: BattleProps) {
+  const grid = !!view.combat?.grid;
   return (
     <div className={s.battle}>
+      {grid && <BattleGrid view={view} submit={submit} armed={armed} onArmedDone={() => setArmed(null)} />}
       <EnemyStrip view={view} />
       <div className={s.feedGrow}>
-        <LogView events={battle} tail={60} />
+        <LogView events={battle} tail={grid ? 20 : 60} />
       </div>
       <div className={s.battleButtons}>
         {commands
           .filter((c) => !["help", "map", "look"].includes(c.input))
           .map((c) => (
-            <button key={c.label} className={`${s.ctxBtn} ${c.primary ? s.ctxPrimary : ""}`} onClick={() => submit(c.input)}>
-              {c.label}
+            <button
+              key={c.label}
+              className={`${s.ctxBtn} ${c.primary || armed?.label === c.label ? s.ctxPrimary : ""}`}
+              onClick={() => (c.targets ? setArmed(armed?.label === c.label ? null : c) : submit(c.input))}
+            >
+              {c.label}{c.targets ? " ⌖" : ""}
             </button>
           ))}
       </div>

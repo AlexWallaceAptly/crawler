@@ -7,6 +7,7 @@ import { formatTimer, mapGrid, renderMap, roomBadge, type MapGrid } from "./expl
 import { derive, xpToNext } from "./rules/derived";
 import { combatModeOf, EQUIP_SLOTS, type CombatMode, type EquipSlot, type Phase, type World } from "./state";
 import { gridView, type GridView } from "./grid/view";
+import { coord } from "./grid/geometry";
 import type { RangeBand } from "./content/schemas";
 
 export interface Bar {
@@ -58,7 +59,7 @@ export interface ViewModel {
     mode: CombatMode;
     /** Grid fights: the board, with every tap and highlight decided by the engine. */
     grid?: GridView;
-    enemies: { uid: string; name: string; hp: Bar; range: string; statuses: string[]; elite: boolean; tier: string; mark?: string }[];
+    enemies: { uid: string; name: string; hp: Bar; range: string; statuses: string[]; elite: boolean; tier: string; mark?: string; at?: string }[];
   };
   minimap: string[] | null;
   /** Structured map for the tile minimap; `minimap` stays as the text/fallback form. */
@@ -173,6 +174,7 @@ export function view(world: World, content: Content): ViewModel {
               elite: e.tier === "elite",
               tier: e.tier,
               ...(e.mark ? { mark: e.mark } : {}),
+              ...(e.pos ? { at: coord(e.pos) } : {}),
             })),
         }
       : null,

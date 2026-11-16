@@ -215,3 +215,18 @@ Inserted before Milestone 5 at the player's request (see the build-order row in 
   | Bands | 41% | 4.9 | 15.4 | 24% | 0 |
 
   Grid crawlers die more to "their own wounds": fleeing on a board takes several turns of walking while bleeding. Worth tuning once hazards and crafting land.
+
+### Grid combat client
+
+- **The board** (`BattleGrid.tsx`) is a CSS grid of layered tiles: floor variant, door, feature, hazard, loose item, then the unit (with an HP pip, its A/B/C mark, a status count, and a gold outline for elites).
+  - **Highlights come from the engine.** Walkable tiles are teal and hittable enemies have a red outline. The client paints flags; it never computes them.
+  - **Tapping** submits the tile's `tap` command. Column and row labels make typed coordinates discoverable.
+  - **Placement.** It sits above the enemy strip in the desktop battle panel. On phones it heads the battle screen, with a shorter log.
+- **Sprites.** `Sprite.tsx` replaces the minimap's `Tile`.
+  - **Fallback chain.** It tries each path in order, then the glyph.
+  - **Failed URLs are remembered** module-wide, so a missing PNG costs one 404 per session rather than one per cell.
+  - **Fixes a minimap bug.** A cell no longer stays stuck on a glyph when its tile changes.
+  - **Combat art** lives in `public/combat/<folder>/<id>.png`, and `public/combat/README.md` is the manifest.
+- **Armed targeting.** A command with `targets` (the next phase's throw and shove) arms when clicked instead of submitting. Tapping a highlighted tile submits `<command> <coord>`, and tapping anywhere else or pressing Esc cancels. Every button is still command text.
+- **The combat toggle** is in the mobile corner menu and the desktop event-log header ("combat: grid ⇄"). Both submit `set combat …`.
+- Checked in headless Chrome at 1440×900 and 390×844 with no combat art (glyphs only). The board fits a phone without sideways scrolling, and tap-to-move, tap-to-attack and fleeing enemies all work end to end.

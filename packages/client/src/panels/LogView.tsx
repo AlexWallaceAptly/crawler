@@ -11,7 +11,7 @@ export function EnemyStrip({ view }: { view: ViewModel }) {
         <span key={e.uid}>
           <span className={e.elite ? s.enemyElite : s.enemyName}>{e.name}</span>{" "}
           <span className={s.enemyMeta}>
-            {e.hp.current}/{e.hp.max} · {e.range}
+            {e.hp.current}/{e.hp.max} · {e.at ? `${e.at} ${e.range}` : e.range}
             {e.statuses.length > 0 && ` · ${e.statuses.join(", ")}`}
           </span>
         </span>
