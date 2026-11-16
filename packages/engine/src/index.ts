@@ -18,3 +18,4 @@ export * from "./parser";
 export * from "./view";
 export * from "./engine";
 export { loadDefaultContent } from "./content/default";
+export type { GridView, GridTileView, GridUnitView } from "./grid/view";

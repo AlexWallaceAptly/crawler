@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  ArenaFeatureSchema,
   ConsumableSchema,
   EnemyFamilySchema,
   EnemyModSchema,
@@ -13,6 +14,7 @@ import {
   QuirkSchema,
   SkillSchema,
   StatusEffectSchema,
+  type ArenaFeature,
   type Consumable,
   type EnemyFamily,
   type EnemyMod,
@@ -43,6 +45,7 @@ export const CONTENT_FILES = {
   "backstory/names.json": NamesSchema,
   "items/bases.json": z.array(ItemBaseSchema),
   "items/consumables.json": z.array(ConsumableSchema),
+  "arenaFeatures.json": z.array(ArenaFeatureSchema),
 } as const;
 
 export type ContentFileName = keyof typeof CONTENT_FILES;
@@ -74,6 +77,7 @@ export interface Content {
     bases: Table<ItemBase>;
     consumables: Table<Consumable>;
   };
+  arenaFeatures: Table<ArenaFeature>;
 }
 
 export class ContentError extends Error {
@@ -154,6 +158,7 @@ export function loadContent(raw: RawContent): Content {
       bases: table("items/bases.json", p["items/bases.json"], problems),
       consumables: table("items/consumables.json", p["items/consumables.json"], problems),
     },
+    arenaFeatures: table("arenaFeatures.json", p["arenaFeatures.json"], problems),
   };
 
   checkReferences(content, problems);
@@ -188,6 +193,30 @@ function checkReferences(c: Content, problems: string[]): void {
   for (const cons of c.items.consumables.all) {
     for (const e of cons.effects) {
       if (e.statusId) ref(`items/consumables.json "${cons.id}".effects`, "status", c.statusEffects.has(e.statusId), e.statusId);
+    }
+  }
+  for (const f of c.arenaFeatures.all) {
+    for (const eff of [f.enter, f.stay]) {
+      if (eff?.status) ref(`arenaFeatures.json "${f.id}"`, "status", c.statusEffects.has(eff.status.id), eff.status.id);
+    }
+  }
+  for (const t of c.floors.all) {
+    const kinds: [keyof typeof t.arena, string[]][] = [["obstacles", ["obstacle"]], ["terrain", ["terrain"]], ["hazards", ["hazard", "terrain"]]];
+    for (const [list, allowed] of kinds) {
+      for (const { id } of t.arena[list] as { id: string }[]) {
+        const f = c.arenaFeatures.byId[id];
+        if (!f) problems.push(`floors.json "${t.id}".arena.${list}: unknown arena feature "${id}"`);
+        else if (!allowed.includes(f.kind)) problems.push(`floors.json "${t.id}".arena.${list}: "${id}" is a ${f.kind}`);
+      }
+    }
+    for (const trap of t.trapTypes) {
+      if (trap.arenaHazard) ref(`floors.json "${t.id}".trapTypes "${trap.id}".arenaHazard`, "arena feature", c.arenaFeatures.has(trap.arenaHazard), trap.arenaHazard);
+      if (trap.status) ref(`floors.json "${t.id}".trapTypes "${trap.id}".status`, "status", c.statusEffects.has(trap.status.id), trap.status.id);
+    }
+  }
+  for (const e of c.enemies.all) {
+    for (const a of e.attacks) {
+      if (a.status) ref(`enemies.json "${e.id}".attacks "${a.name}"`, "status", c.statusEffects.has(a.status.id), a.status.id);
     }
   }
 }

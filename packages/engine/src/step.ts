@@ -6,9 +6,11 @@ import { generateCrawler, introContext } from "./gen/backstory";
 import { generateFloor } from "./gen/floor";
 import { advanceTime, clearFloor, enterRoom, formatTimer, renderMap, springTrap, tickTravelStatuses, TIME_COST } from "./explore";
 import {
-  aliveEnemies, combatSummary, findEnemy, maybeEncounter, playerAttack, playerFlee, playerStep, playerTalk,
-  playerUseItem, playerWait,
+  aliveEnemies, beginTurn, combatSummary, findEnemy, isGrid, maybeEncounter, playerAttack, playerFlee, playerStep,
+  playerTalk, playerUseItem, playerWait,
 } from "./combat";
+import { gridAdvance, gridMove, gridRetreat } from "./grid/play";
+import { renderArena } from "./grid/view";
 import { narrate } from "./narrate/narrator";
 import { derive } from "./rules/derived";
 import { LOG_LIMIT, type Crawler, type FloorState, type Phase, type Room, type World } from "./state";
@@ -86,6 +88,7 @@ export const HELP_LINES = [
   "sleep                safe rooms only (8 hours, full heal)",
   "descend              take a stairwell down, ending the floor",
   "attack [name]        in combat; also: advance / retreat / flee / talk / wait",
+  "move c4 / move ne 2  grid fights: walk to a tile, or steps in a direction (n ne e se s sw w nw)",
   "use <item>           drink or eat something from your pack",
   "accept / reroll      during crawler creation",
   "abandon              end this crawler's run (asks to confirm)",
@@ -142,7 +145,10 @@ const handlers: Handlers = {
     phases: ["exploring", "combat"],
     run(ctx) {
       if (ctx.game.phase === "combat") {
-        ctx.info("You're a little busy:", combatSummary(ctx));
+        const board = ctx.game.combat && isGrid(ctx)
+          ? [...renderArena(ctx.game.combat, ctx.content), "", "@ you   + door   capitals are elites", ""]
+          : [];
+        ctx.info("You're a little busy:", [...board, ...combatSummary(ctx)]);
         return;
       }
       const floor = ctx.game.floor;
@@ -185,13 +191,25 @@ const handlers: Handlers = {
   advance: {
     phases: ["combat"],
     run(ctx) {
-      playerStep(ctx, -1);
+      if (!isGrid(ctx)) return playerStep(ctx, -1);
+      if (beginTurn(ctx)) gridAdvance(ctx);
     },
   },
   retreat: {
     phases: ["combat"],
     run(ctx) {
-      playerStep(ctx, 1);
+      if (!isGrid(ctx)) return playerStep(ctx, 1);
+      if (beginTurn(ctx)) gridRetreat(ctx);
+    },
+  },
+  move: {
+    phases: ["combat"],
+    run(ctx, action) {
+      if (!isGrid(ctx)) {
+        ctx.error("No board in this fight: use advance or retreat. (`set combat grid` for the next one.)");
+        return;
+      }
+      if (beginTurn(ctx)) gridMove(ctx, action.to);
     },
   },
   talk: {

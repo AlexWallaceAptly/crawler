@@ -5,7 +5,9 @@ import type { Content } from "./content/load";
 import { STATS, type Stat } from "./content/schemas";
 import { formatTimer, mapGrid, renderMap, roomBadge, type MapGrid } from "./explore";
 import { derive, xpToNext } from "./rules/derived";
-import { EQUIP_SLOTS, type EquipSlot, type Phase, type World } from "./state";
+import { combatModeOf, EQUIP_SLOTS, type CombatMode, type EquipSlot, type Phase, type World } from "./state";
+import { gridView, type GridView } from "./grid/view";
+import type { RangeBand } from "./content/schemas";
 
 export interface Bar {
   current: number;
@@ -53,12 +55,16 @@ export interface ViewModel {
   effects: { name: string; kind: "buff" | "debuff"; remaining: number; stacks: number }[];
   combat: null | {
     round: number;
+    mode: CombatMode;
+    /** Grid fights: the board, with every tap and highlight decided by the engine. */
+    grid?: GridView;
     enemies: { uid: string; name: string; hp: Bar; range: string; statuses: string[]; elite: boolean; tier: string; mark?: string }[];
   };
   minimap: string[] | null;
   /** Structured map for the tile minimap; `minimap` stays as the text/fallback form. */
   mapGrid: MapGrid | null;
   account: { legacyPoints: number; rerolls: number; runs: number; deaths: number; bestFloor: number };
+  settings: { combatMode: CombatMode };
 }
 
 const SLOT_LABELS: Record<EquipSlot, string> = {
@@ -78,6 +84,7 @@ export function view(world: World, content: Content): ViewModel {
       phase: game.phase,
       status: { floor: null, district: null, timer: null, room: null, hp: null, mp: null, xp: null, level: null },
       character: null, equipment: [], inventory: [], effects: [], combat: null, minimap: null, mapGrid: null, account: accountView,
+      settings: { combatMode: combatModeOf(account) },
     };
   }
   const d = derive(c, content);
@@ -151,6 +158,10 @@ export function view(world: World, content: Content): ViewModel {
     combat: game.combat
       ? {
           round: game.combat.round,
+          mode: game.combat.mode,
+          ...(game.combat.arena && floor
+            ? { grid: gridView(game.combat, c, floor.theme, content, weaponReach(c)) }
+            : {}),
           enemies: game.combat.enemies
             .filter((e) => e.hp > 0)
             .map((e) => ({
@@ -168,5 +179,12 @@ export function view(world: World, content: Content): ViewModel {
     minimap: floor ? renderMap(floor) : null,
     mapGrid: floor ? mapGrid(floor) : null,
     account: accountView,
+    settings: { combatMode: combatModeOf(account) },
   };
+}
+
+function weaponReach(c: NonNullable<World["game"]["crawler"]>): RangeBand {
+  const uid = c.equipment.mainHand;
+  const w = uid ? c.inventory.find((i) => i.uid === uid) : undefined;
+  return (w?.damage && w.range) || "close";
 }

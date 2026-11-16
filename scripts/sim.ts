@@ -3,14 +3,24 @@
  * simple policy, and reports outcomes. This is the balance tool: extend the
  * policy as milestones add systems.
  *
- *   npm run sim            200 runs
- *   npm run sim -- 1000    more runs
+ *   npm run sim                      200 runs, the default combat mode
+ *   npm run sim -- 1000              more runs
+ *   npm run sim -- 500 --mode both   grid and bands side by side
  */
-import { createEngine, loadContent, bfsDistances, type World, type Dir, type GameEvent } from "../packages/engine/src/index";
+import { createEngine, loadContent, bfsDistances, type World, type Dir, type GameEvent, type CombatMode } from "../packages/engine/src/index";
 import { rawContent } from "../packages/content/index";
 
-const runs = Number(process.argv[2] ?? 200);
+const args = process.argv.slice(2);
+const flag = (name: string) => {
+  const i = args.indexOf(`--${name}`);
+  return i >= 0 ? args[i + 1] : undefined;
+};
+const runs = Number(args.find((a) => /^\d+$/.test(a)) ?? 200);
+const modeArg = flag("mode") ?? "default";
+const modes: (CombatMode | "default")[] = modeArg === "both" ? ["grid", "bands"] : [modeArg as CombatMode | "default"];
 const engine = createEngine(loadContent(rawContent as never));
+/** A fight that drags past this many rounds counts as stuck (AI or rules deadlock). */
+const MAX_ROUNDS = 60;
 
 interface Outcome {
   result: "cleared" | "died" | "stuck";
@@ -20,6 +30,9 @@ interface Outcome {
   xp: number;
   fights: number;
   level: number;
+  fightRounds: number[];
+  fightDamage: number[];
+  fled: number;
 }
 
 function hpPct(world: World): number {
@@ -44,23 +57,48 @@ function stepToward(world: World, target: number): Dir | undefined {
   return best?.dir;
 }
 
-function runOne(): Outcome {
+function runOne(mode: CombatMode | "default"): Outcome {
   let { world } = engine.newWorld();
+  if (mode !== "default") world.account.settings = { combatMode: mode };
   ({ world } = engine.step(world, { type: "accept" }));
   let fights = 0;
+  let fled = 0;
+  const fightRounds: number[] = [];
+  const fightDamage: number[] = [];
+  let fightStartHp = 0;
+  let lastRound = 0;
   let lastEvents: GameEvent[] = [];
   const act = (a: Parameters<typeof engine.step>[1]) => {
     const r = engine.step(world, a);
     world = r.world;
     lastEvents = r.events;
-    if (r.events.some((e) => e.type === "combatStarted")) fights++;
+    if (r.events.some((e) => e.type === "combatStarted")) {
+      fights++;
+      fightStartHp = world.game.crawler!.hp;
+    }
+    if (world.game.combat) lastRound = world.game.combat.round;
+    const ended = r.events.find((e) => e.type === "combatEnded" || e.type === "died");
+    if (ended && fightStartHp > 0) {
+      fightRounds.push(lastRound);
+      fightDamage.push(Math.max(0, fightStartHp - Math.max(0, world.game.crawler?.hp ?? 0)));
+      if (ended.type === "combatEnded" && ended.outcome === "fled") fled++;
+      fightStartHp = 0;
+      // a flee can walk straight into the next fight
+      if (world.game.combat) { fights++; fightStartHp = world.game.crawler!.hp; }
+    }
   };
+  const stuck = (cause: string, i: number): Outcome => ({
+    result: "stuck", cause, actions: i, roomsVisited: 0, xp: 0, fights, level: 1, fightRounds, fightDamage, fled,
+  });
 
-  for (let i = 0; i < 3000; i++) {
+  for (let i = 0; i < 4000; i++) {
     const phase = world.game.phase;
     if (phase === "dead") break;
 
     if (phase === "combat") {
+      if (world.game.combat!.round > MAX_ROUNDS) {
+        return stuck(`endless fight (${world.game.combat!.mode}): ${world.game.combat!.enemies.filter((e) => e.hp > 0).map((e) => `${e.name}:${e.hp}`).join(", ")}`, i);
+      }
       const heal = healItem(world);
       if (hpPct(world) < 0.45 && heal) act({ type: "use", item: heal });
       else if (hpPct(world) < 0.3) act({ type: "flee" });
@@ -85,15 +123,15 @@ function runOne(): Outcome {
       if (here.type === "stairwell") { act({ type: "descend" }); continue; }
       const stairs = floor.rooms.filter((r) => r.type === "stairwell")
         .sort((a, b) => dist[a.id]! - dist[b.id]!)[0];
-      if (!stairs) return { result: "stuck", cause: "no stairwell", actions: i, roomsVisited: 0, xp: 0, fights, level: 1 };
+      if (!stairs) return stuck("no stairwell", i);
       const dir = stepToward(world, stairs.id);
-      if (!dir) return { result: "stuck", cause: "no path", actions: i, roomsVisited: 0, xp: 0, fights, level: 1 };
+      if (!dir) return stuck("no path", i);
       act({ type: "go", dir });
       continue;
     }
     const target = unvisited.sort((a, b) => dist[a.id]! - dist[b.id]!)[0]!;
     const dir = stepToward(world, target.id);
-    if (!dir) return { result: "stuck", cause: "no path", actions: i, roomsVisited: 0, xp: 0, fights, level: 1 };
+    if (!dir) return stuck("no path", i);
     act({ type: "go", dir });
   }
 
@@ -110,26 +148,45 @@ function runOne(): Outcome {
     xp: c.xp,
     fights,
     level: c.level,
+    fightRounds,
+    fightDamage,
+    fled,
   };
 }
 
-const outcomes: Outcome[] = [];
-for (let i = 0; i < runs; i++) outcomes.push(runOne());
+const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+const summaries: { mode: string; clear: number; rounds: number; damage: number }[] = [];
 
-const cleared = outcomes.filter((o) => o.result === "cleared");
-const died = outcomes.filter((o) => o.result === "died");
-const stuck = outcomes.filter((o) => o.result === "stuck");
-const causes = new Map<string, number>();
-for (const o of died) causes.set(o.cause, (causes.get(o.cause) ?? 0) + 1);
-const avg = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : 0);
+for (const mode of modes) {
+  const outcomes: Outcome[] = [];
+  for (let i = 0; i < runs; i++) outcomes.push(runOne(mode));
 
-console.log(`\nFloor 1 sim — ${runs} runs`);
-console.log(`  cleared : ${cleared.length} (${Math.round((100 * cleared.length) / runs)}%)`);
-console.log(`  died    : ${died.length} (${Math.round((100 * died.length) / runs)}%)`);
-if (stuck.length) console.log(`  stuck   : ${stuck.length}  ← should be zero`);
-if (stuck.length) for (const o of stuck) console.log(`    ${o.cause}`);
-console.log(`  avg fights/run: ${avg(outcomes.map((o) => o.fights))}   avg xp: ${avg(outcomes.map((o) => o.xp))}   avg rooms: ${avg(outcomes.map((o) => o.roomsVisited))}`);
-console.log("  deaths by cause:");
-for (const [cause, n] of [...causes.entries()].sort((a, b) => b[1] - a[1])) {
-  console.log(`    ${String(n).padStart(4)}  ${cause}`);
+  const cleared = outcomes.filter((o) => o.result === "cleared");
+  const died = outcomes.filter((o) => o.result === "died");
+  const stuck = outcomes.filter((o) => o.result === "stuck");
+  const causes = new Map<string, number>();
+  for (const o of died) causes.set(o.cause, (causes.get(o.cause) ?? 0) + 1);
+  const rounds = outcomes.flatMap((o) => o.fightRounds);
+  const damage = outcomes.flatMap((o) => o.fightDamage);
+  const fights = outcomes.reduce((s, o) => s + o.fights, 0);
+  const fled = outcomes.reduce((s, o) => s + o.fled, 0);
+
+  console.log(`\nFloor 1 sim — ${runs} runs — combat: ${mode}`);
+  console.log(`  cleared : ${cleared.length} (${Math.round((100 * cleared.length) / runs)}%)`);
+  console.log(`  died    : ${died.length} (${Math.round((100 * died.length) / runs)}%)`);
+  if (stuck.length) console.log(`  stuck   : ${stuck.length}  ← should be zero`);
+  if (stuck.length) for (const o of stuck.slice(0, 10)) console.log(`    ${o.cause}`);
+  console.log(`  avg fights/run: ${avg(outcomes.map((o) => o.fights)).toFixed(1)}   avg xp: ${Math.round(avg(outcomes.map((o) => o.xp)))}   avg rooms: ${Math.round(avg(outcomes.map((o) => o.roomsVisited)))}`);
+  console.log(`  per fight: ${avg(rounds).toFixed(1)} rounds, ${avg(damage).toFixed(1)} damage taken, fled ${fights ? Math.round((100 * fled) / fights) : 0}%`);
+  console.log("  deaths by cause:");
+  for (const [cause, n] of [...causes.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)) {
+    console.log(`    ${String(n).padStart(4)}  ${cause}`);
+  }
+  summaries.push({ mode, clear: (100 * cleared.length) / runs, rounds: avg(rounds), damage: avg(damage) });
+}
+
+if (summaries.length === 2) {
+  const [a, b] = summaries as [typeof summaries[0], typeof summaries[0]];
+  const sign = (n: number) => (n >= 0 ? "+" : "") + n.toFixed(1);
+  console.log(`\n${a.mode} vs ${b.mode}: clear ${sign(a.clear - b.clear)} pts, rounds/fight ${sign(a.rounds - b.rounds)}, damage/fight ${sign(a.damage - b.damage)}`);
 }

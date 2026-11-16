@@ -21,6 +21,11 @@ import { killCrawler, type StepContext } from "./step";
 import {
   combatModeOf, type CombatMode, type Enemy, type ItemInstance, type Room, type StatusInstance,
 } from "./state";
+import { buildArena, entrySide } from "./grid/arena";
+import { coord, parseCoord, reaches } from "./grid/geometry";
+import { runEnemyTurnGrid } from "./grid/ai";
+import { approachTarget, gridFlee } from "./grid/play";
+import { ageHazards, crawlerSpeed, packBonus, standInHazard, syncBands } from "./grid/units";
 
 export const BAND: Record<RangeBand, number> = { close: 0, near: 1, far: 2 };
 export const BANDS: RangeBand[] = ["close", "near", "far"];
@@ -33,6 +38,10 @@ export function aliveEnemies(ctx: StepContext): Enemy[] {
 
 export function inCombat(ctx: StepContext): boolean {
   return ctx.game.phase === "combat" && ctx.game.combat !== null;
+}
+
+export function isGrid(ctx: StepContext): boolean {
+  return ctx.game.combat?.mode === "grid" && ctx.game.combat.arena !== undefined;
 }
 
 // ---------------------------------------------------------------- encounters
@@ -69,20 +78,34 @@ export function startCombat(ctx: StepContext, enemies: Enemy[], opts: StartOptio
   enemies.sort((a, b) => b.initiative - a.initiative);
   if (!enemies.some((e) => e.mark)) assignMarks(enemies);
 
+  const mode = opts.mode ?? combatModeOf(ctx.account);
+  const fromRoom = opts.fromRoom ?? floor.currentRoom;
   ctx.game.combat = {
-    mode: opts.mode ?? combatModeOf(ctx.account),
+    mode,
     enemies,
     round: 1,
     playerInitiative: playerInit,
     minorActionsUsed: 0,
     turnBegun: false,
-    fromRoom: opts.fromRoom ?? floor.currentRoom,
+    fromRoom,
   };
+  if (mode === "grid") {
+    const room = floor.rooms[floor.currentRoom]!;
+    ctx.game.combat.arena = buildArena({
+      room,
+      theme: ctx.content.floors.get(floor.theme),
+      entry: entrySide(room, fromRoom),
+      enemies,
+      ambushers: new Set(enemies.filter((e) => e.initiative > playerInit).map((e) => e.uid)),
+    }, ctx.content);
+    syncBands(ctx);
+  }
   ctx.setPhase("combat");
   ctx.emit({ type: "combatStarted", names: enemies.map((e) => e.name) });
   ctx.say("combat.start");
   for (const e of enemies) {
-    ctx.fight(`${e.name} — level ${e.level}${e.tier === "elite" ? " ELITE" : e.tier === "minion" ? " minion" : ""}, ${e.range} range.`, "enemy");
+    const at = e.pos ? `at ${coord(e.pos)}` : `${e.range} range`;
+    ctx.fight(`${e.name} — level ${e.level}${e.tier === "elite" ? " ELITE" : e.tier === "minion" ? " minion" : ""}, ${at}.`, "enemy");
   }
   // Ambush: anyone who beat your initiative gets their round-1 turn now.
   for (const e of enemies) {
@@ -131,6 +154,8 @@ function endOfRound(ctx: StepContext): void {
   }
   combat.minorActionsUsed = 0;
   combat.turnBegun = false;
+  if (combat.arena) combat.arena.moveLeft = 0;
+  ageHazards(ctx);
   combat.round += 1;
   advanceTime(ctx, TIME_COST.combatRound);
 }
@@ -153,6 +178,11 @@ export function beginTurn(ctx: StepContext): boolean {
     endCombat(ctx);
     killCrawler(ctx, "their own wounds");
     return false;
+  }
+  if (combat.arena) {
+    combat.arena.moveLeft = crawlerSpeed(ctx);
+    standInHazard(ctx, "crawler");
+    if (ctx.game.phase !== "combat") return false;
   }
   if (hasFlag(c.statuses, ctx.content, "skipTurn")) {
     ctx.fight("You are stunned and lose the turn.", "status");
@@ -204,6 +234,8 @@ export function playerWeapon(ctx: StepContext): WeaponProfile {
 
 /** Is the target inside this reach right now? Bands compare bands; the grid checks tiles and sight. */
 export function inReach(ctx: StepContext, target: Enemy, reach: RangeBand): boolean {
+  const a = ctx.game.combat?.arena;
+  if (a && target.pos) return reaches(a, ctx.content, a.crawler, target.pos, reach);
   return BAND[target.range] <= BAND[reach];
 }
 
@@ -227,7 +259,10 @@ export function playerAttack(ctx: StepContext, target: Enemy): void {
   }
 
   if (!inReach(ctx, target, w.reach)) {
-    if (canUseMinor(ctx)) {
+    if (isGrid(ctx)) {
+      approachTarget(ctx, target, w);
+      if (ctx.game.phase !== "combat") return;
+    } else if (canUseMinor(ctx)) {
       stepBands(ctx, -1);
       combat.minorActionsUsed += 1;
     }
@@ -297,7 +332,7 @@ export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfi
 export function damageEnemy(ctx: StepContext, e: Enemy, dmg: number, how: string): void {
   if (e.hp <= 0) return;
   e.hp -= dmg;
-  ctx.fight(`${how} — ${dmg} damage to the ${e.name}${e.hp > 0 ? ` (${e.hp}/${e.maxHP})` : ""}.`, "you");
+  ctx.fight(`${how} — ${dmg} damage${e.hp > 0 ? ` (${e.hp}/${e.maxHP})` : ""}.`, "you");
   if (e.hp <= 0) {
     ctx.fight(`The ${e.name} drops.`, "you");
     ctx.say("combat.kill", { target: e.name });
@@ -308,6 +343,10 @@ export function damageEnemy(ctx: StepContext, e: Enemy, dmg: number, how: string
 
 export function playerFlee(ctx: StepContext): void {
   if (!beginTurn(ctx)) return;
+  if (isGrid(ctx)) {
+    gridFlee(ctx);
+    return;
+  }
   const combat = ctx.game.combat!;
   if (fleeContest(ctx, aliveEnemies(ctx))) {
     leaveCombat(ctx, combat.fromRoom);
@@ -618,7 +657,10 @@ function applyEffectToEnemy(ctx: StepContext, en: Enemy, e: Effect, value: numbe
 
 /** Can this attack hit the crawler from where the enemy is right now? */
 export function attackUsable(ctx: StepContext, e: Enemy, a: LiveAttack): boolean {
-  return a.ready === 0 && BAND[e.range] <= BAND[a.range];
+  if (a.ready !== 0) return false;
+  const arena = ctx.game.combat?.arena;
+  if (arena && e.pos) return reaches(arena, ctx.content, e.pos, arena.crawler, a.range);
+  return BAND[e.range] <= BAND[a.range];
 }
 
 export function pickAttack(ctx: StepContext, e: Enemy, specialsOnly = false): LiveAttack | undefined {
@@ -630,7 +672,10 @@ export function pickAttack(ctx: StepContext, e: Enemy, specialsOnly = false): Li
 function enemyTurn(ctx: StepContext, e: Enemy): void {
   if (e.hp <= 0) return;
   try {
-    if (enemyTurnPreamble(ctx, e)) runEnemyTurnBands(ctx, e);
+    if (enemyTurnPreamble(ctx, e)) {
+      if (isGrid(ctx)) runEnemyTurnGrid(ctx, e);
+      else runEnemyTurnBands(ctx, e);
+    }
   } finally {
     for (const name of decrementStatuses(e.statuses, ctx.content)) {
       ctx.fight(`${e.name} is no longer ${name.toLowerCase()}.`, "status");
@@ -729,10 +774,11 @@ export function enemyStrike(ctx: StepContext, e: Enemy, attack: LiveAttack, opts
   const enemyMods = statusModifiers(e, ctx);
   const statMod = e.stats[attack.stat] + modTotal(enemyMods, `stat:${attack.stat}`);
   const nat = d20();
-  const hitMod = statMod + modTotal(enemyMods, "attack", "hit") + (opts.hitBonus ?? 0);
+  const pack = isGrid(ctx) ? packBonus(ctx, e) : 0;
+  const hitMod = statMod + modTotal(enemyMods, "attack", "hit") + (opts.hitBonus ?? 0) + pack;
   const total = nat + hitMod;
   const crit = nat === 20;
-  const note = opts.note ? ` ${opts.note}` : "";
+  const note = [opts.note, pack ? `(+${pack} pack)` : ""].filter(Boolean).map((n) => ` ${n}`).join("");
   const defense = d.defense + (hasFlag(c.statuses, ctx.content, "untargetable") ? 5 : 0);
   const hit = !hasFlag(c.statuses, ctx.content, "untargetable") && (crit || (nat !== 1 && total >= defense));
   if (!hit) {
@@ -812,10 +858,12 @@ function consumeFlaggedStatuses(statuses: StatusInstance[], ctx: StepContext, fl
   return removed;
 }
 
-/** Find a living enemy by (part of) its name. */
+/** Find a living enemy by (part of) its name, or by its tile ("d5") in grid fights. */
 export function findEnemy(ctx: StepContext, query: string): Enemy | undefined {
-  const q = query.toLowerCase();
+  const q = query.toLowerCase().trim();
   const foes = aliveEnemies(ctx);
+  const tile = parseCoord(q);
+  if (tile && ctx.game.combat?.arena) return foes.find((e) => e.pos && e.pos.x === tile.x && e.pos.y === tile.y);
   return foes.find((e) => e.name.toLowerCase() === q) ?? foes.find((e) => e.name.toLowerCase().includes(q));
 }
 
@@ -823,6 +871,7 @@ export function findEnemy(ctx: StepContext, query: string): Enemy | undefined {
 export function combatSummary(ctx: StepContext): string[] {
   return aliveEnemies(ctx).map((e) => {
     const st = e.statuses.map((s) => ctx.content.statusEffects.byId[s.id]?.name ?? s.id).join(", ");
-    return `${e.name}  ${e.hp}/${e.maxHP} HP  [${e.range}]${st ? `  (${st})` : ""}`;
+    const at = e.pos ? `${coord(e.pos)}, ${e.range}` : e.range;
+    return `${e.name}  ${e.hp}/${e.maxHP} HP  [${at}]${st ? `  (${st})` : ""}`;
   });
 }

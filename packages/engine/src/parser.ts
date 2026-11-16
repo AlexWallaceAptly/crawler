@@ -2,7 +2,8 @@ import type { Action } from "./actions";
 import type { Content } from "./content/load";
 import { minorLimit } from "./combat";
 import { isAllowed } from "./step";
-import { combatModeOf, COMBAT_MODES, type CombatMode, type Dir, type World } from "./state";
+import { COMBAT_MODES, type CombatMode, type Dir, type World } from "./state";
+import { DIR8, parseCoord, type Dir8 } from "./grid/geometry";
 
 export type ParseResult = { ok: true; action: Action } | { ok: false; reason: "empty" | "unknown"; input: string };
 
@@ -17,6 +18,8 @@ const VERBS: Record<string, string> = {
   go: "go", move: "go", walk: "go",
   north: "north", n: "north", east: "east", e: "east",
   south: "south", s: "south", west: "west", w: "west",
+  ne: "diag", nw: "diag", se: "diag", sw: "diag",
+  northeast: "diag", northwest: "diag", southeast: "diag", southwest: "diag",
   map: "map", m: "map",
   search: "search", loot: "search",
   rest: "rest", sleep: "sleep", nap: "sleep",
@@ -36,16 +39,55 @@ const DIR_WORDS: Record<string, Dir> = {
   south: "south", s: "south", west: "west", w: "west",
 };
 
+/** Grid directions, long or short. */
+const DIR8_WORDS: Record<string, Dir8> = {
+  n: "n", north: "n", ne: "ne", northeast: "ne", e: "e", east: "e", se: "se", southeast: "se",
+  s: "s", south: "s", sw: "sw", southwest: "sw", w: "w", west: "w", nw: "nw", northwest: "nw",
+};
+
+function inGridFight(world: World): boolean {
+  return world.game.phase === "combat" && world.game.combat?.mode === "grid" && world.game.combat.arena !== undefined;
+}
+
+/** "c4", "3 2" (x y, 1-based), "ne", "ne 2", "north 3". */
+function parseTileRef(arg: string): Extract<Action, { type: "move" }>["to"] | null {
+  const words = arg.split(" ").filter(Boolean);
+  if (words.length === 1) {
+    const tile = parseCoord(words[0]!);
+    if (tile) return tile;
+  }
+  if (words.length === 2 && /^\d+$/.test(words[0]!) && /^\d+$/.test(words[1]!)) {
+    return { x: Number(words[0]) - 1, y: Number(words[1]) - 1 };
+  }
+  const dir = DIR8_WORDS[words[0] ?? ""];
+  if (dir && words.length <= 2) {
+    const steps = words[1] === undefined ? 1 : Number(words[1]);
+    if (Number.isInteger(steps) && steps >= 1 && steps <= 9) return { dir, steps };
+  }
+  return null;
+}
+
 export function normalize(input: string): string {
   return input.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-export function parseCommand(input: string, _world: World): ParseResult {
+export function parseCommand(input: string, world: World): ParseResult {
   const text = normalize(input);
   if (text === "") return { ok: false, reason: "empty", input };
   const [rawVerb = "", ...rest] = text.split(" ");
   const verb = VERBS[rawVerb];
   const arg = rest.join(" ");
+  if (inGridFight(world)) {
+    // On the board, movement words walk tiles instead of rooms.
+    if (verb === "go") {
+      const to = parseTileRef(arg);
+      return to ? { ok: true, action: { type: "move", to } } : { ok: false, reason: "unknown", input: text };
+    }
+    if (verb === "north" || verb === "east" || verb === "south" || verb === "west" || verb === "diag") {
+      const to = parseTileRef(text);
+      if (to) return { ok: true, action: { type: "move", to } };
+    }
+  }
   switch (verb) {
     case "help":
       return { ok: true, action: { type: "help" } };
@@ -124,12 +166,19 @@ export function availableCommands(world: World, content: Content): CommandOption
   }
   if (phase === "dead") out.push({ label: "Next crawler", input: "new", primary: true });
   if (phase === "combat" && world.game.combat) {
-    const foes = world.game.combat.enemies.filter((e) => e.hp > 0);
+    const combat = world.game.combat;
+    const foes = combat.enemies.filter((e) => e.hp > 0);
+    const grid = combat.mode === "grid" && combat.arena;
     for (const e of foes.slice(0, 4)) {
       out.push({ label: `Attack ${e.name}`, input: `attack ${e.name.toLowerCase()}`, primary: foes.indexOf(e) === 0 });
     }
     const statuses = world.game.crawler?.statuses ?? [];
-    if (world.game.combat.minorActionsUsed < minorLimit(statuses, content)) {
+    if (grid) {
+      if (combat.arena!.moveLeft > 0 || !combat.turnBegun) {
+        out.push({ label: "Advance", input: "advance" });
+        out.push({ label: "Retreat", input: "retreat" });
+      }
+    } else if (combat.minorActionsUsed < minorLimit(statuses, content)) {
       if (foes.some((e) => e.range !== "close")) out.push({ label: "Advance", input: "advance" });
       if (foes.some((e) => e.range !== "far")) out.push({ label: "Retreat", input: "retreat" });
     }

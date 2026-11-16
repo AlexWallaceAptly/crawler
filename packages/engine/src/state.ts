@@ -15,7 +15,7 @@ export type Phase = "creation" | "exploring" | "combat" | "dead";
 export type CombatMode = "bands" | "grid";
 export const COMBAT_MODES: readonly CombatMode[] = ["grid", "bands"];
 /** Used when the account has never picked a mode. */
-export const DEFAULT_COMBAT_MODE: CombatMode = "bands";
+export const DEFAULT_COMBAT_MODE: CombatMode = "grid";
 
 export type EquipSlot = Exclude<Slot, "ring"> | "ring1" | "ring2";
 export const EQUIP_SLOTS: EquipSlot[] = [
@@ -150,6 +150,10 @@ export interface Enemy {
   mark?: string;
   /** Grid mode: tiles per turn. */
   speed: number;
+  /** Grid mode: where it stands. */
+  pos?: Pos;
+  /** Grid AI: turns in a row without closing in or attacking. */
+  stall?: number;
   stats: StatBlock;
   maxHP: number;
   hp: number;
@@ -170,6 +174,49 @@ export interface Enemy {
   fate?: "fled" | "pacified";
 }
 
+// ---------------------------------------------------------------- grid arenas
+
+export interface Pos {
+  x: number;
+  y: number;
+}
+
+/** A hazard on one tile. Placed ones (thrown caltrops, fire) may burn out. */
+export interface ArenaHazard extends Pos {
+  /** arenaFeatures.json id */
+  id: string;
+  /** Rounds left; undefined = lasts the fight. */
+  rounds?: number;
+}
+
+/** A door on the arena edge. Fleeing through it leaves the fight that way. */
+export interface ArenaExit extends Pos {
+  dir: Dir;
+  /** The door the crawler came in by; leads back to `fromRoom`. */
+  entry: boolean;
+}
+
+export interface ArenaItem extends Pos {
+  item: ItemInstance;
+}
+
+/**
+ * Grid mode's battlefield: a small board built from the room's shape when the
+ * fight starts. Thrown away when the fight ends (only loose items survive).
+ */
+export interface ArenaState {
+  w: number;
+  h: number;
+  /** Static feature id per tile, row-major (y * w + x); "" is plain floor. */
+  tiles: string[];
+  hazards: ArenaHazard[];
+  items: ArenaItem[];
+  exits: ArenaExit[];
+  crawler: Pos;
+  /** Movement points left this turn (the grid's minor action). */
+  moveLeft: number;
+}
+
 export interface CombatState {
   /** Fixed when the fight starts; changing the setting mid-fight only affects the next one. */
   mode: CombatMode;
@@ -186,6 +233,8 @@ export interface CombatState {
   turnBegun: boolean;
   /** Room the crawler came from; fleeing back the way you came lands there. */
   fromRoom: number;
+  /** Grid mode only. */
+  arena?: ArenaState;
 }
 
 export interface FloorState {

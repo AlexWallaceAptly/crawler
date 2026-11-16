@@ -147,3 +147,71 @@ Inserted before Milestone 5 at the player's request (see the build-order row in 
 - **Test flakes fixed along the way:**
   - The explore revisit test could walk into a lair, where the guaranteed elite fight blocked the walk back.
   - The initiative test used the random crawler's kit, so a missed ambush shifted the forced dice.
+
+### Grid combat engine
+
+- **Grid is the default** on this branch. A missing account setting means grid, and `set combat bands` switches back.
+- **Arenas are generated per fight from the room's shape**:
+
+  | Shape | Size | Obstacles |
+  | --- | --- | --- |
+  | Corridor | 9×4, or 4×9 when entered from north/south (the long axis follows you in) | 1-2 |
+  | Small | 6×6 | 1-3 |
+  | Chamber (also lairs and event rooms) | 8×8 | 3-6 |
+
+  - **Doors.** Each room exit gets one door tile in the middle of that edge; the one you came through is the entry.
+  - **No walls.** Obstacles are single-tile props, and the board edge is the wall. There's no wall auto-tiling, so the art list stays short.
+  - **Dressing.** 0-2 terrain patches of 1-3 tiles, plus 0-1 standing hazards. All of it comes from the theme's `arena` lists in `floors.json`, with features defined in the new `arenaFeatures.json`.
+  - **Reserved tiles.** Door tiles, the tile just inside each door, and spawns are never furnished.
+  - **Validation.** Every enemy and every door must be reachable from the crawler. If not, it rerolls up to 20 times, then drops the furniture.
+  - **Not cached.** Arenas aren't saved on the room, so a rematch gets a new board.
+  - **Trap rooms.** A trap type can name an `arenaHazard` for fights in that room. Trap rooms don't roll encounters yet, so it's groundwork.
+- **Spawns:**
+  - **You** start just inside the entry door. With no entry (tests), the middle of the west side.
+  - **Normal enemies** spawn at distance ≥ min(4, the farthest open tile − 1), clustered within 2 tiles of the previous one. Ranged families take the farthest tiles.
+  - **Enemies that won initiative** spawn 2-3 tiles away and still take their ambush turn.
+  - **Elites** take the farthest tile nearest the far centre.
+- **Geometry:**
+  - **Distance.** 8-way Chebyshev, so a diagonal costs 1. A diagonal step is blocked only when both orthogonal neighbours are obstacles.
+  - **Bands.** They come from distance: close ≤ 1, near 2-3, far 4+. Each enemy's `range` is re-synced after every move, so `attack.range`, item ranges, `EnemyStrip` and bands-written content keep working unchanged.
+  - **Line of sight.** Bresenham, symmetric, blocked only by `blocksSight` features (pillars, crates, smoke), never by units. Adjacent tiles always see each other. Anything beyond close range needs sight.
+  - **Pathing.** Dijkstra with a fixed neighbour order (orthogonals first). Ties between equally good tiles go through `rng.pick`.
+- **Turns.** SPEC's minor action becomes a movement budget:
+  - **Speed.** The crawler moves 4 tiles (plus any `speed` modifiers); enemies use their family `speed`. Slowed (`noMinor`) caps movement at 1, hasted (`extraMinor`) adds 2, and terrain `moveCost` comes out of the budget (sludge costs 2).
+  - **Moving.** `move` never ends the turn; any action does. Movement is set when the turn begins.
+  - **Before your first command.** The view shows your full speed as available.
+  - **Stun.** A stunned crawler's first command, even a move, ends the turn.
+- **Attacking out of reach** walks you, with the movement you have left, to the cheapest tile from which your weapon reaches. If you get there you swing; otherwise the turn ends with `combat.cantReach`, the same contract as bands' auto-advance.
+- **The pack bonus is the only positional rule.** An enemy attacking you while adjacent gets +1 to hit for each other living enemy also adjacent to you, up to +2, logged as `(+2 pack)`. There are no opportunity attacks, cover or facing.
+- **Fleeing:**
+  - **On a door tile.** The DEX contest runs only against enemies within 3 tiles that can see you and aren't stunned; with none, you're out automatically.
+  - **Not on a door.** `flee` runs for the nearest one. If you reach it this turn, the contest happens right away; otherwise the turn ends.
+  - **Where you end up.** The entry door returns you to `fromRoom`, at no time cost (as in bands). Any other door walks you into that room through `travel()`, with its time cost, traps and encounter roll.
+  - **A failed flee** gives the chasers free swings.
+- **Enemy AI** maps the existing tokens onto the board:
+  - `attack` strikes if anything reaches, otherwise paths to the cheapest free tile from which an attack works and strikes if it arrives. Occupied tiles are off limits, so packs surround you naturally.
+  - `keep_range` backs off to its preferred distance (close 1, near 3, far 5) while keeping sight of you.
+  - `special_if_ready` moves into position for a ready cooldown attack if it can this turn.
+  - Fleeing enemies run for the nearest door. Ending a move on a door means they escape, for no XP.
+  - Hazards an enemy can see (`aiAvoids`) add 3 to its path cost.
+  - **Stall guard.** An enemy that neither attacks nor closes in for two turns ignores `keep_range` for a turn.
+- **Hazards** fire `enter` effects on every tile a unit steps into (including tiles it's pushed into) and `stay` effects at the start of the turn of a unit standing on them. `consumedOnTrigger` hazards vanish after firing. Placed hazards with `rounds` burn down at the end of each round.
+- **Commands:**
+  - Coordinates are chess-style: a column letter, then a row number from the top (`c4`).
+  - `move c4`, `move 3 2`, `move ne 2`, and bare `n`/`ne`/`e`/… for one tile. In grid fights, `go north` means a tile, not a room.
+  - `attack c4` targets by tile.
+  - `wait` passes.
+  - `advance`/`retreat` spend your movement toward the nearest enemy or away from all of them, without ending the turn.
+  - In a grid fight, `look` prints the board.
+- **View:**
+  - `view.combat.grid` carries every tile's feature, hazard and door, plus `move`/`attack` highlights and a `tap` command (`attack d5`, `move c4`, or `flee` on your own door tile), units with sprite and glyph, and loose items.
+  - Every `tap` and button is ordinary command text, and a test checks each one parses and is allowed.
+- **The sim** takes `--mode grid|bands|both` and prints rounds and damage per fight, the flee rate, and a grid-vs-bands delta. A fight past 60 rounds counts as stuck.
+- **Snapshot** (300 runs each):
+
+  | Mode | Clear rate | Rounds per fight | Damage per fight | Flee rate | Stuck |
+  | --- | --- | --- | --- | --- | --- |
+  | Grid | 33% | 4.7 | 15.4 | 28% | 0 |
+  | Bands | 41% | 4.9 | 15.4 | 24% | 0 |
+
+  Grid crawlers die more to "their own wounds": fleeing on a board takes several turns of walking while bleeding. Worth tuning once hazards and crafting land.

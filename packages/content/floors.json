@@ -303,7 +303,8 @@
         "avoidStat": "DEX",
         "spotted": "The tiles ahead are cleaner than the rest. Boiled clean. You find the vent and wedge it shut with a rag.",
         "triggered": "A valve snaps open with a shriek and the corridor fills with live steam.",
-        "avoided": "A valve snaps open with a shriek. You drop flat and the steam combs over you, close enough to iron your shirt."
+        "avoided": "A valve snaps open with a shriek. You drop flat and the steam combs over you, close enough to iron your shirt.",
+        "arenaHazard": "steam_vent"
       },
       {
         "id": "rust_spikes",
@@ -320,7 +321,8 @@
         "avoidStat": "DEX",
         "spotted": "One floor grate sits a half-inch proud of the others. Underneath, something waits with the patience of scrap metal.",
         "triggered": "The grate flips and a bed of rusted spikes comes up to meet you like an old friend with knives.",
-        "avoided": "The grate flips under your heel and you throw yourself sideways as the spikes punch up through empty air."
+        "avoided": "The grate flips under your heel and you throw yourself sideways as the spikes punch up through empty air.",
+        "arenaHazard": "rust_spikes"
       },
       {
         "id": "sump_sinkhole",
@@ -337,7 +339,8 @@
         "avoidStat": "DEX",
         "spotted": "The concrete here sags like a stage prop. You skirt the edge and hear the hollow space under it sigh.",
         "triggered": "The floor opens like a trapdoor with no opinion about what happens to you next, and you ride the rubble down.",
-        "avoided": "The floor drops away. You lunge, catch the lip, and haul yourself out with all the grace of laundry."
+        "avoided": "The floor drops away. You lunge, catch the lip, and haul yourself out with all the grace of laundry.",
+        "arenaHazard": "sludge"
       },
       {
         "id": "live_wire",
@@ -354,7 +357,8 @@
         "avoidStat": "INT",
         "spotted": "A cable hangs across the passage at neck height, humming a note you feel in your teeth. You limbo under it with dignity intact.",
         "triggered": "The cable kisses your shoulder and every muscle you own files a formal resignation.",
-        "avoided": "You trace the cable back to a junction box and flip the breaker, feeling briefly like a professional."
+        "avoided": "You trace the cable back to a junction box and flip the breaker, feeling briefly like a professional.",
+        "arenaHazard": "live_wire"
       },
       {
         "id": "gas_pocket",
@@ -371,7 +375,8 @@
         "avoidStat": "INT",
         "spotted": "The air ahead shimmers wrong, and the rats have chewed a detour around this stretch. Smart rats. You follow their route.",
         "triggered": "You taste rotten eggs a half-second before the pocket of sewer gas folds around your head like a bag.",
-        "avoided": "You catch the smell in time, pull your collar over your face, and sprint through the worst of it."
+        "avoided": "You catch the smell in time, pull your collar over your face, and sprint through the worst of it.",
+        "arenaHazard": "gas_leak"
       },
       {
         "id": "flood_valve",
@@ -388,8 +393,66 @@
         "avoidStat": "DEX",
         "spotted": "A tripwire runs to a wheel valve the size of a dinner table. You step over the wire, insulted on its behalf.",
         "triggered": "Something clicks, a valve spins, and a wall of black water takes you off your feet and introduces you to the floor.",
-        "avoided": "Something clicks. You grab a pipe as the water hits, and it only steals your footing and a little of your pride."
+        "avoided": "Something clicks. You grab a pipe as the water hits, and it only steals your footing and a little of your pride.",
+        "arenaHazard": "sludge"
       }
-    ]
+    ],
+    "arena": {
+      "floorVariants": 4,
+      "obstacles": [
+        {
+          "id": "pillar",
+          "weight": 3
+        },
+        {
+          "id": "rubble",
+          "weight": 3
+        },
+        {
+          "id": "crate",
+          "weight": 2
+        },
+        {
+          "id": "barrel",
+          "weight": 2
+        },
+        {
+          "id": "pipe_cluster",
+          "weight": 2
+        },
+        {
+          "id": "dead_boiler",
+          "weight": 1
+        },
+        {
+          "id": "lockers",
+          "weight": 1
+        },
+        {
+          "id": "shopping_cart",
+          "weight": 1
+        }
+      ],
+      "terrain": [
+        {
+          "id": "sludge",
+          "weight": 1
+        }
+      ],
+      "hazards": [
+        {
+          "id": "steam_vent",
+          "weight": 2
+        },
+        {
+          "id": "live_wire",
+          "weight": 1
+        },
+        {
+          "id": "gas_leak",
+          "weight": 1
+        }
+      ]
+    }
   }
 ]

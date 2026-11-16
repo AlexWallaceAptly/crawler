@@ -23,6 +23,10 @@ export const PartialStatBlockSchema = StatBlockSchema.partial();
 export const IdSchema = z.string().regex(/^[a-z0-9_]+$/, "ids must be lowercase snake_case");
 export const DiceSchema = z.string().refine(isDice, { message: "not a valid dice expression (e.g. 2d6+1)" });
 export const DcTierSchema = z.enum(DC_TIER_NAMES as [string, ...string[]]);
+/** A weighted pick list of content ids. */
+export const WeightedIdsSchema = z.array(z.strictObject({ id: IdSchema, weight: z.number().positive().default(1) }));
+export type WeightedIds = z.infer<typeof WeightedIdsSchema>;
+
 /** Inclusive [min, max]. */
 export const IntRangeSchema = z.tuple([z.number().int().min(0), z.number().int().min(0)])
   .refine(([a, b]) => a <= b, { message: "range min must be <= max" });
@@ -268,7 +272,17 @@ export const FloorThemeSchema = z.strictObject({
     spotted: z.string(),
     triggered: z.string(),
     avoided: z.string(),
+    /** Grid fights in this trap room get one tile of this arena feature. */
+    arenaHazard: IdSchema.optional(),
   })).default([]),
+  /** Grid-combat dressing: what arenas on this floor are furnished with (ids in arenaFeatures.json). */
+  arena: z.strictObject({
+    /** Floor sprite variants: `<theme id>_1.png` .. `<theme id>_N.png`. */
+    floorVariants: z.number().int().min(1).default(1),
+    obstacles: WeightedIdsSchema.default([]),
+    terrain: WeightedIdsSchema.default([]),
+    hazards: WeightedIdsSchema.default([]),
+  }).prefault({}),
   /**
    * Encounter makeup. Ordinary fights are packs of weak minions (possibly two
    * families); elites lead lairs, sometimes with escorts.
@@ -367,6 +381,42 @@ export const EnemyModSchema = z.strictObject({
   weight: z.number().positive().default(1),
 });
 export type EnemyMod = z.infer<typeof EnemyModSchema>;
+
+// ---------------------------------------------------------------- grid arenas
+
+/** What happens to a unit that walks into (enter) or starts its turn on (stay) a feature. */
+export const HazardEffectSchema = z.strictObject({
+  dice: DiceSchema.optional(),
+  damageType: DamageTypeSchema.default("physical"),
+  status: OnHitStatusSchema.optional(),
+});
+export type HazardEffect = z.infer<typeof HazardEffectSchema>;
+
+/**
+ * One tile of grid-combat furniture. Obstacles and terrain are laid out when the
+ * arena is generated; hazards can also be placed mid-fight (thrown caltrops, fire).
+ */
+export const ArenaFeatureSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string(),
+  kind: z.enum(["obstacle", "terrain", "hazard"]),
+  /** Drawn when there's no sprite. */
+  glyph: z.string().min(1).max(2),
+  blocksMove: z.boolean().default(false),
+  blocksSight: z.boolean().default(false),
+  /** Movement points to step onto this tile. */
+  moveCost: z.number().int().min(1).max(3).default(1),
+  enter: HazardEffectSchema.optional(),
+  stay: HazardEffectSchema.optional(),
+  /** Placed hazards burn out after this many rounds; omitted = lasts the fight. */
+  rounds: z.number().int().min(1).optional(),
+  /** Gone after it triggers once (trip wire, glue). */
+  consumedOnTrigger: z.boolean().default(false),
+  /** Enemies path around it. False for things they can't see coming. */
+  aiAvoids: z.boolean().default(true),
+  description: z.string(),
+}).refine((f) => f.kind !== "obstacle" || f.blocksMove, { message: "obstacles must block movement" });
+export type ArenaFeature = z.infer<typeof ArenaFeatureSchema>;
 
 // ---------------------------------------------------------------- narration
 
