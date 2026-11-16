@@ -118,5 +118,6 @@
     "description": "Paying less than the sticker price in a store run by a demon.",
     "perks": [
       { "rank": 5, "text": "Shop prices are 10% lower.", "modifiers": [{ "to": "shop:discount", "value": 10 }] }
-    ] }
+    ] },
+  { "id": "tinkering", "name": "Tinkering", "category": "utility", "stat": "INT", "description": "Making useful things out of useless things. Rank adds to crafting checks at a workbench.", "perks": [{"rank": 5, "text": "Your crafting checks get +2.", "modifiers": [{"to": "skill:tinkering", "value": 2}]}] }
 ]

@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   ArenaFeatureSchema,
   LootTableSchema,
+  RecipeSchema,
   ConsumableSchema,
   EnemyFamilySchema,
   EnemyModSchema,
@@ -17,6 +18,7 @@ import {
   StatusEffectSchema,
   type ArenaFeature,
   type LootTable,
+  type Recipe,
   type Consumable,
   type EnemyFamily,
   type EnemyMod,
@@ -49,6 +51,7 @@ export const CONTENT_FILES = {
   "items/consumables.json": z.array(ConsumableSchema),
   "arenaFeatures.json": z.array(ArenaFeatureSchema),
   "lootTables.json": z.array(LootTableSchema),
+  "recipes.json": z.array(RecipeSchema),
 } as const;
 
 export type ContentFileName = keyof typeof CONTENT_FILES;
@@ -82,6 +85,7 @@ export interface Content {
   };
   arenaFeatures: Table<ArenaFeature>;
   lootTables: Table<LootTable>;
+  recipes: Table<Recipe>;
 }
 
 export class ContentError extends Error {
@@ -164,6 +168,7 @@ export function loadContent(raw: RawContent): Content {
     },
     arenaFeatures: table("arenaFeatures.json", p["arenaFeatures.json"], problems),
     lootTables: table("lootTables.json", p["lootTables.json"], problems),
+    recipes: table("recipes.json", p["recipes.json"], problems),
   };
 
   checkReferences(content, problems);
@@ -235,6 +240,14 @@ function checkReferences(c: Content, problems: string[]): void {
     if (t.arena.scrap) ref(`floors.json "${t.id}".arena.scrap`, "loot table", c.lootTables.has(t.arena.scrap), t.arena.scrap);
     if (t.loot.workshopTable) ref(`${where}.workshopTable`, "loot table", c.lootTables.has(t.loot.workshopTable), t.loot.workshopTable);
     for (const f of t.loot.firstSafe) ref(`${where}.firstSafe`, "item", itemRefExists(c, f.item), f.item);
+  }
+  for (const r of c.recipes.all) {
+    const where = `recipes.json "${r.id}"`;
+    for (const i of r.inputs) if (i.id) ref(`${where}.inputs`, "item", itemRefExists(c, i.id), i.id);
+    if (r.output.kind === "item") ref(`${where}.output`, "item", itemRefExists(c, r.output.ref), r.output.ref);
+    if (r.output.kind === "upgrade" && r.output.onHit) ref(`${where}.output.onHit`, "status", c.statusEffects.has(r.output.onHit.id), r.output.onHit.id);
+    if (r.check?.skill) ref(`${where}.check.skill`, "skill", c.skills.has(r.check.skill), r.check.skill);
+    if (r.check?.mishap?.statusId) ref(`${where}.check.mishap`, "status", c.statusEffects.has(r.check.mishap.statusId), r.check.mishap.statusId);
   }
   for (const b of c.items.bases.all) {
     if (b.onHit) ref(`items/bases.json "${b.id}".onHit`, "status", c.statusEffects.has(b.onHit.id), b.onHit.id);

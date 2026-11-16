@@ -6,13 +6,13 @@
 import { useEffect, useRef, useState } from "react";
 import type { CommandOption, GameEvent, ViewModel } from "@crawler/engine";
 import { EnemyStrip, LogView } from "./LogView";
-import { CharacterSheet, EffectsList, EquipmentList, InventoryList } from "./Sheets";
+import { CharacterSheet, EffectsList, EquipmentList, InventoryList, RecipeBook } from "./Sheets";
 import { InputBar } from "./InputBar";
 import { MiniMapGrid } from "./MiniMapGrid";
 import { BattleGrid } from "./BattleGrid";
 import s from "./mobile.module.css";
 
-type Screen = "map" | "log" | "battle" | "character" | "equipment" | "effects" | "inventory";
+type Screen = "map" | "log" | "battle" | "character" | "equipment" | "effects" | "inventory" | "recipes";
 
 const MENU: { id: Screen; label: string }[] = [
   { id: "map", label: "Map" },
@@ -21,6 +21,7 @@ const MENU: { id: Screen; label: string }[] = [
   { id: "equipment", label: "Equipment" },
   { id: "effects", label: "Effects" },
   { id: "inventory", label: "Inventory" },
+  { id: "recipes", label: "Recipes" },
 ];
 
 const DIRS = ["north", "west", "east", "south"] as const;
@@ -114,6 +115,7 @@ export function MobileShell({ view, log, battle, commands, submit, onLocal, arme
       {current === "equipment" && <Sheet><EquipmentList view={view} /></Sheet>}
       {current === "effects" && <Sheet><EffectsList view={view} /></Sheet>}
       {current === "inventory" && <Sheet><InventoryList view={view} /></Sheet>}
+      {current === "recipes" && <Sheet><RecipeBook view={view} submit={submit} /></Sheet>}
     </div>
   );
 }

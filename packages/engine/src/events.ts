@@ -33,6 +33,8 @@ export type GameEventBody =
   | { type: "combatEnded"; outcome: "victory" | "fled" | "talked"; xp?: number }
   | { type: "phaseChanged"; from: Phase; to: Phase }
   | { type: "died"; cause: string }
+  /** A new recipe went into the book (first time a combination worked, or nearly did). */
+  | { type: "recipeLearned"; name: string }
   | { type: "stateChanged" };
 
 export type GameEventType = GameEventBody["type"];

@@ -72,6 +72,8 @@ function Line({ e }: { e: GameEvent }) {
       );
     case "died":
       return <div className={`${s.line} ${s.death}`}>── DEAD ({e.cause}) ──</div>;
+    case "recipeLearned":
+      return <div className={`${s.line} ${s.divider}`}>── NEW RECIPE: {e.name} ──</div>;
     default:
       return null;
   }

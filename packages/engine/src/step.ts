@@ -13,6 +13,7 @@ import { gridAdvance, gridMove, gridRetreat } from "./grid/play";
 import { seedFloorLoot } from "./gen/loot";
 import { addToPile, dropItem, equipItem, findItems, takeItems, unequipItem } from "./inventory";
 import { gridDash, isThrowable, playerDefend, playerShove, playerThrow, takeInArena } from "./maneuvers";
+import { combine, craftKnown, nudge, showRecipes } from "./craft";
 import { renderArena } from "./grid/view";
 import { narrate } from "./narrate/narrator";
 import { derive } from "./rules/derived";
@@ -95,6 +96,8 @@ export const HELP_LINES = [
   "shove [name]         push something a tile (into the caltrops, ideally) or a band",
   "throw <item> at <x>  thrown junk; on the board, at a tile or enemy within 3",
   "dash c4 / defend     run twice as far (ends turn) / brace: +4 defense until your turn",
+  "combine a b c        at a workbench (safe rooms, workshops): put junk together",
+  "craft <recipe>       make something from your recipe book; `recipes` shows it",
   "use <item>           drink or eat something from your pack",
   "take <item> / take all   pick things up (weight limit applies); drop <item>",
   "equip <item> / unequip   wield or wear gear (mid-fight: costs your move or minor action)",
@@ -324,8 +327,28 @@ const handlers: Handlers = {
   take: {
     phases: ["exploring", "combat"],
     run(ctx, action) {
-      if (ctx.game.phase !== "combat") return takeItems(ctx, action.item);
-      if (beginTurn(ctx)) takeInArena(ctx, action.item);
+      if (ctx.game.phase !== "combat") takeItems(ctx, action.item);
+      else if (beginTurn(ctx)) takeInArena(ctx, action.item);
+      if (ctx.game.phase === "exploring") nudge(ctx);
+    },
+  },
+  combine: {
+    phases: ["exploring"],
+    run(ctx, action) {
+      combine(ctx, action.items);
+    },
+  },
+  craft: {
+    phases: ["exploring"],
+    run(ctx, action) {
+      craftKnown(ctx, action.recipe);
+    },
+  },
+  recipes: {
+    phases: "any",
+    run(ctx) {
+      if (!ctx.game.crawler) return ctx.error("No crawler, no recipes.");
+      showRecipes(ctx);
     },
   },
   shove: {
@@ -439,7 +462,7 @@ export function travel(ctx: StepContext, dest: number): void {
 }
 
 /** Actions that don't advance the turn counter (no game effect). */
-const FREE_ACTIONS = new Set<ActionType>(["help", "set"]);
+const FREE_ACTIONS = new Set<ActionType>(["help", "set", "recipes"]);
 
 export function killCrawler(ctx: StepContext, cause: string, key = "died"): void {
   ctx.game.combat = null;

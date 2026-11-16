@@ -138,3 +138,35 @@ export function InventoryList({ view }: { view: ViewModel }) {
     </ul>
   );
 }
+
+/** Recipes you've discovered (✓ = you're carrying the parts) and the System AI's hints. */
+export function RecipeBook({ view, submit }: { view: ViewModel; submit?: (t: string) => void }) {
+  const book = view.recipeBook;
+  if (!book) return null;
+  const bench = view.room?.workbench ?? false;
+  return (
+    <div>
+      <div className={s.muted}>
+        {bench ? "There's a workbench here. Combine anything: " : "Crafting needs a workbench (safe rooms, workshops). Try: "}
+        <i>combine bat tacks tape</i>
+      </div>
+      {book.known.length === 0 && <div className={s.muted}>No recipes yet. Find out what goes together.</div>}
+      <ul className={s.list}>
+        {book.known.map((r) => (
+          <li key={r.id} className={s.recipe}>
+            <span className={r.ready ? s.recipeReady : s.recipeName}>{r.ready ? "✓ " : "· "}{r.name}</span>
+            <span className={s.recipeParts}>{r.parts.join(" + ")}</span>
+            {r.ready && bench && submit && (
+              <button className={s.recipeBtn} onClick={() => submit(`craft ${r.name.toLowerCase()}`)}>make</button>
+            )}
+          </li>
+        ))}
+      </ul>
+      {book.hints.length > 0 && (
+        <div className={s.hints}>
+          {book.hints.map((h, i) => <div key={i}>? {h}</div>)}
+        </div>
+      )}
+    </div>
+  );
+}

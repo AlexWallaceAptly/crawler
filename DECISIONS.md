@@ -302,3 +302,37 @@ These are available to every crawler, so early fights aren't just trading swings
   | Bands | 37% | 4.9 | 0 |
 
   The sim doesn't shove, throw or craft yet.
+
+### Crafting
+
+- **Recipes are discovered, not listed.** `combine <things>` at a workbench (any safe room, or a workshop). Out of combat only; in a fight it gets `command.notNow`.
+  - **On a match:** it's made, and the recipe goes in your book (`crawler.recipes`, with a `recipeLearned` event).
+  - **On no match:** the System AI insults you and 5 minutes pass. Nothing is used up.
+  - **Names you aren't carrying:** a free error, since that's a typo, not an attempt.
+  - **At the wrong spot:** away from a bench it's refused, with no cost.
+- **`recipes.json` is tag-based:**
+  - **Inputs.** Each takes any-of `tags` or an exact `id`, plus `qty` (from one stack or several items), `consumed` (`false` for tools like the hammer), and `base` (the item an upgrade improves).
+  - **Outputs.** Either a new `item`, or an `upgrade` (prefix, damage bonus, die step, damage type, armor bonus, modifiers, on-hit status, range, tags).
+  - **Extras.** An optional check (stat + skill vs a DC tier, with a mishap on a critical failure), the minutes it takes, a priority, a cryptic hint, and a success line.
+- **Matching:**
+  1. The typed text splits on `,` `+` `&` `and` `with`; otherwise every grouping of the words into 2-4 names is tried, fewest pieces first.
+  2. Each name resolves to candidates (exact, then whole word, then substring).
+  3. The search tries candidate choices × recipes × input slots. Every named item must fill a slot and every slot must be filled.
+  4. The most specific recipe wins: an id counts 4, a single tag 2 and a tag list 1, plus 1 per input, plus `priority`. Ties go to file order.
+
+  This settles ambiguous names ("tape" picks whichever tape makes a recipe work) and extra junk (an unrelated fourth item means no match).
+- **Upgrades are baked in.** The name gains a prefix, the dice change (`addToDice`, plus a new `stepDice` d4→d6→…→d12), `onHit`/armor/modifiers are added, and `item.crafted` records the recipe id. Each recipe applies once per item, and an item takes at most two upgrades. The item keeps its uid, so equipped gear stays equipped. When Milestone 5 arrives, crafted prefixes become an affix group, so crafted gear can still roll loot affixes.
+- **New items** auto-equip into a free slot. Consumed parts come off their stacks, and equipped parts are unequipped first.
+- **A failed check** ruins one random consumed part (one unit), but the recipe is still learned, since you found the combination. A critical failure also applies the recipe's mishap (barbed wire cuts, electro-wiring shocks, molotovs set you burning).
+- **The new `tinkering` skill** (INT, utility; +2 at rank 5) feeds the harder checks. Nobody starts with it, and the Junk Engineer class can grant it in Milestone 11. Other checks use DEX, `trap_engineering` or `explosives_handling`.
+- **`craft <name>`** makes a known recipe, picking the parts itself: your equipped weapon is preferred as the upgrade base, and unequipped, cheaper junk as parts. At a bench, the first three makeable known recipes become buttons.
+- **Hints:**
+  - **In the book.** The recipe book (`recipes`, free) shows up to 3 cryptic hints, only for unknown recipes you're carrying every part for.
+  - **On pickup.** The first time a pickup makes an unknown recipe possible, the System AI drops its hint once (`craft.idea`, tracked in `crawler.ideas`).
+- **The 19 starter recipes:**
+  - Upgrades: nail bat, hammered-in nails, barbed wrap, live wiring, taped grip, magazine lining.
+  - Weapons: pipe spear, glass shiv, padlock in a sock, inner-tube sling, garage bola.
+  - Traps and throwables: caltrop pouch, trip wire, molotov, aerosol torch, glue trap.
+  - Armor and healing: magazine armor, strapped trash-lid shield, duct-tape splint.
+  - Tests check that every input can be filled by some item in the content, and that the first safe room's kit makes a nail bat.
+- **Client:** a recipe book sheet (mobile menu → Recipes, and in the desktop inventory overlay) with ✓ for recipes you can make now, a "make" button at a bench, and the hints. Learned recipes also print as a log divider and show in the System AI ticker.

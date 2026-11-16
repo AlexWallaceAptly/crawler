@@ -129,6 +129,24 @@ export function addToDice(expr: Dice, flat: number): Dice {
   return formatDice({ terms: p.terms, modifier: p.modifier + flat });
 }
 
+const DIE_STEPS = [2, 3, 4, 6, 8, 10, 12];
+
+/**
+ * Bump each term's die size up the standard ladder: stepDice("1d6", 1) -> "1d8".
+ * A d12 stays a d12 (the bonus goes nowhere; craft something else).
+ */
+export function stepDice(expr: Dice, steps: number): Dice {
+  const p = parseDice(expr);
+  return formatDice({
+    terms: p.terms.map((t) => {
+      const i = DIE_STEPS.indexOf(t.sides);
+      const next = i < 0 ? t.sides : DIE_STEPS[Math.min(DIE_STEPS.length - 1, i + steps)]!;
+      return { ...t, sides: next };
+    }),
+    modifier: p.modifier,
+  });
+}
+
 /** Multiply the number of dice in each term (min 1). Used for scaling. */
 export function multiplyDice(expr: Dice, factor: number): Dice {
   const p = parseDice(expr);

@@ -20,6 +20,7 @@ const ROUTES: Record<GameEventType, LogPanel[]> = {
   combatLine: ["battle"],
   combatEnded: ["log", "battle"],
   died: ["log", "ticker", "battle"],
+  recipeLearned: ["log", "ticker"],
   phaseChanged: [],
   stateChanged: [],
 };

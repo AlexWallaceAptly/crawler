@@ -8,6 +8,7 @@ import { derive, xpToNext } from "./rules/derived";
 import { combatModeOf, EQUIP_SLOTS, type CombatMode, type EquipSlot, type Phase, type World } from "./state";
 import { gridView, type GridView } from "./grid/view";
 import { coord } from "./grid/geometry";
+import { recipeBook, type RecipeBookView } from "./craft";
 import type { RangeBand } from "./content/schemas";
 
 export interface Bar {
@@ -61,6 +62,8 @@ export interface ViewModel {
     grid?: GridView;
     enemies: { uid: string; name: string; hp: Bar; range: string; statuses: string[]; elite: boolean; tier: string; mark?: string; at?: string }[];
   };
+  /** Recipes you've discovered, and hints for ones your pack could make. */
+  recipeBook: RecipeBookView | null;
   /** The room you're in: what's on the floor, and whether you can craft here. */
   room: null | { items: ItemView[]; workbench: boolean };
   minimap: string[] | null;
@@ -92,7 +95,7 @@ export function view(world: World, content: Content): ViewModel {
     return {
       phase: game.phase,
       status: { floor: null, district: null, timer: null, room: null, hp: null, mp: null, xp: null, level: null },
-      character: null, equipment: [], inventory: [], effects: [], combat: null, room: null, minimap: null, mapGrid: null, account: accountView,
+      character: null, equipment: [], inventory: [], effects: [], combat: null, recipeBook: null, room: null, minimap: null, mapGrid: null, account: accountView,
       settings: { combatMode: combatModeOf(account) },
     };
   }
@@ -190,10 +193,11 @@ export function view(world: World, content: Content): ViewModel {
             })),
         }
       : null,
+    recipeBook: recipeBook(c, content),
     room: room
       ? {
           items: (room.items ?? []).map((it) => itemView(it.uid, room.items)!).filter(Boolean),
-          workbench: !!room.workbench,
+          workbench: room.type === "safe" || !!room.workbench,
         }
       : null,
     minimap: floor ? renderMap(floor) : null,

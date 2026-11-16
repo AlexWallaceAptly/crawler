@@ -722,5 +722,77 @@
         "text": "Drop something first. Hoarding is a lifestyle, not a superpower."
       }
     ]
+  },
+  {
+    "key": "craft.noBench",
+    "variants": [
+      {
+        "text": "Crafting needs a workbench, genius. Safe rooms have one. So do the occasional workshop. This is neither."
+      },
+      {
+        "text": "You can't do arts and crafts on the floor of a sewer. Find a bench. I'm not running a daycare."
+      }
+    ]
+  },
+  {
+    "key": "craft.noMatch",
+    "variants": [
+      {
+        "text": "You fiddle with that pile for five minutes and produce a slightly different pile. Inspiring."
+      },
+      {
+        "text": "Those don't go together. I know you wanted them to. Wanting isn't engineering."
+      },
+      {
+        "text": "That's not a weapon, that's a cry for help. Try another combination."
+      }
+    ]
+  },
+  {
+    "key": "craft.botch",
+    "variants": [
+      {
+        "text": "And it falls apart. The {recipe} was a good idea executed by you, specifically."
+      },
+      {
+        "text": "Close! No. But you know how it's supposed to go now, which is more than most of my contestants."
+      }
+    ]
+  },
+  {
+    "key": "craft.success",
+    "variants": [
+      {
+        "text": "Look at that. A {recipe}. The audience loves a makeover segment."
+      },
+      {
+        "text": "A {recipe}! Built from garbage, by garbage, for violence. Beautiful."
+      },
+      {
+        "text": "Somewhere a shop teacher feels a chill and doesn't know why. Nice {recipe}."
+      }
+    ]
+  },
+  {
+    "key": "craft.learned",
+    "variants": [
+      {
+        "text": "Recipe added to your book: {recipe}. I'll pretend I didn't see you get lucky."
+      },
+      {
+        "text": "New recipe: {recipe}. Write it down. Actually, I wrote it down. You'd have lost it."
+      }
+    ]
+  },
+  {
+    "key": "craft.idea",
+    "variants": [
+      {
+        "text": "Hey. Psst. {hint}"
+      },
+      {
+        "text": "I'm not supposed to help, but: {hint}"
+      }
+    ]
   }
 ]

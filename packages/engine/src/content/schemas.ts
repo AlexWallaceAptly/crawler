@@ -467,6 +467,68 @@ export const ArenaFeatureSchema = z.strictObject({
 }).refine((f) => f.kind !== "obstacle" || f.blocksMove, { message: "obstacles must block movement" });
 export type ArenaFeature = z.infer<typeof ArenaFeatureSchema>;
 
+// ---------------------------------------------------------------- crafting
+
+/** One slot in a recipe: an item with any of these tags (or exactly this id). */
+export const RecipeInputSchema = z.strictObject({
+  /** Any one of these tags qualifies (item tags, weapon type, weapon/armor, slot:<slot>). */
+  tags: z.array(z.string().min(1)).min(1).optional(),
+  id: IdSchema.optional(),
+  /** Units needed: one stack of 2, or two items that each match. */
+  qty: z.number().int().min(1).default(1),
+  /** Tools (a hammer) aren't used up. */
+  consumed: z.boolean().default(true),
+  /** Upgrades: the item that gets improved instead of used up. */
+  base: z.boolean().default(false),
+}).refine((i) => i.tags !== undefined || i.id !== undefined, { message: "an input needs tags or an id" });
+export type RecipeInput = z.infer<typeof RecipeInputSchema>;
+
+export const UpgradeSchema = z.strictObject({
+  kind: z.literal("upgrade"),
+  /** "Nail-Studded Aluminum Baseball Bat" */
+  prefix: z.string().min(1),
+  damageBonus: z.number().int().default(0),
+  /** Bump the weapon's die size this many steps (d4 → d6 → d8 ...). */
+  damageStep: z.number().int().min(0).max(2).default(0),
+  damageType: DamageTypeSchema.optional(),
+  armorBonus: z.number().int().default(0),
+  modifiers: z.array(ModifierSchema).default([]),
+  onHit: OnHitStatusSchema.optional(),
+  range: RangeBandSchema.optional(),
+  addTags: z.array(z.string()).default([]),
+});
+
+export const RecipeSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string(),
+  inputs: z.array(RecipeInputSchema).min(2).max(4),
+  output: z.discriminatedUnion("kind", [
+    z.strictObject({ kind: z.literal("item"), ref: IdSchema, qty: z.number().int().min(1).default(1) }),
+    UpgradeSchema,
+  ]),
+  /** Optional skill check; failing loses a part (and still teaches the recipe). */
+  check: z.strictObject({
+    stat: StatSchema,
+    skill: IdSchema.optional(),
+    tier: DcTierSchema,
+    /** What a critical failure does to you. */
+    mishap: z.strictObject({ dice: DiceSchema.optional(), damageType: DamageTypeSchema.default("physical"), statusId: IdSchema.optional() }).optional(),
+  }).optional(),
+  /** Game minutes at the bench. */
+  minutes: z.number().int().min(1).default(20),
+  /** Breaks ties between equally specific recipes. */
+  priority: z.number().int().default(0),
+  /** The recipe book's cryptic nudge, shown once you're carrying every part. */
+  hint: z.string().min(1),
+  /** Said when it works. */
+  text: z.string().min(1),
+}).refine((r) => r.output.kind !== "upgrade" || r.inputs.filter((i) => i.base).length === 1, {
+  message: "upgrade recipes need exactly one base input",
+}).refine((r) => r.output.kind === "upgrade" || r.inputs.every((i) => !i.base), {
+  message: "only upgrades have a base input",
+});
+export type Recipe = z.infer<typeof RecipeSchema>;
+
 // ---------------------------------------------------------------- narration
 
 /** A `where`/`when` clause: path -> literal or comparison. Shared by achievements and templates. */

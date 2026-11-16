@@ -25,6 +25,11 @@ export type Action =
   | { type: "dash"; to: TileRef }
   | { type: "defend" }
   | { type: "take"; item: string }
+  /** At a workbench: put the named things together. */
+  | { type: "combine"; items: string }
+  /** At a workbench: make a recipe you already know. */
+  | { type: "craft"; recipe: string }
+  | { type: "recipes" }
   | { type: "drop"; item: string }
   | { type: "equip"; item: string }
   | { type: "unequip"; item: string }

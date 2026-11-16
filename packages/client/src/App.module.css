@@ -117,3 +117,11 @@
   overflow: auto;
   padding: 6px 8px;
 }
+
+.subhead {
+  margin: 12px 0 4px;
+  color: var(--dim);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}

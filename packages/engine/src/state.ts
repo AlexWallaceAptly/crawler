@@ -101,6 +101,8 @@ export interface Crawler {
   achievements: string[];
   /** Recipe ids discovered by combining things at a workbench. */
   recipes?: string[];
+  /** Recipe ids the System AI has already hinted at. */
+  ideas?: string[];
 }
 
 // ---------------------------------------------------------------- floors

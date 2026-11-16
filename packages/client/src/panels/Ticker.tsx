@@ -9,6 +9,8 @@ function text(e: GameEvent): string {
       return `⚠ ${e.label} — floor collapse incoming`;
     case "floorCleared":
       return `FLOOR ${e.floor} CLEARED`;
+    case "recipeLearned":
+      return `⚒ NEW RECIPE — ${e.name}`;
     case "narration":
     case "info":
     case "error":

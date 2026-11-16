@@ -6,7 +6,7 @@ import { readPref, writePref } from "./storage";
 import { Panel } from "./panels/Panel";
 import { EnemyStrip, LogView } from "./panels/LogView";
 import { MobileShell } from "./panels/Mobile";
-import { CharacterSheet, EffectsList, EquipmentList, InventoryList, MiniMap } from "./panels/Sheets";
+import { CharacterSheet, EffectsList, EquipmentList, InventoryList, MiniMap, RecipeBook } from "./panels/Sheets";
 import { StatusBar } from "./panels/StatusBar";
 import { Ticker } from "./panels/Ticker";
 import { InputBar } from "./panels/InputBar";
@@ -134,6 +134,8 @@ export function App({ engine }: { engine: Engine }) {
             extra={<button className={s.linkBtn} onClick={() => setInventoryOpen(false)}>close [esc]</button>}
           >
             <InventoryList view={view} />
+            <div className={s.subhead}>Recipe book</div>
+            <RecipeBook view={view} submit={submit} />
           </Panel>
         </div>
       )}

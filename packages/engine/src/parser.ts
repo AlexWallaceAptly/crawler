@@ -5,6 +5,7 @@ import { isAllowed } from "./step";
 import { COMBAT_MODES, type CombatMode, type Dir, type World } from "./state";
 import { allTiles, coord, DIR8, dist, index, occupied, parseCoord, pathField, type Dir8 } from "./grid/geometry";
 import { isThrowable, throwTargets } from "./maneuvers";
+import { autoAssign } from "./craft";
 import { speedOf } from "./grid/units";
 
 export type ParseResult = { ok: true; action: Action } | { ok: false; reason: "empty" | "unknown"; input: string };
@@ -38,6 +39,9 @@ const VERBS: Record<string, string> = {
   throw: "throw", toss: "throw", chuck: "throw", lob: "throw", hurl: "throw",
   dash: "dash", sprint: "dash", charge: "dash",
   defend: "defend", brace: "defend", block: "defend", guard: "defend",
+  combine: "combine", tape: "combine", attach: "combine", mix: "combine", jury: "combine",
+  craft: "craft", make: "craft", build: "craft",
+  recipes: "recipes", recipe: "recipes", book: "recipes",
   drop: "drop", discard: "drop", ditch: "drop",
   equip: "equip", wield: "equip", wear: "equip", hold: "equip", ready: "equip",
   unequip: "unequip", remove: "unequip", doff: "unequip", unwield: "unequip",
@@ -157,6 +161,17 @@ export function parseCommand(input: string, world: World): ParseResult {
     }
     case "defend":
       return { ok: true, action: { type: "defend" } };
+    case "combine": {
+      // "tape the bat" style: the verb itself can be a part ("tape bat tacks")
+      const items = rawVerb === "tape" ? `tape ${arg}` : arg.replace(/^rig /, "");
+      if (!items.trim()) return { ok: false, reason: "unknown", input: text };
+      return { ok: true, action: { type: "combine", items } };
+    }
+    case "craft":
+      if (!arg) return { ok: true, action: { type: "recipes" } };
+      return { ok: true, action: { type: "craft", recipe: arg } };
+    case "recipes":
+      return { ok: true, action: { type: "recipes" } };
     case "take": {
       const what = arg.replace(/^up /, "").replace(/^the /, "");
       if (!what) return { ok: false, reason: "unknown", input: text };
@@ -267,6 +282,13 @@ export function availableCommands(world: World, content: Content): CommandOption
     if (items.length > 1) out.push({ label: "Take all", input: "take all" });
     if (room.type === "stairwell") out.push({ label: "Descend", input: "descend", primary: true });
     if (room.type === "safe") out.push({ label: "Sleep", input: "sleep" });
+    if (room.type === "safe" || room.workbench) {
+      const c = world.game.crawler!;
+      for (const r of content.recipes.all.filter((r) => (c.recipes ?? []).includes(r.id) && autoAssign(c, r)).slice(0, 3)) {
+        out.push({ label: `Craft ${r.name}`, input: `craft ${r.name.toLowerCase()}` });
+      }
+      out.push({ label: "Recipes", input: "recipes" });
+    }
     if (!room.searched) out.push({ label: "Search", input: "search" });
     out.push({ label: "Rest", input: "rest" });
     out.push({ label: "Map", input: "map" });
