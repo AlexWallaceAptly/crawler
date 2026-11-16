@@ -1,0 +1,38 @@
+[
+  { "id": "junk", "entries": [
+    { "item": "duct_tape", "weight": 3 }, { "item": "friction_tape", "weight": 3 }, { "item": "electrical_tape", "weight": 3 },
+    { "item": "nylon_rope", "weight": 2 }, { "item": "zip_ties", "weight": 2 }, { "item": "bungee_cord", "weight": 2 },
+    { "item": "superglue", "weight": 2 },
+    { "item": "box_of_nails", "weight": 2 }, { "item": "thumbtacks", "weight": 3 }, { "item": "broken_glass", "weight": 3 },
+    { "item": "razor_blades", "weight": 1 }, { "item": "barbed_wire_coil", "weight": 1 }, { "item": "caltrops_jacks", "weight": 1 },
+    { "item": "copper_wire", "weight": 2 }, { "item": "d_batteries", "weight": 1 }, { "item": "padlock", "weight": 2 },
+    { "item": "oily_rags", "weight": 2 }, { "item": "empty_bottle", "weight": 3 }, { "item": "disposable_lighter", "weight": 1 },
+    { "item": "lighter_fluid", "weight": 1 }, { "item": "motor_oil", "weight": 1 },
+    { "item": "tube_sock", "weight": 2 }, { "item": "plastic_bag", "weight": 2 }, { "item": "inner_tube", "weight": 1 },
+    { "item": "old_magazines", "weight": 2 }, { "item": "cardboard", "weight": 2 },
+    { "item": "lead_pipe", "weight": 3 }, { "item": "rebar", "weight": 2 }, { "item": "two_by_four", "weight": 2 },
+    { "item": "broom_handle", "weight": 1 }, { "item": "table_leg", "weight": 2 }, { "item": "trash_can_lid", "weight": 1 },
+    { "item": "baseball_bat", "weight": 1 }, { "item": "crowbar", "weight": 1 },
+    { "item": "ball_bearings", "weight": 1 }, { "item": "bowling_pin_cluster", "weight": 1 }, { "item": "lotion_bottle", "weight": 1 }
+  ] },
+  { "id": "sharp", "entries": [
+    { "item": "box_of_nails", "weight": 3 }, { "item": "thumbtacks", "weight": 3 }, { "item": "broken_glass", "weight": 3 },
+    { "item": "razor_blades", "weight": 2 }, { "item": "barbed_wire_coil", "weight": 2 }, { "item": "caltrops_jacks", "weight": 2 }
+  ] },
+  { "id": "treasure", "entries": [
+    { "item": "minor_healing", "weight": 3 }, { "item": "healing_potion", "weight": 2 }, { "item": "bandage_roll", "weight": 3 },
+    { "item": "duct_tape", "weight": 2 }, { "item": "superglue", "weight": 2 }, { "item": "barbed_wire_coil", "weight": 2 },
+    { "item": "d_batteries", "weight": 2 }, { "item": "lighter_fluid", "weight": 2 }, { "item": "smoke_bomb", "weight": 1 },
+    { "item": "molotov", "weight": 1 }, { "item": "baseball_bat", "weight": 2 }, { "item": "crowbar", "weight": 2 },
+    { "item": "caltrops_jacks", "weight": 2 }, { "item": "mana_potion", "weight": 1 }
+  ] },
+  { "id": "safe_supplies", "entries": [
+    { "item": "duct_tape", "weight": 3 }, { "item": "friction_tape", "weight": 2 }, { "item": "electrical_tape", "weight": 2 },
+    { "item": "zip_ties", "weight": 2 }, { "item": "nylon_rope", "weight": 1 }, { "item": "bungee_cord", "weight": 1 }
+  ] },
+  { "id": "arena_scrap", "entries": [
+    { "item": "lead_pipe", "weight": 3 }, { "item": "rebar", "weight": 2 }, { "item": "table_leg", "weight": 2 },
+    { "item": "broken_glass", "weight": 2 }, { "item": "empty_bottle", "weight": 2 }, { "item": "padlock", "weight": 1 },
+    { "item": "thumbtacks", "weight": 1 }, { "item": "trash_can_lid", "weight": 1 }
+  ] }
+]

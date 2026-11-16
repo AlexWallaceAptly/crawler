@@ -64,6 +64,14 @@ export const EffectSchema = z.strictObject({
 }).refine((e) => e.kind !== "cure" || e.statusId !== undefined, { message: "cure effects need a statusId", path: ["statusId"] });
 export type Effect = z.infer<typeof EffectSchema>;
 
+/** A status that may land when something hits (attacks, hazards, crafted weapons). */
+export const OnHitStatusSchema = z.strictObject({
+  id: IdSchema,
+  chance: z.number().min(0).max(1),
+  duration: z.number().int().min(1).optional(),
+});
+export type OnHitStatus = z.infer<typeof OnHitStatusSchema>;
+
 /**
  * A passive bonus applied to any roll or value whose tags include `to`.
  * Examples: { to: "flee", value: 2 }, { to: "skill:perception", value: 1 },
@@ -188,6 +196,8 @@ export const ItemBaseSchema = z.strictObject({
   generate: z.boolean().default(true),
   /** Intrinsic bonuses while equipped (affixes add more in the generator). */
   modifiers: z.array(ModifierSchema).default([]),
+  /** Weapons: a status that may land on a hit. */
+  onHit: OnHitStatusSchema.optional(),
   tags: z.array(z.string()).default([]),
   flavor: z.string().optional(),
 }).superRefine((b, ctx) => {
@@ -218,7 +228,33 @@ export const ConsumableSchema = z.strictObject({
 });
 export type Consumable = z.infer<typeof ConsumableSchema>;
 
+// ---------------------------------------------------------------- loot
+
+/** A weighted table of item ids (bases or consumables). Seeds room contents now; drops and boxes later. */
+export const LootTableSchema = z.strictObject({
+  id: IdSchema,
+  entries: z.array(z.strictObject({
+    item: IdSchema,
+    weight: z.number().positive().default(1),
+    qty: IntRangeSchema.optional(),
+  })).min(1),
+});
+export type LootTable = z.infer<typeof LootTableSchema>;
+
 // ---------------------------------------------------------------- floors
+
+export const ROOM_TYPES = [
+  "corridor", "chamber", "empty", "lair", "trap", "treasure", "puzzle", "event", "npc", "safe", "stairwell",
+] as const;
+export const RoomTypeSchema = z.enum(ROOM_TYPES);
+
+const RoomLootSchema = z.strictObject({
+  table: IdSchema,
+  /** Lying in plain sight. */
+  visible: IntRangeSchema,
+  /** Turned up by `search`. */
+  hidden: IntRangeSchema.default([0, 0]),
+});
 
 /** Physical shape of a room; drives name nouns and opening lines. */
 export const ROOM_SHAPES = ["corridor", "chamber", "small"] as const;
@@ -275,6 +311,17 @@ export const FloorThemeSchema = z.strictObject({
     /** Grid fights in this trap room get one tile of this arena feature. */
     arenaHazard: IdSchema.optional(),
   })).default([]),
+  /** What's lying around: per room type, plus the tutorial bench and workshops. */
+  loot: z.strictObject({
+    rooms: z.partialRecord(RoomTypeSchema, RoomLootSchema).default({}),
+    /** Always in the first safe room, so the first craft is within reach. */
+    firstSafe: z.array(z.strictObject({ item: IdSchema, qty: z.number().int().min(1).default(1) })).default([]),
+    /** Extra rooms with a workbench (safe rooms always have one). */
+    workshops: IntRangeSchema.default([0, 0]),
+    /** Extra junk on a workshop's floor. */
+    workshopTable: IdSchema.optional(),
+    workbenchLines: LinePool.default([]),
+  }).prefault({}),
   /** Grid-combat dressing: what arenas on this floor are furnished with (ids in arenaFeatures.json). */
   arena: z.strictObject({
     /** Floor sprite variants: `<theme id>_1.png` .. `<theme id>_N.png`. */
@@ -314,12 +361,6 @@ export type FloorTheme = z.infer<typeof FloorThemeSchema>;
 export const RANGE_BANDS = ["close", "near", "far"] as const;
 export const RangeBandSchema = z.enum(RANGE_BANDS);
 export type RangeBand = z.infer<typeof RangeBandSchema>;
-
-const OnHitStatusSchema = z.strictObject({
-  id: IdSchema,
-  chance: z.number().min(0).max(1),
-  duration: z.number().int().min(1).optional(),
-});
 
 export const EnemyAttackSchema = z.strictObject({
   name: z.string(),

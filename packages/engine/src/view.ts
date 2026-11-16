@@ -61,12 +61,20 @@ export interface ViewModel {
     grid?: GridView;
     enemies: { uid: string; name: string; hp: Bar; range: string; statuses: string[]; elite: boolean; tier: string; mark?: string; at?: string }[];
   };
+  /** The room you're in: what's on the floor, and whether you can craft here. */
+  room: null | { items: ItemView[]; workbench: boolean };
   minimap: string[] | null;
   /** Structured map for the tile minimap; `minimap` stays as the text/fallback form. */
   mapGrid: MapGrid | null;
   account: { legacyPoints: number; rerolls: number; runs: number; deaths: number; bestFloor: number };
   settings: { combatMode: CombatMode };
 }
+
+/** Item tags that mean "crafting part"; shown in item details. */
+const CRAFT_TAGS = new Set([
+  "bind", "sharp", "haft", "cord", "elastic", "pouch", "weight", "battery", "wire", "fuel", "wick", "bottle",
+  "spark", "padding", "plate", "hammer",
+]);
 
 const SLOT_LABELS: Record<EquipSlot, string> = {
   mainHand: "Main", offHand: "Off", head: "Head", eyes: "Eyes", chest: "Chest", hands: "Hands", legs: "Legs",
@@ -84,21 +92,25 @@ export function view(world: World, content: Content): ViewModel {
     return {
       phase: game.phase,
       status: { floor: null, district: null, timer: null, room: null, hp: null, mp: null, xp: null, level: null },
-      character: null, equipment: [], inventory: [], effects: [], combat: null, minimap: null, mapGrid: null, account: accountView,
+      character: null, equipment: [], inventory: [], effects: [], combat: null, room: null, minimap: null, mapGrid: null, account: accountView,
       settings: { combatMode: combatModeOf(account) },
     };
   }
   const d = derive(c, content);
   const slotOf = new Map(Object.entries(c.equipment).map(([slot, uid]) => [uid, slot as EquipSlot]));
 
-  const itemView = (uid: string): ItemView | null => {
-    const it = c.inventory.find((i) => i.uid === uid);
+  const itemView = (uid: string, from = c.inventory): ItemView | null => {
+    const it = from.find((i) => i.uid === uid);
     if (!it) return null;
     const detail: string[] = [];
     if (it.damage) detail.push(`${it.damage}${it.damageType && it.damageType !== "physical" ? ` ${it.damageType}` : ""} (${it.stat ?? "STR"}${it.weaponType ? `, ${it.weaponType}` : ""})`);
     if (it.twoHanded) detail.push("two-handed");
     if (it.armor) detail.push(`armor ${it.armor}`);
     for (const m of it.modifiers) detail.push(`${m.value >= 0 ? "+" : ""}${m.value} ${m.to.replace(/^(skill|stat):/, "")}`);
+    if (it.onHit) detail.push(`on hit: ${Math.round(it.onHit.chance * 100)}% ${content.statusEffects.byId[it.onHit.id]?.name.toLowerCase() ?? it.onHit.id}`);
+    const parts = it.tags.filter((t) => CRAFT_TAGS.has(t));
+    if (parts.length) detail.push(`parts: ${parts.join(", ")}`);
+    detail.push(`weight ${Math.round(it.weight * it.qty * 10) / 10}`);
     if (it.flavor) detail.push(it.flavor);
     const slot = slotOf.get(it.uid);
     return { uid: it.uid, name: it.name, rarity: it.rarity, detail, qty: it.qty, ...(slot ? { equippedIn: slot } : {}) };
@@ -176,6 +188,12 @@ export function view(world: World, content: Content): ViewModel {
               ...(e.mark ? { mark: e.mark } : {}),
               ...(e.pos ? { at: coord(e.pos) } : {}),
             })),
+        }
+      : null,
+    room: room
+      ? {
+          items: (room.items ?? []).map((it) => itemView(it.uid, room.items)!).filter(Boolean),
+          workbench: !!room.workbench,
         }
       : null,
     minimap: floor ? renderMap(floor) : null,

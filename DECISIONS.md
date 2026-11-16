@@ -230,3 +230,41 @@ Inserted before Milestone 5 at the player's request (see the build-order row in 
 - **Armed targeting.** A command with `targets` (the next phase's throw and shove) arms when clicked instead of submitting. Tapping a highlighted tile submits `<command> <coord>`, and tapping anywhere else or pressing Esc cancels. Every button is still command text.
 - **The combat toggle** is in the mobile corner menu and the desktop event-log header ("combat: grid ⇄"). Both submit `set combat …`.
 - Checked in headless Chrome at 1440×900 and 390×844 with no combat art (glyphs only). The board fits a phone without sideways scrolling, and tap-to-move, tap-to-attack and fleeing enemies all work end to end.
+
+### Junk and the minimal inventory (pulled forward from Milestone 5)
+
+- **Pulled forward:**
+  - room contents: `Room.items` (in plain sight) and `Room.hidden` (found by `search`)
+  - loot tables (`lootTables.json`)
+  - `take` / `take all` / `pick up`, `drop`, and `equip` / `wield` / `unequip`
+  - a hard weight cap at `carryLimit`
+  - consumable stacking by base id
+  - `ItemInstance.onHit` and `crafted`
+- **Still Milestone 5:** the generator (materials, rarity, affixes), shops, enemy drops and identification. Junk bases keep `generate: false`: seeding goes through loot tables, so `generate` still means "the Milestone 5 generator may roll this".
+- **Seeding** runs in `accept`, right after `generateFloor()`, as `seedFloorLoot()`, so the map generator and its tests stay about the map. Per room type (`floors.json` → `loot.rooms`), visible / hidden counts:
+
+  | Room | Table | Visible | Hidden |
+  | --- | --- | --- | --- |
+  | Treasure | treasure | 2-3 | 1-2 |
+  | Lair | junk | 1-2 | 0-1 |
+  | Chamber | junk | 0-2 | 0-1 |
+  | Trap | sharp | 0-1 | 1 |
+  | Corridor | junk | 0-1 | 0 |
+  | Empty / puzzle / event / NPC | junk | 0-1 | 0-1 |
+  | Safe | bind-only supplies | 1-2 | 0 |
+  | Stairwell | none | — | — |
+
+- **The first safe room** (nearest the start) always holds a lead pipe, thumbtacks and duct tape, so the first craft is waiting at the first bench.
+- **Workshops.** Every safe room has a workbench. 1-2 more chamber, empty or puzzle rooms (not corridor-shaped, not the start, at least 3 steps from any safe room) get one too, plus 1-2 extra junk on the floor and a description line. Once visited, a workshop shows on the minimap as `workshop` (glyph ⚒, optional `tiles/workshop.png`).
+- **Room blocks** list what's on the floor (`roomEntered.items`) and flag a workbench. `look` repeats both, and the first three items plus "Take all" become buttons.
+- **`search`** moves hidden items onto the floor (with the `explore.searchFound` line) and still costs 15 minutes. With nothing hidden, the old `explore.searchNothing` joke plays.
+- **Weight.** A hard cap with no encumbrance status. `take` moves as much of a stack as fits and leaves the rest; if nothing fits, the System AI says so. Taking and dropping cost no time.
+- **Equipping** displaces the slot's item. A two-hander also clears the off hand, and an off-hand item knocks a two-hander out. Rings fill ring1, then ring2. Mid-fight, `equip` costs the minor action (bands) or 1 tile of movement (grid).
+- **Name lookup** for take, drop, equip and crafting ranks candidates as: exact name, then whole words, then substring. So "tape" means all the tapes, and "duct tape" means one.
+- **Junk content:**
+  - **New parts.** 23 consumables (type `junk`, with no effects, so `use` replies "combine it").
+  - **New outputs.** 5 crafted consumables (caltrop pouch, garage bola, trip wire kit, glue trap, duct-tape splint).
+  - **New gear.** 6 junk weapons and shields (lead pipe, rebar, two-by-four, broom handle, table leg, trash can lid), plus 6 crafted ones (pipe spear, glass shiv, padlock in a sock, inner-tube sling, magazine armor, strapped trash-lid shield).
+  - **Existing items join through tags only:** duct tape, gaffer tape, superglue, jacks, chains, hammers, hairspray, the bat, the crowbar, the existing lighter fluid, and so on.
+- **Craft tags:** `bind sharp haft cord elastic pouch weight battery wire fuel wick bottle spark padding plate hammer`. An item's effective tags also include its weapon type and `weapon` / `armor` / `slot:<slot>`. Item details list its parts and weight.
+- A test keeps a fully explored, seeded floor's save under 250 KB.

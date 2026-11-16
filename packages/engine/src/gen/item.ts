@@ -25,6 +25,7 @@ export function itemFromBase(base: ItemBase): ItemInstance {
     qty: 1,
     ...(base.flavor ? { flavor: base.flavor } : {}),
     tags: base.tags.slice(),
+    ...(base.onHit ? { onHit: { ...base.onHit } } : {}),
   };
 }
 
@@ -45,9 +46,9 @@ export function itemFromConsumable(c: Consumable, qty = 1): ItemInstance {
 }
 
 /** Build an item from a base or consumable id. */
-export function itemFromRef(content: Content, id: string): ItemInstance {
+export function itemFromRef(content: Content, id: string, qty = 1): ItemInstance {
   if (content.items.bases.has(id)) return itemFromBase(content.items.bases.get(id));
-  return itemFromConsumable(content.items.consumables.get(id));
+  return itemFromConsumable(content.items.consumables.get(id), qty);
 }
 
 export function isWeapon(item: ItemInstance): boolean {

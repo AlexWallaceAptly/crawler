@@ -17,7 +17,13 @@ export type GameEventBody =
   | { type: "check"; result: CheckResult; text: string }
   | { type: "crawlerCreated"; name: string }
   /** The room block the log prints: name header, cached description, exits. Empty lines on a revisit. */
-  | { type: "roomEntered"; name: string; badge?: string; lines: string[]; exits: Dir[]; first: boolean }
+  | {
+    type: "roomEntered"; name: string; badge?: string; lines: string[]; exits: Dir[]; first: boolean;
+    /** What's lying around in plain sight. */
+    items?: string[];
+    /** You can craft here. */
+    workbench?: boolean;
+  }
   /** Collapse countdown crossing a threshold (the spoken line arrives as narration). */
   | { type: "timerWarning"; label: string; minutesLeft: number }
   | { type: "floorCleared"; floor: number }

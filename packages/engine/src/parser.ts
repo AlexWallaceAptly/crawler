@@ -31,6 +31,10 @@ const VERBS: Record<string, string> = {
   talk: "talk", parley: "talk", negotiate: "talk",
   use: "use", drink: "use", eat: "use", quaff: "use",
   wait: "wait", pass: "wait", end: "wait",
+  take: "take", get: "take", grab: "take", pick: "take", pocket: "take",
+  drop: "drop", discard: "drop", ditch: "drop",
+  equip: "equip", wield: "equip", wear: "equip", hold: "equip", ready: "equip",
+  unequip: "unequip", remove: "unequip", doff: "unequip", unwield: "unequip",
   set: "set", setting: "set", settings: "set",
 };
 
@@ -133,6 +137,14 @@ export function parseCommand(input: string, world: World): ParseResult {
       return { ok: true, action: { type: "newCrawler" } };
     case "wait":
       return { ok: true, action: { type: "wait" } };
+    case "take": {
+      const what = arg.replace(/^up /, "").replace(/^the /, "");
+      if (!what) return { ok: false, reason: "unknown", input: text };
+      return { ok: true, action: { type: "take", item: what } };
+    }
+    case "drop": case "equip": case "unequip":
+      if (!arg) return { ok: false, reason: "unknown", input: text };
+      return { ok: true, action: { type: verb, item: arg.replace(/^the /, "") } };
     case "set": {
       // "set combat grid" / "set combat bands" (also "set grid")
       const words = arg.split(" ").filter((w) => w !== "combat" && w !== "mode" && w !== "to");
@@ -200,6 +212,9 @@ export function availableCommands(world: World, content: Content): CommandOption
     for (const dir of ["north", "west", "east", "south"] as const) {
       if (room.exits[dir] !== undefined) out.push({ label: dir[0]!.toUpperCase() + dir.slice(1), input: dir });
     }
+    const items = room.items ?? [];
+    for (const it of items.slice(0, 3)) out.push({ label: `Take ${it.name}`, input: `take ${it.name.toLowerCase()}` });
+    if (items.length > 1) out.push({ label: "Take all", input: "take all" });
     if (room.type === "stairwell") out.push({ label: "Descend", input: "descend", primary: true });
     if (room.type === "safe") out.push({ label: "Sleep", input: "sleep" });
     if (!room.searched) out.push({ label: "Search", input: "search" });

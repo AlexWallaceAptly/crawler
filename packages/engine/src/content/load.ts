@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   ArenaFeatureSchema,
+  LootTableSchema,
   ConsumableSchema,
   EnemyFamilySchema,
   EnemyModSchema,
@@ -15,6 +16,7 @@ import {
   SkillSchema,
   StatusEffectSchema,
   type ArenaFeature,
+  type LootTable,
   type Consumable,
   type EnemyFamily,
   type EnemyMod,
@@ -46,6 +48,7 @@ export const CONTENT_FILES = {
   "items/bases.json": z.array(ItemBaseSchema),
   "items/consumables.json": z.array(ConsumableSchema),
   "arenaFeatures.json": z.array(ArenaFeatureSchema),
+  "lootTables.json": z.array(LootTableSchema),
 } as const;
 
 export type ContentFileName = keyof typeof CONTENT_FILES;
@@ -78,6 +81,7 @@ export interface Content {
     consumables: Table<Consumable>;
   };
   arenaFeatures: Table<ArenaFeature>;
+  lootTables: Table<LootTable>;
 }
 
 export class ContentError extends Error {
@@ -159,6 +163,7 @@ export function loadContent(raw: RawContent): Content {
       consumables: table("items/consumables.json", p["items/consumables.json"], problems),
     },
     arenaFeatures: table("arenaFeatures.json", p["arenaFeatures.json"], problems),
+    lootTables: table("lootTables.json", p["lootTables.json"], problems),
   };
 
   checkReferences(content, problems);
@@ -213,6 +218,20 @@ function checkReferences(c: Content, problems: string[]): void {
       if (trap.arenaHazard) ref(`floors.json "${t.id}".trapTypes "${trap.id}".arenaHazard`, "arena feature", c.arenaFeatures.has(trap.arenaHazard), trap.arenaHazard);
       if (trap.status) ref(`floors.json "${t.id}".trapTypes "${trap.id}".status`, "status", c.statusEffects.has(trap.status.id), trap.status.id);
     }
+  }
+  for (const t of c.lootTables.all) {
+    for (const e of t.entries) ref(`lootTables.json "${t.id}"`, "item", itemRefExists(c, e.item), e.item);
+  }
+  for (const t of c.floors.all) {
+    const where = `floors.json "${t.id}".loot`;
+    for (const [type, rl] of Object.entries(t.loot.rooms)) {
+      if (rl) ref(`${where}.rooms.${type}.table`, "loot table", c.lootTables.has(rl.table), rl.table);
+    }
+    if (t.loot.workshopTable) ref(`${where}.workshopTable`, "loot table", c.lootTables.has(t.loot.workshopTable), t.loot.workshopTable);
+    for (const f of t.loot.firstSafe) ref(`${where}.firstSafe`, "item", itemRefExists(c, f.item), f.item);
+  }
+  for (const b of c.items.bases.all) {
+    if (b.onHit) ref(`items/bases.json "${b.id}".onHit`, "status", c.statusEffects.has(b.onHit.id), b.onHit.id);
   }
   for (const e of c.enemies.all) {
     for (const a of e.attacks) {

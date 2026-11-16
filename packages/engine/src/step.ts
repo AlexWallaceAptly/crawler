@@ -10,6 +10,8 @@ import {
   playerTalk, playerUseItem, playerWait,
 } from "./combat";
 import { gridAdvance, gridMove, gridRetreat } from "./grid/play";
+import { seedFloorLoot } from "./gen/loot";
+import { addToPile, dropItem, equipItem, takeItems, unequipItem } from "./inventory";
 import { renderArena } from "./grid/view";
 import { narrate } from "./narrate/narrator";
 import { derive } from "./rules/derived";
@@ -90,6 +92,8 @@ export const HELP_LINES = [
   "attack [name]        in combat; also: advance / retreat / flee / talk / wait",
   "move c4 / move ne 2  grid fights: walk to a tile, or steps in a direction (n ne e se s sw w nw)",
   "use <item>           drink or eat something from your pack",
+  "take <item> / take all   pick things up (weight limit applies); drop <item>",
+  "equip <item> / unequip   wield or wear gear (mid-fight: costs your move or minor action)",
   "accept / reroll      during crawler creation",
   "abandon              end this crawler's run (asks to confirm)",
   "set combat grid|bands  how the next fight plays (tactical grid or range bands)",
@@ -138,6 +142,7 @@ const handlers: Handlers = {
       const theme = ctx.content.floors.all.find((t) => t.floor === 1);
       if (!theme) throw new Error("no floor 1 theme in floors.json");
       ctx.game.floor = generateFloor(theme);
+      seedFloorLoot(ctx.game.floor, theme, ctx.content);
       enterRoom(ctx, ctx.game.floor.startRoom, "first");
     },
   },
@@ -250,7 +255,16 @@ const handlers: Handlers = {
       advanceTime(ctx, TIME_COST.search);
       if (ctx.game.phase === "dead") return;
       room.searched = true;
-      ctx.say("explore.searchNothing");
+      const found = room.hidden ?? [];
+      if (found.length === 0) {
+        ctx.say("explore.searchNothing");
+        return;
+      }
+      room.items ??= [];
+      for (const it of found) addToPile(room.items, it);
+      delete room.hidden;
+      ctx.describe(`You turn up: ${found.map((i) => (i.qty > 1 ? `${i.name} ×${i.qty}` : i.name)).join(", ")}.`);
+      ctx.say("explore.searchFound");
     },
   },
   rest: {
@@ -295,6 +309,31 @@ const handlers: Handlers = {
         return;
       }
       clearFloor(ctx);
+    },
+  },
+  take: {
+    phases: ["exploring"],
+    run(ctx, action) {
+      takeItems(ctx, action.item);
+    },
+  },
+  drop: {
+    phases: ["exploring"],
+    run(ctx, action) {
+      dropItem(ctx, action.item);
+    },
+  },
+  equip: {
+    phases: ["exploring", "combat"],
+    run(ctx, action) {
+      if (ctx.game.phase === "combat" && !beginTurn(ctx)) return;
+      equipItem(ctx, action.item);
+    },
+  },
+  unequip: {
+    phases: ["exploring"],
+    run(ctx, action) {
+      unequipItem(ctx, action.item);
     },
   },
   wait: {

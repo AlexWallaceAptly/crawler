@@ -49,6 +49,8 @@ function Line({ e }: { e: GameEvent }) {
           {e.lines.map((l, i) => (
             <div key={i} className={s.narrator}>{l}</div>
           ))}
+          {e.items && e.items.length > 0 && <div className={s.loot}>On the floor: {e.items.join(", ")}.</div>}
+          {e.workbench && <div className={s.bench}>⚒ There's a workbench here: combine things (e.g. <i>combine bat tacks tape</i>).</div>}
           <div className={s.exits}>Exits: {e.exits.length ? e.exits.join(", ") : "none"}.</div>
         </div>
       );

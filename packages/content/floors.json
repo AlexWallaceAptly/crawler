@@ -397,6 +397,144 @@
         "arenaHazard": "sludge"
       }
     ],
+    "loot": {
+      "rooms": {
+        "treasure": {
+          "table": "treasure",
+          "visible": [
+            2,
+            3
+          ],
+          "hidden": [
+            1,
+            2
+          ]
+        },
+        "lair": {
+          "table": "junk",
+          "visible": [
+            1,
+            2
+          ],
+          "hidden": [
+            0,
+            1
+          ]
+        },
+        "chamber": {
+          "table": "junk",
+          "visible": [
+            0,
+            2
+          ],
+          "hidden": [
+            0,
+            1
+          ]
+        },
+        "trap": {
+          "table": "sharp",
+          "visible": [
+            0,
+            1
+          ],
+          "hidden": [
+            1,
+            1
+          ]
+        },
+        "corridor": {
+          "table": "junk",
+          "visible": [
+            0,
+            1
+          ],
+          "hidden": [
+            0,
+            0
+          ]
+        },
+        "empty": {
+          "table": "junk",
+          "visible": [
+            0,
+            1
+          ],
+          "hidden": [
+            0,
+            1
+          ]
+        },
+        "puzzle": {
+          "table": "junk",
+          "visible": [
+            0,
+            1
+          ],
+          "hidden": [
+            0,
+            1
+          ]
+        },
+        "event": {
+          "table": "junk",
+          "visible": [
+            0,
+            1
+          ],
+          "hidden": [
+            0,
+            1
+          ]
+        },
+        "npc": {
+          "table": "junk",
+          "visible": [
+            0,
+            1
+          ],
+          "hidden": [
+            0,
+            1
+          ]
+        },
+        "safe": {
+          "table": "safe_supplies",
+          "visible": [
+            1,
+            2
+          ],
+          "hidden": [
+            0,
+            0
+          ]
+        }
+      },
+      "firstSafe": [
+        {
+          "item": "lead_pipe",
+          "qty": 1
+        },
+        {
+          "item": "thumbtacks",
+          "qty": 1
+        },
+        {
+          "item": "duct_tape",
+          "qty": 1
+        }
+      ],
+      "workshops": [
+        1,
+        2
+      ],
+      "workshopTable": "junk",
+      "workbenchLines": [
+        "A steel workbench is bolted to the wall: a vise, three clamps, a coffee can of screws, and a sign that says NO HORSEPLAY. Someone underlined it in blood.",
+        "Somebody set up a workbench down here out of a door and two sawhorses. The vise still works. The previous owner, presumably, does not.",
+        "A maintenance workbench, pegboard and all. The outline of every tool is painted on the wall. Most of the tools are gone. The outlines stayed."
+      ]
+    },
     "arena": {
       "floorVariants": 4,
       "obstacles": [

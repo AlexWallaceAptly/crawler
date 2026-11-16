@@ -118,6 +118,15 @@
   font-size: 13px;
   margin-top: 2px;
 }
+.loot {
+  color: var(--rarity-legendary);
+  margin-top: 2px;
+}
+.bench {
+  color: var(--check);
+  font-size: 13px;
+  margin-top: 2px;
+}
 .fightYou {
   color: var(--text);
 }

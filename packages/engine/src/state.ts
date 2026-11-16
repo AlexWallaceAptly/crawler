@@ -1,4 +1,4 @@
-import type { EnemyAttack, RangeBand, Rarity, RoomShape, Slot, StatBlock, Modifier } from "./content/schemas";
+import type { EnemyAttack, RangeBand, Rarity, RoomShape, Slot, StatBlock, Modifier, ROOM_TYPES } from "./content/schemas";
 import type { GameEvent } from "./events";
 
 /** Bump when the save shape changes incompatibly; old saves are discarded (see DECISIONS.md). */
@@ -99,6 +99,8 @@ export interface Crawler {
   gold: number;
   counters: Record<string, number>;
   achievements: string[];
+  /** Recipe ids discovered by combining things at a workbench. */
+  recipes?: string[];
 }
 
 // ---------------------------------------------------------------- floors
@@ -107,10 +109,7 @@ export const DIRS = ["north", "east", "south", "west"] as const;
 export type Dir = (typeof DIRS)[number];
 
 /** What a room *is*. Lair/trap/event get mechanics in later milestones; until then they just read spooky. */
-export type RoomType =
-  | "corridor" | "chamber" | "empty"
-  | "lair" | "trap" | "treasure" | "puzzle" | "event" | "npc"
-  | "safe" | "stairwell";
+export type RoomType = (typeof ROOM_TYPES)[number];
 
 export interface Room {
   /** Index into FloorState.rooms. */
@@ -131,6 +130,12 @@ export interface Room {
   trapSprung?: boolean;
   /** Description lines, generated on first entry and cached so revisits read the same. */
   desc: string[] | null;
+  /** Lying in plain sight (listed on entry, `take`-able). */
+  items?: ItemInstance[];
+  /** Turned up by `search`. */
+  hidden?: ItemInstance[];
+  /** Crafting happens here (safe rooms always count). */
+  workbench?: boolean;
 }
 
 // ---------------------------------------------------------------- combat

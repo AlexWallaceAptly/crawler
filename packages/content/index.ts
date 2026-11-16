@@ -17,6 +17,7 @@ import names from "./backstory/names.json";
 import bases from "./items/bases.json";
 import consumables from "./items/consumables.json";
 import arenaFeatures from "./arenaFeatures.json";
+import lootTables from "./lootTables.json";
 
 export const rawContent = {
   "skills.json": skills,
@@ -33,4 +34,5 @@ export const rawContent = {
   "items/bases.json": bases,
   "items/consumables.json": consumables,
   "arenaFeatures.json": arenaFeatures,
+  "lootTables.json": lootTables,
 } satisfies Record<string, unknown>;

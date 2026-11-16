@@ -694,5 +694,33 @@
         "text": "Fine, no board. The next fight is back to vibes and vague distances."
       }
     ]
+  },
+  {
+    "key": "explore.searchFound",
+    "variants": [
+      {
+        "text": "Look at you, rooting through garbage. A natural. My producers are thrilled; this is cheaper than a montage."
+      },
+      {
+        "text": "Treasure! Well. Trash. In here those are the same word, and you'd better get used to it."
+      },
+      {
+        "text": "You found things. Somebody died owning these things. Now you own them. Circle of life."
+      }
+    ]
+  },
+  {
+    "key": "item.tooHeavy",
+    "variants": [
+      {
+        "text": "You can't carry the {item}. Your back has filed a formal complaint. It's very long. Mostly screaming."
+      },
+      {
+        "text": "No. The {item} stays. You're already hauling enough junk to qualify as a landfill with legs."
+      },
+      {
+        "text": "Drop something first. Hoarding is a lifestyle, not a superpower."
+      }
+    ]
   }
 ]

@@ -20,6 +20,10 @@ export type Action =
   | { type: "talk" }
   | { type: "use"; item: string }
   | { type: "wait" }
+  | { type: "take"; item: string }
+  | { type: "drop"; item: string }
+  | { type: "equip"; item: string }
+  | { type: "unequip"; item: string }
   /** Grid combat: walk to a tile or a few steps in a direction (doesn't end the turn). */
   | { type: "move"; to: TileRef }
   | { type: "help" }

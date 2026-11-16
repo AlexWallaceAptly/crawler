@@ -11,6 +11,7 @@ import { collectModifiers, derive, modTotal } from "./rules/derived";
 import { applyStatus, decrementStatuses, tickStatuses } from "./rules/effects";
 import { killCrawler, type StepContext } from "./step";
 import { MINUTES_PER_DAY } from "./gen/floor";
+import { workbenchLine } from "./gen/loot";
 import type { Dir, FloorState, Room, RoomType } from "./state";
 import { DIRS } from "./state";
 
@@ -41,7 +42,14 @@ export function describeRoom(theme: FloorTheme, room: Room): string[] {
   ];
   const typeLines = (theme.typeLines as Partial<Record<string, string[]>>)[room.type];
   if (typeLines && typeLines.length > 0) lines.push(pick(typeLines));
+  const bench = room.type === "safe" ? undefined : workbenchLine(theme, room);
+  if (bench) lines.push(bench);
   return lines;
+}
+
+/** "Roll of Duct Tape", "Box of Thumbtacks ×3" */
+export function itemLabels(room: Room): string[] {
+  return (room.items ?? []).map((i) => (i.qty > 1 ? `${i.name} ×${i.qty}` : i.name));
 }
 
 export function exitList(floor: FloorState, room: Room): Dir[] {
@@ -120,6 +128,7 @@ export function enterRoom(ctx: StepContext, roomId: number, kind: "first" | "rev
 
   if (!room.desc) room.desc = describeRoom(theme, room);
   const first = kind === "first";
+  const items = itemLabels(room);
   ctx.emit({
     type: "roomEntered",
     name: room.name,
@@ -127,6 +136,8 @@ export function enterRoom(ctx: StepContext, roomId: number, kind: "first" | "rev
     lines: kind === "revisit" ? [] : room.desc,
     exits: exitList(floor, room),
     first,
+    ...(items.length ? { items } : {}),
+    ...(room.workbench ? { workbench: true } : {}),
   });
   if (kind === "revisit" && chance(0.3)) ctx.say("explore.revisit");
   if (first && chance(0.1)) ctx.say("explore.interjection");
@@ -240,7 +251,7 @@ export function renderMap(floor: FloorState): string[] {
   return cell.map((row) => row.join(""));
 }
 
-export type TileKind = RoomType | "unknown";
+export type TileKind = RoomType | "workshop" | "unknown";
 
 export interface MapCell {
   x: number;
@@ -273,7 +284,7 @@ export function mapGrid(floor: FloorState): MapGrid {
     cells.push({
       x: r.x,
       y: r.y,
-      kind: r.visited ? r.type : "unknown",
+      kind: !r.visited ? "unknown" : r.workbench && r.type !== "safe" ? "workshop" : r.type,
       current: r.id === floor.currentRoom,
       visited: r.visited,
       trapSprung: !!r.trapSprung,
