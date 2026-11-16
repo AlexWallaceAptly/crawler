@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { bfsDistances, generateFloor } from "../src/gen/floor";
-import { describeRoom, renderMap } from "../src/explore";
+import { describeRoom, mapGrid, renderMap } from "../src/explore";
 import { loadContent } from "../src/content/load";
 import { resetRng } from "../src/rng";
 import { rawContent } from "@crawler/content";
@@ -107,5 +107,22 @@ describe("floor generation (100 floors, spec acceptance)", () => {
     expect(map.match(/@/g)).toHaveLength(1);
     // nothing is visited yet except the start, so no S/> may show
     expect(map).not.toMatch(/[S>]/);
+  });
+
+  it("mapGrid hides unexplored rooms, marks you, and masks unvisited types", () => {
+    const f: typeof floors[0] = JSON.parse(JSON.stringify(floors[0]));
+    const grid = mapGrid(f);
+    expect(grid.width).toBe(f.width);
+    expect(grid.cells.filter((c) => c.current)).toHaveLength(1);
+    expect(grid.cells.every((c) => c.visited || c.kind === "unknown")).toBe(true);
+    // an unexplored room is absent; a seen-but-unvisited lair shows as unknown
+    const hidden = f.rooms.find((r) => !r.visited && !r.seen)!;
+    expect(grid.cells.some((c) => c.x === hidden.x && c.y === hidden.y)).toBe(false);
+    hidden.seen = true;
+    hidden.type = "lair";
+    const cell = mapGrid(f).cells.find((c) => c.x === hidden.x && c.y === hidden.y)!;
+    expect(cell.kind).toBe("unknown");
+    hidden.visited = true;
+    expect(mapGrid(f).cells.find((c) => c.x === hidden.x && c.y === hidden.y)!.kind).toBe("lair");
   });
 });

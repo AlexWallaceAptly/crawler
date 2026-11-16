@@ -95,3 +95,9 @@ Assumptions made where [the spec](docs/SPEC.md) is silent or ambiguous. Newest m
 - Enemy mods are selected without replacement and baked into their spawned state. The first combat content set has seven Floor 1 families and a small mod table; broader family coverage and balance tuning are deferred to Milestone 13.
 - `scripts/sim.ts` runs a headless Floor 1 policy. Its outcomes vary with `Math.random`; it is a reachability/playability check, not a seeded balance benchmark.
 - Local M4 acceptance passed: scripted suite and typecheck are clean; a 500-run Floor 1 simulation produced both stair clears and deaths with zero stuck runs. The observed clear rate is a balance snapshot, not a target for this milestone.
+
+## Minimap tiles
+
+- The minimap now renders from `view.mapGrid` (structured cells from `mapGrid()` in `explore.ts`) as PNG tiles in `packages/client/public/tiles/<kind>.png`. `view.minimap` (ASCII) is kept for the `map` command and as the fallback when no grid exists. A tile whose PNG is missing falls back to an ASCII glyph, so art can land incrementally.
+- Spoiler rule: a room's true type is shown only once visited. Seen-but-unvisited rooms use the `unknown` tile (the ASCII map already hid everything but `?`). The player marker is a `player.png` overlay on the current room. Room connectors are CSS bars, not images.
+- Tile URLs use `import.meta.env.BASE_URL` so the GitHub Pages `/crawler/` base works. `trap-sprung.png` is optional and falls back to `trap.png`.

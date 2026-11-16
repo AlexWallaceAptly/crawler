@@ -8,6 +8,7 @@ import type { CommandOption, GameEvent, ViewModel } from "@crawler/engine";
 import { EnemyStrip, LogView } from "./LogView";
 import { CharacterSheet, EffectsList, EquipmentList, InventoryList } from "./Sheets";
 import { InputBar } from "./InputBar";
+import { MiniMapGrid } from "./MiniMapGrid";
 import s from "./mobile.module.css";
 
 type Screen = "map" | "log" | "battle" | "character" | "equipment" | "effects" | "inventory";
@@ -135,7 +136,7 @@ function NavView({ view, log, commands, submit }: { view: ViewModel; log: GameEv
   return (
     <div className={s.nav}>
       <div className={s.mapStage}>
-        {view.minimap ? <pre className={s.map}>{view.minimap.join("\n")}</pre> : <div className={s.noMap}>No floor yet.</div>}
+        {view.mapGrid ? <MiniMapGrid view={view} /> : view.minimap ? <pre className={s.map}>{view.minimap.join("\n")}</pre> : <div className={s.noMap}>No floor yet.</div>}
       </div>
       <div className={s.feed}>
         <LogView events={log} tail={30} />

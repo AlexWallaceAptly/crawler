@@ -11,7 +11,7 @@ import { collectModifiers, derive, modTotal } from "./rules/derived";
 import { applyStatus, decrementStatuses, tickStatuses } from "./rules/effects";
 import { killCrawler, type StepContext } from "./step";
 import { MINUTES_PER_DAY } from "./gen/floor";
-import type { Dir, FloorState, Room } from "./state";
+import type { Dir, FloorState, Room, RoomType } from "./state";
 import { DIRS } from "./state";
 
 /** Spec time costs, in game minutes. */
@@ -238,4 +238,47 @@ export function renderMap(floor: FloorState): string[] {
   cell.pop(); // no connector row below the last rank
   // Full grid at full width, not trimmed to what's explored: the map keeps a stable frame as it fills in.
   return cell.map((row) => row.join(""));
+}
+
+export type TileKind = RoomType | "unknown";
+
+export interface MapCell {
+  x: number;
+  y: number;
+  /** Real room type once visited; `unknown` for rooms only seen from next door (no spoilers). */
+  kind: TileKind;
+  current: boolean;
+  visited: boolean;
+  trapSprung: boolean;
+  /** Connections to other *known* rooms. */
+  exits: { north: boolean; east: boolean; south: boolean; west: boolean };
+}
+
+export interface MapGrid {
+  width: number;
+  height: number;
+  /** Known rooms only; unexplored cells are absent. */
+  cells: MapCell[];
+}
+
+/** Structured twin of `renderMap`, with the same visibility rules, for the graphical minimap. */
+export function mapGrid(floor: FloorState): MapGrid {
+  const at = (x: number, y: number): Room | undefined => floor.rooms.find((r) => r.x === x && r.y === y);
+  const known = (r: Room | undefined): r is Room => !!r && (r.visited || r.seen);
+  const cells: MapCell[] = [];
+  for (const r of floor.rooms) {
+    if (!known(r)) continue;
+    const open = (dir: "north" | "east" | "south" | "west", dx: number, dy: number) =>
+      r.exits[dir] !== undefined && known(at(r.x + dx, r.y + dy));
+    cells.push({
+      x: r.x,
+      y: r.y,
+      kind: r.visited ? r.type : "unknown",
+      current: r.id === floor.currentRoom,
+      visited: r.visited,
+      trapSprung: !!r.trapSprung,
+      exits: { north: open("north", 0, -1), east: open("east", 1, 0), south: open("south", 0, 1), west: open("west", -1, 0) },
+    });
+  }
+  return { width: floor.width, height: floor.height, cells };
 }

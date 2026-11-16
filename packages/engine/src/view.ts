@@ -3,7 +3,7 @@
  */
 import type { Content } from "./content/load";
 import { STATS, type Stat } from "./content/schemas";
-import { formatTimer, renderMap, roomBadge } from "./explore";
+import { formatTimer, mapGrid, renderMap, roomBadge, type MapGrid } from "./explore";
 import { derive, xpToNext } from "./rules/derived";
 import { EQUIP_SLOTS, type EquipSlot, type Phase, type World } from "./state";
 
@@ -56,6 +56,8 @@ export interface ViewModel {
     enemies: { uid: string; name: string; hp: Bar; range: string; statuses: string[]; elite: boolean }[];
   };
   minimap: string[] | null;
+  /** Structured map for the tile minimap; `minimap` stays as the text/fallback form. */
+  mapGrid: MapGrid | null;
   account: { legacyPoints: number; rerolls: number; runs: number; deaths: number; bestFloor: number };
 }
 
@@ -75,7 +77,7 @@ export function view(world: World, content: Content): ViewModel {
     return {
       phase: game.phase,
       status: { floor: null, district: null, timer: null, room: null, hp: null, mp: null, xp: null, level: null },
-      character: null, equipment: [], inventory: [], effects: [], combat: null, minimap: null, account: accountView,
+      character: null, equipment: [], inventory: [], effects: [], combat: null, minimap: null, mapGrid: null, account: accountView,
     };
   }
   const d = derive(c, content);
@@ -162,6 +164,7 @@ export function view(world: World, content: Content): ViewModel {
         }
       : null,
     minimap: floor ? renderMap(floor) : null,
+    mapGrid: floor ? mapGrid(floor) : null,
     account: accountView,
   };
 }

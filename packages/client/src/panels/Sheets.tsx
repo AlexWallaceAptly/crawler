@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ViewModel } from "@crawler/engine";
 import s from "./panels.module.css";
+import { MiniMapGrid } from "./MiniMapGrid";
 
 const rarityClass = (r: string) => s[r] ?? s.common;
 
@@ -110,6 +111,7 @@ export function EffectsList({ view }: { view: ViewModel }) {
 
 export function MiniMap({ view }: { view: ViewModel }) {
   if (!view.minimap) return <div className={s.muted}>No map. No floor. Just vibes.</div>;
+  if (view.mapGrid) return <MiniMapGrid view={view} />;
   return <pre className={s.mapPre}>{view.minimap.join("\n")}</pre>;
 }
 
