@@ -20,14 +20,14 @@ interface Props {
 const OUTLINED_HAZARDS = new Set(["caltrops", "tacks", "broken_glass", "marbles", "barbed_wire", "rust_spikes", "trip_wire"]);
 
 /** A highlight: the ui/ sprite if it exists, otherwise a CSS tint. */
-function Highlight({ kind }: { kind: "move" | "attack" | "target" }) {
+function Highlight({ kind, faint }: { kind: "move" | "attack" | "target"; faint?: boolean }) {
   const css = kind === "move" ? s.hlMove : kind === "attack" ? s.hlAttack : s.hlTarget;
   return (
     <Sprite
       paths={[`combat/ui/${kind}`]}
       glyph=""
-      className={`${s.overlay} ${kind === "move" ? s.overlayMove : kind === "target" ? s.overlayTarget : ""}`}
-      fallback={<span className={`${s.hl} ${css}`} />}
+      className={`${s.overlay} ${kind === "move" ? s.overlayMove : kind === "target" ? s.overlayTarget : ""} ${faint ? s.faint : ""}`}
+      fallback={<span className={`${s.hl} ${css} ${faint ? s.faint : ""}`} />}
     />
   );
 }
@@ -43,6 +43,7 @@ function tileTitle(t: GridTileView, unit?: GridUnitView, item?: string): string 
   if (t.hazard) parts.push(`${t.hazard.name}${t.hazard.rounds !== undefined ? ` (${t.hazard.rounds})` : ""}`);
   if (item) parts.push(item);
   if (t.exit) parts.push(t.exit.entry ? "door (the way you came)" : `door (${t.exit.dir})`);
+  if (t.move && !unit) parts.push(t.moveAp ? `${t.moveAp} AP to walk here` : "already paid for");
   return parts.join(" · ");
 }
 
@@ -112,7 +113,7 @@ export function BattleGrid({ view, submit, armed, onArmedDone, className }: Prop
                     className={`${s.layer} ${s.item}`} glyphClassName={`${s.glyph} ${s.itemGlyph}`} />
                 )}
                 {u && <Unit u={u} />}
-                {!armed && t.move && <Highlight kind="move" />}
+                {!armed && t.move && <Highlight kind="move" faint={(t.moveAp ?? 0) > 1} />}
                 {!armed && t.attack && <Highlight kind="attack" />}
                 {target && <Highlight kind="target" />}
               </button>
@@ -123,7 +124,7 @@ export function BattleGrid({ view, submit, armed, onArmedDone, className }: Prop
       <div className={s.hint}>
         {armed
           ? <>Pick a highlighted tile for <b>{armed.label}</b> — or tap anywhere else to cancel.</>
-          : <>Move {g.moveLeft}/{g.speed} · tap a tile to walk, an enemy to attack, your door to flee.</>}
+          : <>AP {g.ap}/{g.apMax} · 1 AP walks {g.speed} tiles{g.moveLeft > 0 ? ` (${g.moveLeft} already paid for)` : ""} · tap a tile to walk, an enemy to attack ({view.combat?.attackCost ?? 2} AP), your door to flee.</>}
       </div>
     </div>
   );

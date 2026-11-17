@@ -252,3 +252,8 @@
   text-align: center;
   padding: 0 8px;
 }
+
+/* Tiles that cost 2+ AP to walk to: still reachable, but it's most of your turn. */
+.faint {
+  opacity: 0.4;
+}

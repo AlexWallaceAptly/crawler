@@ -125,3 +125,8 @@
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+
+.headLinks {
+  display: flex;
+  gap: 14px;
+}

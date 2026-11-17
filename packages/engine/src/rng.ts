@@ -58,6 +58,10 @@ export function d20(): number {
   return die(20);
 }
 
+export function d10(): number {
+  return die(10);
+}
+
 /** True with probability p (0..1). */
 export function chance(p: number): boolean {
   return source() < p;

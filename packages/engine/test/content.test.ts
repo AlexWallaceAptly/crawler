@@ -26,14 +26,14 @@ describe("shipped content", () => {
 describe("loadContent failures are loud and readable", () => {
   it("reports file, entry id and field for schema errors", () => {
     const bad = clone(raw);
-    (bad["items/bases.json"] as { damage?: string }[])[0]!.damage = "two dee six";
+    (bad["items/bases.json"] as { power?: unknown }[])[0]!.power = [6, 4, 2];
     try {
       loadContent(bad);
       expect.fail("should throw");
     } catch (e) {
       expect(e).toBeInstanceOf(ContentError);
-      expect((e as Error).message).toContain(`items/bases.json[0 "chef_knife"].damage`);
-      expect((e as Error).message).toContain("dice");
+      expect((e as Error).message).toContain(`items/bases.json[0 "chef_knife"].power`);
+      expect((e as Error).message).toContain("tiers");
     }
   });
 

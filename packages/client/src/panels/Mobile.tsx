@@ -10,6 +10,8 @@ import { CharacterSheet, EffectsList, EquipmentList, InventoryList, RecipeBook }
 import { InputBar } from "./InputBar";
 import { MiniMapGrid } from "./MiniMapGrid";
 import { BattleGrid } from "./BattleGrid";
+import { readPref, writePref } from "../storage";
+import type { LayoutControl } from "../layout";
 import s from "./mobile.module.css";
 
 type Screen = "map" | "log" | "battle" | "character" | "equipment" | "effects" | "inventory" | "recipes";
@@ -21,12 +23,27 @@ const MENU: { id: Screen; label: string }[] = [
   { id: "equipment", label: "Equipment" },
   { id: "effects", label: "Effects" },
   { id: "inventory", label: "Inventory" },
-  { id: "recipes", label: "Recipes" },
+  { id: "recipes", label: "Crafting" },
 ];
 
 const DIRS = ["north", "west", "east", "south"] as const;
 
-interface ShellProps {
+/** A show/hide switch that remembers itself on this device. */
+export function useShown(key: string): [boolean, () => void] {
+  const [shown, setShown] = useState<boolean>(() => readPref(key, true));
+  const toggle = () => setShown((v) => { writePref(key, !v); return !v; });
+  return [shown, toggle];
+}
+
+export function Toggle({ label, shown, onClick }: { label: string; shown: boolean; onClick: () => void }) {
+  return (
+    <button className={`${s.toggle} ${shown ? s.toggleOn : ""}`} aria-pressed={shown} onClick={onClick}>
+      {shown ? "▾" : "▸"}{label ? ` ${label}` : ""}
+    </button>
+  );
+}
+
+export interface ShellProps {
   view: ViewModel;
   log: GameEvent[];
   battle: GameEvent[];
@@ -35,9 +52,10 @@ interface ShellProps {
   onLocal: (text: string) => boolean;
   armed: CommandOption | null;
   setArmed: (c: CommandOption | null) => void;
+  layout: LayoutControl;
 }
 
-export function MobileShell({ view, log, battle, commands, submit, onLocal, armed, setArmed }: ShellProps) {
+export function MobileShell({ view, log, battle, commands, submit, onLocal, armed, setArmed, layout }: ShellProps) {
   const [screen, setScreen] = useState<Screen>("map");
   const [menuOpen, setMenuOpen] = useState(false);
   const inCombat = view.phase === "combat";
@@ -75,6 +93,7 @@ export function MobileShell({ view, log, battle, commands, submit, onLocal, arme
       <button className={s.menuBtn} aria-label="Menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((o) => !o)}>
         ☰
       </button>
+      {menuOpen && <div className={s.menuBackdrop} onClick={() => setMenuOpen(false)} />}
       {menuOpen && (
         <nav className={s.menu}>
           {inCombat && (
@@ -96,10 +115,11 @@ export function MobileShell({ view, log, battle, commands, submit, onLocal, arme
           >
             Combat: {view.settings.combatMode === "grid" ? "Grid" : "Bands"} ⇄
           </button>
+          <button className={s.menuItem} onClick={layout.cycle}>{layout.label} ⇄</button>
         </nav>
       )}
 
-      {current === "map" && <NavView view={view} log={log} commands={commands} submit={submit} />}
+      {current === "map" && <NavView view={view} log={log} commands={commands} submit={submit} openBench={() => pick("recipes")} />}
       {current === "battle" && (
         <BattleView view={view} battle={battle} commands={commands} submit={submit} armed={armed} setArmed={setArmed} />
       )}
@@ -115,7 +135,15 @@ export function MobileShell({ view, log, battle, commands, submit, onLocal, arme
       {current === "equipment" && <Sheet><EquipmentList view={view} /></Sheet>}
       {current === "effects" && <Sheet><EffectsList view={view} /></Sheet>}
       {current === "inventory" && <Sheet><InventoryList view={view} /></Sheet>}
-      {current === "recipes" && <Sheet><RecipeBook view={view} submit={submit} /></Sheet>}
+      {current === "recipes" && (
+        <div className={s.logScreen}>
+          <Sheet><RecipeBook view={view} submit={submit} /></Sheet>
+          {/* what the last attempt did, without leaving the bench */}
+          <div className={s.benchFeed}>
+            <LogView events={log} tail={4} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -124,7 +152,7 @@ function Sheet({ children }: { children: React.ReactNode }) {
   return <div className={s.sheet}>{children}</div>;
 }
 
-function StatusStrip({ view }: { view: ViewModel }) {
+export function StatusStrip({ view }: { view: ViewModel }) {
   const st = view.status;
   const hp = st.hp;
   return (
@@ -142,21 +170,32 @@ function StatusStrip({ view }: { view: ViewModel }) {
 }
 
 /** The home view: big map, readable feed, d-pad + context actions. */
-function NavView({ view, log, commands, submit }: { view: ViewModel; log: GameEvent[]; commands: CommandOption[]; submit: (t: string) => void }) {
+function NavView({ view, log, commands, submit, openBench }: { view: ViewModel; log: GameEvent[]; commands: CommandOption[]; submit: (t: string) => void; openBench: () => void }) {
   const byInput = new Map(commands.map((c) => [c.input, c]));
   const dir = (d: (typeof DIRS)[number]) => byInput.get(d);
   const context = commands.filter(
-    (c) => !DIRS.includes(c.input as never) && !["help", "map", "new"].includes(c.input),
+    (c) => !DIRS.includes(c.input as never) && !["help", "map", "new", "recipes"].includes(c.input),
   );
+
+  const [mapShown, toggleMap] = useShown("mobileMap");
+  const [logShown, toggleLog] = useShown("mobileLog");
 
   return (
     <div className={s.nav}>
-      <div className={s.mapStage}>
-        {view.mapGrid ? <MiniMapGrid view={view} /> : view.minimap ? <pre className={s.map}>{view.minimap.join("\n")}</pre> : <div className={s.noMap}>No floor yet.</div>}
+      <div className={s.toggles}>
+        <Toggle label="Map" shown={mapShown} onClick={toggleMap} />
+        <Toggle label="Event log" shown={logShown} onClick={toggleLog} />
       </div>
-      <div className={s.feed}>
-        <LogView events={log} tail={30} />
-      </div>
+      {mapShown && (
+        <div className={`${s.mapStage} ${logShown ? "" : s.mapAlone}`}>
+          {view.mapGrid ? <MiniMapGrid view={view} /> : view.minimap ? <pre className={s.map}>{view.minimap.join("\n")}</pre> : <div className={s.noMap}>No floor yet.</div>}
+        </div>
+      )}
+      {logShown && (
+        <div className={s.feed}>
+          <LogView events={log} tail={mapShown ? 30 : 80} />
+        </div>
+      )}
       <div className={s.controls}>
         <div className={s.dpad}>
           <span />
@@ -167,6 +206,9 @@ function NavView({ view, log, commands, submit }: { view: ViewModel; log: GameEv
           <DirBtn cmd={dir("east")} glyph="▶" name="East" submit={submit} />
         </div>
         <div className={s.context}>
+          {view.room?.workbench && (
+            <button className={`${s.ctxBtn} ${s.ctxPrimary}`} onClick={openBench}>⚒ Workbench</button>
+          )}
           {context.map((c) => (
             <button key={c.label} className={`${s.ctxBtn} ${c.primary ? s.ctxPrimary : ""}`} onClick={() => submit(c.input)}>
               {c.label}
@@ -203,23 +245,31 @@ interface BattleProps {
 /** Combat on a phone: the board (grid mode) or the enemy strip, the blow-by-blow, and big thumb buttons. */
 function BattleView({ view, battle, commands, submit, armed, setArmed }: BattleProps) {
   const grid = !!view.combat?.grid;
+  const [logShown, toggleLog] = useShown("mobileBattleLog");
   return (
     <div className={s.battle}>
       {grid && <BattleGrid view={view} submit={submit} armed={armed} onArmedDone={() => setArmed(null)} />}
       <EnemyStrip view={view} />
-      <div className={s.feedGrow}>
-        <LogView events={battle} tail={grid ? 20 : 60} />
+      <div className={s.toggles}>
+        <Toggle label="Battle log" shown={logShown} onClick={toggleLog} />
       </div>
+      {logShown && (
+        <div className={s.feedGrow}>
+          <LogView events={battle} tail={grid ? 20 : 60} />
+        </div>
+      )}
       <div className={s.battleButtons}>
         {commands
           .filter((c) => !["help", "map", "look"].includes(c.input))
           .map((c) => (
             <button
               key={c.label}
-              className={`${s.ctxBtn} ${c.primary || armed?.label === c.label ? s.ctxPrimary : ""}`}
+              className={`${s.ctxBtn} ${c.primary && !c.disabled || armed?.label === c.label ? s.ctxPrimary : ""}`}
+              disabled={c.disabled}
               onClick={() => (c.targets ? setArmed(armed?.label === c.label ? null : c) : submit(c.input))}
             >
               {c.label}{c.targets ? " ⌖" : ""}
+              {c.ap !== undefined && <span className={s.apCost}>{c.ap}</span>}
             </button>
           ))}
       </div>

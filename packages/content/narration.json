@@ -522,16 +522,47 @@
     ]
   },
   {
-    "key": "combat.playerMiss",
+    "key": "combat.tier1",
     "variants": [
       {
-        "text": "You swing with everything you have. The air is devastated."
+        "text": "Tier one. You technically hit it. The {target} technically noticed."
       },
       {
-        "text": "A miss. Bold choice. Very avant-garde."
+        "text": "That landed like a strongly worded letter."
       },
       {
-        "text": "That attack had the accuracy of a weather forecast."
+        "text": "Contact was made. Damage was discussed. Nothing was decided."
+      },
+      {
+        "text": "A glancing blow. The {target} will be telling its friends about the breeze."
+      }
+    ]
+  },
+  {
+    "key": "combat.tier2",
+    "variants": [
+      {
+        "text": "A solid hit. Adequate. I've had sponsors walk out over adequate."
+      },
+      {
+        "text": "That one did what it said on the label. No more. No less."
+      },
+      {
+        "text": "Competent. Look at you, being competent. Don't make it weird."
+      }
+    ]
+  },
+  {
+    "key": "combat.tier3",
+    "variants": [
+      {
+        "text": "Tier three. The {target} felt that in places it doesn't have."
+      },
+      {
+        "text": "Oh, that was mean. Do that one again."
+      },
+      {
+        "text": "Somebody's been practicing. On what, I don't want to know."
       }
     ]
   },
@@ -546,20 +577,6 @@
       },
       {
         "text": "Beautiful. Disgusting. I'm putting that one on the highlight reel."
-      }
-    ]
-  },
-  {
-    "key": "combat.critFail",
-    "variants": [
-      {
-        "text": "I have watched a lot of crawlers fight. That was something else. Something worse."
-      },
-      {
-        "text": "Critical failure. The {target} looks embarrassed for you. The {target} is right."
-      },
-      {
-        "text": "You'll want to pretend that didn't happen. The replay disagrees."
       }
     ]
   },

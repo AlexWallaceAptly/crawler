@@ -9,7 +9,7 @@
  *   npm run sim -- 500 --craft       the crawler also picks up junk, crafts at
  *                                    benches, wields its best weapon and throws junk at packs
  */
-import { createEngine, loadContent, bfsDistances, diceAverage, type World, type Dir, type GameEvent, type CombatMode } from "../packages/engine/src/index";
+import { createEngine, loadContent, bfsDistances, powerScore, type World, type Dir, type GameEvent, type CombatMode } from "../packages/engine/src/index";
 import { autoAssign, atWorkbench } from "../packages/engine/src/craft";
 import { rawContent } from "../packages/content/index";
 
@@ -39,6 +39,8 @@ interface Outcome {
   fightDamage: number[];
   fled: number;
   crafted: number;
+  /** Died in one of the floor's opening (easy pool) fights. */
+  earlyDeath: boolean;
 }
 
 function hpPct(world: World): number {
@@ -58,9 +60,9 @@ function throwable(world: World): string | undefined {
 /** The hardest-hitting weapon in the pack, if it beats what's in hand. */
 function bestWeapon(world: World): string | undefined {
   const c = world.game.crawler!;
-  const score = (i: (typeof c.inventory)[number]) => (i.damage ? diceAverage(i.damage) + (i.onHit ? 1 : 0) : 0);
+  const score = (i: (typeof c.inventory)[number]) => (i.power ? powerScore(i.power) + (i.onHit ? 1 : 0) : 0);
   const held = c.inventory.find((i) => i.uid === c.equipment.mainHand);
-  const best = c.inventory.filter((i) => i.kind === "gear" && i.slot === "mainHand" && i.damage).sort((a, b) => score(b) - score(a))[0];
+  const best = c.inventory.filter((i) => i.kind === "gear" && i.slot === "mainHand" && i.power).sort((a, b) => score(b) - score(a))[0];
   return best && best !== held && score(best) > (held ? score(held) : 1.5) ? best.name.toLowerCase() : undefined;
 }
 
@@ -88,6 +90,7 @@ function runOne(mode: CombatMode | "default"): Outcome {
   ({ world } = engine.step(world, { type: "accept" }));
   let fights = 0;
   let fled = 0;
+  let earlyDeath = false;
   const fightRounds: number[] = [];
   const fightDamage: number[] = [];
   let fightStartHp = 0;
@@ -105,6 +108,7 @@ function runOne(mode: CombatMode | "default"): Outcome {
     }
     if (world.game.combat) lastRound = world.game.combat.round;
     const ended = r.events.find((e) => e.type === "combatEnded" || e.type === "died");
+    if (ended?.type === "died" && fightStartHp > 0 && fights <= 3) earlyDeath = true;
     if (ended && fightStartHp > 0) {
       fightRounds.push(lastRound);
       fightDamage.push(Math.max(0, fightStartHp - Math.max(0, world.game.crawler?.hp ?? 0)));
@@ -115,8 +119,22 @@ function runOne(mode: CombatMode | "default"): Outcome {
     }
   };
   const stuck = (cause: string, i: number): Outcome => ({
-    result: "stuck", cause, actions: i, roomsVisited: 0, xp: 0, fights, level: 1, fightRounds, fightDamage, fled, crafted,
+    result: "stuck", cause, actions: i, roomsVisited: 0, xp: 0, fights, level: 1, fightRounds, fightDamage, fled, crafted, earlyDeath,
   });
+  /** Run a command; false if the engine refused it (not enough AP, out of reach...). */
+  const tryAct = (a: Parameters<typeof engine.step>[1]) => {
+    act(a);
+    return !lastEvents.some((e) => e.type === "error");
+  };
+  /** Nearest living enemy, weakest first among equals: the one worth swinging at. */
+  const pickTarget = (): string | undefined => {
+    const combat = world.game.combat!;
+    const band = { close: 0, near: 1, far: 2 } as const;
+    const at = combat.arena?.crawler;
+    const far = (e: (typeof combat.enemies)[number]) =>
+      at && e.pos ? Math.max(Math.abs(e.pos.x - at.x), Math.abs(e.pos.y - at.y)) : band[e.range];
+    return combat.enemies.filter((e) => e.hp > 0).sort((a, b) => far(a) - far(b) || a.hp - b.hp)[0]?.name.toLowerCase();
+  };
 
   for (let i = 0; i < 4000; i++) {
     const phase = world.game.phase;
@@ -126,16 +144,19 @@ function runOne(mode: CombatMode | "default"): Outcome {
       if (world.game.combat!.round > MAX_ROUNDS) {
         return stuck(`endless fight (${world.game.combat!.mode}): ${world.game.combat!.enemies.filter((e) => e.hp > 0).map((e) => `${e.name}:${e.hp}`).join(", ")}`, i);
       }
+      // A turn is AP: keep issuing commands until the engine ends it. Swing while there's
+      // AP for it, close in when out of reach, and brace with whatever is left over.
       const heal = healItem(world);
       const thrown = crafty ? throwable(world) : undefined;
       const foes = world.game.combat!.enemies.filter((e) => e.hp > 0).length;
-      if (hpPct(world) < 0.45 && heal) act({ type: "use", item: heal });
-      else if (hpPct(world) < 0.3) act({ type: "flee" });
-      else if (thrown && foes >= 2 && world.game.combat!.round <= 2) {
-        const before = world.game.turn;
-        act({ type: "use", item: thrown });
-        if (world.game.turn === before || world.game.log.at(-2)?.type === "error") act({ type: "attack" });
-      } else act({ type: "attack" });
+      const cv = engine.view(world).combat!;
+      const target = pickTarget();
+      if (hpPct(world) < 0.45 && heal) { if (!tryAct({ type: "use", item: heal })) act({ type: "wait" }); }
+      else if (hpPct(world) < 0.3) { if (!tryAct({ type: "flee" })) act({ type: "wait" }); }
+      else if (thrown && foes >= 2 && world.game.combat!.round <= 2 && tryAct({ type: "use", item: thrown })) { /* thrown */ }
+      else if (cv.ap.current >= cv.attackCost) {
+        if (!tryAct(target ? { type: "attack", target } : { type: "attack" }) && !tryAct({ type: "advance" })) act({ type: "wait" });
+      } else if (!tryAct({ type: "defend" })) act({ type: "wait" });
       continue;
     }
 
@@ -211,6 +232,7 @@ function runOne(mode: CombatMode | "default"): Outcome {
     fightDamage,
     fled,
     crafted,
+    earlyDeath,
   };
 }
 
@@ -238,6 +260,10 @@ for (const mode of modes) {
   if (stuck.length) for (const o of stuck.slice(0, 10)) console.log(`    ${o.cause}`);
   console.log(`  avg fights/run: ${avg(outcomes.map((o) => o.fights)).toFixed(1)}   avg xp: ${Math.round(avg(outcomes.map((o) => o.xp)))}   avg rooms: ${Math.round(avg(outcomes.map((o) => o.roomsVisited)))}`);
   console.log(`  per fight: ${avg(rounds).toFixed(1)} rounds, ${avg(damage).toFixed(1)} damage taken, fled ${fights ? Math.round((100 * fled) / fights) : 0}%`);
+  const early = outcomes.flatMap((o) => o.fightDamage.slice(0, 3));
+  const late = outcomes.flatMap((o) => o.fightDamage.slice(3));
+  console.log(`  damage taken per fight: ${avg(early).toFixed(1)} in fights 1-3 (easy pool), ${avg(late).toFixed(1)} after`);
+  console.log(`  died in the first 3 fights: ${outcomes.filter((o) => o.earlyDeath).length} (${Math.round((100 * outcomes.filter((o) => o.earlyDeath).length) / runs)}%)`);
   if (crafty) console.log(`  crafted per run: ${avg(outcomes.map((o) => o.crafted)).toFixed(1)}`);
   console.log("  deaths by cause:");
   for (const [cause, n] of [...causes.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)) {

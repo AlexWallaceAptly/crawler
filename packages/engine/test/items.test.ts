@@ -140,18 +140,18 @@ describe("inventory", () => {
     expect(w.game.floor!.rooms[w.game.floor!.currentRoom]!.items!.length).toBeGreaterThan(0);
   });
 
-  it("equip swaps gear; a two-hander clears the off hand; armor moves defense", () => {
+  it("equip swaps gear; a two-hander clears the off hand; armor soaks damage", () => {
     const world = quietRoom();
     const c = world.game.crawler!;
     c.inventory = [];
     c.equipment = {};
     c.inventory.push(itemFromRef(content, "lead_pipe"), itemFromRef(content, "trash_can_lid"), itemFromRef(content, "broom_handle"));
-    const base = derive(c, content).defense;
+    const base = derive(c, content).armor;
     let w = engine.input(world, "wield lead pipe").world;
     w = engine.input(w, "equip trash can lid").world;
     let wc = w.game.crawler!;
     expect(wc.inventory.find((i) => i.uid === wc.equipment.mainHand)!.baseId).toBe("lead_pipe");
-    expect(derive(wc, content).defense).toBe(base + 1);
+    expect(derive(wc, content).armor).toBe(base + 1);
     w = engine.input(w, "equip broom handle").world;
     wc = w.game.crawler!;
     expect(wc.inventory.find((i) => i.uid === wc.equipment.mainHand)!.baseId).toBe("broom_handle");

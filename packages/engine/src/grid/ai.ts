@@ -11,9 +11,14 @@
  *                     first if that's possible this turn.
  *   flee_below_N      run for the nearest door; reaching it means it got away.
  *
+ * An enemy's turn is AP (3, elites 4): an attack costs 2 unless it says otherwise,
+ * and 1 AP buys its speed in tiles. It keeps acting until the AP is gone, so an
+ * elite standing next to you swings twice.
+ *
  * Ties between equally good tiles go through rng so tests can pin them.
  */
-import { enemyStrike, markFled, pickAttack, wantsToFlee, type LiveAttack } from "../combat";
+import { attackCost, enemyAp, enemyStrike, markFled, pickAttack, wantsToFlee, type LiveAttack } from "../combat";
+import { AP_COST } from "../rules/ap";
 import { hazardAt, occupied, pathField, pathTo, affordable, coord, dist, lineOfSight, allTiles, index, reaches, same, type PathField } from "./geometry";
 import { pick } from "../rng";
 import type { StepContext } from "../step";
@@ -54,36 +59,23 @@ function usableFrom(ctx: StepContext, e: Enemy, from: Pos, specialsOnly: boolean
   return e.attacks.some((at) => at.ready === 0 && (!specialsOnly || at.cooldown) && reaches(a, ctx.content, from, a.crawler, at.range));
 }
 
-function strike(ctx: StepContext, e: Enemy, specialsOnly = false): boolean {
-  const attack: LiveAttack | undefined = pickAttack(ctx, e, specialsOnly);
-  if (!attack) return false;
-  enemyStrike(ctx, e, attack);
-  return true;
-}
-
 /**
- * Move to the cheapest tile from which an attack works; strike if it arrives.
- * If nothing works from anywhere, shuffle as close as possible.
- * Returns true if the enemy struck.
+ * Walk toward the cheapest tile from which an attack works (as far as `budget`
+ * goes). If nothing works from anywhere, shuffle as close as possible.
+ * Returns movement spent.
  */
-function approach(ctx: StepContext, e: Enemy, budget: number, specialsOnly: boolean): boolean {
+function approach(ctx: StepContext, e: Enemy, budget: number, specialsOnly: boolean): number {
   const combat = ctx.game.combat!;
   const a = arenaOf(ctx);
+  if (budget <= 0) return 0;
   const field = fieldFor(ctx, e);
   const goals = reachable(a, field).filter((p) => !occupied(combat, p, e) && usableFrom(ctx, e, p, specialsOnly));
   const goal = choose(a, field, goals, () => 0);
   if (goal) {
-    const path = pathTo(a, field, goal);
-    const steps = affordable(a, ctx.content, path, budget);
-    if (steps.length) {
-      walk(ctx, e, steps, budget);
-      if (ctx.game.phase !== "combat" || e.hp <= 0) return true;
-    }
-    if (same(e.pos!, goal) || usableFrom(ctx, e, e.pos!, specialsOnly)) return strike(ctx, e, specialsOnly);
-    if (!steps.length) ctx.fight(`The ${e.name} circles, looking for an angle.`, "enemy");
-    return false;
+    const steps = affordable(a, ctx.content, pathTo(a, field, goal), budget);
+    return steps.length ? walk(ctx, e, steps, budget) : 0;
   }
-  if (specialsOnly) return false;
+  if (specialsOnly) return 0;
   // Nothing can reach from any free tile (boxed in): get as close as possible.
   const before = dist(e.pos!, a.crawler);
   const options = reachable(a, field).filter((p) => {
@@ -92,9 +84,7 @@ function approach(ctx: StepContext, e: Enemy, budget: number, specialsOnly: bool
     return affordable(a, ctx.content, path, budget).length === path.length;
   });
   const spot = choose(a, field, options, (p) => -dist(p, a.crawler));
-  if (spot && dist(spot, a.crawler) < before) walk(ctx, e, pathTo(a, field, spot), budget);
-  else ctx.fight(`The ${e.name} circles, looking for an angle.`, "enemy");
-  return false;
+  return spot && dist(spot, a.crawler) < before ? walk(ctx, e, pathTo(a, field, spot), budget) : 0;
 }
 
 /** Back off toward the preferred distance, keeping sight. Returns movement spent. */
@@ -145,34 +135,74 @@ export function runEnemyTurnGrid(ctx: StepContext, e: Enemy): void {
   if (ctx.game.phase !== "combat" || e.hp <= 0) return;
   const a = arenaOf(ctx);
   const startDist = dist(e.pos, a.crawler);
-  let budget = enemySpeed(ctx, e);
+  const speed = enemySpeed(ctx, e);
+  let ap = enemyAp(ctx, e);
+  /** Tiles already paid for. */
+  let tiles = 0;
   let struck = false;
+  let moved = false;
+  let kept = false;
   const ignoreRange = (e.stall ?? 0) >= 2;
+  const alive = () => ctx.game.phase === "combat" && e.hp > 0 && !!e.pos;
+  /** Tiles it can walk while holding `reserve` AP back for a swing. */
+  const budget = (reserve: number) => tiles + Math.max(0, ap - reserve) * AP_COST.move * speed;
+  const pay = (spent: number) => {
+    if (spent > 0) moved = true;
+    tiles -= spent;
+    while (tiles < 0 && ap > 0) { ap -= AP_COST.move; tiles += speed; }
+    tiles = Math.max(0, tiles);
+  };
+  const strike = (specialsOnly: boolean): boolean => {
+    const attack: LiveAttack | undefined = pickAttack(ctx, e, specialsOnly, ap);
+    if (!attack) return false;
+    ap -= attackCost(attack);
+    struck = true;
+    enemyStrike(ctx, e, attack);
+    return true;
+  };
+  /** Cheapest attack that's off cooldown, so it knows how much AP to hold back while walking. */
+  const cheapest = (specialsOnly: boolean) => Math.min(...e.attacks
+    .filter((at) => at.ready === 0 && (!specialsOnly || at.cooldown)).map(attackCost), Infinity);
 
-  for (const token of e.ai) {
-    if (wantsToFlee(ctx, e, token)) {
-      runForIt(ctx, e, budget);
+  for (let guard = 0; guard < 8 && ap > 0 && alive(); guard++) {
+    if (e.ai.some((token) => wantsToFlee(ctx, e, token))) {
+      runForIt(ctx, e, budget(0));
       return;
     }
-    if (token === "special_if_ready" && e.attacks.some((at) => at.cooldown && at.ready === 0)) {
-      if (strike(ctx, e, true)) { struck = true; break; }
-      if (approach(ctx, e, budget, true)) { struck = true; break; }
+    let acted = false;
+    const tokens = e.ai.includes("attack") ? e.ai : [...e.ai, "attack"];
+    for (const token of tokens) {
+      if (token === "special_if_ready" && cheapest(true) <= ap) {
+        if (strike(true)) { acted = true; break; }
+        pay(approach(ctx, e, budget(cheapest(true)), true));
+        if (!alive()) return;
+        if (strike(true)) { acted = true; break; }
+      }
+      if (token === "keep_range" && !ignoreRange && !kept) {
+        kept = true;
+        pay(keepRange(ctx, e, budget(cheapest(false))));
+        if (!alive()) return;
+      }
+      if (token === "attack") {
+        if (strike(false)) { acted = true; break; }
+        const hold = cheapest(false) <= ap ? cheapest(false) : 0;
+        const spent = approach(ctx, e, budget(hold), false);
+        pay(spent);
+        if (!alive()) return;
+        if (strike(false)) { acted = true; break; }
+        // Couldn't get a swing in: use what was held back to keep closing.
+        if (hold > 0 && spent > 0) {
+          pay(approach(ctx, e, budget(0), false));
+          if (!alive()) return;
+        }
+        break;
+      }
     }
-    if (token === "keep_range" && !ignoreRange) {
-      budget -= keepRange(ctx, e, budget);
-      if (ctx.game.phase !== "combat" || e.hp <= 0) return;
-    }
-    if (token === "attack") {
-      struck = strike(ctx, e) || approach(ctx, e, budget, false);
-      break;
-    }
+    if (!acted) break;
   }
-  if (!struck && !e.ai.includes("attack") && ctx.game.phase === "combat" && e.hp > 0) {
-    struck = strike(ctx, e) || approach(ctx, e, budget, false);
-  }
-  if (ctx.game.phase !== "combat" || e.hp <= 0 || !e.pos) return;
+  if (!alive()) return;
+  if (!struck && !moved) ctx.fight(`The ${e.name} circles, looking for an angle.`, "enemy");
   // Stall guard: an enemy that neither hits nor closes for two turns forgets about keeping range.
-  const closer = dist(e.pos, a.crawler) < startDist;
+  const closer = dist(e.pos!, a.crawler) < startDist;
   e.stall = struck || closer ? 0 : (e.stall ?? 0) + 1;
 }
-

@@ -113,3 +113,19 @@
   border-color: var(--system);
   color: var(--system);
 }
+
+/* Combat buttons carry their AP price; ones you can't pay for are greyed out. */
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: var(--border);
+  color: var(--dim);
+}
+.apCost {
+  margin-left: 6px;
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  font-size: 10px;
+  opacity: 0.75;
+}

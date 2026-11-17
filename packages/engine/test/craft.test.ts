@@ -29,13 +29,23 @@ const has = (w: World, id: string) => w.game.crawler!.inventory.find((i) => i.ba
 const said = (events: { type: string; key?: string }[], key: string) => events.some((e) => e.type === "narration" && e.key === key);
 
 describe("combine", () => {
+  it("the workbench picker's form: full item names with bars between them", () => {
+    const world = atBench(["baseball_bat", "thumbtacks", "duct_tape"]);
+    const names = world.game.crawler!.inventory
+      .filter((i) => ["baseball_bat", "thumbtacks", "duct_tape"].includes(i.baseId))
+      .map((i) => i.name.toLowerCase());
+    const { world: w } = engine.input(world, `combine ${names.join(" | ")}`);
+    expect(w.game.crawler!.recipes).toEqual(["nail_bat"]);
+    expect(engine.view(world).inventory.find((i) => i.name.toLowerCase() === names[1])!.parts).toContain("sharp");
+  });
+
   it("bat + tacks + tape = a nail bat, upgraded in place and still in your hands", () => {
     const world = atBench(["baseball_bat", "thumbtacks", "duct_tape"]);
     const t = world.game.floor!.timeLeft;
     const { world: w, events } = engine.input(world, "combine bat tacks tape");
     const bat = has(w, "baseball_bat")!;
     expect(bat.name).toBe("Nail-Studded Aluminum Baseball Bat");
-    expect(bat.damage).toBe("1d8+1");
+    expect(bat.power).toEqual([4, 6, 8]); // 3/5/7, +1 on every tier
     expect(bat.onHit).toEqual({ id: "bleeding", chance: 0.3, duration: 2 });
     expect(bat.crafted).toEqual(["nail_bat"]);
     expect(w.game.crawler!.equipment.mainHand).toBe(bat.uid);
@@ -85,7 +95,7 @@ describe("combine", () => {
   it("tools aren't used up: the hammer survives hammering", () => {
     const world = atBench(["baseball_bat", "box_of_nails", "claw_hammer"]);
     const { world: w } = engine.input(world, "combine hammer nails bat");
-    expect(has(w, "baseball_bat")!.damage).toBe("1d8+2");
+    expect(has(w, "baseball_bat")!.power).toEqual([5, 7, 9]);
     expect(has(w, "claw_hammer")).toBeDefined();
     expect(has(w, "box_of_nails")).toBeUndefined();
   });
@@ -190,7 +200,7 @@ describe("crafted gear in a fight", () => {
     const club = world.game.crawler!.inventory[0]!;
     club.onHit = { id: "bleeding", chance: 1, duration: 2 };
     setRandomSource(() => 0);
-    forceDice(10, 2, 1);
+    forceDice(5, 5); // tier 2: the on-hit rolls its chance
     const { world: w, events } = engine.step(world, { type: "attack" });
     expect(w.game.combat!.enemies[0]!.statuses.some((s) => s.id === "bleeding")).toBe(true);
     expect(lines(events)).toContain("is bleeding");

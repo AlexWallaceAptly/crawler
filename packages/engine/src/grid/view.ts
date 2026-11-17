@@ -11,6 +11,7 @@ import {
   allTiles, columnLabels, coord, dist, exitAt, featureAt, hazardAt, index, occupied, pathField, reaches, same,
 } from "./geometry";
 import { speedOf } from "./units";
+import { AP_COST, apNow } from "../rules/ap";
 import type { RangeBand } from "../content/schemas";
 
 export interface GridTileView {
@@ -22,8 +23,10 @@ export interface GridTileView {
   feature?: { id: string; name: string; kind: string; glyph: string };
   hazard?: { id: string; name: string; glyph: string; rounds?: number };
   exit?: { dir: string; entry: boolean };
-  /** You can walk here with the movement left. */
+  /** You can walk here with the AP you have left. */
   move?: true;
+  /** AP walking here would spend (0 = already paid for). */
+  moveAp?: number;
   /** Something you can hit from where you stand is on this tile. */
   attack?: true;
   /** The command a tap on this tile submits, if any. */
@@ -54,8 +57,12 @@ export interface GridView {
   cols: string[];
   rows: string[];
   theme: string;
+  /** Tiles already paid for this turn. */
   moveLeft: number;
+  /** Tiles per AP. */
   speed: number;
+  ap: number;
+  apMax: number;
   tiles: GridTileView[];
   units: GridUnitView[];
   items: { x: number; y: number; coord: string; name: string; sprite: string }[];
@@ -89,9 +96,11 @@ export function gridView(combat: CombatState, crawler: Crawler, themeId: string,
   const variants = theme?.arena.floorVariants ?? 1;
   const weights = theme?.arena.floorWeights;
   const field = pathField(a, content, a.crawler, { blocked: (p) => occupied(combat, p, "crawler") });
-  // Before your first command of the round, the whole move is still ahead of you.
+  // Before your first command of the round, the whole turn's AP is still ahead of you.
   const speed = speedOf(crawler, content);
-  const moveLeft = combat.turnBegun ? a.moveLeft : speed;
+  const { ap, max: apMax } = apNow(combat, crawler, content);
+  const moveLeft = combat.turnBegun ? a.moveLeft : 0;
+  const reach = moveLeft + ap * AP_COST.move * speed;
   const live = combat.enemies.filter((e) => e.hp > 0 && e.pos);
   const tiles: GridTileView[] = allTiles(a).map((p) => {
     const t: GridTileView = { x: p.x, y: p.y, coord: coord(p), floor: floorVariant(themeId, variants, p, weights) };
@@ -103,14 +112,17 @@ export function gridView(combat: CombatState, crawler: Crawler, themeId: string,
     const x = exitAt(a, p);
     if (x) t.exit = { dir: x.dir, entry: x.entry };
     const cost = field.cost[index(a, p)]!;
-    if (cost > 0 && cost <= moveLeft) t.move = true;
+    if (cost > 0 && cost <= reach) {
+      t.move = true;
+      t.moveAp = Math.max(0, Math.ceil((cost - moveLeft) / speed)) * AP_COST.move;
+    }
     const foe = live.find((e) => same(e.pos!, p));
     if (foe) {
       if (reaches(a, content, a.crawler, p, weaponReach) && !hasFlag(foe.statuses, content, "untargetable")) t.attack = true;
       t.tap = `attack ${t.coord}`;
     } else if (same(p, a.crawler) && x) {
       t.tap = "flee";
-    } else if (a.items.some((it) => same(it, p)) && dist(p, a.crawler) <= 1 && (!combat.turnBegun || a.moveLeft > 0)) {
+    } else if (a.items.some((it) => same(it, p)) && dist(p, a.crawler) <= 1 && reach > 0) {
       t.tap = `take ${a.items.find((it) => same(it, p))!.item.name.toLowerCase()}`;
     } else if (same(p, a.crawler)) {
       // standing still: nothing to tap
@@ -142,6 +154,8 @@ export function gridView(combat: CombatState, crawler: Crawler, themeId: string,
     theme: themeId,
     moveLeft,
     speed,
+    ap,
+    apMax,
     tiles,
     units,
     items: a.items.map((it) => ({ x: it.x, y: it.y, coord: coord(it), name: it.item.name, sprite: it.item.baseId })),

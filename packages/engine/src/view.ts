@@ -5,6 +5,8 @@ import type { Content } from "./content/load";
 import { STATS, type Stat } from "./content/schemas";
 import { formatTimer, mapGrid, renderMap, roomBadge, type MapGrid } from "./explore";
 import { derive, xpToNext } from "./rules/derived";
+import { AP_COST, apNow } from "./rules/ap";
+import { formatPower } from "./rules/power";
 import { combatModeOf, EQUIP_SLOTS, type CombatMode, type EquipSlot, type Phase, type World } from "./state";
 import { gridView, type GridView } from "./grid/view";
 import { coord } from "./grid/geometry";
@@ -21,6 +23,8 @@ export interface ItemView {
   name: string;
   rarity: string;
   detail: string[];
+  /** Crafting roles this can play ("bind", "sharp"), if any. */
+  parts?: string[];
   equippedIn?: EquipSlot;
   qty: number;
 }
@@ -58,6 +62,10 @@ export interface ViewModel {
   combat: null | {
     round: number;
     mode: CombatMode;
+    /** Action points left this turn, and what the turn started with. */
+    ap: Bar;
+    /** What a swing of the weapon in hand costs. */
+    attackCost: number;
     /** Grid fights: the board, with every tap and highlight decided by the engine. */
     grid?: GridView;
     enemies: { uid: string; name: string; hp: Bar; range: string; statuses: string[]; elite: boolean; tier: string; mark?: string; at?: string }[];
@@ -106,7 +114,8 @@ export function view(world: World, content: Content): ViewModel {
     const it = from.find((i) => i.uid === uid);
     if (!it) return null;
     const detail: string[] = [];
-    if (it.damage) detail.push(`${it.damage}${it.damageType && it.damageType !== "physical" ? ` ${it.damageType}` : ""} (${it.stat ?? "STR"}${it.weaponType ? `, ${it.weaponType}` : ""})`);
+    if (it.power) detail.push(`${formatPower(it.power)}${it.damageType && it.damageType !== "physical" ? ` ${it.damageType}` : ""} damage, ${it.apCost ?? AP_COST.attack} AP (${it.stat ?? "STR"}${it.weaponType ? `, ${it.weaponType}` : ""})`);
+    if (it.unwieldy) detail.push("unwieldy: a swing ends your turn");
     if (it.twoHanded) detail.push("two-handed");
     if (it.armor) detail.push(`armor ${it.armor}`);
     for (const m of it.modifiers) detail.push(`${m.value >= 0 ? "+" : ""}${m.value} ${m.to.replace(/^(skill|stat):/, "")}`);
@@ -116,7 +125,10 @@ export function view(world: World, content: Content): ViewModel {
     detail.push(`weight ${Math.round(it.weight * it.qty * 10) / 10}`);
     if (it.flavor) detail.push(it.flavor);
     const slot = slotOf.get(it.uid);
-    return { uid: it.uid, name: it.name, rarity: it.rarity, detail, qty: it.qty, ...(slot ? { equippedIn: slot } : {}) };
+    return {
+      uid: it.uid, name: it.name, rarity: it.rarity, detail, qty: it.qty,
+      ...(parts.length ? { parts } : {}), ...(slot ? { equippedIn: slot } : {}),
+    };
   };
 
   const occ = content.backstory.occupations.byId[c.backstory.occupation];
@@ -146,7 +158,7 @@ export function view(world: World, content: Content): ViewModel {
       level: c.level,
       stats: STATS.map((s) => ({ stat: s, value: d.stats[s], base: c.baseStats[s] })),
       derived: [
-        { label: "Defense", value: String(d.defense) },
+        { label: "Armor", value: String(d.armor) },
         { label: "Init", value: `+${d.initiativeBonus}` },
         { label: "Regen", value: `${d.hpRegen} HP / ${d.mpRegen} MP` },
         { label: "Carry", value: `${Math.round(d.carried * 10) / 10}/${d.carryLimit}` },
@@ -175,6 +187,8 @@ export function view(world: World, content: Content): ViewModel {
       ? {
           round: game.combat.round,
           mode: game.combat.mode,
+          ap: (() => { const n = apNow(game.combat, c, content); return { current: n.ap, max: n.max }; })(),
+          attackCost: weaponInHand(c)?.apCost ?? (weaponInHand(c) ? AP_COST.attack : 1),
           ...(game.combat.arena && floor
             ? { grid: gridView(game.combat, c, floor.theme, content, weaponReach(c)) }
             : {}),
@@ -207,8 +221,12 @@ export function view(world: World, content: Content): ViewModel {
   };
 }
 
-function weaponReach(c: NonNullable<World["game"]["crawler"]>): RangeBand {
+function weaponInHand(c: NonNullable<World["game"]["crawler"]>) {
   const uid = c.equipment.mainHand;
   const w = uid ? c.inventory.find((i) => i.uid === uid) : undefined;
-  return (w?.damage && w.range) || "close";
+  return w?.power ? w : undefined;
+}
+
+function weaponReach(c: NonNullable<World["game"]["crawler"]>): RangeBand {
+  return weaponInHand(c)?.range ?? "close";
 }

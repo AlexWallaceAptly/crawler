@@ -1,6 +1,6 @@
 /**
  * Enemy generation (spec: Enemies and bosses).
- * level = floor*4 + random(-1, 2) + tier.levelOffset; stats shift 1 per level away
+ * level = floor*4 + random(-1, 2) + tier.levelOffset + the floor's offsets; stats shift 1 per level away
  * from the floor baseline; maxHP = hpBase * (1 + 0.25*level) * tierMult; mods bake
  * into the instance at spawn.
  *
@@ -10,17 +10,18 @@
 import type { Content } from "../content/load";
 import { STATS, type EnemyFamily, type EnemyMod } from "../content/schemas";
 import { chance, int, pick, shuffle, uid, weightedPick } from "../rng";
+import { addPower } from "../rules/power";
 import type { Enemy, EnemyTier } from "../state";
 
 /** Tier tuning. A boss row lands with Milestone 9; Claude runs it in Milestone 10. */
-export const TIER: Record<EnemyTier, { hpMult: number; mods: readonly [number, number]; levelOffset: number; xpMult: number }> = {
-  minion: { hpMult: 0.6, mods: [0, 0], levelOffset: -2, xpMult: 0.6 },
-  mob: { hpMult: 1, mods: [0, 1], levelOffset: 0, xpMult: 1 },
-  elite: { hpMult: 2.5, mods: [1, 2], levelOffset: 0, xpMult: 3 },
+export const TIER: Record<EnemyTier, { hpMult: number; mods: readonly [number, number]; levelOffset: number; xpMult: number; ap: number }> = {
+  minion: { hpMult: 0.6, mods: [0, 0], levelOffset: -2, xpMult: 0.6, ap: 3 },
+  mob: { hpMult: 1, mods: [0, 1], levelOffset: 0, xpMult: 1, ap: 3 },
+  elite: { hpMult: 2.5, mods: [1, 2], levelOffset: 0, xpMult: 3, ap: 4 },
 };
 
-export function generateEnemy(family: EnemyFamily, tier: EnemyTier, floor: number, content: Content): Enemy {
-  const level = Math.max(1, floor * 4 + int(-1, 2) + TIER[tier].levelOffset);
+export function generateEnemy(family: EnemyFamily, tier: EnemyTier, floor: number, content: Content, levelOffset = 0): Enemy {
+  const level = Math.max(1, floor * 4 + int(-1, 2) + TIER[tier].levelOffset + levelOffset);
   const baseline = floor * 4; // the level family.stats are written for
   const shift = level - baseline;
 
@@ -60,7 +61,7 @@ export function generateEnemy(family: EnemyFamily, tier: EnemyTier, floor: numbe
   const maxHP = Math.max(1, Math.round(family.hpBase * (1 + 0.25 * level) * hpMult));
   const attacks = family.attacks.map((a) => ({
     ...a,
-    dice: damageBonus ? `${a.dice}${damageBonus > 0 ? "+" : ""}${damageBonus}` : a.dice,
+    power: damageBonus ? addPower(a.power, damageBonus) : a.power,
     ...(statusOnHit && !a.status ? { status: statusOnHit } : {}),
     ready: 0,
   }));
@@ -76,7 +77,7 @@ export function generateEnemy(family: EnemyFamily, tier: EnemyTier, floor: numbe
     maxHP,
     hp: maxHP,
     armor,
-    defense: 10 + Math.floor(stats.DEX / 2) + armor + defenseBonus,
+    guard: defenseBonus,
     attacks,
     ai: family.ai,
     preferRange: family.preferRange,
@@ -100,47 +101,76 @@ function fleeThreshold(ai: string[]): number {
 
 export type EncounterKind = "pack" | "corridor" | "elite";
 
+export interface GroupOptions {
+  /** One of the floor's opening fights: easy pool, small pack, lower levels. */
+  easy?: boolean;
+}
+
 /**
  * Roll an encounter.
- * - pack / corridor: 2-4 (2-3 in corridors) minions. The first family fills what
- *   its groupSize allows; a second family fills the rest, or joins anyway on
- *   `mixedChance`. Never a lone enemy.
- * - elite: one elite of a family, alone or with 1-2 minion escorts of the same family.
+ * - easy (the floor's first few fights): 1-2 minions from the easy pool, a level down.
+ * - pack / corridor: 2-4 (2-3 in corridors) minions from the hard pool. The first
+ *   family fills what its groupSize allows; a second family fills the rest, or joins
+ *   anyway on `mixedChance`. Never a lone enemy. On `mobChance` a full-strength mob
+ *   leads the pack in place of two minions.
+ * - elite: one elite of a hard-pool family, alone or with 1-2 minion escorts of the same family.
  */
-export function generateGroup(floor: number, kind: EncounterKind, content: Content): Enemy[] {
-  const families = content.enemies.all.filter((f) => f.floor === floor);
-  if (families.length === 0) return [];
+export function generateGroup(floor: number, kind: EncounterKind, content: Content, opts: GroupOptions = {}): Enemy[] {
+  const onFloor = content.enemies.all.filter((f) => f.floor === floor);
+  if (onFloor.length === 0) return [];
   const theme = content.floors.all.find((t) => t.floor === floor);
-  const enc = theme?.encounters ?? { pack: [2, 4], corridorPack: [2, 3], mixedChance: 0.35, eliteAloneChance: 0.5, eliteEscorts: [1, 2] };
+  const enc = theme?.encounters ?? DEFAULT_ENCOUNTERS;
+  const easy = !!opts.easy && kind !== "elite";
+  const poolIds = easy ? enc.easyPool : enc.hardPool;
+  const pooled = onFloor.filter((f) => poolIds.includes(f.id));
+  const families = pooled.length > 0 ? pooled : onFloor;
+  const offset = enc.levelOffset + (easy ? enc.easyLevelOffset : 0);
+  const spawn = (family: EnemyFamily, tier: EnemyTier) => generateEnemy(family, tier, floor, content, offset);
 
   if (kind === "elite") {
     const family = pick(families);
-    const out = [generateEnemy(family, "elite", floor, content)];
+    const out = [spawn(family, "elite")];
     if (!chance(enc.eliteAloneChance)) {
       const extra = int(enc.eliteEscorts[0], enc.eliteEscorts[1]);
-      for (let i = 0; i < extra; i++) out.push(generateEnemy(family, "minion", floor, content));
+      for (let i = 0; i < extra; i++) out.push(spawn(family, "minion"));
     }
     return out;
   }
 
-  const [lo, hi] = kind === "corridor" ? enc.corridorPack : enc.pack;
+  const [lo, hi] = easy ? enc.easyPack : kind === "corridor" ? enc.corridorPack : enc.pack;
   const total = int(Math.max(1, lo), Math.max(1, hi));
   const [primary, ...others] = shuffle(families);
+  if (easy) {
+    const out: Enemy[] = [];
+    for (let i = 0; i < total; i++) out.push(spawn(primary!, "minion"));
+    return out;
+  }
   let first = Math.min(total, int(primary!.groupSize[0], primary!.groupSize[1]));
   const second = others[0];
   // Mix in a second family when the first can't fill the pack, or just because.
   if (second && total >= 2 && first === total && chance(enc.mixedChance)) first = int(1, total - 1);
   const out: Enemy[] = [];
-  for (let i = 0; i < first; i++) out.push(generateEnemy(primary!, "minion", floor, content));
+  for (let i = 0; i < first; i++) out.push(spawn(primary!, "minion"));
   if (second) {
     const rest = Math.min(total - first, second.groupSize[1]);
-    for (let i = 0; i < rest; i++) out.push(generateEnemy(second, "minion", floor, content));
+    for (let i = 0; i < rest; i++) out.push(spawn(second, "minion"));
   }
   // Two capped families can still come up short; top the primary up past its cap
   // rather than ship a lone enemy.
-  while (out.length < Math.min(2, total)) out.push(generateEnemy(primary!, "minion", floor, content));
+  while (out.length < Math.min(2, total)) out.push(spawn(primary!, "minion"));
+  // A mob takes the place of two minions (the pack never drops below two bodies).
+  if (out.length >= 3 && chance(enc.mobChance)) {
+    const lead = out[0]!;
+    out.splice(0, 2, spawn(content.enemies.get(lead.familyId), "mob"));
+  }
   return out;
 }
+
+const DEFAULT_ENCOUNTERS = {
+  pack: [2, 4], corridorPack: [2, 3], mixedChance: 0.35, eliteAloneChance: 0.5, eliteEscorts: [1, 2],
+  easyFights: 3, easyPool: [] as string[], hardPool: [] as string[], easyPack: [1, 2], easyLevelOffset: -1,
+  levelOffset: 0, mobChance: 0.25,
+} as const;
 
 /**
  * Same-named enemies get letters ("Sump Rat A", "Sump Rat B") so they can be

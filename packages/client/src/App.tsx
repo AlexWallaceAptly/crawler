@@ -6,6 +6,8 @@ import { readPref, writePref } from "./storage";
 import { Panel } from "./panels/Panel";
 import { EnemyStrip, LogView } from "./panels/LogView";
 import { MobileShell } from "./panels/Mobile";
+import { TabletShell } from "./panels/Tablet";
+import { useLayout } from "./layout";
 import { CharacterSheet, EffectsList, EquipmentList, InventoryList, MiniMap, RecipeBook } from "./panels/Sheets";
 import { StatusBar } from "./panels/StatusBar";
 import { Ticker } from "./panels/Ticker";
@@ -13,21 +15,10 @@ import { InputBar } from "./panels/InputBar";
 import { BattleGrid } from "./panels/BattleGrid";
 import s from "./App.module.css";
 
-function useNarrow(query = "(max-width: 899px)") {
-  const get = () => typeof window !== "undefined" && window.matchMedia(query).matches;
-  const [narrow, setNarrow] = useState(get);
-  useEffect(() => {
-    const mq = window.matchMedia(query);
-    const on = () => setNarrow(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, [query]);
-  return narrow;
-}
-
 export function App({ engine }: { engine: Engine }) {
   const { world, view, commands, submit, resetEverything } = useGame(engine);
-  const narrow = useNarrow();
+  const layoutControl = useLayout();
+  const narrow = false; // the dashboard below is only drawn at desktop size
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [split, setSplit] = useState<boolean>(() => readPref("combatSplit", false));
   /** A grid command waiting for the player to pick a tile. */
@@ -69,9 +60,10 @@ export function App({ engine }: { engine: Engine }) {
   }, []);
 
   // Phones get the full-screen map-first shell instead of the panel dashboard.
-  if (narrow) {
+  if (layoutControl.layout !== "desktop") {
+    const Shell = layoutControl.layout === "phone" ? MobileShell : TabletShell;
     return (
-      <MobileShell
+      <Shell
         view={view}
         log={log}
         battle={battle}
@@ -80,6 +72,7 @@ export function App({ engine }: { engine: Engine }) {
         onLocal={onLocal}
         armed={armed}
         setArmed={setArmed}
+        layout={layoutControl}
       />
     );
   }
@@ -115,10 +108,17 @@ export function App({ engine }: { engine: Engine }) {
           title="Event log"
           collapsible={false}
           className={s.grow}
-          extra={view.character && (
-            <button className={s.linkBtn} title="How the next fight plays" onClick={() => submit(`set combat ${otherMode}`)}>
-              combat: {view.settings.combatMode} ⇄
-            </button>
+          extra={(
+            <span className={s.headLinks}>
+              {view.character && (
+                <button className={s.linkBtn} title="How the next fight plays" onClick={() => submit(`set combat ${otherMode}`)}>
+                  combat: {view.settings.combatMode} ⇄
+                </button>
+              )}
+              <button className={s.linkBtn} title="Switch between the desktop, tablet and phone layouts" onClick={layoutControl.cycle}>
+                {layoutControl.label.toLowerCase()} ⇄
+              </button>
+            </span>
           )}
         >
           <LogView events={log} />

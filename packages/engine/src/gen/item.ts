@@ -14,7 +14,9 @@ export function itemFromBase(base: ItemBase): ItemInstance {
     slot: base.slot,
     ...(base.twoHanded ? { twoHanded: true } : {}),
     ...(base.weaponType ? { weaponType: base.weaponType } : {}),
-    ...(base.damage ? { damage: base.damage } : {}),
+    ...(base.power ? { power: [...base.power] as [number, number, number] } : {}),
+    ...(base.apCost ? { apCost: base.apCost } : {}),
+    ...(base.unwieldy ? { unwieldy: true } : {}),
     ...(base.damageType ? { damageType: base.damageType } : {}),
     ...(base.stat ? { stat: base.stat } : {}),
     ...(base.range ? { range: base.range } : {}),
@@ -52,5 +54,5 @@ export function itemFromRef(content: Content, id: string, qty = 1): ItemInstance
 }
 
 export function isWeapon(item: ItemInstance): boolean {
-  return item.kind === "gear" && item.slot === "mainHand" && !!item.damage;
+  return item.kind === "gear" && item.slot === "mainHand" && !!item.power;
 }

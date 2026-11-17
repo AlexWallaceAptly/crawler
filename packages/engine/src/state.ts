@@ -1,8 +1,8 @@
-import type { EnemyAttack, RangeBand, Rarity, RoomShape, Slot, StatBlock, Modifier, ROOM_TYPES } from "./content/schemas";
+import type { EnemyAttack, Power, RangeBand, Rarity, RoomShape, Slot, StatBlock, Modifier, ROOM_TYPES } from "./content/schemas";
 import type { GameEvent } from "./events";
 
 /** Bump when the save shape changes incompatibly; old saves are discarded (see DECISIONS.md). */
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export const ACCOUNT_VERSION = 1;
 export const LOG_LIMIT = 300;
 
@@ -32,7 +32,12 @@ export interface ItemInstance {
   slot?: Slot;
   twoHanded?: boolean;
   weaponType?: string;
-  damage?: string;
+  /** Weapons: damage by power-roll tier [t1, t2, t3]. */
+  power?: Power;
+  /** Weapons: AP per swing (default 2). */
+  apCost?: number;
+  /** Weapons: a swing ends your turn. */
+  unwieldy?: boolean;
   damageType?: string;
   stat?: "STR" | "DEX";
   range?: "close" | "near" | "far";
@@ -164,8 +169,10 @@ export interface Enemy {
   stats: StatBlock;
   maxHP: number;
   hp: number;
+  /** Flat damage taken off every hit (never below 1). */
   armor: number;
-  defense: number;
+  /** From mods: positive is hard to hit cleanly (banes on your roll), negative is easy (edges). */
+  guard: number;
   attacks: (EnemyAttack & { ready: number })[];
   ai: string[];
   preferRange: RangeBand;
@@ -220,7 +227,7 @@ export interface ArenaState {
   items: ArenaItem[];
   exits: ArenaExit[];
   crawler: Pos;
-  /** Movement points left this turn (the grid's minor action). */
+  /** Tiles of movement already paid for this turn (1 AP buys your speed in tiles). */
   moveLeft: number;
 }
 
@@ -231,8 +238,10 @@ export interface CombatState {
   round: number;
   /** The crawler's rolled initiative for this fight. */
   playerInitiative: number;
-  /** Number of step-a-band minor actions used this round (bands mode). */
-  minorActionsUsed: number;
+  /** Action points left this turn. Everything costs some; the turn ends at zero. */
+  ap: number;
+  /** What the turn started with (3, give or take haste and slow). */
+  apMax: number;
   /**
    * Set once the crawler's turn has started this round (statuses ticked). Makes the
    * turn start idempotent: a rejected command or a grid move doesn't tick twice.
@@ -257,6 +266,8 @@ export interface FloorState {
   timeLeft: number;
   /** Warning thresholds (in minutes) that have already fired. */
   warned: number[];
+  /** Fights started on this floor: the first few roll from the easy pool. */
+  fights: number;
 }
 
 export interface NarratorState {

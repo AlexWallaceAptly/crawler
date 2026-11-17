@@ -22,6 +22,14 @@ export const PartialStatBlockSchema = StatBlockSchema.partial();
 
 export const IdSchema = z.string().regex(/^[a-z0-9_]+$/, "ids must be lowercase snake_case");
 export const DiceSchema = z.string().refine(isDice, { message: "not a valid dice expression (e.g. 2d6+1)" });
+
+/**
+ * Damage by power-roll tier: [tier 1 (11 or less), tier 2 (12-16), tier 3 (17+)].
+ * Every attack lands; the roll only decides how hard.
+ */
+export const PowerSchema = z.tuple([z.number().int().min(1), z.number().int().min(1), z.number().int().min(1)])
+  .refine((p) => p[0] <= p[1] && p[1] <= p[2], { message: "power tiers must not decrease: [t1, t2, t3]" });
+export type Power = z.infer<typeof PowerSchema>;
 export const DcTierSchema = z.enum(DC_TIER_NAMES as [string, ...string[]]);
 /** A weighted pick list of content ids. */
 export const WeightedIdsSchema = z.array(z.strictObject({ id: IdSchema, weight: z.number().positive().default(1) }));
@@ -184,7 +192,12 @@ export const ItemBaseSchema = z.strictObject({
   slot: SlotSchema,
   twoHanded: z.boolean().optional(),
   weaponType: z.string().optional(),
-  damage: DiceSchema.optional(),
+  /** Weapons: damage by power-roll tier. */
+  power: PowerSchema.optional(),
+  /** Weapons: AP per swing (default 2). Light junk pokes for 1; the heavy stuff takes the whole turn. */
+  apCost: z.number().int().min(1).max(3).optional(),
+  /** Big two-handed lumps: a swing ends your turn, and hits like a 3-AP swing. */
+  unwieldy: z.boolean().optional(),
   damageType: DamageTypeSchema.optional(),
   stat: z.enum(["STR", "DEX"]).optional(),
   range: z.enum(["close", "near", "far"]).optional(),
@@ -201,8 +214,8 @@ export const ItemBaseSchema = z.strictObject({
   tags: z.array(z.string()).default([]),
   flavor: z.string().optional(),
 }).superRefine((b, ctx) => {
-  if (b.slot === "mainHand" && b.weaponType && (!b.damage || !b.stat)) {
-    ctx.addIssue({ code: "custom", message: "weapons need damage and stat" });
+  if (b.slot === "mainHand" && b.weaponType && (!b.power || !b.stat)) {
+    ctx.addIssue({ code: "custom", message: "weapons need power and stat" });
   }
   if (b.twoHanded && b.slot !== "mainHand") {
     ctx.addIssue({ code: "custom", message: "only mainHand items can be twoHanded" });
@@ -351,6 +364,20 @@ export const FloorThemeSchema = z.strictObject({
     mixedChance: z.number().min(0).max(1).default(0.35),
     eliteAloneChance: z.number().min(0).max(1).default(0.5),
     eliteEscorts: IntRangeSchema.default([1, 2]),
+    /** The first this-many fights on the floor roll from the easy pool, lairs included. */
+    easyFights: z.number().int().min(0).default(3),
+    /** Families for the easy opening fights. Empty = any family on the floor. */
+    easyPool: z.array(IdSchema).default([]),
+    /** Families for every fight after that. Empty = any family on the floor. */
+    hardPool: z.array(IdSchema).default([]),
+    /** Pack size for easy fights; a lone enemy is allowed here. */
+    easyPack: IntRangeSchema.default([1, 2]),
+    /** Added to enemy level in easy fights (on top of the tier's offset). */
+    easyLevelOffset: z.number().int().default(-1),
+    /** Added to every enemy's level on this floor: the floor-wide difficulty knob. */
+    levelOffset: z.number().int().default(0),
+    /** Chance a hard pack is led by a full-strength mob in place of two of its minions. */
+    mobChance: z.number().min(0).max(1).default(0.25),
   }).prefault({}),
   /** Extra closing lines by special room type; empty array = no extra line. */
   typeLines: z.strictObject({
@@ -377,9 +404,12 @@ export type RangeBand = z.infer<typeof RangeBandSchema>;
 
 export const EnemyAttackSchema = z.strictObject({
   name: z.string(),
-  dice: DiceSchema,
+  /** Damage by power-roll tier. */
+  power: PowerSchema,
+  /** AP this attack costs the enemy (default 2). */
+  ap: z.number().int().min(1).max(4).optional(),
   damageType: DamageTypeSchema.default("physical"),
-  /** Stat added to the hit roll and half-added to damage. */
+  /** Stat added to the power roll and quarter-added to damage. */
   stat: StatSchema,
   range: RangeBandSchema,
   /** Rounds between uses; attacks with a cooldown are "specials" to the AI. */
@@ -401,7 +431,7 @@ export const EnemyFamilySchema = z.strictObject({
   /** Baseline stats at the floor's typical level; shifted 1 per level away from it. */
   stats: StatBlockSchema,
   hpBase: z.number().min(1),
-  /** Added to defense (spec formula). */
+  /** Subtracted from every hit it takes (never below 1 damage). */
   armor: z.number().default(0),
   attacks: z.array(EnemyAttackSchema).min(1),
   ai: z.array(AiTokenSchema).min(1),
@@ -493,7 +523,7 @@ export const UpgradeSchema = z.strictObject({
   /** "Nail-Studded Aluminum Baseball Bat" */
   prefix: z.string().min(1),
   damageBonus: z.number().int().default(0),
-  /** Bump the weapon's die size this many steps (d4 → d6 → d8 ...). */
+  /** Bump the weapon's power this many steps (each step: +1 at tier 2, +2 at tier 3). */
   damageStep: z.number().int().min(0).max(2).default(0),
   damageType: DamageTypeSchema.optional(),
   armorBonus: z.number().int().default(0),

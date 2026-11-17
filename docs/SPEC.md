@@ -84,6 +84,8 @@ The UI shows a text log plus a command line. Commands are typed (`attack goblin`
 
 ### Screen layout
 
+There are three shells, picked by screen: **phone** (under 700px wide: one view at a time, a d-pad), **tablet** (700px and up on a touch screen: map or battle board on the left with an action bar, log and sheets on the right, walking by arrows on the map, rarely used commands behind "More") and **desktop** (the dashboard below, with a typed command bar). A layout switch in each shell overrides the choice. All three render from `engine.view()` and `engine.commands()`; the engine marks rarely used commands `niche`.
+
 The first UI is a multi-panel text dashboard: separate areas for the event log, battle log, active effects, equipment and character sheet, laid out with CSS grid. Each panel is its own React component in a named layout region, so a later art or illustration layer can sit behind or around the text without rewriting the panels.
 
 ```
@@ -127,7 +129,7 @@ Rules:
 
 ## Core rules
 
-Every uncertain outcome is one roll: d20 + the relevant stat (+ skill and gear bonuses) against a difficulty number. Stats grow without a cap, so difficulty grows with the floor.
+Every uncertain outcome outside a fight is one roll: d20 + the relevant stat (+ skill and gear bonuses) against a difficulty number. Stats grow without a cap, so difficulty grows with the floor. Attacks in a fight are power rolls (see Combat): 2d10, three tiers of damage, and nothing misses.
 
 ### Stats
 
@@ -135,8 +137,8 @@ Five primary stats. A new crawler has 3-12 in each, set by backstory. Each level
 
 | Stat | Governs |
 | --- | --- |
-| STR (Strength) | Melee hit and damage, carry weight, forcing doors |
-| DEX (Dexterity) | Ranged and finesse hit, defense, initiative, stealth, fleeing |
+| STR (Strength) | Melee power rolls and damage, carry weight, forcing doors |
+| DEX (Dexterity) | Ranged and finesse power rolls and damage, initiative, stealth, fleeing |
 | CON (Constitution) | Max HP, resisting poison, disease and fear, HP regen |
 | INT (Intelligence) | Max MP, spell power, identifying items, traps, puzzles |
 | CHA (Charisma) | Talking to NPCs, shop prices, pet and summon power, how much the System AI likes you |
@@ -146,7 +148,8 @@ Five primary stats. A new crawler has 3-12 in each, set by backstory. Each level
 ```
 maxHP      = 10 + 3*CON + 2*level + race.hpBonus + class.hpBonus
 maxMP      = 5 + 2*INT + class.mpBonus
-defense    = 10 + floor(DEX/2) + armor.total + shield + buffs
+armor      = armor.total + shield + damage-reduction buffs   (taken off every hit, never below 1 damage)
+guard      = "defense" buffs and debuffs   (every 2 points is a bane on attackers; every -2 is an edge for them)
 initiative = d20 + DEX
 hpRegen    = floor(CON/5) per room moved (out of combat only)
 mpRegen    = floor(INT/5) per room moved (out of combat only)
@@ -166,23 +169,37 @@ carryLimit = 20 + 4*STR  (weight units)
 
 Combat is turn-based in rounds. Everyone rolls initiative at the start; order stays fixed for the fight.
 
-On their turn a combatant gets **one action** and **one minor action**:
+**Action points.** A turn is a pool of **3 AP** (hasted 4, slowed 2). Everything costs some, in any order, and the turn ends by itself when the pool is empty or on `wait`. An action you can't pay for is refused and costs nothing. Attacking something too far to reach and still swing is not refused: you spend the AP closing in instead, and it only errors when there is no way to get closer.
 
-- Actions: attack, cast a spell, use an active skill, use an item on someone else, try to flee, talk (if the enemy can be talked to).
-- Minor actions: drink a potion, swap a weapon, take one step between range bands, command a pet.
+| Action | AP |
+| --- | --- |
+| Attack | 2 (the weapon's `apCost`: light junk 1). The heaviest two-handers are `unwieldy`: 2 AP, but the swing ends your turn |
+| Move | 1 buys your speed in tiles (grid) or one range band (bands) |
+| Shove, throw, defend, use an item, dash | 1 each (dash also ends the turn) |
+| Swap gear | 1 (bands) or one tile of movement (grid) |
+| Flee, talk | 2 |
 
-Resolution:
+Enemies run on the same pool: minions and mobs get 3 AP, elites 4. An attack costs 2 unless it says otherwise (`ap`), and 1 AP buys the family's `speed` in tiles. An enemy keeps acting until its AP is gone, so an elite already next to you swings twice.
+
+**Power rolls.** Every attack lands. The roll decides how hard:
 
 ```
-attackRoll = d20 + (weapon.stat == STR ? STR : DEX) + weaponSkillRank + weapon.hitBonus
-hit        if attackRoll >= target.defense
-damage     = roll(weapon.dice) + floor(stat/2) + bonuses - target.damageReduction (min 1)
-crit       on natural 20 (or weapon.critRange): roll damage dice twice
-spellRoll  = d20 + INT + spellSkillRank vs target.defense (or a save DC, see Spells)
-flee       = DEX check vs highest enemy (d20 + DEX); fail = enemies get a free attack
+powerRoll  = 2d10 + floor(stat/2) + weaponSkillRank + attack bonuses, +2 per edge, -2 per bane (net, at most two either way)
+tier       = 1 if 11 or less, 2 if 12-16, 3 if 17+
+crit       = natural 19-20 on the dice: tier 3 whatever the total, and the crawler gets 1 AP back
+damage     = attack.power[tier] + flat stat bonus + bonuses - target.armor   (min 1)
+flat bonus = crawler: floor(stat * apCost / 4), so stat/2 on a normal 2-AP swing (unwieldy weapons count as 3); enemies: floor(stat/4)
+riders     = a status carried by the attack: never at tier 1, its listed chance at tier 2, always at tier 3
+spellRoll  = 2d10 + floor(INT/2) + spellSkillRank, same tiers (or a save DC, see Spells)
+flee       = DEX check vs highest enemy (d20 + DEX); fail = enemies get a free attack and your turn is over
 ```
 
-Range is three bands: **close**, **near**, **far**. Melee needs close, thrown and most spells reach near, bows reach far. Moving one band is a minor action.
+- **Power** is three numbers per weapon or enemy attack, `[tier 1, tier 2, tier 3]`, in content. A lead pipe is 2/4/6.
+- **Armor** is flat damage reduction, never to zero. **Guard** (braced, hasted, blinded and so on, plus enemy mods like Tiny or Rabid) becomes edges or banes on whoever is attacking.
+- **Ganging up** is the usual source of edges: see the pack bonus below.
+- Checks that aren't attacks (talk, shove, flee, traps, crafting) still use the d20.
+
+Range is three bands: **close**, **near**, **far**. Melee needs close, thrown and most spells reach near, bows reach far. Moving one band costs 1 AP.
 
 Status effects are data (`statusEffects.json`): each has a duration in rounds, a tick effect and stacking rules. Starter set: bleeding, burning, poisoned, stunned, blinded, slowed, hasted, feared, charmed, shielded, regenerating (plus confused, invisible and braced).
 
@@ -194,15 +211,15 @@ Fights can also play on a small tactical board. Which mode an account uses is a 
   - Single-tile obstacles, terrain and hazards come from `arenaFeatures.json`, picked by the floor theme.
   - The crawler starts inside the door they came through; enemies start across the room, or close if they won initiative.
 - **Distance.** It's 8-way (Chebyshev), and bands come from it: close ≤ 1 tile, near 2-3, far 4+. Anything beyond close range needs line of sight; pillars, crates and smoke block it, units don't.
-- **Turn.** The minor action becomes movement: the crawler moves 4 tiles, enemies move their family's `speed`, slowed caps movement at 1 and hasted adds 2. Moving never ends the turn; an action does. Attacking something out of reach walks you into reach first.
-- **Maneuvers** anyone can use:
+- **Movement.** 1 AP buys 4 tiles for the crawler and the family's `speed` for an enemy. Tiles you've paid for can be spent across several moves; walking farther buys another AP's worth. Attacking something out of reach walks you into reach first if there's still AP for the swing, and is refused if there isn't.
+- **Maneuvers** anyone can use, 1 AP each:
   - **Shove:** STR contest. The target is pushed a tile into whatever is there, or slams into an obstacle for 1d4.
   - **Throw junk:** up to 3 tiles away. Splash hits the 3×3 around where it lands, and hazards like caltrops, glue, fire and smoke stay on the board.
-  - **Dash:** double movement; ends the turn.
-  - **Defend:** braced, +4 defense and can't be shoved.
+  - **Dash:** double movement for 1 AP; ends the turn.
+  - **Defend:** braced until your next turn: a double bane on everything swung at you, and you can't be shoved.
   - **Pick up and wield:** junk lying on the board, for a tile of movement each.
-- **The pack bonus is the one positional rule.** A melee enemy gets +1 to hit for each other enemy next to you, up to +2.
-- **Flee.** Reach a door and roll DEX against enemies within 3 tiles that can see you; with none, you're out automatically. The door you came in by leads back; any other door leads onward.
+- **The pack bonus is the one positional rule.** A melee enemy gets an edge for each other enemy next to you, up to two. In bands mode the same edge counts other enemies at close range.
+- **Flee.** Reach a door and spend 2 AP to roll DEX against enemies within 3 tiles that can see you; with none, you're out automatically. The door you came in by leads back; any other door leads onward.
 
 ### Death and the hybrid run model
 
@@ -425,7 +442,7 @@ Affixes are data: `{ id, kind: prefix|suffix, group, slots, minLevel, effect, ma
 | Greasy | prefix | +X flee, -2 to keep hold when disarmed |
 | Screaming | prefix | Weapon shrieks on crit; enemies roll vs fear |
 | of the Ox | suffix | +X STR |
-| of Poor Decisions | suffix | +X damage, -X defense |
+| of Poor Decisions | suffix | +X damage, -X guard |
 | of Leeching | suffix | Heal X% of damage dealt |
 
 Start with at least 60 affixes and 50 bases across all slots.
@@ -575,8 +592,9 @@ generateEnemy(family, tier, floor, district):
   level    = floor * 4 + district.index + random(-1, 2)
   stats    = family.statProfile scaled by level
   maxHP    = family.hpBase * (1 + 0.25 * level) * tier.hpMult
-  defense  = 10 + floor(DEX/2) + family.armor
-  attacks  = family.attacks (dice scale with level)
+  level   += floor.encounters.levelOffset (and easyLevelOffset in the floor's opening fights)
+  armor    = family.armor (flat damage reduction); guard = the mods' defense bonuses
+  attacks  = family.attacks (power tiers; mods add flat damage)
   mods     = pick tier.modCount from enemyMods (rabid, armored, explosive, cowardly, regenerating, venomous, enormous, tiny, chatty...)
   name     = mods + family.name (e.g. "Rabid Explosive Carnie")
   loot     = family.lootTable + chance of a box by tier
@@ -585,10 +603,12 @@ generateEnemy(family, tier, floor, district):
 | Tier | HP mult | Mods | Notes |
 | --- | --- | --- | --- |
 | Minion | 0.6 | 0 | Two levels below a mob, 60% XP. Ordinary encounters are packs of 2-4 minions (2-3 in corridors), from up to two families (`floors.json` → `encounters`) |
-| Mob | 1 | 0-1 | A standard foe. Floor 1 fields only minion packs and elites; Floor 2 (Milestone 9) sets its own mix |
+| Mob | 1 | 0-1 | A standard foe. On `mobChance` (25% on Floor 1) one leads a hard-pool pack of 3+ in place of two of its minions |
 | Elite | 2.5 | 1-2 | Alone or with 1-2 minion escorts; drops a bronze or silver box |
 | District boss | 6 | 2 | One per district on Floors 2-3; Claude-run; gold box |
 | Quest boss | 10 | 3 | Floor 3 quest finale; Claude-run; platinum box |
+
+**Easy pool, then hard pool.** Each floor's `encounters` lists an `easyPool` and a `hardPool` of families. The first `easyFights` fights on a floor (3 on Floor 1) are 1-2 minions of one easy-pool family, a level down, wherever they happen: even a lair entered that early holds squatters, not its elite. Every fight after that rolls from the hard pool: full packs, mobs and lair elites. The Floor 1 target is a clear rate near 50% with almost no deaths in the opening fights (`npm run sim`).
 
 Floor families (examples, all original): Floor 1: tunnel rats, mold zombies, scrap goblins, pipe snakes. Floor 2: mall goblins, mannequin stalkers, food-court slimes, kiosk mimics. Floor 3: animatronic carnies, cotton-candy oozes, ring-toss imps, sideshow freaks, feral clowns.
 
@@ -748,6 +768,7 @@ All content lives in `packages/content/*.json` and is validated by Zod schemas a
 type Stat = "STR" | "DEX" | "CON" | "INT" | "CHA";
 type StatBlock = Record<Stat, number>;
 type Dice = string; // "2d6+1"
+type Power = [number, number, number]; // attack damage by power-roll tier: [11 or less, 12-16, 17+]
 type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
 type DcTier = "trivial" | "easy" | "medium" | "hard" | "brutal" | "absurd";
 
@@ -761,7 +782,7 @@ interface Occupation { id: string; name: string; weights: StatBlock; skill: stri
 
 interface ItemBase {
   id: string; name: string; slot: Slot; twoHanded?: boolean;
-  weaponType?: string; damage?: Dice; stat?: "STR" | "DEX";
+  weaponType?: string; power?: Power; apCost?: number; unwieldy?: boolean; stat?: "STR" | "DEX";
   armor?: number; weight: number; value: number; tags: string[];
 }
 
@@ -794,7 +815,7 @@ interface Spell {
 
 interface EnemyFamily {
   id: string; name: string; floors: number[]; statProfile: StatBlock; hpBase: number; armor: number;
-  attacks: { id: string; name: string; damage: Dice; range: string; effects?: Effect[] }[];
+  attacks: { id: string; name: string; power: Power; ap?: number; range: string; effects?: Effect[] }[];
   ai: string[]; talkable: boolean; groupSize: [number, number]; lootTable: string; tags: string[];
   speed: number;   // grid tiles per turn (the crawler moves 4)
   glyph?: string;  // drawn when there's no sprite
@@ -824,7 +845,7 @@ Build in 13 milestones, each ending in something playable or testable. Don't sta
 | 1 | Engine core: RNG module, dice parser, check resolver, `step()` reducer, event log | Unit tests for dice ranges, nat 1/20, DC formula, crit/fail margins |
 | 2 | Character creation + UI shell: backstory generator, stat gen, starting kit, command parser, buttons, save/load | New crawler appears with roast; refresh keeps the save |
 | 3 | Floor 1: map generator, room types, descriptions, `look`/`map`/`go`, game clock, collapse timer, stairwells | 100 generated floors all pass reachability test; timer kills you off-stairs |
-| 4 | Combat: initiative, actions, range bands, status effects, enemy families, priority AI, flee | Scripted fight tests; a Floor 1 run is winnable and losable |
+| 4 | Combat: initiative, action points, power rolls, range bands, status effects, enemy families, priority AI, flee | Scripted fight tests; a Floor 1 run is winnable and losable |
 | 4b | Grid combat (account toggle, grid default), mob packs and minions, junk seeding with a minimal inventory (take/drop/equip, weight), crafting at workbenches | Scripted grid fights and arena property tests pass; recipes craft from seeded junk; the sim runs both combat modes with zero stuck runs |
 | 5 | Items: generator, rarity, affixes, equip slots, inventory, weight, consumables | 1,000 generated items all valid; equipping changes derived stats |
 | 6 | Progression: XP and levels, stat points, skills with use-XP, spells and tomes, MP | Skills rank up from use; a spell levels after N casts |

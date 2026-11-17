@@ -35,6 +35,8 @@ body,
 }
 
 body {
+  overscroll-behavior: none; /* no pull-to-refresh mid-fight */
+  -webkit-text-size-adjust: 100%;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);

@@ -43,8 +43,10 @@ export interface Derived {
   stats: StatBlock;
   maxHP: number;
   maxMP: number;
-  defense: number;
+  /** Flat damage taken off every hit (never below 1): worn armor plus damage-reduction effects. */
   armor: number;
+  /** Net "defense" effects (braced, hasted, blinded...). Every 2 points is a bane on attackers; -2 is an edge. */
+  guard: number;
   hpRegen: number;
   mpRegen: number;
   carryLimit: number;
@@ -60,8 +62,8 @@ export function derive(c: Crawler, content: Content): Derived {
     stats,
     maxHP: Math.max(1, 10 + 3 * stats.CON + 2 * c.level + modTotal(mods, "maxHP")),
     maxMP: Math.max(0, 5 + 2 * stats.INT + modTotal(mods, "maxMP")),
-    defense: 10 + Math.floor(stats.DEX / 2) + armor + modTotal(mods, "defense"),
-    armor,
+    armor: armor + modTotal(mods, "damageReduction", "dr"),
+    guard: modTotal(mods, "defense"),
     hpRegen: Math.floor(stats.CON / 5),
     mpRegen: Math.floor(stats.INT / 5),
     carryLimit: 20 + 4 * stats.STR,

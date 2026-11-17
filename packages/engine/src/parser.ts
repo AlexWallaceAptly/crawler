@@ -1,6 +1,6 @@
 import type { Action } from "./actions";
 import type { Content } from "./content/load";
-import { minorLimit } from "./combat";
+import { AP_COST, apNow } from "./rules/ap";
 import { isAllowed } from "./step";
 import { COMBAT_MODES, type CombatMode, type Dir, type World } from "./state";
 import { allTiles, coord, DIR8, dist, index, occupied, parseCoord, pathField, type Dir8 } from "./grid/geometry";
@@ -206,6 +206,12 @@ export interface CommandOption {
    * tapping one of these coordinates submits `${input} ${coord}`.
    */
   targets?: string[];
+  /** Combat: what this costs in action points. */
+  ap?: number;
+  /** Combat: you can't pay for it this turn. */
+  disabled?: boolean;
+  /** Rarely wanted: touch layouts tuck these behind a "More" menu. */
+  niche?: true;
 }
 
 /** Every valid command for the current state, shown as clickable buttons. */
@@ -217,59 +223,63 @@ export function availableCommands(world: World, content: Content): CommandOption
     if (world.account.rerolls > 0) out.push({ label: `Reroll (${world.account.rerolls} left)`, input: "reroll" });
   }
   if (phase === "dead") out.push({ label: "Next crawler", input: "new", primary: true });
-  if (phase === "combat" && world.game.combat) {
+  if (phase === "combat" && world.game.combat && world.game.crawler) {
     const combat = world.game.combat;
+    const crawler = world.game.crawler;
     const foes = combat.enemies.filter((e) => e.hp > 0);
     const grid = combat.mode === "grid" && combat.arena;
+    const { ap } = apNow(combat, crawler, content);
+    /** Every combat button carries its AP price; ones you can't pay for are greyed out. */
+    const add = (o: CommandOption, cost: number) => out.push({ ...o, ap: cost, ...(cost > ap ? { disabled: true } : {}) });
+    const held = crawler.inventory.find((i) => i.uid === crawler.equipment.mainHand);
+    const swing = held?.power ? held.apCost ?? AP_COST.attack : 1;
     for (const e of foes.slice(0, 4)) {
-      out.push({ label: `Attack ${e.name}`, input: `attack ${e.name.toLowerCase()}`, primary: foes.indexOf(e) === 0 });
+      add({ label: `Attack ${e.name}`, input: `attack ${e.name.toLowerCase()}`, primary: foes.indexOf(e) === 0 }, swing);
     }
-    const statuses = world.game.crawler?.statuses ?? [];
     if (grid) {
-      if (combat.arena!.moveLeft > 0 || !combat.turnBegun) {
-        out.push({ label: "Advance", input: "advance" });
-        out.push({ label: "Retreat", input: "retreat" });
-      }
-    } else if (combat.minorActionsUsed < minorLimit(statuses, content)) {
-      if (foes.some((e) => e.range !== "close")) out.push({ label: "Advance", input: "advance" });
-      if (foes.some((e) => e.range !== "far")) out.push({ label: "Retreat", input: "retreat" });
+      const paid = combat.turnBegun && combat.arena!.moveLeft > 0;
+      add({ label: "Advance", input: "advance" }, paid ? 0 : AP_COST.move);
+      add({ label: "Retreat", input: "retreat" }, paid ? 0 : AP_COST.move);
+    } else {
+      if (foes.some((e) => e.range !== "close")) add({ label: "Advance", input: "advance" }, AP_COST.move);
+      if (foes.some((e) => e.range !== "far")) add({ label: "Retreat", input: "retreat" }, AP_COST.move);
     }
-    if (foes.some((e) => e.talkable)) out.push({ label: "Talk", input: "talk" });
-    const crawler = world.game.crawler;
-    const potion = crawler?.inventory.find((i) => i.kind === "consumable" && i.tags.includes("healing") &&
+    if (foes.some((e) => e.talkable)) add({ niche: true, label: "Talk", input: "talk" }, AP_COST.talk);
+    const potion = crawler.inventory.find((i) => i.kind === "consumable" && i.tags.includes("healing") &&
       content.items.consumables.byId[i.baseId]?.usableInCombat !== false);
-    if (potion) out.push({ label: `Use ${potion.name}`, input: `use ${potion.name.toLowerCase()}` });
-    const throwables = (crawler?.inventory ?? []).filter((i) => {
+    if (potion) add({ label: `Use ${potion.name}`, input: `use ${potion.name.toLowerCase()}` }, AP_COST.item);
+    const throwables = crawler.inventory.filter((i) => {
       const def = i.kind === "consumable" ? content.items.consumables.byId[i.baseId] : undefined;
       return def && isThrowable(def) && (def.usableInCombat || def.hazard);
     });
     if (grid) {
       const a = combat.arena!;
       const live = foes.filter((e) => e.pos);
-      out.push({ label: "Shove", input: "shove", targets: live.map((e) => coord(e.pos!)) });
+      add({ niche: true, label: "Shove", input: "shove", targets: live.map((e) => coord(e.pos!)) }, AP_COST.shove);
       const throwAt = throwTargets(a, content).map(coord);
       for (const t of throwables.slice(0, 2)) {
-        out.push({ label: `Throw ${t.name}`, input: `throw ${t.name.toLowerCase()} at`, targets: throwAt });
+        add({ niche: true, label: `Throw ${t.name}`, input: `throw ${t.name.toLowerCase()} at`, targets: throwAt }, AP_COST.throw);
       }
-      const budget = (combat.turnBegun ? a.moveLeft : speedOf(crawler!, content)) + speedOf(crawler!, content);
+      const budget = (combat.turnBegun ? a.moveLeft : 0) + 2 * speedOf(crawler, content);
       const field = pathField(a, content, a.crawler, { blocked: (p) => occupied(combat, p, "crawler") });
       const dashTo = allTiles(a).filter((p) => {
         const c = field.cost[index(a, p)]!;
         return c > 0 && c <= budget;
       }).map(coord);
-      if (dashTo.length) out.push({ label: "Dash", input: "dash", targets: dashTo });
-      const canStoop = !combat.turnBegun || a.moveLeft > 0;
+      if (dashTo.length) add({ niche: true, label: "Dash", input: "dash", targets: dashTo }, AP_COST.dash);
       for (const it of a.items.filter((n) => dist(n, a.crawler) <= 1).slice(0, 2)) {
-        if (canStoop) out.push({ label: `Take ${it.item.name}`, input: `take ${it.item.name.toLowerCase()}` });
+        add({ label: `Take ${it.item.name}`, input: `take ${it.item.name.toLowerCase()}` }, combat.turnBegun && a.moveLeft > 0 ? 0 : AP_COST.move);
       }
     } else {
       const first = foes[0];
-      if (first && first.range === "close") out.push({ label: `Shove ${first.name}`, input: `shove ${first.name.toLowerCase()}` });
-      for (const t of throwables.slice(0, 2)) out.push({ label: `Throw ${t.name}`, input: `throw ${t.name.toLowerCase()}` });
+      if (first && first.range === "close") add({ niche: true, label: `Shove ${first.name}`, input: `shove ${first.name.toLowerCase()}` }, AP_COST.shove);
+      for (const t of throwables.slice(0, 2)) add({ niche: true, label: `Throw ${t.name}`, input: `throw ${t.name.toLowerCase()}` }, AP_COST.throw);
     }
-    out.push({ label: "Defend", input: "defend" });
-    out.push({ label: "Wait", input: "wait" });
-    out.push({ label: "Flee", input: "flee" });
+    add({ label: "Defend", input: "defend" }, AP_COST.defend);
+    out.push({ label: "End turn", input: "wait" });
+    // On the board, flee runs for a door with whatever AP you have; the 2 AP is for getting through it.
+    if (grid) out.push({ niche: true, label: "Flee", input: "flee", ap: AP_COST.flee });
+    else add({ niche: true, label: "Flee", input: "flee" }, AP_COST.flee);
   }
   const floor = world.game.floor;
   if (phase === "exploring" && floor) {
@@ -287,13 +297,13 @@ export function availableCommands(world: World, content: Content): CommandOption
       for (const r of content.recipes.all.filter((r) => (c.recipes ?? []).includes(r.id) && autoAssign(c, r)).slice(0, 3)) {
         out.push({ label: `Craft ${r.name}`, input: `craft ${r.name.toLowerCase()}` });
       }
-      out.push({ label: "Recipes", input: "recipes" });
+      out.push({ niche: true, label: "Recipes", input: "recipes" });
     }
     if (!room.searched) out.push({ label: "Search", input: "search" });
     out.push({ label: "Rest", input: "rest" });
-    out.push({ label: "Map", input: "map" });
+    out.push({ niche: true, label: "Map", input: "map" });
   }
-  if (isAllowed(world, "look")) out.push({ label: "Look", input: "look" });
-  out.push({ label: "Help", input: "help" });
+  if (isAllowed(world, "look")) out.push({ niche: true, label: "Look", input: "look" });
+  out.push({ niche: true, label: "Help", input: "help" });
   return out;
 }

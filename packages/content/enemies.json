@@ -16,7 +16,7 @@
     "attacks": [
       {
         "name": "Incisor Lottery",
-        "dice": "1d4",
+        "power": [1,  2,  3],
         "damageType": "physical",
         "stat": "DEX",
         "range": "close",
@@ -27,7 +27,7 @@
       },
       {
         "name": "Tail Flick",
-        "dice": "1d3",
+        "power": [1,  1,  2],
         "damageType": "physical",
         "stat": "DEX",
         "range": "close"
@@ -66,7 +66,7 @@
     "attacks": [
       {
         "name": "Wet Hug",
-        "dice": "1d6",
+        "power": [1,  3,  5],
         "damageType": "physical",
         "stat": "STR",
         "range": "close",
@@ -78,7 +78,7 @@
       },
       {
         "name": "Spore Cough",
-        "dice": "1d4",
+        "power": [1,  2,  4],
         "damageType": "poison",
         "stat": "STR",
         "range": "near",
@@ -118,14 +118,14 @@
     "attacks": [
       {
         "name": "Hurled Debris",
-        "dice": "1d6",
+        "power": [1,  3,  4],
         "damageType": "physical",
         "stat": "DEX",
         "range": "near"
       },
       {
         "name": "Shiv Jab",
-        "dice": "1d4",
+        "power": [1,  2,  3],
         "damageType": "physical",
         "stat": "DEX",
         "range": "close"
@@ -167,7 +167,7 @@
     "attacks": [
       {
         "name": "Fang Deposit",
-        "dice": "1d6",
+        "power": [1,  3,  4],
         "damageType": "physical",
         "stat": "DEX",
         "range": "close",
@@ -179,7 +179,7 @@
       },
       {
         "name": "Constrictor Special",
-        "dice": "1d4",
+        "power": [1,  2,  3],
         "damageType": "physical",
         "stat": "STR",
         "range": "close",
@@ -222,7 +222,7 @@
     "attacks": [
       {
         "name": "Latch On",
-        "dice": "1d3",
+        "power": [1,  1,  2],
         "damageType": "physical",
         "stat": "DEX",
         "range": "close",
@@ -265,7 +265,7 @@
     "attacks": [
       {
         "name": "Arc Flash",
-        "dice": "2d4",
+        "power": [2,  4,  6],
         "damageType": "lightning",
         "stat": "DEX",
         "range": "near",
@@ -278,7 +278,7 @@
       },
       {
         "name": "Spark Slap",
-        "dice": "1d4",
+        "power": [1,  2,  3],
         "damageType": "lightning",
         "stat": "DEX",
         "range": "close"
@@ -318,14 +318,14 @@
     "attacks": [
       {
         "name": "Claw Clamp",
-        "dice": "1d6+1",
+        "power": [2,  3,  5],
         "damageType": "physical",
         "stat": "STR",
         "range": "close"
       },
       {
         "name": "Shell Check",
-        "dice": "1d4",
+        "power": [1,  2,  3],
         "damageType": "physical",
         "stat": "STR",
         "range": "close",

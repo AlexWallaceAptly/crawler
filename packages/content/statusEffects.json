@@ -36,7 +36,7 @@
     "kind": "debuff",
     "defaultDuration": 4,
     "stacking": "extend",
-    "description": "1d4 poison damage each round and -2 to attack rolls.",
+    "description": "1d4 poison damage each round and -2 to your power rolls.",
     "tick": [
       {
         "kind": "damage",
@@ -68,7 +68,7 @@
     "kind": "debuff",
     "defaultDuration": 2,
     "stacking": "refresh",
-    "description": "-5 to attack rolls and -3 defense.",
+    "description": "-5 to your power rolls, and anything swinging at you gets an edge.",
     "modifiers": [
       {
         "to": "attack",
@@ -86,7 +86,7 @@
     "kind": "debuff",
     "defaultDuration": 3,
     "stacking": "refresh",
-    "description": "No minor actions, -2 defense.",
+    "description": "One less AP each turn, and anything swinging at you gets an edge.",
     "modifiers": [
       {
         "to": "defense",
@@ -94,7 +94,7 @@
       }
     ],
     "flags": [
-      "noMinor"
+      "apDown"
     ]
   },
   {
@@ -103,7 +103,7 @@
     "kind": "buff",
     "defaultDuration": 3,
     "stacking": "refresh",
-    "description": "An extra minor action each turn and +2 defense.",
+    "description": "An extra AP each turn, and anything swinging at you takes a bane.",
     "modifiers": [
       {
         "to": "defense",
@@ -111,7 +111,7 @@
       }
     ],
     "flags": [
-      "extraMinor"
+      "apUp"
     ]
   },
   {
@@ -120,7 +120,7 @@
     "kind": "debuff",
     "defaultDuration": 2,
     "stacking": "refresh",
-    "description": "Can only try to flee or cower. -2 defense.",
+    "description": "Can only try to flee or cower. Anything swinging at you gets an edge.",
     "modifiers": [
       {
         "to": "defense",
@@ -176,7 +176,7 @@
     "kind": "debuff",
     "defaultDuration": 1,
     "stacking": "refresh",
-    "description": "Attacks a random target, possibly a friend, possibly the floor. -2 defense.",
+    "description": "Attacks a random target, possibly a friend, possibly the floor. Anything swinging at you gets an edge.",
     "modifiers": [
       {
         "to": "defense",
@@ -209,7 +209,7 @@
     "id": "braced",
     "name": "Braced",
     "kind": "buff",
-    "description": "Feet planted, guard up: +4 defense and you can't be shoved. Ends when your next turn starts.",
+    "description": "Feet planted, guard up: a double bane on anything swinging at you, and you can't be shoved. Ends when your next turn starts.",
     "defaultDuration": 1,
     "tick": [],
     "modifiers": [

@@ -42,7 +42,7 @@ export interface CheckResult {
   parts?: Record<string, number>;
 }
 
-/** Decide the outcome of an already-rolled check. Exposed for combat, which rolls vs defense. */
+/** Decide the outcome of an already-rolled check. Combat doesn't use this: attacks are power rolls (power.ts). */
 export function judge(natural: number, modifier: number, dc: number): Pick<CheckResult, "total" | "margin" | "success" | "outcome"> {
   const total = natural + modifier;
   const margin = total - dc;

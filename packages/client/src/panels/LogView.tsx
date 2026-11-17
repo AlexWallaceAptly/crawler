@@ -2,11 +2,24 @@ import { useEffect, useRef } from "react";
 import type { GameEvent, ViewModel } from "@crawler/engine";
 import s from "./panels.module.css";
 
-/** Live enemy readout pinned above the battle log. */
+/** Action points as pips: filled ones are still yours to spend this turn. */
+export function ApPips({ ap, max }: { ap: number; max: number }) {
+  const total = Math.max(ap, max);
+  return (
+    <span className={s.ap} title={`${ap} of ${max} action points left this turn`} aria-label={`${ap} of ${max} action points`}>
+      <span className={s.apLabel}>AP</span>
+      {Array.from({ length: total }, (_, i) => <span key={i} className={i < ap ? s.apOn : s.apOff} />)}
+      <span className={s.apCount}>{ap}/{max}</span>
+    </span>
+  );
+}
+
+/** Live enemy readout pinned above the battle log, led by your AP. */
 export function EnemyStrip({ view }: { view: ViewModel }) {
   if (!view.combat || view.combat.enemies.length === 0) return null;
   return (
     <div className={s.enemyStrip}>
+      <ApPips ap={view.combat.ap.current} max={view.combat.ap.max} />
       {view.combat.enemies.map((e) => (
         <span key={e.uid}>
           <span className={e.elite ? s.enemyElite : s.enemyName}>{e.name}</span>{" "}
@@ -50,7 +63,7 @@ function Line({ e }: { e: GameEvent }) {
             <div key={i} className={s.narrator}>{l}</div>
           ))}
           {e.items && e.items.length > 0 && <div className={s.loot}>On the floor: {e.items.join(", ")}.</div>}
-          {e.workbench && <div className={s.bench}>⚒ There's a workbench here: combine things (e.g. <i>combine bat tacks tape</i>).</div>}
+          {e.workbench && <div className={s.bench}>⚒ There's a workbench here: open the workbench (Inventory on desktop, the ⚒ button on a phone), tap things, hit Combine. Or type <i>combine bat tacks tape</i>.</div>}
           <div className={s.exits}>Exits: {e.exits.length ? e.exits.join(", ") : "none"}.</div>
         </div>
       );

@@ -174,5 +174,6 @@ export function generateFloor(theme: FloorTheme): FloorState {
     currentRoom: start.id,
     timeLeft: Math.round(theme.days * MINUTES_PER_DAY),
     warned: [],
+    fights: 0,
   };
 }

@@ -141,22 +141,33 @@ describe("throwing junk on the board", () => {
 describe("dash, defend, and loose junk", () => {
   it("dash covers double movement and ends the turn", () => {
     const world = gridWorld(["@.......a"], [testEnemy({ hp: 30, maxHP: 30, speed: 1 })]);
-    forceDice(1);
+    forceDice(1, 1);
     const { world: w } = engine.input(world, "dash h1");
     expect(arenaOf(w).crawler).toEqual({ x: 7, y: 0 });
     expect(w.game.combat!.round).toBe(2);
+
+    // it costs 1 AP, so it's there as a last-AP sprint
+    const spent = gridWorld(["@.......a"], [testEnemy({ hp: 30, maxHP: 30, speed: 1 })]);
+    const r1 = engine.input(spent, "defend");
+    const r2 = engine.input(r1.world, "defend");
+    expect(r2.world.game.combat!.ap).toBe(1);
+    forceDice(1, 1);
+    const r3 = engine.input(r2.world, "dash h1");
+    expect(arenaOf(r3.world).crawler).toEqual({ x: 7, y: 0 });
   });
 
-  it("defend: +4 defense until your next turn, and it ends when that turn starts", () => {
+  it("defend: 1 AP for a double bane on whatever swings at you, until your next turn starts", () => {
     const world = gridWorld(["@a"], [testEnemy()]);
-    forceDice(10); // rat: 10 + 5 = 15 vs your defense
-    const { world: w, events } = engine.input(world, "defend");
-    expect(lines(events)).toMatch(/vs your \d+/);
-    const def = Number(/vs your (\d+)/.exec(lines(events))![1]);
+    const braced = engine.input(world, "defend");
+    expect(braced.world.game.combat!.ap).toBe(2);
+    forceDice(7, 7); // rat: 14 + 2, less 4 for the two banes = 12
+    const { world: w, events } = engine.input(braced.world, "wait");
+    expect(lines(events)).toContain("double bane = 12");
     const plain = gridWorld(["@a"], [testEnemy()]);
-    forceDice(10);
+    forceDice(7, 7);
     const p = engine.input(plain, "wait");
-    expect(def - Number(/vs your (\d+)/.exec(lines(p.events))![1])).toBe(4);
+    expect(lines(p.events)).not.toContain("bane");
+    expect(lines(p.events)).toContain("= 16");
     expect(w.game.crawler!.statuses.some((s) => s.id === "braced")).toBe(true);
     forceDice(1, 1);
     const next = engine.input(w, "attack");
@@ -170,11 +181,13 @@ describe("dash, defend, and loose junk", () => {
     expect(v.tiles.find((t) => t.coord === "b1")!.tap).toBe("take length of lead pipe");
     let w = engine.input(world, "take lead pipe").world;
     expect(w.game.crawler!.inventory.some((i) => i.baseId === "lead_pipe")).toBe(true);
+    // stooping costs a tile: 1 AP buys four, three are left
     expect(arenaOf(w).moveLeft).toBe(3);
+    expect(w.game.combat!.ap).toBe(2);
     w = engine.input(w, "wield lead pipe").world;
     expect(arenaOf(w).moveLeft).toBe(2);
-    // finish the fight (two steps in, one swing); the tacks go back on the room floor
-    forceDice(19, 6);
+    // finish the fight (two paid-for steps in, one 2-AP swing); the tacks go back on the room floor
+    forceDice(5, 5);
     w = engine.input(w, "attack").world;
     expect(w.game.phase).toBe("exploring");
     const room = w.game.floor!.rooms[w.game.floor!.currentRoom]!;

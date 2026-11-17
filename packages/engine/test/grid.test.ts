@@ -151,58 +151,97 @@ describe("arena generation", () => {
 });
 
 describe("grid fights", () => {
-  it("an adjacent swing uses the same to-hit and damage math as bands", () => {
+  it("an adjacent swing uses the same power roll and damage math as bands", () => {
     const world = gridWorld(["@a.."], [testEnemy()]);
-    forceDice(10, 4, /* rat swings back */ 2);
+    forceDice(5, 5); // 10 + 5 = 15: tier 2, 4 + 5
     const { world: w, events } = engine.step(world, { type: "attack" });
     expect(w.game.combat!.enemies[0]!.hp).toBe(1);
     expect(lines(events)).toContain("9 damage");
+    expect(w.game.combat!.ap).toBe(1);
   });
 
-  it("attacking out of reach walks into reach first, then swings", () => {
+  it("attacking out of reach walks into reach first (1 AP), then swings (2 AP)", () => {
     const world = gridWorld(["@...a"], [testEnemy()]);
-    forceDice(10, 4, 1);
+    forceDice(5, 5, /* the rat's turn */ 5, 5);
     const { world: w, events } = engine.step(world, { type: "attack" });
     expect(arenaOf(w).crawler).toEqual({ x: 3, y: 0 });
     expect(lines(events)).toContain("9 damage");
-  });
-
-  it("if the walk falls short, the turn ends with a can't-reach", () => {
-    const world = gridWorld(["@.....a"], [testEnemy({ speed: 1 })]);
-    forceDice(1); // the rat steps up and whiffs
-    const { world: w, events } = engine.step(world, { type: "attack" });
-    expect(arenaOf(w).crawler).toEqual({ x: 4, y: 0 });
-    expect(events.some((e) => e.type === "narration" && e.key === "combat.cantReach")).toBe(true);
-    expect(w.game.combat!.enemies[0]!.pos).toEqual({ x: 5, y: 0 });
     expect(w.game.combat!.round).toBe(2);
   });
 
-  it("moving doesn't end the turn; movement is capped at speed", () => {
+  it("attacking something too far to reach and swing closes the distance instead; advance goes an AP at a time", () => {
+    const world = gridWorld(["@.....a"], [testEnemy({ speed: 1 })]);
+    // five tiles to get adjacent: 2 AP of walking, which leaves 1, so no swing this turn
+    const r1 = engine.step(world, { type: "attack" });
+    expect(of(r1.events, "error")).toHaveLength(0);
+    expect(arenaOf(r1.world).crawler).toEqual({ x: 5, y: 0 });
+    expect(r1.world.game.combat!.ap).toBe(1);
+    expect(r1.world.game.combat!.enemies[0]!.hp).toBe(10);
+    expect(lines(r1.events)).toContain("too far to reach and still swing");
+    // now it's adjacent, but 1 AP doesn't buy a swing: refused, nothing spent
+    const r2 = engine.step(r1.world, { type: "attack" });
+    expect(of(r2.events, "error")).toHaveLength(1);
+    expect(r2.world.game.combat!.round).toBe(1);
+
+    const again = gridWorld(["@.....a"], [testEnemy({ speed: 1 })]);
+    const a1 = engine.step(again, { type: "advance" });
+    expect(arenaOf(a1.world).crawler).toEqual({ x: 4, y: 0 });
+    expect(a1.world.game.combat!.ap).toBe(2);
+  });
+
+  it("an unwieldy weapon can still step in and swing in one turn", () => {
+    const world = gridWorld(["@...a"], [testEnemy({ speed: 1, hp: 50, maxHP: 50 })]);
+    const c = world.game.crawler!;
+    Object.assign(c.inventory.find((i) => i.uid === c.equipment.mainHand)!, { power: [4, 7, 10], apCost: 2, unwieldy: true });
+    forceDice(5, 5, /* rat */ 1, 1);
+    const r = engine.step(world, { type: "attack" });
+    expect(of(r.events, "error")).toHaveLength(0);
+    expect(r.world.game.combat!.enemies[0]!.hp).toBeLessThan(50);
+    expect(r.world.game.combat!.round).toBe(2);
+  });
+
+  it("1 AP buys your speed in tiles; walking farther buys another AP's worth", () => {
     const world = gridWorld(["@.......", "........"], [testEnemy({ pos: undefined })].slice(0, 0));
     world.game.combat!.enemies = [testEnemy({ hp: 50, maxHP: 50 })];
     world.game.combat!.enemies[0]!.pos = { x: 7, y: 1 };
     const r1 = engine.input(world, "move c1");
     expect(arenaOf(r1.world).crawler).toEqual({ x: 2, y: 0 });
     expect(arenaOf(r1.world).moveLeft).toBe(2);
+    expect(r1.world.game.combat!.ap).toBe(2);
     expect(r1.world.game.combat!.round).toBe(1);
-    const r2 = engine.input(r1.world, "move h1");
-    expect(of(r2.events, "error")).toHaveLength(1);
-    expect(arenaOf(r2.world).crawler).toEqual({ x: 2, y: 0 });
-    const r3 = engine.input(r1.world, "e 2");
-    expect(arenaOf(r3.world).crawler).toEqual({ x: 4, y: 0 });
-    expect(arenaOf(r3.world).moveLeft).toBe(0);
+    // two tiles are already paid for: they cost no more AP
+    const r2 = engine.input(r1.world, "e 2");
+    expect(arenaOf(r2.world).crawler).toEqual({ x: 4, y: 0 });
+    expect(arenaOf(r2.world).moveLeft).toBe(0);
+    expect(r2.world.game.combat!.ap).toBe(2);
+    // five tiles from c1 with two in hand: one more AP
+    const r3 = engine.input(r1.world, "move h1");
+    expect(arenaOf(r3.world).crawler).toEqual({ x: 7, y: 0 });
+    expect(r3.world.game.combat!.ap).toBe(1);
+    expect(arenaOf(r3.world).moveLeft).toBe(1);
+    // seven tiles back with 1 AP and a tile: too far
+    const r4 = engine.input(r3.world, "move a1");
+    expect(of(r4.events, "error")).toHaveLength(1);
+    expect(arenaOf(r4.world).crawler).toEqual({ x: 7, y: 0 });
   });
 
-  it("slowed moves one tile, hasted six", () => {
-    const slow = gridWorld(["@.......", ".......a"], [testEnemy({ hp: 50, maxHP: 50 })]);
+  it("slowed is 2 AP of board, hasted 4; the view prices every tile", () => {
+    const slow = gridWorld(["@........", "........a"], [testEnemy({ hp: 50, maxHP: 50 })]);
     slow.game.crawler!.statuses = [{ id: "slowed", remaining: 2, stacks: 1 }];
+    const g1 = engine.view(slow).combat!.grid!;
+    expect([g1.ap, g1.apMax]).toEqual([2, 2]);
+    expect(g1.tiles.find((t) => t.coord === "e1")!.moveAp).toBe(1);
+    expect(g1.tiles.find((t) => t.coord === "i1")!.moveAp).toBe(2);
     const r1 = engine.input(slow, "move e 3");
-    expect(arenaOf(r1.world).crawler).toEqual({ x: 1, y: 0 });
+    expect(arenaOf(r1.world).crawler).toEqual({ x: 3, y: 0 });
+    expect(r1.world.game.combat!.ap).toBe(1);
 
-    const fast = gridWorld(["@.......", ".......a"], [testEnemy({ hp: 50, maxHP: 50 })]);
+    const fast = gridWorld(["@........", "........a"], [testEnemy({ hp: 50, maxHP: 50 })]);
     fast.game.crawler!.statuses = [{ id: "hasted", remaining: 2, stacks: 1 }];
+    expect(engine.view(fast).combat!.grid!.ap).toBe(4);
     const r2 = engine.input(fast, "move e 6");
     expect(arenaOf(r2.world).crawler).toEqual({ x: 6, y: 0 });
+    expect(r2.world.game.combat!.ap).toBe(2);
   });
 
   it("a stunned crawler's first command, even a move, ends the turn", () => {
@@ -217,10 +256,10 @@ describe("grid fights", () => {
   it("a ranged goblin backs off to near range and shoots", () => {
     const goblin = testEnemy({
       name: "Test Goblin", ai: ["keep_range", "attack"], preferRange: "near",
-      attacks: [{ name: "Hurled Debris", dice: "1d6", damageType: "physical", stat: "DEX", range: "near", ready: 0 }],
+      attacks: [{ name: "Hurled Debris", power: [1, 3, 4], damageType: "physical", stat: "DEX", range: "near", ready: 0 }],
     });
     const world = gridWorld(["@a......", "........"], [goblin]);
-    forceDice(1); // the throw misses
+    forceDice(5, 5); // 1 AP to back off, 2 for the throw
     const { world: w, events } = engine.step(world, { type: "wait" });
     const g = w.game.combat!.enemies[0]!;
     expect(dist(g.pos!, arenaOf(w).crawler)).toBe(3);
@@ -230,10 +269,10 @@ describe("grid fights", () => {
   it("a ranged enemy with a pillar in the way moves to get a clean line", () => {
     const goblin = testEnemy({
       name: "Test Goblin", ai: ["keep_range", "attack"], preferRange: "near",
-      attacks: [{ name: "Hurled Debris", dice: "1d6", damageType: "physical", stat: "DEX", range: "near", ready: 0 }],
+      attacks: [{ name: "Hurled Debris", power: [1, 3, 4], damageType: "physical", stat: "DEX", range: "near", ready: 0 }],
     });
     const world = gridWorld(["@.#a", "....", "...."], [goblin]);
-    forceDice(1);
+    forceDice(5, 5);
     const { world: w, events } = engine.step(world, { type: "wait" });
     const a = arenaOf(w);
     const g = w.game.combat!.enemies[0]!;
@@ -244,18 +283,20 @@ describe("grid fights", () => {
   it("melee enemies path around obstacles and never through each other", () => {
     const rat = testEnemy({ speed: 5 });
     const world = gridWorld(["@.#.a", "..#..", "....."], [rat]);
-    forceDice(1);
+    forceDice(5, 5);
     const { world: w } = engine.step(world, { type: "wait" });
     const r = w.game.combat!.enemies[0]!;
     expect(dist(r.pos!, arenaOf(w).crawler)).toBe(1);
     expect(blocksMove(arenaOf(w), content, r.pos!)).toBe(false);
   });
 
-  it("three enemies around you each get +2 to hit (pack bonus)", () => {
+  it("three enemies around you each swing with a double edge (pack bonus)", () => {
     const world = gridWorld(["a@b", ".c."], [testEnemy(), testEnemy(), testEnemy()]);
-    forceDice(1, 1, 1);
+    forceDice(1, 1, 1, 1, 1, 1);
     const { events } = engine.step(world, { type: "wait" });
-    expect((lines(events).match(/\+2 pack/g) ?? []).length).toBe(3);
+    expect((lines(events).match(/2 ganging up/g) ?? []).length).toBe(3);
+    // 2 + 2 + two edges = 8
+    expect((lines(events).match(/double edge = 8/g) ?? []).length).toBe(3);
   });
 
   it("a fleeing enemy that reaches a door is gone, for no XP", () => {
@@ -333,7 +374,7 @@ describe("grid fights", () => {
 
   it("you can attack by tile", () => {
     const world = gridWorld(["@a", "b."], [testEnemy({ name: "Rat One" }), testEnemy({ name: "Rat Two" })]);
-    forceDice(10, 4, 1, 1);
+    forceDice(5, 5);
     const { events } = engine.input(world, "attack a2");
     expect(lines(events)).toContain("hit the Rat Two");
   });

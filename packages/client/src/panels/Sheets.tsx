@@ -139,6 +139,53 @@ export function InventoryList({ view }: { view: ViewModel }) {
   );
 }
 
+/** Pick things from the pack and try them together: the tap version of `combine a b c`. */
+function Workbench({ view, submit }: { view: ViewModel; submit: (t: string) => void }) {
+  const [picked, setPicked] = useState<string[]>([]);
+  // things can vanish from the pack (used up, ruined) between tries
+  const chosen = view.inventory.filter((it) => picked.includes(it.uid));
+  const toggle = (uid: string) => setPicked((p) => (p.includes(uid) ? p.filter((u) => u !== uid) : [...p, uid]));
+  const go = () => {
+    submit(`combine ${chosen.map((it) => it.name.toLowerCase()).join(" | ")}`);
+    setPicked([]);
+  };
+  return (
+    <div className={s.bench}>
+      <div className={s.benchHead}>⚒ Workbench</div>
+      <ol className={s.benchSteps}>
+        <li>Tap two or more things below.</li>
+        <li>Hit Combine.</li>
+        <li>If they go together you get something new, and the recipe is saved so you can remake it in one tap.</li>
+      </ol>
+      <div className={s.muted}>A wrong guess wastes 5 minutes. A fumbled build can ruin a part.</div>
+      {view.inventory.length === 0 ? (
+        <div className={s.muted}>Your pack is empty. Go pick up some garbage.</div>
+      ) : (
+        <div className={s.benchItems}>
+          {view.inventory.map((it) => {
+            const on = picked.includes(it.uid);
+            return (
+              <button key={it.uid} className={`${s.benchItem} ${on ? s.benchItemOn : ""}`} aria-pressed={on} onClick={() => toggle(it.uid)}>
+                <span className={rarityClass(it.rarity)}>{on ? "✓ " : ""}{it.name}{it.qty > 1 ? ` x${it.qty}` : ""}</span>
+                {it.parts && <span className={s.benchRole}>{it.parts.join(", ")}</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <div className={s.benchBar}>
+        <span className={s.benchPicked}>
+          {chosen.length ? chosen.map((it) => it.name).join(" + ") : "Nothing picked yet."}
+        </span>
+        {chosen.length > 0 && <button className={s.recipeBtn} onClick={() => setPicked([])}>clear</button>}
+        <button className={s.benchGo} disabled={chosen.length < 2} onClick={go}>
+          Combine{chosen.length >= 2 ? ` (${chosen.length})` : ""}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /** Recipes you've discovered (✓ = you're carrying the parts) and the System AI's hints. */
 export function RecipeBook({ view, submit }: { view: ViewModel; submit?: (t: string) => void }) {
   const book = view.recipeBook;
@@ -146,11 +193,15 @@ export function RecipeBook({ view, submit }: { view: ViewModel; submit?: (t: str
   const bench = view.room?.workbench ?? false;
   return (
     <div>
-      <div className={s.muted}>
-        {bench ? "There's a workbench here. Combine anything: " : "Crafting needs a workbench (safe rooms, workshops). Try: "}
-        <i>combine bat tacks tape</i>
-      </div>
-      {book.known.length === 0 && <div className={s.muted}>No recipes yet. Find out what goes together.</div>}
+      {bench && submit ? (
+        <Workbench view={view} submit={submit} />
+      ) : (
+        <div className={s.muted}>
+          No workbench here. Safe rooms have one, and so does the odd workshop. Bring your junk there to put it together.
+        </div>
+      )}
+      <div className={s.benchHead}>Recipe book</div>
+      {book.known.length === 0 && <div className={s.muted}>Empty. Anything you put together at a bench gets written down here.</div>}
       <ul className={s.list}>
         {book.known.map((r) => (
           <li key={r.id} className={s.recipe}>

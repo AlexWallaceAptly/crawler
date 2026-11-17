@@ -10,29 +10,23 @@ import { collectModifiers, modTotal } from "../rules/derived";
 import { applyStatus, hasFlag } from "../rules/effects";
 import { chance } from "../rng";
 import type { StepContext } from "../step";
-import type { ArenaHazard, ArenaState, Crawler, Enemy, Pos, StatusInstance } from "../state";
+import type { ArenaHazard, ArenaState, Crawler, Enemy, Pos } from "../state";
 import { bandOf, coord, dist, hazardAt, same, stepCost } from "./geometry";
 
-/** The crawler's base movement per turn. */
+/** Tiles the crawler gets per AP spent moving. Slow and haste change your AP, not this. */
 export const CRAWLER_SPEED = 4;
 
-/** Slowed: 1 tile. Hasted: +2. */
-function adjustSpeed(base: number, statuses: StatusInstance[], content: Content): number {
-  if (hasFlag(statuses, content, "noMinor")) return Math.min(1, base);
-  return base + (hasFlag(statuses, content, "extraMinor") ? 2 : 0);
-}
-
 export function speedOf(c: Crawler, content: Content): number {
-  const base = CRAWLER_SPEED + modTotal(collectModifiers(c, content), "speed");
-  return adjustSpeed(Math.max(1, base), c.statuses, content);
+  return Math.max(1, CRAWLER_SPEED + modTotal(collectModifiers(c, content), "speed"));
 }
 
 export function crawlerSpeed(ctx: StepContext): number {
   return speedOf(ctx.crawler, ctx.content);
 }
 
-export function enemySpeed(ctx: StepContext, e: Enemy): number {
-  return adjustSpeed(e.speed, e.statuses, ctx.content);
+/** Tiles an enemy gets per AP spent moving. */
+export function enemySpeed(_ctx: StepContext, e: Enemy): number {
+  return e.speed;
 }
 
 export function arenaOf(ctx: StepContext): ArenaState {
@@ -121,9 +115,9 @@ export function triggerHazard(ctx: StepContext, who: Mover, h: ArenaHazard, when
 }
 
 /**
- * The one positional rule: an enemy swinging at you in melee gets +1 to hit for
- * each OTHER enemy also standing next to you, up to +2. Backing into a corner or
- * a doorway matters; being surrounded hurts.
+ * The one positional rule: an enemy swinging at you in melee gets an edge (+2 on
+ * its power roll) for each OTHER enemy also standing next to you, up to two.
+ * Backing into a corner or a doorway matters; being surrounded hurts.
  */
 export function packBonus(ctx: StepContext, e: Enemy): number {
   const combat = ctx.game.combat;

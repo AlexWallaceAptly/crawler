@@ -13,7 +13,7 @@
  *      fill a slot, and every slot must be filled;
  *   4. the most specific recipe wins (id 4, a single tag 2, a list of tags 1,
  *      plus one per input, plus its priority); ties go to file order.
- * Upgrades are baked into the item (name, dice, on-hit) and recorded in
+ * Upgrades are baked into the item (name, power, on-hit) and recorded in
  * `item.crafted`, so an equipped bat stays equipped and each upgrade applies once.
  */
 import type { Recipe, RecipeInput } from "./content/schemas";
@@ -22,7 +22,8 @@ import { autoEquip } from "./gen/backstory";
 import { itemFromRef } from "./gen/item";
 import { addToPile, effectiveTags, equippedSlot, findItems, unequipUid } from "./inventory";
 import { dcFor, describeCheck, resolveCheck, type DcTier } from "./rules/checks";
-import { addToDice, rollDice, stepDice } from "./rules/dice";
+import { rollDice } from "./rules/dice";
+import { addPower, stepPower } from "./rules/power";
 import { collectModifiers, derive, modTotal } from "./rules/derived";
 import { applyStatus } from "./rules/effects";
 import { pick } from "./rng";
@@ -117,6 +118,8 @@ function groupings(words: string[]): string[][] {
 /** Split `combine ...` text into item names. */
 export function splitNames(text: string): string[][] {
   const t = text.trim().toLowerCase();
+  // The workbench picker sends full names with a bar between them: no item name contains one.
+  if (t.includes("|")) return [t.split(/\s*\|\s*/).filter(Boolean)];
   if (/[,+]| and | with | & /.test(t)) return [t.split(/\s*(?:,|\+|&| and | with )\s*/).filter(Boolean)];
   const words = t.split(/\s+/).filter(Boolean).filter((w) => w !== "the" && w !== "a");
   return words.length > 12 ? [words] : groupings(words);
@@ -228,9 +231,9 @@ function applyUpgrade(item: ItemInstance, recipe: Recipe): void {
   const out = recipe.output;
   if (out.kind !== "upgrade") return;
   item.name = `${out.prefix} ${item.name}`;
-  if (item.damage) {
-    if (out.damageStep) item.damage = stepDice(item.damage, out.damageStep);
-    if (out.damageBonus) item.damage = addToDice(item.damage, out.damageBonus);
+  if (item.power) {
+    if (out.damageStep) item.power = stepPower(item.power, out.damageStep);
+    if (out.damageBonus) item.power = addPower(item.power, out.damageBonus);
   }
   if (out.damageType) item.damageType = out.damageType;
   if (out.armorBonus) item.armor = (item.armor ?? 0) + out.armorBonus;

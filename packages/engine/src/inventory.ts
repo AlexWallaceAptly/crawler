@@ -3,7 +3,9 @@
  * putting them down, a hard weight cap, stacking, and equipping. Item generation
  * (materials, rarity, affixes) is still Milestone 5.
  */
-import { inCombat, minorLimit } from "./combat";
+import { afterAction, canAfford, inCombat, spendAp } from "./combat";
+import { payTiles } from "./grid/play";
+import { AP_COST } from "./rules/ap";
 import { derive } from "./rules/derived";
 import type { StepContext } from "./step";
 import type { Crawler, EquipSlot, ItemInstance, Room } from "./state";
@@ -15,7 +17,7 @@ import type { Crawler, EquipSlot, ItemInstance, Room } from "./state";
 export function effectiveTags(item: ItemInstance): string[] {
   const tags = new Set(item.tags);
   if (item.weaponType) tags.add(item.weaponType);
-  if (item.kind === "gear" && item.damage) tags.add("weapon");
+  if (item.kind === "gear" && item.power) tags.add("weapon");
   if (item.kind === "gear" && item.armor) tags.add("armor");
   if (item.slot) tags.add(`slot:${item.slot}`);
   return [...tags];
@@ -161,23 +163,19 @@ export function equip(c: Crawler, item: ItemInstance): { slot: EquipSlot; replac
   return { slot, replaced };
 }
 
-/** Swapping gear mid-fight is the minor action (bands) or one tile of movement (grid). */
+/** Swapping gear mid-fight costs 1 AP (bands) or one tile of movement (grid). */
 function payForSwap(ctx: StepContext): boolean {
   if (!inCombat(ctx)) return true;
   const combat = ctx.game.combat!;
   if (combat.arena) {
-    if (combat.arena.moveLeft < 1) {
-      ctx.error("No movement left to swap gear this turn.");
+    if (!payTiles(ctx, 1)) {
+      ctx.error("No AP left to swap gear this turn.");
       return false;
     }
-    combat.arena.moveLeft -= 1;
     return true;
   }
-  if (combat.minorActionsUsed >= minorLimit(ctx.crawler.statuses, ctx.content)) {
-    ctx.error("You've already used your minor action this round.");
-    return false;
-  }
-  combat.minorActionsUsed += 1;
+  if (!canAfford(ctx, AP_COST.swap, "Swapping gear")) return false;
+  spendAp(ctx, AP_COST.swap);
   return true;
 }
 
@@ -196,8 +194,10 @@ export function equipItem(ctx: StepContext, query: string): void {
   const res = equip(c, item)!;
   const swap = res.replaced.length ? ` (putting away ${res.replaced.map((r) => r.name).join(", ")})` : "";
   const line = `You ${item.slot === "mainHand" ? "ready" : "put on"} ${item.name}${swap}.`;
-  if (inCombat(ctx)) ctx.fight(line, "you");
-  else ctx.describe(line);
+  if (inCombat(ctx)) {
+    ctx.fight(line, "you");
+    afterAction(ctx);
+  } else ctx.describe(line);
 }
 
 export function unequipItem(ctx: StepContext, query: string): void {

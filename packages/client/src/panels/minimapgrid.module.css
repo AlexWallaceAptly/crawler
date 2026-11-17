@@ -26,3 +26,41 @@
 .e, .w { top: calc(50% - 1px); height: 2px; width: 50%; }
 .e { right: 0; }
 .w { left: 0; }
+
+/* Movement arrows: the whole neighbouring cell is the tap target, the arrow sits on the side nearest you. */
+.go {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.goArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46%;
+  height: 46%;
+  min-width: 20px;
+  min-height: 20px;
+  font-size: calc(var(--tile) * 0.26);
+  line-height: 1;
+  color: var(--bg);
+  background: var(--system);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.55);
+  opacity: 0.92;
+}
+.go:active .goArrow {
+  transform: scale(0.88);
+  opacity: 1;
+}
+.goN { align-items: flex-end; justify-content: center; }
+.goS { align-items: flex-start; justify-content: center; }
+.goE { align-items: center; justify-content: flex-start; }
+.goW { align-items: center; justify-content: flex-end; }

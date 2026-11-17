@@ -1,0 +1,249 @@
+/* Tablet shell: touch-sized, two columns in landscape, one in portrait. */
+
+.shell {
+  /* how much room the map may take; the tile size is worked out from these */
+  --map-w: 52vw;
+  --map-h: 58dvh;
+  display: grid;
+  height: 100dvh;
+  grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "status  status"
+    "stage   side"
+    "actions side";
+  background: var(--bg);
+  font-size: 16px;
+  overflow: hidden;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+.status { grid-area: status; min-width: 0; }
+.status header { padding-right: 12px; font-size: 15px; }
+
+.stage {
+  grid-area: stage;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px;
+  background: radial-gradient(ellipse at center, rgba(255, 176, 0, 0.04), transparent 70%);
+}
+.mapWrap {
+  margin: auto;
+}
+.stage .board > div {
+  /* the board fits the stage column, not the whole screen */
+  --cell: min(calc(var(--map-w) / var(--cols)), calc(var(--map-h) / var(--rows)), 84px);
+}
+.story {
+  align-self: stretch;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 8px;
+  line-height: 1.5;
+}
+.hint {
+  margin-top: 6px;
+  color: var(--system);
+  font-size: 14px;
+}
+
+/* ---- right column: log, then the sheets ---- */
+.side {
+  grid-area: side;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  min-width: 0;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom)) 0;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-height: 0;
+  border: 1px solid var(--border);
+  background: var(--panel);
+}
+.cardGrow {
+  flex: 1 1 0;
+}
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-head);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.cardHead::-webkit-scrollbar {
+  display: none;
+}
+.cardBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 12px;
+  line-height: 1.45;
+  font-size: 15px;
+}
+.tabBar {
+  display: flex;
+  gap: 4px;
+}
+.tab {
+  min-height: 36px;
+  padding: 0 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  background: none;
+  color: var(--dim);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.tabOn {
+  color: var(--system);
+  border-color: var(--border-hi);
+  background: var(--panel);
+}
+
+/* ---- action bar ---- */
+.actions {
+  grid-area: actions;
+  min-width: 0;
+  padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+}
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.act {
+  min-height: 48px;
+  padding: 0 18px;
+  font-size: 16px;
+  background: var(--panel-head);
+  color: var(--text);
+  border: 1px solid var(--border-hi);
+  cursor: pointer;
+}
+.act:active:not(:disabled),
+.moreItem:active:not(:disabled) {
+  background: var(--border);
+}
+.on {
+  color: var(--system);
+  border-color: var(--system);
+}
+.act:disabled,
+.moreItem:disabled {
+  opacity: 0.4;
+  color: var(--dim);
+  cursor: default;
+}
+.apCost {
+  margin-left: 8px;
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  border-radius: 10px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+.moreWrap {
+  position: relative;
+  margin-left: auto;
+}
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+.more {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  min-width: 240px;
+  max-height: 70dvh;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border-hi);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+.moreItem {
+  min-height: 48px;
+  padding: 0 16px;
+  text-align: left;
+  white-space: nowrap;
+  font-size: 16px;
+  background: none;
+  color: var(--text);
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.moreItem:last-child {
+  border-bottom: 0;
+}
+.typeBar {
+  margin-top: 8px;
+}
+.typeBar input {
+  font-size: 16px; /* stops iOS zooming in on focus */
+}
+
+/* ---- touch manners ---- */
+.shell button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.stage,
+.story,
+.cardBody,
+.more {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---- portrait: one column ---- */
+@media (orientation: portrait) {
+  .shell {
+    --map-w: 86vw;
+    --map-h: 40dvh;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "status"
+      "stage"
+      "side"
+      "actions";
+  }
+  .stage {
+    max-height: 52dvh;
+  }
+  .side {
+    flex-direction: row;
+    padding: 0 8px 8px;
+  }
+  .card {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .card:not(.cardGrow) {
+    flex: 0 0 auto;
+  }
+}

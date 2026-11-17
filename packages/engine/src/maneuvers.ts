@@ -2,19 +2,23 @@
  * Things anyone can do in a fight without abilities (Milestone 4b), so early
  * fights are more than trading swings:
  *
+ * Each costs 1 AP (see rules/ap.ts), so there's room for one next to a swing.
+ *
  *   shove X       STR contest; win and it's pushed a tile (grid: maybe into the
  *                 caltrops, or slammed into a pillar for 1d4) or a band (bands).
  *   throw X at Y  thrown junk. Grid: up to 3 tiles with sight, always lands on the
  *                 tile; splash hits the 3x3 around it (you too, if you're in it);
  *                 hazards (caltrops, glue, fire, smoke) stay on the board.
- *   dash TILE     grid: run up to double your speed; ends the turn.
- *   defend        braced: +4 defense and unshovable until your next turn.
- *   take X        grid: pick up loose junk from your tile or next to it (1 move).
+ *   dash TILE     grid: run up to double your speed for 1 AP; ends the turn.
+ *   defend        braced: a double bane on everything swung at you, and unshovable,
+ *                 until your next turn.
+ *   take X        grid: pick up loose junk from your tile or next to it (1 tile of movement).
  */
 import {
-  aliveEnemies, applyItemEffects, beginTurn, checkVictory, consumeOne, damageEnemy, endCombat, finishRound,
-  findEnemy, isGrid, needsEnemy, playerWeapon, shiftEnemyBand, type EffectTargets,
+  afterAction, aliveEnemies, applyItemEffects, beginTurn, canAfford, consumeOne, damageEnemy, endCombat, finishRound,
+  findEnemy, isGrid, needsEnemy, shiftEnemyBand, spendAp, type EffectTargets,
 } from "./combat";
+import { AP_COST } from "./rules/ap";
 import type { Consumable } from "./content/schemas";
 import { rollDice } from "./rules/dice";
 import { collectModifiers, derive, modTotal } from "./rules/derived";
@@ -25,7 +29,7 @@ import type { ArenaState, Enemy, ItemInstance, Pos } from "./state";
 import {
   allTiles, blocksMove, coord, dist, featureAt, inBounds, isCoord, occupied, parseCoord, reaches, same, unitAt,
 } from "./grid/geometry";
-import { approachTarget, planPath, type TileRef } from "./grid/play";
+import { approachCost, approachTarget, moveBudget, payTiles, planPath, type TileRef } from "./grid/play";
 import { arenaOf, crawlerSpeed, walk } from "./grid/units";
 import { addToPile, findItems, howManyFit } from "./inventory";
 
@@ -39,12 +43,6 @@ function fearBlocks(ctx: StepContext, line: string): boolean {
   return true;
 }
 
-function endTurn(ctx: StepContext): void {
-  if (ctx.game.phase !== "combat") return;
-  if (aliveEnemies(ctx).length === 0) checkVictory(ctx);
-  else finishRound(ctx);
-}
-
 // ---------------------------------------------------------------- shove
 
 export function playerShove(ctx: StepContext, target: Enemy): void {
@@ -54,26 +52,31 @@ export function playerShove(ctx: StepContext, target: Enemy): void {
     ctx.error(`${target.name} can't be targeted right now.`);
     return;
   }
+  if (!canAfford(ctx, AP_COST.shove, "A shove")) return;
   const grid = isGrid(ctx);
   if (grid) {
     const a = arenaOf(ctx);
     if (dist(a.crawler, target.pos!) > 1) {
-      approachTarget(ctx, target, { ...playerWeapon(ctx), reach: "close" });
+      if (approachCost(ctx, target, "close") > moveBudget(ctx, AP_COST.shove)) {
+        ctx.error(`The ${target.name} is too far to reach and still shove this turn. Close in first.`);
+        return;
+      }
+      approachTarget(ctx, target, "close", moveBudget(ctx, AP_COST.shove));
       if (ctx.game.phase !== "combat") return;
       if (dist(a.crawler, target.pos!) > 1) {
         ctx.say("combat.cantReach");
-        finishRound(ctx);
+        afterAction(ctx);
         return;
       }
     }
   } else if (target.range !== "close") {
-    ctx.fight(`The ${target.name} is out of arm's reach. Get close to shove it.`, "you");
-    finishRound(ctx);
+    ctx.error(`The ${target.name} is out of arm's reach. Get close to shove it.`);
     return;
   }
+  spendAp(ctx, AP_COST.shove);
   if (hasFlag(target.statuses, ctx.content, "noShove")) {
     ctx.fight(`You shove the ${target.name}. It has its feet planted and doesn't budge.`, "you");
-    finishRound(ctx);
+    afterAction(ctx);
     return;
   }
   const c = ctx.crawler;
@@ -83,13 +86,13 @@ export function playerShove(ctx: StepContext, target: Enemy): void {
   const theirs = d20() + Math.max(target.stats.STR, target.stats.DEX);
   if (mine <= theirs) {
     ctx.fight(`You shove the ${target.name}: ${mine} vs ${theirs}. It shoves back harder.`, "you");
-    finishRound(ctx);
+    afterAction(ctx);
     return;
   }
   if (!grid) {
     if (shiftEnemyBand(target, 1)) ctx.fight(`You shove the ${target.name}: ${mine} vs ${theirs}. It staggers back to ${target.range} range.`, "you");
     else ctx.fight(`You shove the ${target.name}: ${mine} vs ${theirs}. It skids, but it was already as far away as it gets.`, "you");
-    finishRound(ctx);
+    afterAction(ctx);
     return;
   }
   const a = arenaOf(ctx);
@@ -106,7 +109,7 @@ export function playerShove(ctx: StepContext, target: Enemy): void {
     ctx.fight(`You shove the ${target.name}: ${mine} vs ${theirs}. It stumbles back to ${coord(dest)}.`, "you");
     walk(ctx, target, [dest], 99);
   }
-  endTurn(ctx);
+  afterAction(ctx);
 }
 
 function nameAt(ctx: StepContext, p: Pos): string {
@@ -156,10 +159,12 @@ export function playerThrow(ctx: StepContext, item: ItemInstance, at?: string): 
   }
   if (!beginTurn(ctx)) return;
   if (fearBlocks(ctx, "Your hands are shaking too hard to aim anything.")) return;
+  if (!canAfford(ctx, AP_COST.throw, `Throwing ${item.name}`)) return;
 
   if (!isGrid(ctx)) {
     const foes = aliveEnemies(ctx).filter((e) => !hasFlag(e.statuses, ctx.content, "untargetable"));
     const primary = (at ? findEnemy(ctx, at) : undefined) ?? foes[0];
+    spendAp(ctx, AP_COST.throw);
     consumeOne(ctx, item);
     const applied = applyItemEffects(ctx, def, { area: foes, ...(primary ? { primary } : {}) });
     ctx.fight(`You throw ${item.name}${primary ? ` at the ${primary.name}` : ""}${applied.length ? ` (${applied.join(", ")})` : ""}.`, "you");
@@ -179,6 +184,7 @@ export function playerThrow(ctx: StepContext, item: ItemInstance, at?: string): 
     selfInArea: dist(a.crawler, tile) <= 1,
     ...(primary ? { primary } : {}),
   };
+  spendAp(ctx, AP_COST.throw);
   consumeOne(ctx, item);
   const applied = applyItemEffects(ctx, def, t);
   ctx.fight(`You throw ${item.name} at ${coord(tile)}${primary ? `, right at the ${primary.name}` : ""}${applied.length ? ` (${applied.join(", ")})` : ""}.`, "you");
@@ -200,7 +206,7 @@ function afterSelfHarm(ctx: StepContext, cause: string): void {
     killCrawler(ctx, `their own ${cause.toLowerCase()}`);
     return;
   }
-  endTurn(ctx);
+  afterAction(ctx);
 }
 
 /** A coordinate, an enemy's name, or (nothing) the nearest enemy you can hit. */
@@ -233,13 +239,15 @@ export function gridDash(ctx: StepContext, to: TileRef): void {
     ctx.error("No board in this fight. Advance or retreat instead.");
     return;
   }
+  if (!canAfford(ctx, AP_COST.dash, "A dash")) return;
   const a = arenaOf(ctx);
-  const budget = a.moveLeft + crawlerSpeed(ctx);
+  const budget = a.moveLeft + 2 * crawlerSpeed(ctx);
   const plan = planPath(ctx, to, budget);
   if (typeof plan === "string") {
     ctx.error(plan);
     return;
   }
+  spendAp(ctx, AP_COST.dash);
   walk(ctx, "crawler", plan, budget);
   if (ctx.game.phase !== "combat") return;
   a.moveLeft = 0;
@@ -248,10 +256,12 @@ export function gridDash(ctx: StepContext, to: TileRef): void {
 }
 
 export function playerDefend(ctx: StepContext): void {
+  if (!canAfford(ctx, AP_COST.defend, "Bracing")) return;
+  spendAp(ctx, AP_COST.defend);
   const def = ctx.content.statusEffects.get("braced");
   applyStatus(ctx.crawler.statuses, def, 1);
   ctx.fight("You plant your feet and get your guard up.", "you");
-  finishRound(ctx);
+  afterAction(ctx);
 }
 
 /** Statuses that only last until your next turn starts (braced). Called by beginTurn. */
@@ -275,16 +285,16 @@ export function takeInArena(ctx: StepContext, query: string): void {
     ctx.error(near.length ? `Nothing called "${query}" within reach.` : "Nothing within reach to pick up. Walk next to it first.");
     return;
   }
-  if (a.moveLeft < 1) {
-    ctx.error("No movement left to bend down this turn.");
-    return;
-  }
   if (howManyFit(ctx, pick) < pick.qty) {
     ctx.say("item.tooHeavy", { item: pick.name });
     return;
   }
-  a.moveLeft -= 1;
+  if (!payTiles(ctx, 1)) {
+    ctx.error("No AP left to bend down this turn.");
+    return;
+  }
   a.items = a.items.filter((n) => n.item !== pick);
   addToPile(ctx.crawler.inventory, pick);
-  ctx.fight(`You snatch up ${pick.name}${a.moveLeft > 0 ? ` (${a.moveLeft} movement left)` : ""}.`, "you");
+  ctx.fight(`You snatch up ${pick.name} (${ctx.game.combat!.ap} AP left).`, "you");
+  afterAction(ctx);
 }

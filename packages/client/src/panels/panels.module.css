@@ -53,6 +53,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
+  max-width: 100%;
 }
 .line {
   white-space: pre-wrap;
@@ -84,7 +86,11 @@
 .info {
   color: var(--text);
 }
+/* help, lists and the like: keep the line breaks, but wrap instead of running off the side */
 .info pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 100%;
   margin: 2px 0 0;
   font: inherit;
   color: var(--dim);
@@ -279,4 +285,102 @@
   margin-top: 8px;
   color: var(--check);
   font-style: italic;
+}
+
+/* ---- action points ---- */
+.ap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.apLabel {
+  color: var(--dim);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.apOn,
+.apOff {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid var(--system);
+}
+.apOn {
+  background: var(--system);
+}
+.apOff {
+  border-color: var(--border-hi);
+}
+.apCount {
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- workbench: tap parts, then combine ---- */
+.bench {
+  margin-bottom: 10px;
+}
+.benchHead {
+  margin: 8px 0 4px;
+  color: var(--system);
+  font-weight: bold;
+}
+.benchSteps {
+  margin: 0 0 4px;
+  padding-left: 2.4ch;
+  color: var(--text);
+}
+.benchItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+.benchItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 40px;
+  padding: 4px 10px;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: 1px solid var(--border-hi);
+  cursor: pointer;
+}
+.benchItemOn {
+  border-color: var(--system);
+  background: rgba(255, 176, 0, 0.1);
+}
+.benchRole {
+  color: var(--dim);
+  font-size: 11px;
+}
+.benchBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.benchPicked {
+  flex: 1;
+  min-width: 0;
+  color: var(--dim);
+  overflow-wrap: anywhere;
+}
+.benchGo {
+  min-height: 40px;
+  padding: 0 16px;
+  font: inherit;
+  color: var(--system);
+  background: none;
+  border: 1px solid var(--system);
+  cursor: pointer;
+}
+.benchGo:disabled {
+  opacity: 0.4;
+  color: var(--dim);
+  border-color: var(--border);
+  cursor: default;
 }

@@ -13,13 +13,45 @@ const engine = createEngine(content);
 afterEach(() => resetRng());
 
 describe("encounter packs (milestone 4b)", () => {
-  it("ordinary fights are 2-4 minions from at most two families", () => {
+  it("ordinary fights are 2-4 bodies from at most two families: minions, sometimes led by one mob", () => {
+    let led = 0;
     for (let i = 0; i < 1000; i++) {
       const pack = generateGroup(1, "pack", content);
       expect(pack.length).toBeGreaterThanOrEqual(2);
       expect(pack.length).toBeLessThanOrEqual(4);
-      expect(pack.every((e) => e.tier === "minion")).toBe(true);
+      const mobs = pack.filter((e) => e.tier === "mob");
+      expect(mobs.length).toBeLessThanOrEqual(1);
+      expect(pack.every((e) => e.tier === "minion" || e.tier === "mob")).toBe(true);
       expect(new Set(pack.map((e) => e.familyId)).size).toBeLessThanOrEqual(2);
+      if (mobs.length) led++;
+    }
+    expect(led).toBeGreaterThan(30);
+    expect(led).toBeLessThan(400);
+  });
+
+  it("easy fights are 1-2 minions of one easy-pool family, a level down", () => {
+    const enc = content.floors.all.find((t) => t.floor === 1)!.encounters;
+    expect(enc.easyPool.length).toBeGreaterThan(0);
+    let easyLevels = 0;
+    let hardLevels = 0;
+    const n = 500;
+    for (let i = 0; i < n; i++) {
+      const pack = generateGroup(1, i % 2 ? "pack" : "corridor", content, { easy: true });
+      expect(pack.length).toBeGreaterThanOrEqual(enc.easyPack[0]);
+      expect(pack.length).toBeLessThanOrEqual(enc.easyPack[1]);
+      expect(pack.every((e) => e.tier === "minion" && enc.easyPool.includes(e.familyId))).toBe(true);
+      expect(new Set(pack.map((e) => e.familyId)).size).toBe(1);
+      easyLevels += pack[0]!.level;
+      hardLevels += generateEnemy(content.enemies.get(pack[0]!.familyId), "minion", 1, content).level;
+    }
+    expect(easyLevels / n).toBeLessThan(hardLevels / n);
+  });
+
+  it("hard fights only roll families from the hard pool; an elite is never easy", () => {
+    const enc = content.floors.all.find((t) => t.floor === 1)!.encounters;
+    for (let i = 0; i < 300; i++) {
+      expect(generateGroup(1, "pack", content).every((e) => enc.hardPool.includes(e.familyId))).toBe(true);
+      expect(generateGroup(1, "elite", content, { easy: true })[0]!.tier).toBe("elite");
     }
   });
 

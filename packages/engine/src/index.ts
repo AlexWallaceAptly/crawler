@@ -3,6 +3,8 @@ export * from "./rules/dice";
 export * from "./rules/checks";
 export * from "./rules/conditions";
 export * from "./rules/derived";
+export * from "./rules/power";
+export * from "./rules/ap";
 export * from "./content/schemas";
 export * from "./content/load";
 export * from "./narrate/narrator";

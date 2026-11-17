@@ -3,19 +3,25 @@
  * beat the crawler act first in round 1, after that each round is the player's
  * action followed by every living enemy in initiative order.
  *
- * Two modes share every roll in this file (to-hit, damage, statuses, flee
+ * A turn is 3 action points (rules/ap.ts): everything costs some and the turn
+ * ends itself at zero. Attacks are power rolls (rules/power.ts): 2d10 + stat,
+ * three damage tiers, and nothing ever misses.
+ *
+ * Two modes share every roll in this file (power rolls, statuses, flee
  * contest, item effects): "bands" keeps the original three range bands per
  * enemy, "grid" (Milestone 4b) puts everyone on a small tactical arena and
  * derives the bands from tile distance. The mode is fixed when the fight starts.
  */
 import type { Content } from "./content/load";
-import type { Consumable, Effect, EnemyAttack, RangeBand } from "./content/schemas";
-import { assignMarks, generateGroup, type EncounterKind } from "./gen/enemy";
+import type { Consumable, Effect, EnemyAttack, Power, RangeBand } from "./content/schemas";
+import { assignMarks, generateGroup, TIER, type EncounterKind } from "./gen/enemy";
 import { enterRoom, advanceTime, TIME_COST } from "./explore";
 import { dcFor } from "./rules/checks";
 import { rollDice } from "./rules/dice";
 import { collectModifiers, derive, modTotal } from "./rules/derived";
 import { applyStatus, decrementStatuses, hasFlag, tickStatuses } from "./rules/effects";
+import { AP_COST, turnAp } from "./rules/ap";
+import { describePower, guardShift, powerRoll, type PowerRoll } from "./rules/power";
 import { chance, d20, pick } from "./rng";
 import { killCrawler, type StepContext } from "./step";
 import {
@@ -24,8 +30,8 @@ import {
 import { buildArena, entrySide } from "./grid/arena";
 import { coord, parseCoord, reaches } from "./grid/geometry";
 import { runEnemyTurnGrid } from "./grid/ai";
-import { approachTarget, gridFlee } from "./grid/play";
-import { ageHazards, crawlerSpeed, packBonus, standInHazard, syncBands } from "./grid/units";
+import { approachCost, approachTarget, gridFlee, moveBudget } from "./grid/play";
+import { ageHazards, packBonus, standInHazard, syncBands } from "./grid/units";
 import { dropTurnStatuses } from "./maneuvers";
 import { rollLoot } from "./gen/loot";
 import { addToPile } from "./inventory";
@@ -53,15 +59,19 @@ export function isGrid(ctx: StepContext): boolean {
 /** Encounter odds by room type. Lairs always fight (elite); corridors roll every entry. */
 export function maybeEncounter(ctx: StepContext, room: Room, firstVisit: boolean, cameFrom?: number): boolean {
   if (ctx.game.phase !== "exploring") return false;
+  const floor = ctx.game.floor!;
+  // The floor's first few fights come from the easy pool, wherever they happen:
+  // a lair you stumble into that early has a couple of squatters, not its elite.
+  const theme = ctx.content.floors.byId[floor.theme];
+  const easy = (floor.fights ?? 0) < (theme?.encounters.easyFights ?? 0);
   let kind: EncounterKind = room.type === "corridor" ? "corridor" : "pack";
   let p = 0;
-  if (room.type === "lair") { p = firstVisit ? 1 : 0.2; if (firstVisit) kind = "elite"; }
+  if (room.type === "lair") { p = firstVisit ? 1 : 0.2; if (firstVisit && !easy) kind = "elite"; }
   else if (room.type === "chamber") p = firstVisit ? 0.35 : 0.06;
   else if (room.type === "corridor") p = 0.08;
   else if (room.type === "event" || room.type === "npc" || room.type === "puzzle") p = firstVisit ? 0.15 : 0.05;
   if (p <= 0 || !chance(p)) return false;
-  const floor = ctx.game.floor!;
-  const enemies = generateGroup(floor.floor, kind, ctx.content);
+  const enemies = generateGroup(floor.floor, kind, ctx.content, { easy });
   if (enemies.length === 0) return false;
   startCombat(ctx, enemies, { fromRoom: cameFrom ?? floor.currentRoom });
   return true;
@@ -84,12 +94,15 @@ export function startCombat(ctx: StepContext, enemies: Enemy[], opts: StartOptio
 
   const mode = opts.mode ?? combatModeOf(ctx.account);
   const fromRoom = opts.fromRoom ?? floor.currentRoom;
+  floor.fights = (floor.fights ?? 0) + 1;
+  const ap = turnAp(ctx.crawler.statuses, ctx.content);
   ctx.game.combat = {
     mode,
     enemies,
     round: 1,
     playerInitiative: playerInit,
-    minorActionsUsed: 0,
+    ap,
+    apMax: ap,
     turnBegun: false,
     fromRoom,
   };
@@ -128,7 +141,30 @@ export function startCombat(ctx: StepContext, enemies: Enemy[], opts: StartOptio
 
 // ---------------------------------------------------------------- round flow
 
-/** Runs after the player's main action: remaining enemies act, then the round closes. */
+/** Is there AP for this? Says why not if there isn't (and the turn carries on). */
+export function canAfford(ctx: StepContext, cost: number, what: string): boolean {
+  const ap = ctx.game.combat!.ap;
+  if (ap >= cost) return true;
+  ctx.error(`${what} takes ${cost} AP and you have ${ap}. Do something cheaper, or \`wait\` to end the turn.`);
+  return false;
+}
+
+export function spendAp(ctx: StepContext, cost: number): void {
+  const combat = ctx.game.combat;
+  if (combat) combat.ap = Math.max(0, combat.ap - cost);
+}
+
+/** After anything the crawler does: victory if nothing's left standing; out of AP ends the turn. */
+export function afterAction(ctx: StepContext): void {
+  if (ctx.game.phase !== "combat") return;
+  if (aliveEnemies(ctx).length === 0) {
+    checkVictory(ctx);
+    return;
+  }
+  if (ctx.game.combat!.ap <= 0) finishRound(ctx);
+}
+
+/** Runs when the crawler's turn is over: remaining enemies act, then the round closes. */
 export function finishRound(ctx: StepContext): void {
   if (ctx.game.phase !== "combat") return;
   // Enemies slower than the crawler take their turn after the crawler. Faster
@@ -165,7 +201,7 @@ function endOfRound(ctx: StepContext): void {
   for (const name of decrementStatuses(c.statuses, ctx.content)) {
     ctx.fight(`You are no longer ${name.toLowerCase()}.`, "status");
   }
-  combat.minorActionsUsed = 0;
+  combat.ap = 0;
   combat.turnBegun = false;
   if (combat.arena) combat.arena.moveLeft = 0;
   ageHazards(ctx);
@@ -174,7 +210,7 @@ function endOfRound(ctx: StepContext): void {
 }
 
 /**
- * Start of the crawler's turn: statuses tick. Idempotent within a round, so an
+ * Start of the crawler's turn: statuses tick and the AP pool refills. Idempotent within a round, so an
  * action that is rejected after this (bad target) doesn't tick a second time
  * when the player tries again. Returns false if the turn is already lost.
  */
@@ -193,8 +229,9 @@ export function beginTurn(ctx: StepContext): boolean {
     killCrawler(ctx, "their own wounds");
     return false;
   }
+  combat.apMax = combat.ap = turnAp(c.statuses, ctx.content);
   if (combat.arena) {
-    combat.arena.moveLeft = crawlerSpeed(ctx);
+    combat.arena.moveLeft = 0;
     standInHazard(ctx, "crawler");
     if (ctx.game.phase !== "combat") return false;
   }
@@ -218,7 +255,12 @@ function fearBlocks(ctx: StepContext, line: string): boolean {
 
 export interface WeaponProfile {
   name: string;
-  dice: string;
+  /** Damage by power-roll tier. */
+  power: Power;
+  /** AP per swing. */
+  apCost: number;
+  /** A swing ends the turn (and carries a 3-AP swing's weight). */
+  unwieldy?: boolean;
   stat: "STR" | "DEX";
   reach: RangeBand;
   skillId?: string;
@@ -231,11 +273,13 @@ export function playerWeapon(ctx: StepContext): WeaponProfile {
   const c = ctx.crawler;
   const uidMain = c.equipment.mainHand;
   const weapon = uidMain ? c.inventory.find((i) => i.uid === uidMain) : undefined;
-  if (weapon?.damage) {
+  if (weapon?.power) {
     const skill = ctx.content.skills.all.find((s) => s.weaponType && s.weaponType === weapon.weaponType);
     return {
       name: weapon.name,
-      dice: weapon.damage,
+      power: weapon.power,
+      apCost: weapon.apCost ?? AP_COST.attack,
+      ...(weapon.unwieldy ? { unwieldy: true } : {}),
       stat: weapon.stat ?? "STR",
       reach: (weapon.range as RangeBand | undefined) ?? "close",
       ...(skill ? { skillId: skill.id } : {}),
@@ -243,7 +287,7 @@ export function playerWeapon(ctx: StepContext): WeaponProfile {
       ...(weapon.onHit ? { onHit: weapon.onHit } : {}),
     };
   }
-  return { name: "bare hands", dice: "1d2", stat: "STR", reach: "close", skillId: "unarmed" };
+  return { name: "bare hands", power: [1, 2, 2], apCost: 1, stat: "STR", reach: "close", skillId: "unarmed" };
 }
 
 /** Is the target inside this reach right now? Bands compare bands; the grid checks tiles and sight. */
@@ -271,75 +315,118 @@ export function playerAttack(ctx: StepContext, target: Enemy): void {
     ctx.error(`${target.name} can't be targeted right now.`);
     return;
   }
+  if (!canAfford(ctx, w.apCost, `Swinging ${w.name}`)) return;
 
   if (!inReach(ctx, target, w.reach)) {
     if (isGrid(ctx)) {
-      approachTarget(ctx, target, w);
+      if (approachCost(ctx, target, w.reach) > moveBudget(ctx, w.apCost)) {
+        // Too far to get there and still swing: spend the turn closing the distance instead.
+        const from = { ...combat.arena!.crawler };
+        approachTarget(ctx, target, w.reach, moveBudget(ctx));
+        if (ctx.game.phase !== "combat") return;
+        const at = combat.arena!.crawler;
+        if (from.x === at.x && from.y === at.y) {
+          ctx.error(`There's no way to get any closer to the ${target.name} from here.`);
+          return;
+        }
+        ctx.fight(`The ${target.name} is too far to reach and still swing this turn.`, "status");
+        afterAction(ctx);
+        return;
+      }
+      approachTarget(ctx, target, w.reach, moveBudget(ctx, w.apCost));
       if (ctx.game.phase !== "combat") return;
-    } else if (canUseMinor(ctx)) {
-      stepBands(ctx, -1);
-      combat.minorActionsUsed += 1;
+    } else {
+      const steps = BAND[target.range] - BAND[w.reach];
+      if (combat.ap < w.apCost + steps * AP_COST.move) {
+        // Not enough AP to close in and swing: close in as far as the AP goes.
+        for (let n = 0; n < steps && combat.ap >= AP_COST.move; n++) {
+          spendAp(ctx, AP_COST.move);
+          stepBands(ctx, -1);
+        }
+        ctx.fight(`The ${target.name} is still out of reach for a swing this turn.`, "status");
+        afterAction(ctx);
+        return;
+      }
+      for (let n = 0; n < steps; n++) {
+        spendAp(ctx, AP_COST.move);
+        stepBands(ctx, -1);
+      }
     }
     if (!inReach(ctx, target, w.reach)) {
+      // Something stopped you on the way (a hazard, usually).
       ctx.say("combat.cantReach");
-      finishRound(ctx);
+      afterAction(ctx);
       return;
     }
   }
 
+  spendAp(ctx, w.apCost);
   resolvePlayerHit(ctx, target, w);
-  finishRound(ctx);
+  // An unwieldy weapon takes the rest of the turn to haul back up.
+  if (w.unwieldy && ctx.game.combat) ctx.game.combat.ap = 0;
+  afterAction(ctx);
 }
 
-/** An enemy's defense right now, including status shifts to DEX and defense. */
-export function enemyDefense(ctx: StepContext, e: Enemy): number {
-  const mods = statusModifiers(e, ctx);
-  const dex = e.stats.DEX + modTotal(mods, "stat:DEX");
-  return e.defense + Math.floor(dex / 2) - Math.floor(e.stats.DEX / 2) + modTotal(mods, "defense");
+/** How hard an enemy is to hit cleanly right now: its mods plus status shifts to defense. */
+export function enemyGuard(ctx: StepContext, e: Enemy): number {
+  return e.guard + modTotal(statusModifiers(e, ctx), "defense");
 }
 
-/** One weapon swing: to-hit, damage, crits, on-hit statuses, the kill. Doesn't end the turn. */
-export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfile, opts: { bonus?: number; note?: string } = {}): boolean {
+/** Damage an enemy shrugs off every weapon hit (never below 1 getting through). */
+export function enemyArmor(ctx: StepContext, e: Enemy): number {
+  return Math.max(0, e.armor + modTotal(statusModifiers(e, ctx), "dr", "damageReduction"));
+}
+
+/** When does a status riding on an attack land? Never on tier 1, on its chance at tier 2, always at tier 3. */
+function riderLands(tier: number, p: number): boolean {
+  return tier >= 3 || (tier === 2 && chance(p));
+}
+
+/**
+ * One weapon swing: the power roll, the tier's damage, on-hit statuses, the kill.
+ * Always does at least 1 damage. A crit hands 1 AP back. Doesn't spend AP or end the turn.
+ */
+export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfile, opts: { edges?: number; banes?: number } = {}): PowerRoll {
   const c = ctx.crawler;
   const mods = collectModifiers(c, ctx.content);
   const d = derive(c, ctx.content);
   const skillRank = w.skillId ? (c.skills[w.skillId]?.rank ?? 0) : 0;
-  const hitMod = d.stats[w.stat] + skillRank + modTotal(mods, "attack", "hit") + (opts.bonus ?? 0);
-  const nat = d20();
-  const total = nat + hitMod;
-  const crit = nat === 20;
-  const targetDefense = enemyDefense(ctx, target);
-  const hit = crit || (nat !== 1 && total >= targetDefense);
-  const note = opts.note ? ` ${opts.note}` : "";
+  const bonus = Math.floor(d.stats[w.stat] / 2) + skillRank + modTotal(mods, "attack", "hit");
+  const shift = guardShift(enemyGuard(ctx, target));
+  const roll = powerRoll(bonus, shift.edges + (opts.edges ?? 0), shift.banes + (opts.banes ?? 0));
   for (const name of consumeFlaggedStatuses(c.statuses, ctx, "breaksOnAttack")) {
     ctx.fight(`${name} ends when you attack.`, "status");
   }
 
-  if (!hit) {
-    ctx.fight(`You attack the ${target.name} with ${w.name}: d20(${nat})+${hitMod}${note} = ${total} vs ${targetDefense}. Miss.`, "you");
-    if (nat === 1) ctx.say("combat.critFail", { target: target.name });
-    else if (chance(0.3)) ctx.say("combat.playerMiss");
-    return false;
-  }
-  let dmg = rollDice(w.dice).total + (crit ? rollDice(w.dice).total : 0);
-  dmg += Math.floor(d.stats[w.stat] / 2) + modTotal(mods, "damage");
-  dmg = Math.max(1, dmg);
+  // The stat's flat bonus scales with the swing's AP: quarter for a 1-AP poke, half at 2, three quarters at 3.
+  const flat = Math.floor((d.stats[w.stat] * (w.unwieldy ? 3 : w.apCost)) / 4) + modTotal(mods, "damage");
+  const armor = enemyArmor(ctx, target);
+  const dmg = Math.max(1, w.power[roll.tier - 1]! + flat - armor);
   target.hp -= dmg;
   ctx.fight(
-    `You ${crit ? "CRIT" : "hit"} the ${target.name} with ${w.name}: d20(${nat})+${hitMod}${note} = ${total} vs ${targetDefense} — ${dmg} damage${target.hp > 0 ? ` (${target.hp}/${target.maxHP})` : ""}.`,
+    `You hit the ${target.name} with ${w.name}: ${describePower(roll)}. ${roll.crit ? "CRIT, tier 3" : `Tier ${roll.tier}`}: ${dmg} damage${armor > 0 ? ` (${armor} soaked)` : ""}${target.hp > 0 ? ` (${target.hp}/${target.maxHP})` : ""}.`,
     "you",
   );
-  if (crit) ctx.say("combat.crit");
+  if (roll.crit) {
+    ctx.say("combat.crit");
+    const combat = ctx.game.combat;
+    if (combat) {
+      combat.ap += 1;
+      ctx.fight("The crit hands you 1 AP back.", "you");
+    }
+  } else if (chance(0.25)) {
+    ctx.say(`combat.tier${roll.tier}`, { target: target.name });
+  }
   if (target.hp <= 0) {
     ctx.fight(`The ${target.name} drops.`, "you");
     ctx.say("combat.kill", { target: target.name });
-  } else if (w.onHit && chance(w.onHit.chance)) {
+  } else if (w.onHit && riderLands(roll.tier, w.onHit.chance)) {
     const def = ctx.content.statusEffects.get(w.onHit.id);
     if (applyStatus(target.statuses, def, w.onHit.duration) !== "ignored") {
       ctx.fight(`The ${target.name} is ${def.name.toLowerCase()}.`, "status");
     }
   }
-  return true;
+  return roll;
 }
 
 /** Damage an enemy from something other than a weapon swing (items, hazards, slams). */
@@ -362,6 +449,8 @@ export function playerFlee(ctx: StepContext): void {
     return;
   }
   const combat = ctx.game.combat!;
+  if (!canAfford(ctx, AP_COST.flee, "Running for it")) return;
+  spendAp(ctx, AP_COST.flee);
   if (fleeContest(ctx, aliveEnemies(ctx))) {
     leaveCombat(ctx, combat.fromRoom);
     return;
@@ -420,6 +509,8 @@ export function playerTalk(ctx: StepContext): void {
   }
   if (!beginTurn(ctx)) return;
   if (fearBlocks(ctx, "Fear leaves you with nothing to say but goodbye.")) return;
+  if (!canAfford(ctx, AP_COST.talk, "Talking your way out")) return;
+  spendAp(ctx, AP_COST.talk);
   const c = ctx.crawler;
   const d = derive(c, ctx.content);
   const rank = c.skills["persuasion"]?.rank ?? 0;
@@ -437,41 +528,28 @@ export function playerTalk(ctx: StepContext): void {
     c.xp += xp;
     ctx.fight(`Persuasion: d20(${nat})+${d.stats.CHA + rank} = ${total} vs DC ${dc}. They buy it. +${xp} XP.`, "you");
     ctx.say("combat.talkSuccess");
-    if (aliveEnemies(ctx).length > 0) finishRound(ctx);
-    else checkVictory(ctx);
+    afterAction(ctx);
     return;
   }
   ctx.fight(`Persuasion: d20(${nat})+${d.stats.CHA + rank} = ${total} vs DC ${dc}. No sale.`, "you");
   ctx.say("combat.talkFail");
-  finishRound(ctx);
+  afterAction(ctx);
 }
 
-/** Minor action (bands): shift every enemy one band (you reposition relative to the pack). */
+/** Bands: shift every enemy one band (you reposition relative to the pack). 1 AP. */
 export function playerStep(ctx: StepContext, delta: 1 | -1): void {
-  const combat = ctx.game.combat!;
-  if (!canUseMinor(ctx)) {
-    ctx.error("You've already moved this round.");
-    return;
-  }
-  combat.minorActionsUsed += 1;
+  if (!beginTurn(ctx)) return;
+  if (!canAfford(ctx, AP_COST.move, "Moving")) return;
+  spendAp(ctx, AP_COST.move);
   stepBands(ctx, delta);
+  afterAction(ctx);
 }
 
-/** Spend the turn doing nothing useful. */
+/** End the turn, whatever AP is left. */
 export function playerWait(ctx: StepContext): void {
   if (!beginTurn(ctx)) return;
   ctx.fight("You hold your ground and wait.", "you");
   finishRound(ctx);
-}
-
-/** Minor-action budget: slowed allows none, hasted allows two. */
-export function minorLimit(statuses: StatusInstance[], content: Content): number {
-  if (hasFlag(statuses, content, "noMinor")) return 0;
-  return hasFlag(statuses, content, "extraMinor") ? 2 : 1;
-}
-
-function canUseMinor(ctx: StepContext): boolean {
-  return ctx.game.combat!.minorActionsUsed < minorLimit(ctx.crawler.statuses, ctx.content);
 }
 
 function stepBands(ctx: StepContext, delta: 1 | -1): void {
@@ -541,6 +619,8 @@ export function playerUseItem(ctx: StepContext, item: ItemInstance, targets?: Ef
   }
   if (fighting && !beginTurn(ctx)) return;
   if (fighting && fearBlocks(ctx, "Fear makes using an item seem like a long-term plan.")) return;
+  if (fighting && !canAfford(ctx, AP_COST.item, `Using ${item.name}`)) return;
+  if (fighting) spendAp(ctx, AP_COST.item);
 
   let t: EffectTargets = targets ?? { area: [] };
   if (fighting && !targets) {
@@ -557,16 +637,11 @@ export function playerUseItem(ctx: StepContext, item: ItemInstance, targets?: Ef
       killCrawler(ctx, item.name);
       return;
     }
-    if (!enemiesLeft(ctx)) checkVictory(ctx);
-    else finishRound(ctx);
+    afterAction(ctx);
   } else {
     ctx.describe(`You use ${item.name}${summary}.`);
     if (ctx.crawler.hp <= 0) killCrawler(ctx, item.name);
   }
-}
-
-function enemiesLeft(ctx: StepContext): boolean {
-  return aliveEnemies(ctx).length > 0;
 }
 
 /** Apply a consumable's effects to whoever they're aimed at. Returns short log fragments. */
@@ -677,8 +752,18 @@ export function attackUsable(ctx: StepContext, e: Enemy, a: LiveAttack): boolean
   return BAND[e.range] <= BAND[a.range];
 }
 
-export function pickAttack(ctx: StepContext, e: Enemy, specialsOnly = false): LiveAttack | undefined {
-  const usable = e.attacks.filter((a) => attackUsable(ctx, e, a));
+/** AP an enemy's turn starts with: by tier, +1 hasted, -1 slowed. */
+export function enemyAp(ctx: StepContext, e: Enemy): number {
+  return turnAp(e.statuses, ctx.content, TIER[e.tier].ap);
+}
+
+export function attackCost(a: EnemyAttack): number {
+  return a.ap ?? AP_COST.attack;
+}
+
+/** A usable attack to throw right now; `ap` limits it to ones the enemy can still pay for. */
+export function pickAttack(ctx: StepContext, e: Enemy, specialsOnly = false, ap = Infinity): LiveAttack | undefined {
+  const usable = e.attacks.filter((a) => attackUsable(ctx, e, a) && attackCost(a) <= ap);
   const candidates = specialsOnly ? usable.filter((a) => a.cooldown) : usable;
   return candidates.length > 0 ? pick(candidates) : undefined;
 }
@@ -735,85 +820,98 @@ export function markFled(ctx: StepContext, e: Enemy): void {
   ctx.say("combat.enemyFled", { target: e.name });
 }
 
+/** Bands: spend the enemy's AP an action at a time. A band step is 1 AP; attacks cost what they say (2). */
 function runEnemyTurnBands(ctx: StepContext, e: Enemy): void {
-  let repositioned = false;
-  for (const priority of e.ai) {
-    if (wantsToFlee(ctx, e, priority)) {
+  let ap = enemyAp(ctx, e);
+  let kept = false;
+  let did = false;
+  const strike = (a: LiveAttack) => {
+    ap -= attackCost(a);
+    did = true;
+    enemyStrike(ctx, e, a);
+  };
+  for (let guard = 0; guard < 8 && ap > 0 && e.hp > 0 && ctx.game.phase === "combat"; guard++) {
+    if (e.ai.some((token) => wantsToFlee(ctx, e, token))) {
       const d = derive(ctx.crawler, ctx.content);
       if (d20() + e.stats.DEX > d20() + d.stats.DEX) markFled(ctx, e);
       else ctx.fight(`The ${e.name} tries to bolt and can't find an opening.`, "enemy");
       return;
     }
-    if (priority === "special_if_ready") {
-      const special = pickAttack(ctx, e, true);
-      if (special) {
-        enemyStrike(ctx, e, special);
-        return;
+    let acted = false;
+    for (const priority of e.ai) {
+      if (priority === "special_if_ready") {
+        const special = pickAttack(ctx, e, true, ap);
+        if (special) { strike(special); acted = true; break; }
+      }
+      if (priority === "keep_range" && !kept && BAND[e.range] < BAND[e.preferRange]) {
+        kept = true;
+        ap -= AP_COST.move;
+        did = true;
+        e.range = BANDS[BAND[e.range] + 1]!;
+        ctx.fight(`The ${e.name} skitters back to ${e.range} range.`, "enemy");
+        acted = true;
+        break;
+      }
+      if (priority === "attack") {
+        const attack = pickAttack(ctx, e, false, ap);
+        if (attack) { strike(attack); acted = true; break; }
       }
     }
-    if (priority === "keep_range" && BAND[e.range] < BAND[e.preferRange]) {
-      e.range = BANDS[BAND[e.range] + 1]!;
-      repositioned = true;
-      ctx.fight(`The ${e.name} skitters back to ${e.range} range.`, "enemy");
-    }
-    if (priority === "attack") {
-      const attack = pickAttack(ctx, e);
-      if (attack) {
-        enemyStrike(ctx, e, attack);
-        return;
-      }
-    }
-  }
-  let attack = pickAttack(ctx, e);
-  if (!attack) {
-    // step toward a band where something works
-    if (BAND[e.range] > 0) {
+    if (acted) continue;
+    const attack = pickAttack(ctx, e, false, ap);
+    if (attack) { strike(attack); continue; }
+    // Step toward a band where something works, if there'd be a point.
+    const closer = e.attacks.some((a) => a.ready === 0 && BAND[a.range] < BAND[e.range]);
+    if (closer && BAND[e.range] > 0) {
+      ap -= AP_COST.move;
+      did = true;
       e.range = BANDS[BAND[e.range] - 1]!;
       ctx.fight(`The ${e.name} closes to ${e.range} range.`, "enemy");
+      continue;
     }
-    attack = pickAttack(ctx, e);
-    if (!attack) {
-      if (!repositioned) ctx.fight(`The ${e.name} circles, looking for an angle.`, "enemy");
-      return;
-    }
+    break;
   }
-  enemyStrike(ctx, e, attack);
+  if (!did && e.hp > 0 && ctx.game.phase === "combat") ctx.fight(`The ${e.name} circles, looking for an angle.`, "enemy");
 }
 
-export function enemyStrike(ctx: StepContext, e: Enemy, attack: LiveAttack, opts: { hitBonus?: number; note?: string } = {}): void {
+/** Bands has no tiles, so ganging up is counted by band: every other enemy at close range with it, up to two. */
+function bandsPackBonus(ctx: StepContext, e: Enemy): number {
+  if (e.range !== "close") return 0;
+  return Math.min(2, aliveEnemies(ctx).filter((o) => o !== e && o.range === "close").length);
+}
+
+/**
+ * One enemy attack: the power roll, the tier's damage, the status riding on it.
+ * Always does at least 1 damage. Doesn't touch the enemy's AP.
+ */
+export function enemyStrike(ctx: StepContext, e: Enemy, attack: LiveAttack, opts: { edges?: number; banes?: number } = {}): PowerRoll {
   const c = ctx.crawler;
   const mods = collectModifiers(c, ctx.content);
   const d = derive(c, ctx.content);
   if (attack.cooldown) attack.ready = attack.cooldown;
   const enemyMods = statusModifiers(e, ctx);
   const statMod = e.stats[attack.stat] + modTotal(enemyMods, `stat:${attack.stat}`);
-  const nat = d20();
-  const pack = isGrid(ctx) ? packBonus(ctx, e) : 0;
-  const hitMod = statMod + modTotal(enemyMods, "attack", "hit") + (opts.hitBonus ?? 0) + pack;
-  const total = nat + hitMod;
-  const crit = nat === 20;
-  const note = [opts.note, pack ? `(+${pack} pack)` : ""].filter(Boolean).map((n) => ` ${n}`).join("");
-  const defense = d.defense + (hasFlag(c.statuses, ctx.content, "untargetable") ? 5 : 0);
-  const hit = !hasFlag(c.statuses, ctx.content, "untargetable") && (crit || (nat !== 1 && total >= defense));
-  if (!hit) {
-    ctx.fight(`${e.name} — ${attack.name}: d20(${nat})+${hitMod}${note} = ${total} vs your ${defense}. Miss.`, "enemy");
-    return;
-  }
+  const bonus = Math.floor(statMod / 2) + modTotal(enemyMods, "attack", "hit");
+  // Ganging up is an edge per extra body next to you; your guard (braced, hasted...) is banes.
+  const pack = isGrid(ctx) ? packBonus(ctx, e) : bandsPackBonus(ctx, e);
+  const shift = guardShift(d.guard);
+  const hidden = hasFlag(c.statuses, ctx.content, "untargetable") ? 2 : 0;
+  const roll = powerRoll(bonus, pack + shift.edges + (opts.edges ?? 0), shift.banes + hidden + (opts.banes ?? 0));
   // Enemies add stat/4 where the crawler adds stat/2: the player's damage edge (see DECISIONS.md).
-  let dmg = rollDice(attack.dice).total + (crit ? rollDice(attack.dice).total : 0) + Math.floor(statMod / 4);
-  dmg -= modTotal(mods, "damageReduction", "dr", `resist:${attack.damageType}`);
-  dmg = Math.max(1, dmg);
+  const soak = d.armor + modTotal(mods, `resist:${attack.damageType}`);
+  const dmg = Math.max(1, attack.power[roll.tier - 1]! + Math.floor(statMod / 4) + modTotal(enemyMods, "damage") - soak);
   c.hp -= dmg;
   ctx.fight(
-    `${e.name} — ${attack.name}${crit ? " (CRIT)" : ""}: d20(${nat})+${hitMod}${note} = ${total} vs your ${defense} — ${dmg} ${attack.damageType} damage. You: ${Math.max(0, c.hp)}/${d.maxHP}.`,
+    `${e.name} — ${attack.name}: ${describePower(roll)}${pack ? ` (${pack} ganging up)` : ""}. ${roll.crit ? "CRIT, tier 3" : `Tier ${roll.tier}`}: ${dmg} ${attack.damageType} damage${soak > 0 ? ` (${soak} soaked)` : ""}. You: ${Math.max(0, c.hp)}/${d.maxHP}.`,
     "enemy",
   );
-  if (attack.status && c.hp > 0 && chance(attack.status.chance)) {
+  if (attack.status && c.hp > 0 && riderLands(roll.tier, attack.status.chance)) {
     const def = ctx.content.statusEffects.get(attack.status.id);
     const what = applyStatus(c.statuses, def, attack.status.duration);
     if (what !== "ignored") ctx.fight(`You are ${def.name.toLowerCase()}.`, "status");
   }
   if (c.hp <= 0) killInCombat(ctx, `a ${e.name}`);
+  return roll;
 }
 
 /**

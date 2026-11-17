@@ -17,8 +17,8 @@ export function testEnemy(over: Partial<Enemy> = {}): Enemy {
   return {
     uid: `e${Math.random().toString(36).slice(2, 7)}`, familyId: "sump_rat", name: "Test Rat", level: 4, tier: "mob",
     stats: { STR: 4, DEX: 5, CON: 4, INT: 1, CHA: 1 },
-    maxHP: 10, hp: 10, armor: 0, defense: 12, speed: 4,
-    attacks: [{ name: "Bite", dice: "1d4", damageType: "physical", stat: "DEX", range: "close", ready: 0 }],
+    maxHP: 10, hp: 10, armor: 0, guard: 0, speed: 4,
+    attacks: [{ name: "Bite", power: [1, 2, 3], damageType: "physical", stat: "DEX", range: "close", ready: 0 }],
     ai: ["attack"], preferRange: "close", talkable: false, range: "close",
     statuses: [], regen: 0, fleeBelow: 0, initiative: 5, xp: 10,
     ...over,
@@ -42,7 +42,7 @@ export function gridWorld(rows: string[], enemies: Enemy[]): World {
   c.statuses = [];
   c.inventory = [{
     uid: "w1", baseId: "test_club", kind: "gear", name: "Test Club", rarity: "common",
-    slot: "mainHand", damage: "1d6", damageType: "physical", stat: "STR",
+    slot: "mainHand", power: [2, 4, 6], damageType: "physical", stat: "STR",
     modifiers: [], weight: 1, value: 0, qty: 1, tags: [],
   }];
   c.equipment = { mainHand: "w1" };
@@ -62,7 +62,7 @@ export function gridWorld(rows: string[], enemies: Enemy[]): World {
   }));
   for (const e of enemies) e.range = bandOf(dist(e.pos!, arena.crawler));
   world.game.combat = {
-    mode: "grid", enemies, round: 1, playerInitiative: 15, minorActionsUsed: 0, turnBegun: false,
+    mode: "grid", enemies, round: 1, playerInitiative: 15, ap: 0, apMax: 3, turnBegun: false,
     fromRoom: world.game.floor!.currentRoom, arena,
   };
   world.game.phase = "combat";

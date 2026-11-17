@@ -374,3 +374,88 @@ These are available to every crawler, so early fights aren't just trading swings
   - **Floor 2:** park and wood benches, the padded bench, the café table and stools, and the food-service cart are defined but held back for the Drowned Mall.
   - **File size:** the masters were 180-314px (1.6 MB), so the published copies are resized to fit 128px with Lanczos (607 KB). The masters stay in `sprites/furniture_carts/`.
   - Every arena feature now has art.
+
+## Combat rework: action points, power rolls, easy and hard pools
+
+Asked for after the Milestone 4b playtest: a small AP system, damage on every attack in the style of Draw Steel instead of D&D hit-or-miss, and much easier early enemies (a Floor 1 clear rate near 50%, with the first few fights from an easy pool and the rest from a hard pool). SPEC.md's Combat, Grid mode and Enemy generation sections are amended to match. Saves are bumped to version 5; older saves are discarded.
+
+### Action points
+
+- **3 AP a turn** (`rules/ap.ts`). Attack 2, move 1, shove/throw/defend/item/dash 1, flee and talk 2. The turn ends itself at 0 AP; `wait` ends it early. The "one action plus a minor action" rule and the per-turn movement budget are gone.
+- **Hasted is +1 AP and slowed is -1 AP.** They no longer change tiles per move. The status flags are renamed `apUp` and `apDown`.
+- **Movement is bought.** 1 AP pays for your speed in tiles (4), which can be spent across several moves. Walking farther than what's paid for buys another AP's worth automatically, so one `move` can cost 2 or 3 AP. The board dims tiles that cost 2+ AP.
+- **An attack you can't finish is refused, not wasted.** Out of reach, the crawler walks in only if AP for the swing would be left. Otherwise the command is an error that costs nothing and suggests `advance`. Bands works the same way at 1 AP per band.
+- **Weapon AP costs.** Weapons default to 2. The 65 weakest joke weapons (old 1, 1d2 and 1d3 dice) and bare hands cost 1. The six old 1d10 two-handers cost 3 and went from 3/6/9 to 4/7/10.
+  - The flat stat bonus scales with the cost (`floor(stat * apCost / 4)`), so three 1-AP pokes don't triple-dip the stat. Without this, light weapons out-damaged everything.
+- **Dash** costs 1 AP, covers double speed and still ends the turn. With AP it's mostly a last-AP sprint.
+- **Defend no longer ends the turn.** It's 1 AP, so swing-then-brace is a normal turn.
+- **Picking up junk and swapping gear** on the board still cost one tile of movement (which may mean buying an AP's worth). In bands a swap is 1 AP.
+- **A failed flee still ends the turn** after the free swings. On the board, `flee` spends whatever AP it takes to reach the nearest door and needs 2 AP left to go through it.
+- **Enemies get 3 AP, elites 4.** The plan said minions 2, but with a 2-AP attack a 2-AP minion could never move and swing in the same turn, and attack-then-step-back would have beaten every melee pack for free. Elites next to you swing twice.
+- **Hit and run is now possible** (swing for 2, step away for 1). Slow enemies such as the mold shambler and gutter crab can be kited on open boards. The sim's policy doesn't do it, so a careful player will beat the sim's numbers.
+- **Buttons carry their AP price** and grey out when you can't pay (`CommandOption.ap`, `.disabled`). "Wait" is labelled "End turn".
+
+### Power rolls
+
+- **2d10 + floor(stat/2) + skill rank + attack mods**, tiers at 11 or less / 12-16 / 17+ (`rules/power.ts`). Nothing misses, and damage is never below 1 after armor.
+  - **Half the stat, not the full stat.** The plan said full stat. Stats here run 3-12, so a full stat pinned the crawler at tier 3 and made tier 1 nearly impossible. Half the stat keeps all three tiers live for both sides.
+- **Crit** is a natural 19-20: tier 3 whatever the total, and the crawler gets 1 AP back. Enemies get the tier but no AP.
+- **Edges and banes** are ±2 each, net, capped at two.
+  - The pack bonus is now an edge per other enemy next to you, up to two. Bands mode gets the same edge from other enemies at close range, so the modes stay comparable.
+  - "Defense" modifiers (braced +4, hasted +2, blinded -3, slowed/feared/confused -2, and the enemy mods Tiny, Greasy, Rabid and Enormous) are now **guard**: every 2 points is a bane on attackers, every -2 an edge.
+  - Numeric attack penalties (poisoned -2, blinded -5) still apply straight to the roll.
+- **Armor is flat damage reduction** for both sides. DEX no longer adds to defense, since there's nothing left to dodge.
+- **Invisible** is a double bane on anything attacking you. It used to be an automatic miss, which can't exist any more.
+- **Status riders:** never at tier 1, the listed chance at tier 2, always at tier 3.
+- **Content.** Weapon `damage` dice and enemy attack `dice` became `power: [t1, t2, t3]`.
+  - Weapons were converted from the dice average (about 0.6x, 1.1x and 1.6x): 1d4 is 2/3/4, 1d6 is 2/4/6, 1d8 is 3/5/7.
+  - Enemy attacks were set by hand and are lower than that formula, because they now land every time: for example the sump rat's bite is 1/2/3 and the gutter crab's clamp is 2/3/5.
+  - Crafting: `damageBonus` adds to every tier, and a `damageStep` adds 1 at tier 2 and 2 at tier 3.
+- **Still dice:** thrown consumables, hazards, traps and status ticks. They were never attack rolls and already always land.
+- **Still d20:** initiative, flee, talk, shove, and every check outside a fight.
+- **Narration:** `combat.playerMiss` and `combat.critFail` are replaced by `combat.tier1`, `combat.tier2` and `combat.tier3`, each said on about a quarter of swings.
+- The skill-perk tags that combat never read (`critRange`, `perk:*`, `damage:<type>`) are still unread.
+
+### Easy pool, then hard pool
+
+- `floors.json` → `encounters` gained `easyFights` (3), `easyPool`, `hardPool`, `easyPack` ([1, 2]), `easyLevelOffset` (-1), `levelOffset` (0) and `mobChance` (0.25). `FloorState.fights` counts fights started on the floor.
+- **Floor 1 easy pool:** sump rat, drain leech, scrap goblin. One family, 1-2 minions, a level down. A lone enemy is allowed here.
+- **Floor 1 hard pool:** all seven families, in the full 2-4 packs.
+- **The first three fights are always easy, lairs included.** A lair entered that early holds a small easy pack instead of its elite. Without this, about a quarter of runs died in their first three fights to an early elite.
+- **Mobs finally spawn:** 25% of hard packs of 3+ are led by one mob in place of two minions.
+- `levelOffset` is left at 0. The easy pool and the lower enemy damage were enough to reach the target.
+
+### Balance snapshot
+
+`npm run sim -- 400 --mode both [--craft]`, Floor 1. The auto-player swings while it has AP, closes in when out of reach, and braces with a leftover AP.
+
+| Configuration | Clear rate | Rounds per fight | Damage per fight, fights 1-3 | Damage per fight, later | Died in fights 1-3 | Stuck |
+| --- | --- | --- | --- | --- | --- | --- |
+| Grid (default) | 46% | 2.9 | 1.8 | 14.8 | 1% | 0 |
+| Bands | 52% | 3.0 | about 1 | about 13 | 0% | 0 |
+| Grid + crafting | 54% | 2.9 | 1.7 | 13.1 | 0% | 0 |
+| Bands + crafting | 68% | 2.9 | about 1 | about 10 | 0% | 0 |
+
+- Before the rework the same sim cleared 35% (grid) and 40% (bands).
+- Fights are shorter than the old 3-6 round target, because a round now holds up to three actions.
+- **The step from easy to hard is steep** (about 2 damage a fight to about 14). That is what was asked for, but it's the first thing to soften if it feels like a wall: raise `easyFights`, or lower `levelOffset`.
+- **"Their own wounds" is the top cause of death.** Bleed and poison land more often now that every hit connects and tier 3 always applies its status.
+- Bands with crafting is above the target. Crafted weapons are worth more when every swing lands.
+
+## Workbench picker and phone layout
+
+- Crafting by discovery used to be typed only (`combine bat tacks tape`), which a phone's map screen can't do. The recipe book now has a workbench picker when you're at a bench: tap two or more pack items, hit Combine. It submits the same `combine` command, so the engine rules are unchanged.
+- The picker sends full item names separated by ` | `. `splitNames` treats a bar as the only separator when one is present, because real item names contain commas, "and" and "with" ("Laptop, Closed", "DSLR with Flash").
+- `ItemView.parts` exposes an item's crafting roles (bind, sharp, haft...) so the picker can label each item. The roles are shown outright; which roles a recipe wants is still for the player to find out.
+- On a phone the "Recipes" command button is replaced by a "⚒ Workbench" button that opens the crafting screen, and that screen shows the last four log lines so the result of a try is visible without leaving it.
+- Phone map, event log and battle log can each be hidden; the choice is a per-device UI preference in `localStorage` (`crawler.ui.*`), not game state.
+
+## Tablet layout, map arrows, and two combat fixes
+
+- **Three shells.** Phone is under 700px wide. Tablet is 700px and up on a touch screen (`(any-pointer: coarse)`, so an iPad with a keyboard attached still counts). Everything else is the desktop dashboard. The phone cut-off moved down from 900px so an 11-inch iPad in portrait (834px) gets the tablet shell. A "Layout" switch (auto, tablet, desktop, phone) in each shell overrides the detection and is saved per device.
+- **Tablet shell.** Landscape: map or battle board on the left with the action bar under it, log and sheets (Character, Gear, Pack, Crafting, Effects) on the right. Portrait: board on top, log and sheets side by side under it, actions along the bottom. The plan said the portrait sheets would slide over; side by side was simpler and fits a 1024px-wide screen.
+- **Map arrows.** On the tablet, walking is an arrow on each neighbouring map cell that has an exit; the whole cell is the tap target (54px or more). Direction buttons are left out of the action bar there. The phone keeps its d-pad.
+- **Niche commands.** `CommandOption.niche` is set by the engine: Shove, Throw, Dash, Talk, Flee in a fight; Recipes, Map, Look, Help outside one. The tablet puts them behind "More", with the combat-mode switch, a "Type a command" line and the layout switch. Rest stays a main button because it is how you heal.
+- **Unwieldy weapons.** The six 3-AP weapons (sledgehammer, felling axe, fire axe, speargun, heavy bowling ball, barbell) could never step and swing in one turn, so anything that kept its distance beat them: a sledgehammer crawler died in 57 of 150 first fights. They now cost 2 AP and are `unwieldy`: the swing ends your turn. Their stat bonus still counts as a 3-AP swing, so damage per hit is unchanged.
+- **Attack closes in.** Attacking something too far to reach and still swing no longer errors. Grid: you walk as close as your AP allows. Bands: you step closer as far as your AP allows. It only errors when there is no way to get closer.
+- **Sim after these changes (400 runs, Floor 1):** grid 51% clear, bands 58%, no deaths in the first three fights. Bands is a little over the 45-55% target; left alone because grid is the default mode.

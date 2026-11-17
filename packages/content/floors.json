@@ -21,7 +21,14 @@
       "eliteEscorts": [
         1,
         2
-      ]
+      ],
+      "easyFights": 3,
+      "easyPool": ["sump_rat", "drain_leech", "scrap_goblin"],
+      "hardPool": ["sump_rat", "drain_leech", "scrap_goblin", "mold_shambler", "pipe_snake", "fuse_imp", "gutter_crab"],
+      "easyPack": [1, 2],
+      "easyLevelOffset": -1,
+      "levelOffset": 0,
+      "mobChance": 0.25
     },
     "roomNames": {
       "adjectives": [
