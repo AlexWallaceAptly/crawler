@@ -161,6 +161,54 @@
     "lines": []
   },
   {
+    "id": "recipe_nervous_ping",
+    "type": "recipe",
+    "name": "Nervous Ping",
+    "text": "A speaker scrap and copper wire. Echo listens for trouble so you don't have to, and apologizes when it finds some.",
+    "unlockText": "Craft M02 once",
+    "floorText": "F1",
+    "unlock": {
+      "module": "M02"
+    },
+    "lines": []
+  },
+  {
+    "id": "recipe_lost_property_index",
+    "type": "recipe",
+    "name": "Lost Property Index",
+    "text": "A tag gun and two luggage tags. Echo reads what things are worth, who lost them, and whether they want to be found.",
+    "unlockText": "Craft M03 once",
+    "floorText": "F2",
+    "unlock": {
+      "module": "M03"
+    },
+    "lines": []
+  },
+  {
+    "id": "recipe_fault_sense",
+    "type": "recipe",
+    "name": "Fault Sense",
+    "text": "Chalk and surveyor's string. The floor remembers where it was torn, and Echo can feel the seam.",
+    "unlockText": "Craft M04 once",
+    "floorText": "F2",
+    "unlock": {
+      "module": "M04"
+    },
+    "lines": []
+  },
+  {
+    "id": "recipe_salt_reader",
+    "type": "recipe",
+    "name": "Salt Reader",
+    "text": "A glass vial and saltwater. Echo tastes nothing, and still knows what will kill you.",
+    "unlockText": "Craft M05 once",
+    "floorText": "F3",
+    "unlock": {
+      "module": "M05"
+    },
+    "lines": []
+  },
+  {
     "id": "recipe_rope_bind",
     "type": "recipe",
     "name": "Rope Bind",
@@ -173,6 +221,54 @@
     "lines": []
   },
   {
+    "id": "recipe_soothe",
+    "type": "recipe",
+    "name": "Soothe",
+    "text": "A pudding cup and a tuning fork. A lullaby of its own, small enough to share.",
+    "unlockText": "Craft M07 once",
+    "floorText": "F4",
+    "unlock": {
+      "module": "M07"
+    },
+    "lines": []
+  },
+  {
+    "id": "recipe_thread_pull",
+    "type": "recipe",
+    "name": "Thread Pull",
+    "text": "Two silver threads and a hook. Echo pulls, and things come closer whether they want to or not.",
+    "unlockText": "Craft M08 once",
+    "floorText": "F5",
+    "unlock": {
+      "module": "M08"
+    },
+    "lines": []
+  },
+  {
+    "id": "recipe_quiet_field",
+    "type": "recipe",
+    "name": "Quiet Field",
+    "text": "A foam pad and a bell jar. A little silence Echo carries around like a held breath.",
+    "unlockText": "Craft M09 once",
+    "floorText": "F6",
+    "unlock": {
+      "module": "M09"
+    },
+    "lines": []
+  },
+  {
+    "id": "recipe_counter_snap",
+    "type": "recipe",
+    "name": "Counter-Snap",
+    "text": "A spring and a stapler. The first hit of every fight goes nowhere. Echo is very proud of it.",
+    "unlockText": "Craft M10 once",
+    "floorText": "F8",
+    "unlock": {
+      "module": "M10"
+    },
+    "lines": []
+  },
+  {
     "id": "recipe_suture",
     "type": "recipe",
     "name": "Suture",
@@ -181,6 +277,42 @@
     "floorText": "F10",
     "unlock": {
       "module": "M11"
+    },
+    "lines": []
+  },
+  {
+    "id": "recipe_tremor_mapper",
+    "type": "recipe",
+    "name": "Tremor Mapper",
+    "text": "A seismograph scrap and a tuning fork. It shows how much she is stirring. The needle never quite stops.",
+    "unlockText": "Craft M12 once",
+    "floorText": "F11",
+    "unlock": {
+      "module": "M12"
+    },
+    "lines": []
+  },
+  {
+    "id": "recipe_override",
+    "type": "recipe",
+    "name": "Override",
+    "text": "A pipe wrench, a circuit board and a key. Echo takes the controls for a moment, and doesn't always give them back.",
+    "unlockText": "Craft M13 once",
+    "floorText": "F12",
+    "unlock": {
+      "module": "M13"
+    },
+    "lines": []
+  },
+  {
+    "id": "recipe_node_key",
+    "type": "recipe",
+    "name": "Node Key",
+    "text": "A bolt from Floor 13, a silver thread and a gold one. It opens the node. What happens next is up to the two of you.",
+    "unlockText": "Craft M14 once",
+    "floorText": "F13",
+    "unlock": {
+      "module": "M14"
     },
     "lines": []
   },
@@ -375,148 +507,5 @@
       "ending": "peace_terms"
     },
     "lines": []
-  },
-  {
-    "id": "recipe_nervous_ping",
-    "type": "recipe",
-    "name": "Nervous Ping",
-    "text": "A speaker scrap and copper wire. Echo listens for trouble so you don't have to, and apologizes when it finds some.",
-    "unlockText": "Craft M02 once",
-    "floorText": "F1",
-    "unlock": {
-      "module": "M02"
-    },
-    "lines": [],
-    "draft": true
-  },
-  {
-    "id": "recipe_lost_property_index",
-    "type": "recipe",
-    "name": "Lost Property Index",
-    "text": "A tag gun and two luggage tags. Echo reads what things are worth, who lost them, and whether they want to be found.",
-    "unlockText": "Craft M03 once",
-    "floorText": "F2",
-    "unlock": {
-      "module": "M03"
-    },
-    "lines": [],
-    "draft": true
-  },
-  {
-    "id": "recipe_fault_sense",
-    "type": "recipe",
-    "name": "Fault Sense",
-    "text": "Chalk and surveyor's string. The floor remembers where it was torn, and Echo can feel the seam.",
-    "unlockText": "Craft M04 once",
-    "floorText": "F2",
-    "unlock": {
-      "module": "M04"
-    },
-    "lines": [],
-    "draft": true
-  },
-  {
-    "id": "recipe_salt_reader",
-    "type": "recipe",
-    "name": "Salt Reader",
-    "text": "A glass vial and saltwater. Echo tastes nothing, and still knows what will kill you.",
-    "unlockText": "Craft M05 once",
-    "floorText": "F3",
-    "unlock": {
-      "module": "M05"
-    },
-    "lines": [],
-    "draft": true
-  },
-  {
-    "id": "recipe_soothe",
-    "type": "recipe",
-    "name": "Soothe",
-    "text": "A pudding cup and a tuning fork. A lullaby of its own, small enough to share.",
-    "unlockText": "Craft M07 once",
-    "floorText": "F4",
-    "unlock": {
-      "module": "M07"
-    },
-    "lines": [],
-    "draft": true
-  },
-  {
-    "id": "recipe_thread_pull",
-    "type": "recipe",
-    "name": "Thread Pull",
-    "text": "Two silver threads and a hook. Echo pulls, and things come closer whether they want to or not.",
-    "unlockText": "Craft M08 once",
-    "floorText": "F5",
-    "unlock": {
-      "module": "M08"
-    },
-    "lines": [],
-    "draft": true
-  },
-  {
-    "id": "recipe_quiet_field",
-    "type": "recipe",
-    "name": "Quiet Field",
-    "text": "A foam pad and a bell jar. A little silence Echo carries around like a held breath.",
-    "unlockText": "Craft M09 once",
-    "floorText": "F6",
-    "unlock": {
-      "module": "M09"
-    },
-    "lines": [],
-    "draft": true
-  },
-  {
-    "id": "recipe_counter_snap",
-    "type": "recipe",
-    "name": "Counter-Snap",
-    "text": "A spring and a stapler. The first hit of every fight goes nowhere. Echo is very proud of it.",
-    "unlockText": "Craft M10 once",
-    "floorText": "F8",
-    "unlock": {
-      "module": "M10"
-    },
-    "lines": [],
-    "draft": true
-  },
-  {
-    "id": "recipe_tremor_mapper",
-    "type": "recipe",
-    "name": "Tremor Mapper",
-    "text": "A seismograph scrap and a tuning fork. It shows how much she is stirring. The needle never quite stops.",
-    "unlockText": "Craft M12 once",
-    "floorText": "F11",
-    "unlock": {
-      "module": "M12"
-    },
-    "lines": [],
-    "draft": true
-  },
-  {
-    "id": "recipe_override",
-    "type": "recipe",
-    "name": "Override",
-    "text": "A pipe wrench, a circuit board and a key. Echo takes the controls for a moment, and doesn't always give them back.",
-    "unlockText": "Craft M13 once",
-    "floorText": "F12",
-    "unlock": {
-      "module": "M13"
-    },
-    "lines": [],
-    "draft": true
-  },
-  {
-    "id": "recipe_node_key",
-    "type": "recipe",
-    "name": "Node Key",
-    "text": "A bolt from Floor 13, a silver thread and a gold one. It opens the node. What happens next is up to the two of you.",
-    "unlockText": "Craft M14 once",
-    "floorText": "F13",
-    "unlock": {
-      "module": "M14"
-    },
-    "lines": [],
-    "draft": true
   }
 ]

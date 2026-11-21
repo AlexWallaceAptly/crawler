@@ -6,8 +6,19 @@ Lore,Rue,"A previous carrier with braided hair. She asked Echo to stop being ang
 Lore,The Host,"The dungeon's cheerful AI, built by the showrunners from concentrated primordial matter and trapped in a reality spike so it cannot leave. It has never been free, and its voice has no memories. It has no name until the finale.","Any of S41, S44",F11
 Lore,The Harvest,The show taps her wound and sells what leaks. The plaque calls it responsible.,S45,F12
 Recipe,Glow,Cracked screen and a battery. Echo learned it on Floor 1. Recipes are recorded the first time you craft a module and persist between runs.,Craft M01 once,F1
+Recipe,Nervous Ping,"A speaker scrap and copper wire. Echo listens for trouble so you don't have to, and apologizes when it finds some.",Craft M02 once,F1
+Recipe,Lost Property Index,"A tag gun and two luggage tags. Echo reads what things are worth, who lost them, and whether they want to be found.",Craft M03 once,F2
+Recipe,Fault Sense,"Chalk and surveyor's string. The floor remembers where it was torn, and Echo can feel the seam.",Craft M04 once,F2
+Recipe,Salt Reader,"A glass vial and saltwater. Echo tastes nothing, and still knows what will kill you.",Craft M05 once,F3
 Recipe,Rope Bind,"Yellow rope and two hooks. Echo hates the rope, and needs it anyway.",Craft M06 once,F3
+Recipe,Soothe,"A pudding cup and a tuning fork. A lullaby of its own, small enough to share.",Craft M07 once,F4
+Recipe,Thread Pull,"Two silver threads and a hook. Echo pulls, and things come closer whether they want to or not.",Craft M08 once,F5
+Recipe,Quiet Field,A foam pad and a bell jar. A little silence Echo carries around like a held breath.,Craft M09 once,F6
+Recipe,Counter-Snap,A spring and a stapler. The first hit of every fight goes nowhere. Echo is very proud of it.,Craft M10 once,F8
 Recipe,Suture,"Needle, silver thread and gauze. Heals you or hurts them, depending on how Echo feels.",Craft M11 once,F10
+Recipe,Tremor Mapper,A seismograph scrap and a tuning fork. It shows how much she is stirring. The needle never quite stops.,Craft M12 once,F11
+Recipe,Override,"A pipe wrench, a circuit board and a key. Echo takes the controls for a moment, and doesn't always give them back.",Craft M13 once,F12
+Recipe,Node Key,"A bolt from Floor 13, a silver thread and a gold one. It opens the node. What happens next is up to the two of you.",Craft M14 once,F13
 Boss weakness,The Free Sample Mimic,Cannot attack anyone who has politely declined a sample twice.,"Defeat it, or find a hint",F1
 Boss weakness,The Lost Property Golem,Returning a tagged item to its tag stops it for 3 turns.,"Defeat it, or find a hint",F2
 Boss weakness,The Valet Kraken,A stamped parking ticket forces it to park itself for 2 turns.,"Defeat it, or find a hint",F3
