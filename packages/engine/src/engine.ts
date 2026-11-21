@@ -3,7 +3,7 @@ import type { Action } from "./actions";
 import type { Content } from "./content/load";
 import { availableCommands, normalize, parseCommand, type CommandOption } from "./parser";
 import { commitEvents, step, type StepResult } from "./step";
-import { ACCOUNT_VERSION, SAVE_VERSION, newAccount, newGameState, type AccountState, type GameState, type World } from "./state";
+import { ACCOUNT_VERSION, SAVE_VERSION, newAccount, newGameState, newThreadCodex, type AccountState, type GameState, type World } from "./state";
 import { view, type ViewModel } from "./view";
 import { narrate } from "./narrate/narrator";
 
@@ -30,8 +30,7 @@ export function createEngine(content: Content): Engine {
       return step(world, { type: "newCrawler" }, content);
     },
     restoreAccount(account) {
-      const a = account as AccountState | null;
-      return a && typeof a === "object" && a.version === ACCOUNT_VERSION ? a : null;
+      return migrateAccount(account);
     },
     restore(game, account) {
       const g = game as GameState | null;
@@ -56,4 +55,16 @@ export function createEngine(content: Content): Engine {
     view: (world) => view(world, content),
   };
   return engine;
+}
+
+/**
+ * Bring a saved account up to the current shape. Accounts are never thrown away for being old:
+ * version 1 (before the thread Codex) gains an empty Codex and keeps everything else.
+ */
+export function migrateAccount(account: unknown): AccountState | null {
+  if (!account || typeof account !== "object") return null;
+  const a = account as AccountState & { version: number };
+  if (a.version === ACCOUNT_VERSION) return a;
+  if (a.version === 1) return { ...a, version: ACCOUNT_VERSION, thread: newThreadCodex() };
+  return null;
 }

@@ -7,7 +7,7 @@ import type { Dir, Phase } from "./state";
  */
 export type GameEventBody =
   /** System AI or plain narrator text. */
-  | { type: "narration"; voice: "system" | "narrator"; text: string; key?: string }
+  | { type: "narration"; voice: "system" | "narrator" | "echo"; text: string; key?: string }
   /** Neutral UI text (help output, lists). `lines` render as a block. */
   | { type: "info"; text: string; lines?: string[] }
   /** Echo of the player's typed command. */
@@ -35,6 +35,15 @@ export type GameEventBody =
   | { type: "died"; cause: string }
   /** A new recipe went into the book (first time a combination worked, or nearly did). */
   | { type: "recipeLearned"; name: string }
+  /** A shard of the thread turned up (its clue is in the room block or the boss's line). */
+  | { type: "shardFound"; id: string; strand: string; floor: number; first: boolean }
+  /** The account's Codex gained something. */
+  | { type: "codexUpdated"; entry: string; kind: "unlocked" | "line" | "recipe" | "weakness" | "ending" }
+  | { type: "temperChanged"; temper: number; delta: number; side: "calm" | "base" | "fed" }
+  /** Echo has a new module for this run. */
+  | { type: "moduleBuilt"; name: string }
+  /** You came down the stairs onto a new floor. */
+  | { type: "floorEntered"; floor: number; name: string }
   | { type: "stateChanged" };
 
 export type GameEventType = GameEventBody["type"];

@@ -13,11 +13,12 @@ import { chance, int, pick, shuffle, uid, weightedPick } from "../rng";
 import { addPower } from "../rules/power";
 import type { Enemy, EnemyTier } from "../state";
 
-/** Tier tuning. A boss row lands with Milestone 9; Claude runs it in Milestone 10. */
+/** Tier tuning. Floor bosses (bosses.json) scale HP and XP with their own multipliers on top. Claude runs them in Milestone 10. */
 export const TIER: Record<EnemyTier, { hpMult: number; mods: readonly [number, number]; levelOffset: number; xpMult: number; ap: number }> = {
   minion: { hpMult: 0.6, mods: [0, 0], levelOffset: -2, xpMult: 0.6, ap: 3 },
   mob: { hpMult: 1, mods: [0, 1], levelOffset: 0, xpMult: 1, ap: 3 },
   elite: { hpMult: 2.5, mods: [1, 2], levelOffset: 0, xpMult: 3, ap: 4 },
+  boss: { hpMult: 1, mods: [0, 0], levelOffset: 0, xpMult: 1, ap: 3 },
 };
 
 export function generateEnemy(family: EnemyFamily, tier: EnemyTier, floor: number, content: Content, levelOffset = 0): Enemy {

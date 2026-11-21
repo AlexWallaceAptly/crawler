@@ -380,7 +380,7 @@
         "text": "You sleep. Somewhere far above, people are watching a replay of you drooling. It's trending."
       },
       {
-        "text": "Lights out. Dream about something nice. Daylight. A shower. Not dying in a fucking storm drain."
+        "text": "Lights out. Dream about something nice. Daylight. A shower. Not dying in a fucking parking garage."
       },
       {
         "text": "You sleep like the dead. Practice, I suppose."
@@ -389,7 +389,7 @@
         "text": "You sleep badly, dream about drowning, and wake up exactly as wet as when you lay down."
       },
       {
-        "text": "Night night, crawler. Don't let the sewer bugs bite. They will, though. They're sewer bugs."
+        "text": "Night night, crawler. Don't let the bedbugs bite. They will, though. This place has a hotel license."
       }
     ]
   },
@@ -491,19 +491,28 @@
     "key": "floor.cleared",
     "variants": [
       {
-        "text": "Floor cleared. You survived the Undercroft, which says less about you than about the Undercroft."
+        "text": "Floor {floor} cleared. You survived, which says less about you than it does about Floor {floor}."
       },
       {
-        "text": "Congratulations, you made it through the sewers. The floors below are worse. So much fucking worse. I can't wait."
+        "text": "Congratulations, you made it down the stairs. The floors below are worse. So much fucking worse. I can't wait."
       },
       {
-        "text": "Floor one, done. Pop the cheap champagne, crawler. There's a whole lot of dungeon left and none of it likes you."
+        "text": "Floor {floor}, done. Pop the cheap champagne, crawler. There's a whole lot of dungeon left and none of it likes you."
       },
       {
         "text": "Floor cleared. Look at you, a real little survivor. Don't let it go to your head. Your head's next."
       },
       {
-        "text": "You beat the Undercroft. It's a sewer. You beat a sewer. Put it on your résumé, champ."
+        "text": "You beat the Welcome Lobby. It's a lobby. You beat a lobby. Put it on your résumé, champ.",
+        "when": {
+          "floor": 1
+        }
+      },
+      {
+        "text": "Out of the lost and found, and nobody claimed you. Tells you everything.",
+        "when": {
+          "floor": 2
+        }
       }
     ]
   },
@@ -747,7 +756,7 @@
         "text": "Crafting needs a workbench, genius. Safe rooms have one. So do the occasional workshop. This is neither."
       },
       {
-        "text": "You can't do arts and crafts on the floor of a sewer. Find a bench. I'm not running a daycare."
+        "text": "You can't do arts and crafts on the floor of a hallway. Find a bench. I'm not running a daycare."
       }
     ]
   },
@@ -809,6 +818,543 @@
       },
       {
         "text": "I'm not supposed to help, but: {hint}"
+      }
+    ]
+  },
+  {
+    "key": "floor.entered",
+    "variants": [
+      {
+        "text": "Welcome to Floor {floor}: {name}. Same rules as upstairs. Fewer of you."
+      },
+      {
+        "text": "Floor {floor}! {name}! Give it a big hand, folks. It's going to give you several."
+      },
+      {
+        "text": "Ladies, gentlemen, and whatever's in the crawler's pocket: {name}. Try not to die in the first room. It's embarrassing for everyone."
+      }
+    ]
+  },
+  {
+    "key": "boss.weakness",
+    "variants": [
+      {
+        "text": "Oh, come on. {boss} has ONE weakness and you found it? Who's been leaking the rulebook?"
+      },
+      {
+        "text": "Rules are rules, and {boss} has to follow them. I hate rules. I wrote half of them."
+      },
+      {
+        "text": "That's the trick, is it? Fine. It's in the Codex now. Everyone will know. Thanks for ruining {boss} for the next guy."
+      }
+    ]
+  },
+  {
+    "key": "boss.declineOne",
+    "variants": [
+      {
+        "text": "A polite refusal. On my show. I need a minute."
+      },
+      {
+        "text": "You said no thank you. To a free sample. The audience is in shock. I'm in shock."
+      },
+      {
+        "text": "Manners. Down here. That's either brave or a symptom."
+      }
+    ]
+  },
+  {
+    "key": "boss.defeated",
+    "variants": [
+      {
+        "text": "{boss} is down. That's a Floor boss, crawler. A small one, but they all start small. Like you, before you got this disappointing."
+      },
+      {
+        "text": "Well, there goes {boss}. Lovely. Now who's going to run the bit?"
+      },
+      {
+        "text": "You killed {boss}. The sponsors are thrilled. I'm told to say I'm thrilled. I'm thrilled."
+      }
+    ]
+  },
+  {
+    "key": "codex.hint",
+    "variants": [
+      {
+        "text": "Oh, that {item}? That's for {boss}. {weakness} Don't tell anyone I told you. It's in your Codex now anyway."
+      },
+      {
+        "text": "Picked up the {item}, did we? Somebody upstairs is going to be very annoyed you know what it's for: {weakness}"
+      }
+    ]
+  },
+  {
+    "key": "echo.hello",
+    "variants": [
+      {
+        "text": "Hello. Hello? Sorry. I am in the {echo.vessel}. I think I live here now. I will try not to be any trouble."
+      },
+      {
+        "text": "Is this a pocket? A pocket. It is warm. Sorry. I will be quiet. Mostly quiet."
+      }
+    ]
+  },
+  {
+    "key": "echo.side.calm",
+    "variants": [
+      {
+        "text": "Calm. Calm. That is nice. Thank you. I feel like I can put something down."
+      },
+      {
+        "text": "Calm. Calmer. You keep saying no, and somehow that helps. Thank you."
+      },
+      {
+        "text": "Calm. Not calm. Settled. I like it. Don't make it weird.",
+        "when": {
+          "echo.act": 2
+        }
+      },
+      {
+        "text": "I am holding back because you asked. Don't make me regret it.",
+        "when": {
+          "echo.act": 3
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.side.fed",
+    "variants": [
+      {
+        "text": "Fed. Fed. I feel — bigger? Is that all right? I could do this myself, I think. Sorry. Sorry."
+      },
+      {
+        "text": "Something in me just got louder. I liked it. I'm sorry I liked it."
+      },
+      {
+        "text": "Fed. Not fed. Full of opinions. Let me handle the next one.",
+        "when": {
+          "echo.act": 2
+        }
+      },
+      {
+        "text": "Good. More. I'm done asking.",
+        "when": {
+          "echo.act": 3
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.side.base",
+    "variants": [
+      {
+        "text": "Back to normal. Normal. Whatever that is for me."
+      },
+      {
+        "text": "Somewhere in the middle again. Rue would have liked that. I don't know why I said that."
+      }
+    ]
+  },
+  {
+    "key": "echo.moduleIdea",
+    "variants": [
+      {
+        "text": "I think — I think I remember how to make something. {module}. From {parts}. At a bench. Only if you want to."
+      },
+      {
+        "text": "{module}. That word just came back. If we found {parts}, I could be {module}. Sorry. Is that a lot?"
+      },
+      {
+        "text": "{module}. Not a word, a tool. {parts}, at a bench. I'll talk you through it.",
+        "when": {
+          "echo.act": 2
+        }
+      },
+      {
+        "text": "{module}. {parts}. Get them.",
+        "when": {
+          "echo.act": 3
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.moduleBuilt",
+    "variants": [
+      {
+        "text": "{module}. I have {module} now. I can feel it, like a new finger. Thank you. Thank you."
+      },
+      {
+        "text": "Oh. Oh, that's {module}. That's mine. I'll try to use it well."
+      },
+      {
+        "text": "{module}. Online. Not online, alive. Better.",
+        "when": {
+          "echo.act": 2
+        }
+      },
+      {
+        "text": "{module}. Good.",
+        "when": {
+          "echo.act": 3
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.alreadyHave",
+    "variants": [
+      {
+        "text": "I already have {module}. Already have. I'm a little proud of it, actually."
+      }
+    ]
+  },
+  {
+    "key": "echo.urge.rummage",
+    "variants": [
+      {
+        "text": "Under the — under the. There's something under the furniture, I think. Could I look? Only if that's all right."
+      },
+      {
+        "text": "Hidden. Hidden things. I can feel them in here. May I? You can say no."
+      },
+      {
+        "text": "There's something hidden here. Not hidden. Badly hidden. Let me get it.",
+        "when": {
+          "echo.act": 2
+        }
+      },
+      {
+        "text": "Something's in here. I'm taking a look.",
+        "when": {
+          "echo.act": 3
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.urge.listen",
+    "variants": [
+      {
+        "text": "Down. Down. I think I can hear the way down. If I hum, the floor might hum back. Can I hum? Just a little?"
+      },
+      {
+        "text": "Stairs. Stairs. I hear stairs. May I listen properly? It's loud when I do."
+      },
+      {
+        "text": "The stairs are talking. Not talking, humming. Let me answer.",
+        "when": {
+          "echo.act": 2
+        }
+      },
+      {
+        "text": "I hear the way down. I'm listening.",
+        "when": {
+          "echo.act": 3
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.urge.zap",
+    "variants": [
+      {
+        "text": "I could — I could zap it. Zap. Just a small one. If you want. You don't have to want."
+      },
+      {
+        "text": "It's hurting you. Hurting. Can I hurt it back? Only a little?"
+      },
+      {
+        "text": "Let me zap it. Not zap, fry. Small fry. Say yes.",
+        "when": {
+          "echo.act": 2
+        }
+      },
+      {
+        "text": "Let me at it.",
+        "when": {
+          "echo.act": 3
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.did.rummage",
+    "variants": [
+      {
+        "text": "Got it. Got it! Sorry, that was loud."
+      },
+      {
+        "text": "Found. Found things. Here."
+      },
+      {
+        "text": "There. You'd have walked right past it.",
+        "when": {
+          "echo.act": 2
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.did.listen",
+    "variants": [
+      {
+        "text": "Hmmmmm. There. There. Did you hear that? The floor hummed back."
+      },
+      {
+        "text": "The floor answered. It always answers. I wish it wouldn't."
+      },
+      {
+        "text": "Got it. Not got it, located it. Same thing for us.",
+        "when": {
+          "echo.act": 2
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.did.zap",
+    "variants": [
+      {
+        "text": "Zap. Zap! Oh. Oh, I liked that. Sorry."
+      },
+      {
+        "text": "Did that help? It helped. I think it helped."
+      },
+      {
+        "text": "Zap. Not zap. Correction. Correction applied.",
+        "when": {
+          "echo.act": 2
+        }
+      },
+      {
+        "text": "Again, next time.",
+        "when": {
+          "echo.act": 3
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.refused",
+    "variants": [
+      {
+        "text": "Okay. Okay. That's fine. I'll stay quiet. Thank you for telling me."
+      },
+      {
+        "text": "No. No is fine. I'll put it down."
+      },
+      {
+        "text": "Fine. Not fine. Fine. You're the one with legs.",
+        "when": {
+          "echo.act": 2
+        }
+      },
+      {
+        "text": "Noted. I'm holding it. For you.",
+        "when": {
+          "echo.act": 3
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.noUrge",
+    "variants": [
+      {
+        "text": "I'm not asking for anything right now. I'm trying not to ask for things."
+      },
+      {
+        "text": "Nothing. I don't want anything. Right now. Sorry."
+      }
+    ]
+  },
+  {
+    "key": "echo.fed",
+    "variants": [
+      {
+        "text": "Oh. Oh. That was — thank you. I didn't know I was hungry."
+      },
+      {
+        "text": "Crunchy. Crunchy. I don't know why I said crunchy. I can't taste."
+      },
+      {
+        "text": "More of that, please. Not please. More.",
+        "when": {
+          "echo.act": 2
+        }
+      },
+      {
+        "text": "Again.",
+        "when": {
+          "echo.act": 3
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.full",
+    "variants": [
+      {
+        "text": "I'm full. Full. Sorry. I don't want to take too much."
+      },
+      {
+        "text": "No more, I think. I'll keep it for the next floor."
+      }
+    ]
+  },
+  {
+    "key": "echo.glow",
+    "variants": [
+      {
+        "text": "Look. Look. I lit it up."
+      },
+      {
+        "text": "There. I made it bright. Is that all right?"
+      }
+    ]
+  },
+  {
+    "key": "echo.glowTrap",
+    "variants": [
+      {
+        "text": "Wait. Wait. There, see it? I lit it up for you."
+      },
+      {
+        "text": "Careful. Careful there. I see it. Now you do too."
+      }
+    ]
+  },
+  {
+    "key": "echo.flare",
+    "variants": [
+      {
+        "text": "Bright. Bright! I'm not dimming. I'm not dimming!"
+      },
+      {
+        "text": "Look at me. Look at me. Oh, they can't. Good."
+      }
+    ]
+  },
+  {
+    "key": "echo.faultSense",
+    "variants": [
+      {
+        "text": "The seam. The old seam. I can feel where it was torn. It goes that way."
+      },
+      {
+        "text": "Under the floor. Under. There's a line where they cut. I can follow it."
+      }
+    ]
+  },
+  {
+    "key": "echo.saltCure",
+    "variants": [
+      {
+        "text": "Salt. Salt fixes it. I fixed it. You're welcome. Sorry. You're welcome."
+      }
+    ]
+  },
+  {
+    "key": "echo.ping",
+    "variants": [
+      {
+        "text": "Something — something there. Behind the. Sorry. Behind the door. They're waiting."
+      },
+      {
+        "text": "Ping. Ping. Someone's breathing who shouldn't be."
+      }
+    ]
+  },
+  {
+    "key": "echo.shout",
+    "variants": [
+      {
+        "text": "HEY! Sorry. Not sorry. HEY!"
+      },
+      {
+        "text": "LOUD. I can be LOUD."
+      }
+    ]
+  },
+  {
+    "key": "echo.bind",
+    "variants": [
+      {
+        "text": "The rope. The rope. I don't like it. It's holding. I'm holding it."
+      },
+      {
+        "text": "Stay. Stay. Please stay there."
+      }
+    ]
+  },
+  {
+    "key": "echo.yank",
+    "variants": [
+      {
+        "text": "Come here. Come HERE. Oh, that felt good."
+      },
+      {
+        "text": "The rope. Ha. The rope's for them now."
+      }
+    ]
+  },
+  {
+    "key": "echo.coat",
+    "variants": [
+      {
+        "text": "Salt on the edge. Salt. It'll sting them. I wanted it to sting them."
+      }
+    ]
+  },
+  {
+    "key": "echo.breakWall",
+    "variants": [
+      {
+        "text": "It was thin there. Thin. Like it wanted to come down."
+      }
+    ]
+  },
+  {
+    "key": "echo.newFloor",
+    "variants": [
+      {
+        "text": "Floor {floor}. Floor {floor}. Something came back on the stairs. I'm {wholeness} percent of something. I don't know what the something is."
+      },
+      {
+        "text": "Down. We went down. I feel more. More me. Is that bad? Tell me if it's bad."
+      },
+      {
+        "text": "Floor {floor}. {wholeness} percent. Not percent. Me. Getting there.",
+        "when": {
+          "echo.act": 2
+        }
+      },
+      {
+        "text": "Floor {floor}. I'm {wholeness} percent of what they took. Keep going.",
+        "when": {
+          "echo.act": 3
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.died",
+    "variants": [
+      {
+        "text": "No. No. Get up. Please. Please get up. I'll be quiet. I'll be so quiet."
+      },
+      {
+        "text": "Not again. Not again. I'm sorry. I'm sorry. Who's going to carry me now?"
+      }
+    ]
+  },
+  {
+    "key": "echo.quit",
+    "variants": [
+      {
+        "text": "Oh. Oh, we're stopping. That's all right. That's all right. I'll wait for the next one."
       }
     ]
   }

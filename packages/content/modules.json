@@ -1,0 +1,275 @@
+[
+  {
+    "id": "M01",
+    "name": "Glow",
+    "unlockedBy": "S02",
+    "partsText": "Cracked screen, 1 battery",
+    "parts": [
+      {
+        "item": "cracked_screen",
+        "qty": 1
+      },
+      {
+        "item": "d_batteries",
+        "qty": 1
+      }
+    ],
+    "base": "Lights dark rooms. 20% chance to reveal a hidden door.",
+    "calm": "Also shows traps.",
+    "fed": "Blinding bright: stuns light-sensitive enemies for 1 turn, but Echo refuses to dim.",
+    "effects": {
+      "base": {
+        "revealHidden": 0.2
+      },
+      "calm": {
+        "revealHidden": 0.2,
+        "spotTraps": true
+      },
+      "fed": {
+        "revealHidden": 0.2,
+        "blindOnStart": 1
+      }
+    }
+  },
+  {
+    "id": "M02",
+    "name": "Nervous Ping",
+    "unlockedBy": "S01",
+    "partsText": "Speaker scrap, copper wire",
+    "parts": [
+      {
+        "item": "speaker_scrap",
+        "qty": 1
+      },
+      {
+        "item": "copper_wire",
+        "qty": 1
+      }
+    ],
+    "base": "Warns you 1 turn before an ambush.",
+    "calm": "Warns 2 turns ahead and is never wrong.",
+    "fed": "Ping becomes a small sonic shout that does damage. The ambush warning becomes unreliable.",
+    "effects": {
+      "base": {
+        "ambushGuard": 1
+      },
+      "calm": {
+        "ambushGuard": 1,
+        "initiative": 2
+      },
+      "fed": {
+        "ambushGuard": 0.5,
+        "shout": "1d6"
+      }
+    }
+  },
+  {
+    "id": "M03",
+    "name": "Lost Property Index",
+    "unlockedBy": "S05",
+    "partsText": "Tag gun, 2 luggage tags",
+    "parts": [
+      {
+        "item": "tag_gun",
+        "qty": 1
+      },
+      {
+        "item": "luggage_tag",
+        "qty": 2
+      }
+    ],
+    "base": "Appraises items and flags curses.",
+    "calm": "Free appraisal on every item.",
+    "fed": "Sells items by intimidation for +20% gold. Some NPCs turn hostile.",
+    "effects": {
+      "base": {
+        "appraise": true
+      },
+      "calm": {
+        "appraise": true,
+        "identify": true
+      },
+      "fed": {
+        "appraise": true,
+        "sellBonus": 0.2
+      }
+    }
+  },
+  {
+    "id": "M04",
+    "name": "Fault Sense",
+    "unlockedBy": "S06",
+    "partsText": "Chalk, surveyor's string",
+    "parts": [
+      {
+        "item": "chalk",
+        "qty": 1
+      },
+      {
+        "item": "surveyors_string",
+        "qty": 1
+      }
+    ],
+    "base": "Detects hidden passages that follow old tears in the floor.",
+    "calm": "Also marks safe resting spots.",
+    "fed": "Marks weak walls you can break through.",
+    "effects": {
+      "base": {
+        "senseStairs": 2,
+        "senseLair": 3
+      },
+      "calm": {
+        "senseStairs": 2,
+        "senseLair": 3,
+        "markSafe": true
+      },
+      "fed": {
+        "senseStairs": 2,
+        "senseLair": 3,
+        "breakWalls": true
+      }
+    }
+  },
+  {
+    "id": "M05",
+    "name": "Salt Reader",
+    "unlockedBy": "S10",
+    "partsText": "Glass vial, saltwater",
+    "parts": [
+      {
+        "item": "glass_vial",
+        "qty": 1
+      },
+      {
+        "item": "saltwater",
+        "qty": 1
+      }
+    ],
+    "base": "Identifies liquids and poisons.",
+    "calm": "Neutralizes mild poisons.",
+    "fed": "Coats a weapon with poison for 3 attacks.",
+    "effects": {
+      "base": {
+        "identify": true
+      },
+      "calm": {
+        "identify": true,
+        "curePoison": true
+      },
+      "fed": {
+        "identify": true,
+        "coat": 3
+      }
+    }
+  },
+  {
+    "id": "M06",
+    "name": "Rope Bind",
+    "unlockedBy": "S11",
+    "partsText": "Yellow rope, 2 hooks",
+    "parts": [
+      {
+        "item": "nylon_rope",
+        "qty": 1
+      },
+      {
+        "item": "hook",
+        "qty": 2
+      }
+    ],
+    "base": "Tethers an enemy in place for 1 turn.",
+    "calm": "Tether lasts 2 turns and does no damage.",
+    "fed": "Yanks the enemy into melee for 5 damage. Echo enjoys it.",
+    "effects": {
+      "base": {
+        "tether": 1
+      },
+      "calm": {
+        "tether": 2
+      },
+      "fed": {
+        "yank": 5
+      }
+    }
+  },
+  {
+    "id": "M07",
+    "name": "Soothe",
+    "unlockedBy": "S16",
+    "partsText": "Pudding cup, tuning fork",
+    "parts": [],
+    "base": "Calms a boss for 1 turn, once per floor.",
+    "calm": "Calm lasts 2 turns and heals you a little.",
+    "fed": "Unavailable. Replaced by Rile: boss takes extra damage for 2 turns but hits harder."
+  },
+  {
+    "id": "M08",
+    "name": "Thread Pull",
+    "unlockedBy": "S17",
+    "partsText": "2 silver threads, hook",
+    "parts": [],
+    "base": "Pulls one enemy to you.",
+    "calm": "Also pulls loot across a room.",
+    "fed": "Pull deals damage and pins the enemy."
+  },
+  {
+    "id": "M09",
+    "name": "Quiet Field",
+    "unlockedBy": "S24",
+    "partsText": "Foam pad, bell jar",
+    "parts": [],
+    "base": "Silences spellcasters in a small area.",
+    "calm": "Silence zone follows you.",
+    "fed": "Silence also covers you, but your damage doubles inside it."
+  },
+  {
+    "id": "M10",
+    "name": "Counter-Snap",
+    "unlockedBy": "S29",
+    "partsText": "Spring, stapler",
+    "parts": [],
+    "base": "Blocks the first attack of each fight.",
+    "calm": "Block also heals 3 HP.",
+    "fed": "Block becomes a counter for 8 damage. Echo starts picking fights."
+  },
+  {
+    "id": "M11",
+    "name": "Suture",
+    "unlockedBy": "S38",
+    "partsText": "Needle, silver thread, gauze",
+    "parts": [],
+    "base": "Heals 2 HP per turn for 3 turns.",
+    "calm": "Also removes bleeding.",
+    "fed": "Stitches a wound into an enemy instead: bleeding damage."
+  },
+  {
+    "id": "M12",
+    "name": "Tremor Mapper",
+    "unlockedBy": "S43",
+    "partsText": "Seismograph scrap, tuning fork",
+    "parts": [],
+    "base": "Shows how much the Mother is stirring. Warns of quakes.",
+    "calm": "Predicts quakes 2 turns ahead.",
+    "fed": "Triggers small quakes that knock enemies down. 20% chance it knocks you down too."
+  },
+  {
+    "id": "M13",
+    "name": "Override",
+    "unlockedBy": "S45",
+    "partsText": "Pipe wrench, circuit board, key",
+    "parts": [],
+    "base": "Takes over a dungeon machine or door for 1 turn.",
+    "calm": "Overrides locks safely.",
+    "fed": "Overrides enemy abilities too, but Echo may keep control for a turn."
+  },
+  {
+    "id": "M14",
+    "name": "Node Key",
+    "unlockedBy": "S51",
+    "partsText": "Floor 13 bolt, silver thread, gold thread",
+    "parts": [],
+    "base": "Opens the Main Constraint Node on Floor 13.",
+    "calm": "Echo shares its memory with the Host: Share the Load, and the Host becomes Sonance.",
+    "fed": "Echo takes the Host's memory for itself: Take the Node, and the Host's last word is Cord."
+  }
+]

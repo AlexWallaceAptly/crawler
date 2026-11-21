@@ -23,6 +23,7 @@ function Cell({ c }: { c: MapCell }) {
       {c.exits.south && <i className={`${s.link} ${s.sx}`} />}
       {c.exits.west && <i className={`${s.link} ${s.w}`} />}
       <Tile name={tile} fallback={c.kind} />
+      {c.boss && <span className={s.boss} aria-label="boss">!</span>}
       {c.current && <Tile name="player" className={s.player} />}
     </div>
   );

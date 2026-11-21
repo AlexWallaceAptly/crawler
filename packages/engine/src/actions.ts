@@ -1,5 +1,6 @@
 import type { CombatMode, Dir } from "./state";
 import type { TileRef } from "./grid/play";
+import type { ModuleVerb } from "./modules";
 
 /** Player commands. The parser turns typed text into these; buttons submit text too. */
 export type Action =
@@ -38,6 +39,18 @@ export type Action =
   | { type: "help" }
   /** Account preference; free, allowed any time. */
   | { type: "set"; key: "combat"; value: CombatMode }
-  | { type: "abandon"; confirm: boolean };
+  | { type: "abandon"; confirm: boolean }
+  /** A boss fight: "no, thank you" (the Free Sample Mimic's weakness). */
+  | { type: "decline" }
+  /** Echo asked to do something: let it, or hush it. */
+  | { type: "allowEcho" }
+  | { type: "refuseEcho" }
+  /** Give Echo a piece of salvage. */
+  | { type: "feed"; item: string }
+  /** Free: print the account's Codex / how Echo is doing. */
+  | { type: "codex" }
+  | { type: "echo" }
+  /** Echo's module abilities: shout, bind <enemy>, coat, break <dir>. */
+  | { type: "module"; verb: ModuleVerb; arg?: string };
 
 export type ActionType = Action["type"];

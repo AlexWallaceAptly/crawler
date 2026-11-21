@@ -7,6 +7,9 @@ import { allTiles, coord, DIR8, dist, index, occupied, parseCoord, pathField, ty
 import { isThrowable, throwTargets } from "./maneuvers";
 import { autoAssign } from "./craft";
 import { speedOf } from "./grid/units";
+import { breakableWalls, effectsNow, knownModuleVerb, moduleViews } from "./modules";
+import { counterItems } from "./boss";
+import { openStairwell } from "./explore";
 
 export type ParseResult = { ok: true; action: Action } | { ok: false; reason: "empty" | "unknown"; input: string };
 
@@ -46,6 +49,13 @@ const VERBS: Record<string, string> = {
   equip: "equip", wield: "equip", wear: "equip", hold: "equip", ready: "equip",
   unequip: "unequip", remove: "unequip", doff: "unequip", unwield: "unequip",
   set: "set", setting: "set", settings: "set",
+  decline: "decline",
+  let: "let", allow: "allowEcho",
+  hush: "refuseEcho", shush: "refuseEcho", deny: "refuseEcho", refuse: "refuseEcho",
+  feed: "feed",
+  codex: "codex", lore: "codex", journal: "codex",
+  echo: "echo", stray: "echo",
+  return: "use", give: "use", hand: "use", show: "use",
 };
 
 const DIR_WORDS: Record<string, Dir> = {
@@ -88,9 +98,16 @@ export function normalize(input: string): string {
 export function parseCommand(input: string, world: World): ParseResult {
   const text = normalize(input);
   if (text === "") return { ok: false, reason: "empty", input };
+  // "no thanks" / "no, thank you" is declining, not rerolling.
+  if (/^no,? thank(s| you)\b/.test(text)) return { ok: true, action: { type: "decline" } };
   const [rawVerb = "", ...rest] = text.split(" ");
   const verb = VERBS[rawVerb];
   const arg = rest.join(" ");
+  const moduleVerb = knownModuleVerb(rawVerb);
+  if (moduleVerb) {
+    const target = arg.replace(/^(the|at|on) /, "");
+    return { ok: true, action: target ? { type: "module", verb: moduleVerb, arg: target } : { type: "module", verb: moduleVerb } };
+  }
   if (inGridFight(world)) {
     // On the board, movement words walk tiles instead of rooms.
     if (verb === "go") {
@@ -180,6 +197,21 @@ export function parseCommand(input: string, world: World): ParseResult {
     case "drop": case "equip": case "unequip":
       if (!arg) return { ok: false, reason: "unknown", input: text };
       return { ok: true, action: { type: verb, item: arg.replace(/^the /, "") } };
+    case "decline":
+      return { ok: true, action: { type: "decline" } };
+    case "let":
+      if (arg !== "echo" && arg !== "it" && arg !== "stray") return { ok: false, reason: "unknown", input: text };
+      return { ok: true, action: { type: "allowEcho" } };
+    case "allowEcho":
+      return { ok: true, action: { type: "allowEcho" } };
+    case "refuseEcho":
+      return { ok: true, action: { type: "refuseEcho" } };
+    case "feed":
+      return { ok: true, action: { type: "feed", item: arg.replace(/^(echo|it|stray)( the)? ?/, "") } };
+    case "codex":
+      return { ok: true, action: { type: "codex" } };
+    case "echo":
+      return { ok: true, action: { type: "echo" } };
     case "set": {
       // "set combat grid" / "set combat bands" (also "set grid")
       const words = arg.split(" ").filter((w) => w !== "combat" && w !== "mode" && w !== "to");
@@ -223,6 +255,10 @@ export function availableCommands(world: World, content: Content): CommandOption
     if (world.account.rerolls > 0) out.push({ label: `Reroll (${world.account.rerolls} left)`, input: "reroll" });
   }
   if (phase === "dead") out.push({ label: "Next crawler", input: "new", primary: true });
+  if ((phase === "exploring" || phase === "combat") && world.game.echo?.urge) {
+    out.push({ label: `Let Echo ${world.game.echo.urge.kind}`, input: "let echo", primary: true });
+    out.push({ label: "Hush", input: "hush" });
+  }
   if (phase === "combat" && world.game.combat && world.game.crawler) {
     const combat = world.game.combat;
     const crawler = world.game.crawler;
@@ -275,6 +311,15 @@ export function availableCommands(world: World, content: Content): CommandOption
       if (first && first.range === "close") add({ niche: true, label: `Shove ${first.name}`, input: `shove ${first.name.toLowerCase()}` }, AP_COST.shove);
       for (const t of throwables.slice(0, 2)) add({ niche: true, label: `Throw ${t.name}`, input: `throw ${t.name.toLowerCase()}` }, AP_COST.throw);
     }
+    const bossId = combat.boss?.id;
+    const boss = bossId ? content.bosses.byId[bossId] : undefined;
+    if (boss?.weakness.trigger?.kind === "decline") add({ label: "Decline politely", input: "decline" }, AP_COST.item);
+    for (const it of counterItems({ game: world.game, content }).slice(0, 1)) {
+      add({ label: `Return ${it.name}`, input: `use ${it.name.toLowerCase()}` }, AP_COST.item);
+    }
+    const fx = effectsNow(world.game, content);
+    if ((fx.tether || fx.yank) && !combat.used?.includes("bind")) add({ label: fx.yank ? "Yank (Rope Bind)" : "Bind (Rope Bind)", input: "bind" }, AP_COST.shove);
+    if (fx.shout && !combat.used?.includes("shout")) add({ label: "Shout (Nervous Ping)", input: "shout" }, AP_COST.shove);
     add({ label: "Defend", input: "defend" }, AP_COST.defend);
     out.push({ label: "End turn", input: "wait" });
     // On the board, flee runs for a door with whatever AP you have; the 2 AP is for getting through it.
@@ -290,10 +335,13 @@ export function availableCommands(world: World, content: Content): CommandOption
     const items = room.items ?? [];
     for (const it of items.slice(0, 3)) out.push({ label: `Take ${it.name}`, input: `take ${it.name.toLowerCase()}` });
     if (items.length > 1) out.push({ label: "Take all", input: "take all" });
-    if (room.type === "stairwell") out.push({ label: "Descend", input: "descend", primary: true });
+    if (openStairwell(floor, room)) out.push({ label: "Descend", input: "descend", primary: true });
     if (room.type === "safe") out.push({ label: "Sleep", input: "sleep" });
     if (room.type === "safe" || room.workbench) {
       const c = world.game.crawler!;
+      for (const m of moduleViews(world.game, content).filter((v) => !v.installed && v.ready)) {
+        out.push({ label: `Build ${m.name}`, input: `craft ${m.name.toLowerCase()}`, primary: true });
+      }
       for (const r of content.recipes.all.filter((r) => (c.recipes ?? []).includes(r.id) && autoAssign(c, r)).slice(0, 3)) {
         out.push({ label: `Craft ${r.name}`, input: `craft ${r.name.toLowerCase()}` });
       }
@@ -302,7 +350,14 @@ export function availableCommands(world: World, content: Content): CommandOption
     if (!room.searched) out.push({ label: "Search", input: "search" });
     out.push({ label: "Rest", input: "rest" });
     out.push({ niche: true, label: "Map", input: "map" });
+    if (world.game.echo) {
+      const fx = effectsNow(world.game, content);
+      if (fx.breakWalls) for (const w of breakableWalls(world.game)) out.push({ niche: true, label: `Break ${w.dir}`, input: `break ${w.dir}` });
+      if (fx.coat && !world.game.echo.floorUsed.includes("coat") && world.game.crawler?.equipment.mainHand) out.push({ niche: true, label: "Coat weapon (Salt Reader)", input: "coat" });
+      out.push({ niche: true, label: "Echo", input: "echo" });
+    }
   }
+  if (world.game.crawler) out.push({ niche: true, label: "Codex", input: "codex" });
   if (isAllowed(world, "look")) out.push({ niche: true, label: "Look", input: "look" });
   out.push({ niche: true, label: "Help", input: "help" });
   return out;

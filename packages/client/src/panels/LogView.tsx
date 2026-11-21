@@ -38,7 +38,7 @@ function Line({ e }: { e: GameEvent }) {
     case "command":
       return <div className={`${s.line} ${s.cmd}`}>{e.text}</div>;
     case "narration":
-      return <div className={`${s.line} ${e.voice === "system" ? s.system : s.narrator}`}>{e.text}</div>;
+      return <div className={`${s.line} ${e.voice === "system" ? s.system : e.voice === "echo" ? s.echo : s.narrator}`}>{e.text}</div>;
     case "info":
       return (
         <div className={`${s.line} ${s.info}`}>
@@ -87,6 +87,24 @@ function Line({ e }: { e: GameEvent }) {
       return <div className={`${s.line} ${s.death}`}>── DEAD ({e.cause}) ──</div>;
     case "recipeLearned":
       return <div className={`${s.line} ${s.divider}`}>── NEW RECIPE: {e.name} ──</div>;
+    case "shardFound":
+      return <div className={`${s.line} ${s.shard}`}>◆ SHARD · {e.strand}{e.first ? " · new in the Codex" : ""}</div>;
+    case "codexUpdated":
+      return (
+        <div className={`${s.line} ${s.codexNote}`}>
+          ❖ Codex: {e.entry}{e.kind === "unlocked" ? " (new entry)" : e.kind === "line" ? " (another line)" : ""}
+        </div>
+      );
+    case "temperChanged":
+      return (
+        <div className={`${s.line} ${s.temperNote}`}>
+          Temper {e.delta > 0 ? `+${e.delta} (Fed)` : `${e.delta} (Calm)`} → {e.temper > 0 ? "+" : ""}{e.temper}
+        </div>
+      );
+    case "moduleBuilt":
+      return <div className={`${s.line} ${s.divider}`}>── ECHO MODULE: {e.name} ──</div>;
+    case "floorEntered":
+      return <div className={`${s.line} ${s.divider}`}>── FLOOR {e.floor}: {e.name.toUpperCase()} ──</div>;
     default:
       return null;
   }

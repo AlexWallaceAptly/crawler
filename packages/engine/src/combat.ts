@@ -25,7 +25,7 @@ import { describePower, guardShift, powerRoll, type PowerRoll } from "./rules/po
 import { chance, d20, pick } from "./rng";
 import { killCrawler, type StepContext } from "./step";
 import {
-  combatModeOf, type CombatMode, type Enemy, type ItemInstance, type Room, type StatusInstance,
+  combatModeOf, type CombatMode, type CombatState, type Enemy, type ItemInstance, type Room, type StatusInstance,
 } from "./state";
 import { buildArena, entrySide } from "./grid/arena";
 import { coord, parseCoord, reaches } from "./grid/geometry";
@@ -36,6 +36,9 @@ import { dropTurnStatuses } from "./maneuvers";
 import { rollLoot } from "./gen/loot";
 import { addToPile } from "./inventory";
 import { int } from "./rng";
+import { bossDefeated, bossTaunt, startBossFight } from "./boss";
+import { coatedHit, glowFlare, neutralizePoison, pingInitiative, cantMove } from "./modules";
+import { maybeUrge, shiftTemper } from "./echo";
 
 export const BAND: Record<RangeBand, number> = { close: 0, near: 1, far: 2 };
 export const BANDS: RangeBand[] = ["close", "near", "far"];
@@ -60,6 +63,11 @@ export function isGrid(ctx: StepContext): boolean {
 export function maybeEncounter(ctx: StepContext, room: Room, firstVisit: boolean, cameFrom?: number): boolean {
   if (ctx.game.phase !== "exploring") return false;
   const floor = ctx.game.floor!;
+  // A living floor boss fights every time you walk into its room.
+  if (room.boss && !floor.bossDefeated) {
+    startBossFight(ctx, room, cameFrom ?? floor.currentRoom);
+    return true;
+  }
   // The floor's first few fights come from the easy pool, wherever they happen:
   // a lair you stumble into that early has a couple of squatters, not its elite.
   const theme = ctx.content.floors.byId[floor.theme];
@@ -82,13 +90,19 @@ export interface StartOptions {
   fromRoom?: number;
   /** Override the account setting (tests, the sim). */
   mode?: CombatMode;
+  /** A floor boss fight (boss.ts). */
+  boss?: NonNullable<CombatState["boss"]>;
+  /** Said after the enemies are listed and before any ambush turn (a boss's intro). */
+  prelude?: (ctx: StepContext) => void;
 }
 
 export function startCombat(ctx: StepContext, enemies: Enemy[], opts: StartOptions = {}): void {
   const floor = ctx.game.floor!;
   const d = derive(ctx.crawler, ctx.content);
-  const playerInit = d20() + d.initiativeBonus;
+  const rolled = d20() + d.initiativeBonus;
   for (const e of enemies) e.initiative += d20() + e.stats.DEX;
+  // Nervous Ping can hear an ambush coming (and its Calm variant adds initiative).
+  const playerInit = pingInitiative(ctx, rolled, enemies);
   enemies.sort((a, b) => b.initiative - a.initiative);
   if (!enemies.some((e) => e.mark)) assignMarks(enemies);
 
@@ -105,6 +119,7 @@ export function startCombat(ctx: StepContext, enemies: Enemy[], opts: StartOptio
     apMax: ap,
     turnBegun: false,
     fromRoom,
+    ...(opts.boss ? { boss: opts.boss } : {}),
   };
   if (mode === "grid") {
     const room = floor.rooms[floor.currentRoom]!;
@@ -131,8 +146,11 @@ export function startCombat(ctx: StepContext, enemies: Enemy[], opts: StartOptio
   ctx.say("combat.start");
   for (const e of enemies) {
     const at = e.pos ? `at ${coord(e.pos)}` : `${e.range} range`;
-    ctx.fight(`${e.name} — level ${e.level}${e.tier === "elite" ? " ELITE" : e.tier === "minion" ? " minion" : ""}, ${at}.`, "enemy");
+    ctx.fight(`${e.name} — level ${e.level}${e.tier === "boss" ? " BOSS" : e.tier === "elite" ? " ELITE" : e.tier === "minion" ? " minion" : ""}, ${at}.`, "enemy");
   }
+  opts.prelude?.(ctx);
+  glowFlare(ctx);
+  maybeUrge(ctx, "combat");
   // Ambush: anyone who beat your initiative gets their round-1 turn now.
   for (const e of enemies) {
     if (e.initiative > playerInit && ctx.game.phase === "combat") enemyTurn(ctx, e);
@@ -220,6 +238,7 @@ export function beginTurn(ctx: StepContext): boolean {
   combat.turnBegun = true;
   dropTurnStatuses(ctx);
   const c = ctx.crawler;
+  neutralizePoison(ctx, true);
   for (const t of tickStatuses(c.statuses, ctx.content)) {
     c.hp = Math.min(derive(c, ctx.content).maxHP, c.hp - t.amount);
     ctx.fight(t.amount > 0 ? `${t.status} costs you ${t.amount} HP.` : `${t.status} restores ${-t.amount} HP.`, "status");
@@ -426,6 +445,11 @@ export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfi
       ctx.fight(`The ${target.name} is ${def.name.toLowerCase()}.`, "status");
     }
   }
+  coatedHit(ctx, target);
+  // Some oddities feed Echo every time they bite (the Bone China Mouth).
+  const held = c.inventory.find((i) => i.uid === c.equipment.mainHand);
+  const perHit = held ? ctx.content.oddities.byId[held.baseId]?.temperOnHit : undefined;
+  if (perHit) shiftTemper(ctx, perHit);
   return roll;
 }
 
@@ -771,6 +795,7 @@ export function pickAttack(ctx: StepContext, e: Enemy, specialsOnly = false, ap 
 function enemyTurn(ctx: StepContext, e: Enemy): void {
   if (e.hp <= 0) return;
   try {
+    if (e.tier === "boss") bossTaunt(ctx, e);
     if (enemyTurnPreamble(ctx, e)) {
       if (isGrid(ctx)) runEnemyTurnGrid(ctx, e);
       else runEnemyTurnBands(ctx, e);
@@ -802,6 +827,10 @@ function enemyTurnPreamble(ctx: StepContext, e: Enemy): boolean {
     ctx.fight(`${e.name} is too busy admiring you to attack.`, "enemy");
     return false;
   }
+  if (hasFlag(e.statuses, ctx.content, "noAttack")) {
+    ctx.fight(`The ${e.name} can't bring itself to attack you. It just stands there, offering.`, "enemy");
+    return false;
+  }
   return true;
 }
 
@@ -830,8 +859,9 @@ function runEnemyTurnBands(ctx: StepContext, e: Enemy): void {
     did = true;
     enemyStrike(ctx, e, a);
   };
+  const tied = cantMove(ctx, e);
   for (let guard = 0; guard < 8 && ap > 0 && e.hp > 0 && ctx.game.phase === "combat"; guard++) {
-    if (e.ai.some((token) => wantsToFlee(ctx, e, token))) {
+    if (!tied && e.ai.some((token) => wantsToFlee(ctx, e, token))) {
       const d = derive(ctx.crawler, ctx.content);
       if (d20() + e.stats.DEX > d20() + d.stats.DEX) markFled(ctx, e);
       else ctx.fight(`The ${e.name} tries to bolt and can't find an opening.`, "enemy");
@@ -843,7 +873,7 @@ function runEnemyTurnBands(ctx: StepContext, e: Enemy): void {
         const special = pickAttack(ctx, e, true, ap);
         if (special) { strike(special); acted = true; break; }
       }
-      if (priority === "keep_range" && !kept && BAND[e.range] < BAND[e.preferRange]) {
+      if (priority === "keep_range" && !kept && !tied && BAND[e.range] < BAND[e.preferRange]) {
         kept = true;
         ap -= AP_COST.move;
         did = true;
@@ -862,7 +892,7 @@ function runEnemyTurnBands(ctx: StepContext, e: Enemy): void {
     if (attack) { strike(attack); continue; }
     // Step toward a band where something works, if there'd be a point.
     const closer = e.attacks.some((a) => a.ready === 0 && BAND[a.range] < BAND[e.range]);
-    if (closer && BAND[e.range] > 0) {
+    if (closer && !tied && BAND[e.range] > 0) {
       ap -= AP_COST.move;
       did = true;
       e.range = BANDS[BAND[e.range] - 1]!;
@@ -897,7 +927,7 @@ export function enemyStrike(ctx: StepContext, e: Enemy, attack: LiveAttack, opts
   const shift = guardShift(d.guard);
   const hidden = hasFlag(c.statuses, ctx.content, "untargetable") ? 2 : 0;
   const roll = powerRoll(bonus, pack + shift.edges + (opts.edges ?? 0), shift.banes + hidden + (opts.banes ?? 0));
-  // Enemies add stat/4 where the crawler adds stat/2: the player's damage edge (see DECISIONS.md).
+  // Enemies add stat/4 where the crawler adds stat/2: the player's damage edge (see the decision log in docs/DESIGN.md).
   const soak = d.armor + modTotal(mods, `resist:${attack.damageType}`);
   const dmg = Math.max(1, attack.power[roll.tier - 1]! + Math.floor(statMod / 4) + modTotal(enemyMods, "damage") - soak);
   c.hp -= dmg;
@@ -910,7 +940,7 @@ export function enemyStrike(ctx: StepContext, e: Enemy, attack: LiveAttack, opts
     const what = applyStatus(c.statuses, def, attack.status.duration);
     if (what !== "ignored") ctx.fight(`You are ${def.name.toLowerCase()}.`, "status");
   }
-  if (c.hp <= 0) killInCombat(ctx, `a ${e.name}`);
+  if (c.hp <= 0) killInCombat(ctx, e.tier === "boss" ? `the ${e.name}` : `${/^[aeiou]/i.test(e.name) ? "an" : "a"} ${e.name}`);
   return roll;
 }
 
@@ -941,6 +971,7 @@ export function checkVictory(ctx: StepContext): void {
   const xp = combat.enemies.reduce((sum, e) => sum + (e.hp <= 0 && !e.fate ? e.xp : 0), 0);
   // talked enemies already paid half in playerTalk; fled ones pay nothing
   ctx.crawler.xp += xp;
+  if (combat.boss) bossDefeated(ctx);
   endCombat(ctx);
   ctx.emit({ type: "combatEnded", outcome: "victory", xp });
   ctx.say("combat.victory", { xp });
@@ -957,6 +988,8 @@ export function endCombat(ctx: StepContext): void {
     for (const it of arena.items) addToPile(room.items, it.item);
   }
   ctx.game.combat = null;
+  // A combat urge goes with the fight.
+  if (ctx.game.echo?.urge?.where === "combat") delete ctx.game.echo.urge;
 }
 
 export function statusModifiers(e: Enemy, ctx: StepContext) {

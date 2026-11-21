@@ -19,6 +19,13 @@ import consumables from "./items/consumables.json";
 import arenaFeatures from "./arenaFeatures.json";
 import lootTables from "./lootTables.json";
 import recipes from "./recipes.json";
+import thread from "./thread.json";
+import shards from "./shards.json";
+import modules from "./modules.json";
+import temper from "./temper.json";
+import codex from "./codex.json";
+import bosses from "./bosses.json";
+import oddities from "./items/oddities.json";
 
 export const rawContent = {
   "skills.json": skills,
@@ -37,4 +44,11 @@ export const rawContent = {
   "arenaFeatures.json": arenaFeatures,
   "lootTables.json": lootTables,
   "recipes.json": recipes,
+  "thread.json": thread,
+  "shards.json": shards,
+  "modules.json": modules,
+  "temper.json": temper,
+  "codex.json": codex,
+  "bosses.json": bosses,
+  "items/oddities.json": oddities,
 } satisfies Record<string, unknown>;

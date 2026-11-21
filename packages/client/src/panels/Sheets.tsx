@@ -200,6 +200,22 @@ export function RecipeBook({ view, submit }: { view: ViewModel; submit?: (t: str
           No workbench here. Safe rooms have one, and so does the odd workshop. Bring your junk there to put it together.
         </div>
       )}
+      {view.echo && view.echo.modules.some((m) => !m.installed) && (
+        <>
+          <div className={s.benchHead}>Echo's modules</div>
+          <ul className={s.list}>
+            {view.echo.modules.filter((m) => !m.installed).map((m) => (
+              <li key={m.id} className={s.recipe}>
+                <span className={m.ready ? s.recipeReady : s.recipeName}>{m.ready ? "✓ " : "· "}{m.name}</span>
+                <span className={s.recipeParts}>{m.future ? "Echo can't run this one yet (later floors)" : m.parts.map((p) => `${p.name} ${p.have}/${p.need}`).join(" + ")}</span>
+                {m.ready && bench && submit && (
+                  <button className={s.recipeBtn} onClick={() => submit(`craft ${m.name.toLowerCase()}`)}>build</button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       <div className={s.benchHead}>Recipe book</div>
       {book.known.length === 0 && <div className={s.muted}>Empty. Anything you put together at a bench gets written down here.</div>}
       <ul className={s.list}>
@@ -217,6 +233,103 @@ export function RecipeBook({ view, submit }: { view: ViewModel; submit?: (t: str
         <div className={s.hints}>
           {book.hints.map((h, i) => <div key={i}>? {h}</div>)}
         </div>
+      )}
+    </div>
+  );
+}
+
+/** Echo: its vessel, Wholeness, the Temper track and its modules. */
+export function EchoPanel({ view }: { view: ViewModel }) {
+  const e = view.echo;
+  if (!e) return <div className={s.muted}>Nothing in your pocket. Yet.</div>;
+  const steps = Array.from({ length: e.temperMax - e.temperMin + 1 }, (_, i) => e.temperMin + i);
+  const sideLabel = e.side === "base" ? "steady" : e.side;
+  return (
+    <div>
+      <div className={s.sub}>in {e.vessel}</div>
+      <dl className={s.kv}>
+        <dt>Wholeness</dt>
+        <dd>
+          <span className={s.wholeBar} aria-hidden="true"><span style={{ width: `${e.wholeness}%` }} /></span> {e.wholeness}%
+        </dd>
+        <dt>Stage</dt>
+        <dd>{e.stage}</dd>
+        <dt>Shards</dt>
+        <dd>{e.shards} this run</dd>
+      </dl>
+      <div className={s.sectionLabel}>Temper: {e.temper > 0 ? "+" : ""}{e.temper} ({sideLabel})</div>
+      <div className={s.temper} role="img" aria-label={`Temper ${e.temper}, ${sideLabel}`}>
+        <span className={s.temperEnd}>Calm</span>
+        {steps.map((t) => (
+          <span
+            key={t}
+            className={`${s.temperPip} ${t === e.temper ? s.temperNow : ""} ${t <= -3 ? s.temperCalm : t >= 3 ? s.temperFed : ""}`}
+            title={String(t)}
+          />
+        ))}
+        <span className={s.temperEnd}>Fed</span>
+      </div>
+      {e.urge && <div className={s.echoUrge}>{e.urge} (let echo / hush)</div>}
+      <div className={s.sectionLabel}>Modules</div>
+      {e.modules.length === 0 && <div className={s.muted}>None yet. Shards remind Echo how to build them.</div>}
+      <ul className={s.list}>
+        {e.modules.map((m) => (
+          <li key={m.id} className={s.recipe}>
+            <span className={m.installed ? s.recipeReady : s.recipeName}>{m.installed ? "● " : "○ "}{m.name}</span>
+            <span className={s.recipeParts}>
+              {m.installed ? `${m.side === "base" ? "" : `${m.side}: `}${m.now}` : m.future ? "later floors" : m.parts.map((p) => `${p.name} ${p.have}/${p.need}`).join(" + ")}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** The account's Codex: lore that fills in a line per shard, recipes, boss weaknesses, endings, past runs. */
+export function CodexSheet({ view }: { view: ViewModel }) {
+  const c = view.codex;
+  const groups: [string, string][] = [["lore", "Lore"], ["weakness", "Boss weaknesses"], ["recipe", "Recipes"], ["ending", "Endings"]];
+  return (
+    <div>
+      <div className={s.sub}>Shards recorded: {c.shards.found} of {c.shards.total}. The Codex outlives every crawler.</div>
+      {groups.map(([type, label]) => {
+        const entries = c.entries.filter((e) => e.type === type);
+        return (
+          <div key={type}>
+            <div className={s.sectionLabel}>{label}</div>
+            <ul className={s.list}>
+              {entries.map((e) => (
+                <li key={e.id} className={s.codexEntry}>
+                  <span className={e.unlocked ? s.codexName : s.muted}>{e.name}</span>
+                  {e.unlocked ? (
+                    <>
+                      <div className={s.codexText}>{e.text}</div>
+                      {e.lines.map((l, i) => <div key={i} className={s.codexLine}>· {l}</div>)}
+                      {type === "lore" && e.missing > 0 && <div className={s.muted}>({e.missing} more to find)</div>}
+                    </>
+                  ) : (
+                    <span className={s.muted}>
+                      {type === "lore" ? (e.recorded ? ` locked; ${e.recorded} fragment${e.recorded === 1 ? "" : "s"} recorded` : " locked") : " unknown"}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+      {c.history.length > 0 && (
+        <>
+          <div className={s.sectionLabel}>Past runs</div>
+          <ul className={s.list}>
+            {c.history.slice().reverse().map((r) => (
+              <li key={r.run + r.crawler} className={s.sub}>
+                #{r.run} {r.crawler}, Floor {r.floor}: {r.outcome}. {r.shards} shard{r.shards === 1 ? "" : "s"}, Temper {r.temper > 0 ? "+" : ""}{r.temper}.
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );

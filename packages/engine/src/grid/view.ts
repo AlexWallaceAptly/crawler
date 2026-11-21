@@ -85,8 +85,8 @@ export function floorVariant(theme: string, variants: number, p: Pos, weights?: 
 }
 
 function enemyGlyph(content: Content, e: Enemy): string {
-  const g = content.enemies.byId[e.familyId]?.glyph ?? e.name[0] ?? "?";
-  return e.tier === "elite" ? g.toUpperCase() : g.toLowerCase();
+  const g = content.enemies.byId[e.familyId]?.glyph ?? content.bosses.byId[e.familyId]?.family?.glyph ?? e.name[0] ?? "?";
+  return e.tier === "elite" || e.tier === "boss" ? g.toUpperCase() : g.toLowerCase();
 }
 
 export function gridView(combat: CombatState, crawler: Crawler, themeId: string, content: Content, weaponReach: RangeBand): GridView | undefined {
@@ -103,7 +103,7 @@ export function gridView(combat: CombatState, crawler: Crawler, themeId: string,
   const reach = moveLeft + ap * AP_COST.move * speed;
   const live = combat.enemies.filter((e) => e.hp > 0 && e.pos);
   const tiles: GridTileView[] = allTiles(a).map((p) => {
-    const t: GridTileView = { x: p.x, y: p.y, coord: coord(p), floor: floorVariant(themeId, variants, p, weights) };
+    const t: GridTileView = { x: p.x, y: p.y, coord: coord(p), floor: floorVariant(theme?.arena.floorArt ?? themeId, variants, p, weights) };
     const f = featureAt(a, content, p);
     if (f) t.feature = { id: f.id, name: f.name, kind: f.kind, glyph: f.glyph };
     const hz = hazardAt(a, p);

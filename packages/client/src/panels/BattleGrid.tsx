@@ -133,7 +133,7 @@ export function BattleGrid({ view, submit, armed, onArmedDone, className }: Prop
 function Unit({ u }: { u: GridUnitView }) {
   const pct = Math.max(0, Math.min(1, u.hp.current / u.hp.max));
   return (
-    <span className={`${s.unit} ${u.kind === "crawler" ? s.you : s.foe} ${u.tier === "elite" ? s.elite : ""}`}>
+    <span className={`${s.unit} ${u.kind === "crawler" ? s.you : s.foe} ${u.tier === "elite" || u.tier === "boss" ? s.elite : ""}`}>
       <Sprite
         paths={[`combat/unit/${u.sprite}`]}
         glyph={u.glyph}

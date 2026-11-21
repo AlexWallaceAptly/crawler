@@ -16,7 +16,7 @@ import type { GameEvent, GameEventType } from "../src/events";
 
 const content = loadContent(rawContent as never);
 const engine = createEngine(content);
-const theme = content.floors.get("undercroft");
+const theme = content.floors.get("welcome_lobby");
 
 const of = <T extends GameEventType>(events: GameEvent[], type: T) =>
   events.filter((e): e is Extract<GameEvent, { type: T }> => e.type === type);

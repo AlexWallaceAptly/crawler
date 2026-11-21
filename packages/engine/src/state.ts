@@ -1,9 +1,10 @@
 import type { EnemyAttack, Power, RangeBand, Rarity, RoomShape, Slot, StatBlock, Modifier, ROOM_TYPES } from "./content/schemas";
 import type { GameEvent } from "./events";
 
-/** Bump when the save shape changes incompatibly; old saves are discarded (see DECISIONS.md). */
-export const SAVE_VERSION = 5;
-export const ACCOUNT_VERSION = 1;
+/** Bump when the save shape changes incompatibly; old saves are discarded (see the decision log in docs/DESIGN.md). */
+export const SAVE_VERSION = 6;
+/** Bump with a migration in engine.ts `restoreAccount`: accounts are upgraded, never discarded. */
+export const ACCOUNT_VERSION = 2;
 export const LOG_LIMIT = 300;
 
 export type Phase = "creation" | "exploring" | "combat" | "dead";
@@ -108,6 +109,8 @@ export interface Crawler {
   recipes?: string[];
   /** Recipe ids the System AI has already hinted at. */
   ideas?: string[];
+  /** Salt Reader (Fed): hits left on a poisoned weapon. */
+  coat?: number;
 }
 
 // ---------------------------------------------------------------- floors
@@ -143,11 +146,19 @@ export interface Room {
   hidden?: ItemInstance[];
   /** Crafting happens here (safe rooms always count). */
   workbench?: boolean;
+  /** A shard turned up here (its clue is part of `desc`). */
+  shard?: string;
+  /** A floor boss lives here (bosses.json id) until it's beaten. */
+  boss?: string;
+  /** Gate floors: a stairwell that reads as an ordinary room until it's found. */
+  concealed?: boolean;
+  /** Fault Sense or a boss's warning has marked it on the map before you've been in. */
+  marked?: boolean;
 }
 
 // ---------------------------------------------------------------- combat
 
-export type EnemyTier = "minion" | "mob" | "elite";
+export type EnemyTier = "minion" | "mob" | "elite" | "boss";
 
 /** A live enemy. Everything is resolved at spawn (family + mods baked in) so the state stays flat JSON. */
 export interface Enemy {
@@ -251,6 +262,10 @@ export interface CombatState {
   fromRoom: number;
   /** Grid mode only. */
   arena?: ArenaState;
+  /** A floor boss fight: which boss, and how far its weakness has got. */
+  boss?: { id: string; uid: string; declines: number; triggered: boolean };
+  /** Once-a-fight module abilities already used (`shout`, `bind`). */
+  used?: string[];
 }
 
 export interface FloorState {
@@ -268,12 +283,39 @@ export interface FloorState {
   warned: number[];
   /** Fights started on this floor: the first few roll from the easy pool. */
   fights: number;
+  /** Room the floor boss lives in, and whether it's been beaten. */
+  bossRoom?: number;
+  bossDefeated?: boolean;
 }
 
 export interface NarratorState {
   recent: string[];
   /** -10 contempt .. +10 grudging respect */
   mood: number;
+}
+
+/** Something Echo has asked to do; `let echo` or `hush`. Lapses when you leave the room or the fight. */
+export interface EchoUrge {
+  kind: "rummage" | "listen" | "zap";
+  /** Where it was asked: a room id, or "combat". */
+  where: number | "combat";
+}
+
+/** Echo, per run. Wholeness and the stage come from the floor (see echo.ts). */
+export interface EchoState {
+  /** thread.json vessel id. */
+  vessel: string;
+  /** -5 (Calm) .. +5 (Fed). */
+  temper: number;
+  /** Modules built this run (module ids). */
+  modules: string[];
+  /** Shards found this run. */
+  shards: string[];
+  urge?: EchoUrge;
+  /** Temper pushes counted this floor, per source (for the per-floor caps). */
+  pushes: Record<string, number>;
+  /** Once-a-floor module uses (`coat`). */
+  floorUsed: string[];
 }
 
 export interface GameState {
@@ -289,7 +331,37 @@ export interface GameState {
   log: GameEvent[];
   nextEventId: number;
   narrator: NarratorState;
+  /** The thing in your pocket. Null before the run starts. */
+  echo: EchoState | null;
 }
+
+/** One finished run, for the account's history. */
+export interface RunRecord {
+  run: number;
+  crawler: string;
+  /** Deepest floor reached. */
+  floor: number;
+  /** "died: a Sump Rat", "descended past Floor 3", "quit". */
+  outcome: string;
+  shards: number;
+  temper: number;
+  vessel: string;
+}
+
+/** The thread Codex: what the account remembers across runs. */
+export interface AccountThread {
+  /** Every shard ever found, in the order found. */
+  shards: string[];
+  /** Modules ever built (their Codex recipe entries). */
+  recipes: string[];
+  /** Bosses whose weakness is known. */
+  weaknesses: string[];
+  endings: string[];
+  /** The last 50 runs, newest last. */
+  history: RunRecord[];
+}
+
+export const HISTORY_LIMIT = 50;
 
 export interface AccountSettings {
   combatMode: CombatMode;
@@ -306,6 +378,7 @@ export interface AccountState {
   runs: number;
   deaths: number;
   codex: { enemies: string[]; items: string[]; achievements: string[] };
+  thread: AccountThread;
 }
 
 export interface World {
@@ -323,7 +396,12 @@ export function newAccount(): AccountState {
     runs: 0,
     deaths: 0,
     codex: { enemies: [], items: [], achievements: [] },
+    thread: newThreadCodex(),
   };
+}
+
+export function newThreadCodex(): AccountThread {
+  return { shards: [], recipes: [], weaknesses: [], endings: [], history: [] };
 }
 
 export function combatModeOf(account: AccountState): CombatMode {
@@ -342,5 +420,6 @@ export function newGameState(): GameState {
     log: [],
     nextEventId: 1,
     narrator: { recent: [], mood: 0 },
+    echo: null,
   };
 }

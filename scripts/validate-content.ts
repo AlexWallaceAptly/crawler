@@ -16,6 +16,8 @@ try {
     `${c.items.consumables.all.length} consumables`,
     `${c.statusEffects.all.length} statuses`,
     `${Object.keys(c.narration).length} narration keys`,
+    `${c.floors.all.length} floors`,
+    `thread: ${c.shards.all.length} shards, ${c.modules.all.length} modules, ${c.codex.all.length} codex entries, ${c.bosses.all.length} bosses, ${c.oddities.all.length} oddities`,
   ];
   console.log(`✓ content OK — ${counts.join(", ")}`);
 } catch (err) {

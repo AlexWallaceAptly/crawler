@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CommandOption, GameEvent, ViewModel } from "@crawler/engine";
 import { EnemyStrip, LogView } from "./LogView";
-import { CharacterSheet, EffectsList, EquipmentList, InventoryList, RecipeBook } from "./Sheets";
+import { CharacterSheet, CodexSheet, EchoPanel, EffectsList, EquipmentList, InventoryList, RecipeBook } from "./Sheets";
 import { InputBar } from "./InputBar";
 import { MiniMapGrid } from "./MiniMapGrid";
 import { BattleGrid } from "./BattleGrid";
@@ -14,7 +14,7 @@ import { readPref, writePref } from "../storage";
 import type { LayoutControl } from "../layout";
 import s from "./mobile.module.css";
 
-type Screen = "map" | "log" | "battle" | "character" | "equipment" | "effects" | "inventory" | "recipes";
+type Screen = "map" | "log" | "battle" | "character" | "equipment" | "effects" | "inventory" | "recipes" | "echo";
 
 const MENU: { id: Screen; label: string }[] = [
   { id: "map", label: "Map" },
@@ -24,6 +24,7 @@ const MENU: { id: Screen; label: string }[] = [
   { id: "effects", label: "Effects" },
   { id: "inventory", label: "Inventory" },
   { id: "recipes", label: "Crafting" },
+  { id: "echo", label: "Echo & Codex" },
 ];
 
 const DIRS = ["north", "west", "east", "south"] as const;
@@ -135,6 +136,7 @@ export function MobileShell({ view, log, battle, commands, submit, onLocal, arme
       {current === "equipment" && <Sheet><EquipmentList view={view} /></Sheet>}
       {current === "effects" && <Sheet><EffectsList view={view} /></Sheet>}
       {current === "inventory" && <Sheet><InventoryList view={view} /></Sheet>}
+      {current === "echo" && <Sheet><EchoPanel view={view} /><div className={s.sheetSub}>Codex</div><CodexSheet view={view} /></Sheet>}
       {current === "recipes" && (
         <div className={s.logScreen}>
           <Sheet><RecipeBook view={view} submit={submit} /></Sheet>
@@ -210,7 +212,7 @@ function NavView({ view, log, commands, submit, openBench }: { view: ViewModel; 
             <button className={`${s.ctxBtn} ${s.ctxPrimary}`} onClick={openBench}>⚒ Workbench</button>
           )}
           {context.map((c) => (
-            <button key={c.label} className={`${s.ctxBtn} ${c.primary ? s.ctxPrimary : ""}`} onClick={() => submit(c.input)}>
+            <button key={`${c.label}|${c.input}`} className={`${s.ctxBtn} ${c.primary ? s.ctxPrimary : ""}`} onClick={() => submit(c.input)}>
               {c.label}
             </button>
           ))}
@@ -263,7 +265,7 @@ function BattleView({ view, battle, commands, submit, armed, setArmed }: BattleP
           .filter((c) => !["help", "map", "look"].includes(c.input))
           .map((c) => (
             <button
-              key={c.label}
+              key={`${c.label}|${c.input}`}
               className={`${s.ctxBtn} ${c.primary && !c.disabled || armed?.label === c.label ? s.ctxPrimary : ""}`}
               disabled={c.disabled}
               onClick={() => (c.targets ? setArmed(armed?.label === c.label ? null : c) : submit(c.input))}

@@ -12,6 +12,8 @@ import { gridView, type GridView } from "./grid/view";
 import { coord } from "./grid/geometry";
 import { recipeBook, type RecipeBookView } from "./craft";
 import type { RangeBand } from "./content/schemas";
+import { codexView, sideOf, stageOn, vesselOf, wholenessOn, type CodexView, type Side } from "./echo";
+import { moduleItemDetails, moduleViews, type ModuleView } from "./modules";
 
 export interface Bar {
   current: number;
@@ -72,6 +74,25 @@ export interface ViewModel {
   };
   /** Recipes you've discovered, and hints for ones your pack could make. */
   recipeBook: RecipeBookView | null;
+  /** The thing in your pocket. */
+  echo: null | {
+    vessel: string;
+    wholeness: number;
+    stage: string;
+    act: number;
+    /** -5 Calm .. +5 Fed. */
+    temper: number;
+    temperMin: number;
+    temperMax: number;
+    side: Side;
+    /** Built and unlocked modules, with what they do at this Temper. */
+    modules: ModuleView[];
+    shards: number;
+    /** What Echo is asking to do, if anything. */
+    urge: string | null;
+  };
+  /** What the account remembers across runs. */
+  codex: CodexView;
   /** The room you're in: what's on the floor, and whether you can craft here. */
   room: null | { items: ItemView[]; workbench: boolean };
   minimap: string[] | null;
@@ -105,6 +126,8 @@ export function view(world: World, content: Content): ViewModel {
       status: { floor: null, district: null, timer: null, room: null, hp: null, mp: null, xp: null, level: null },
       character: null, equipment: [], inventory: [], effects: [], combat: null, recipeBook: null, room: null, minimap: null, mapGrid: null, account: accountView,
       settings: { combatMode: combatModeOf(account) },
+      echo: null,
+      codex: codexView(content, account),
     };
   }
   const d = derive(c, content);
@@ -122,6 +145,8 @@ export function view(world: World, content: Content): ViewModel {
     if (it.onHit) detail.push(`on hit: ${Math.round(it.onHit.chance * 100)}% ${content.statusEffects.byId[it.onHit.id]?.name.toLowerCase() ?? it.onHit.id}`);
     const parts = it.tags.filter((t) => CRAFT_TAGS.has(t));
     if (parts.length) detail.push(`parts: ${parts.join(", ")}`);
+    if (it.tags.includes("module_part")) detail.push("one of Echo's module parts");
+    detail.push(...moduleItemDetails(game, content, it));
     detail.push(`weight ${Math.round(it.weight * it.qty * 10) / 10}`);
     if (it.flavor) detail.push(it.flavor);
     const slot = slotOf.get(it.uid);
@@ -200,7 +225,7 @@ export function view(world: World, content: Content): ViewModel {
               hp: { current: e.hp, max: e.maxHP },
               range: e.range,
               statuses: e.statuses.map((s) => content.statusEffects.byId[s.id]?.name ?? s.id),
-              elite: e.tier === "elite",
+              elite: e.tier === "elite" || e.tier === "boss",
               tier: e.tier,
               ...(e.mark ? { mark: e.mark } : {}),
               ...(e.pos ? { at: coord(e.pos) } : {}),
@@ -218,8 +243,30 @@ export function view(world: World, content: Content): ViewModel {
     mapGrid: floor ? mapGrid(floor) : null,
     account: accountView,
     settings: { combatMode: combatModeOf(account) },
+    echo: game.echo
+      ? {
+          vessel: vesselOf(content, game.echo).short,
+          wholeness: wholenessOn(content, floor?.floor ?? 1),
+          stage: stageOn(content, floor?.floor ?? 1).name,
+          act: stageOn(content, floor?.floor ?? 1).act,
+          temper: game.echo.temper,
+          temperMin: content.temper.min,
+          temperMax: content.temper.max,
+          side: sideOf(content, game.echo.temper),
+          modules: moduleViews(game, content),
+          shards: game.echo.shards.length,
+          urge: game.echo.urge ? URGE_TEXT[game.echo.urge.kind] ?? null : null,
+        }
+      : null,
+    codex: codexView(content, account),
   };
 }
+
+const URGE_TEXT: Record<string, string> = {
+  rummage: "Echo wants to rummage through this room.",
+  listen: "Echo wants to listen for the stairs.",
+  zap: "Echo wants to zap something.",
+};
 
 function weaponInHand(c: NonNullable<World["game"]["crawler"]>) {
   const uid = c.equipment.mainHand;

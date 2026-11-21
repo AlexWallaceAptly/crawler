@@ -227,7 +227,7 @@ describe("recipe content", () => {
   });
 
   it("the tutorial kit in the first safe room makes a nail bat", () => {
-    const kit = content.floors.get("undercroft").loot.firstSafe.map((f) => itemFromRef(content, f.item, f.qty));
+    const kit = content.floors.get("welcome_lobby").loot.firstSafe.map((f) => itemFromRef(content, f.item, f.qty));
     const m = matchCombination(content, kit, "pipe tacks tape");
     expect(m?.recipe.id).toBe("nail_bat");
   });

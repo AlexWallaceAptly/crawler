@@ -384,3 +384,85 @@
   border-color: var(--border);
   cursor: default;
 }
+
+/* ---- Echo and the Codex ---- */
+.echo {
+  color: var(--echo);
+  font-style: italic;
+}
+.echo::before {
+  content: "ECHO ▸ ";
+  color: var(--dim);
+  font-size: 12px;
+  font-style: normal;
+}
+.shard {
+  color: var(--echo);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.codexNote {
+  color: var(--dim);
+  font-size: 12px;
+}
+.temperNote {
+  color: var(--faint);
+  font-size: 12px;
+}
+.wholeBar {
+  display: inline-block;
+  width: 80px;
+  height: 7px;
+  vertical-align: middle;
+  border: 1px solid var(--border-hi);
+  background: var(--panel);
+}
+.wholeBar span {
+  display: block;
+  height: 100%;
+  background: var(--echo);
+}
+.temper {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin: 3px 0 4px;
+}
+.temperEnd {
+  color: var(--faint);
+  font-size: 11px;
+}
+.temperPip {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--border-hi);
+  background: var(--panel);
+}
+.temperCalm {
+  border-color: var(--mp);
+}
+.temperFed {
+  border-color: var(--danger);
+}
+.temperNow {
+  background: var(--echo);
+  border-color: var(--echo);
+}
+.echoUrge {
+  color: var(--echo);
+  margin: 2px 0 4px;
+}
+.codexEntry {
+  margin-bottom: 6px;
+}
+.codexName {
+  color: var(--echo);
+}
+.codexText {
+  color: var(--text);
+}
+.codexLine {
+  color: var(--dim);
+  font-size: 13px;
+  padding-left: 8px;
+}

@@ -1,0 +1,383 @@
+[
+  {
+    "id": "free_sample_mimic",
+    "name": "The Free Sample Mimic",
+    "floor": 1,
+    "kind": "mini",
+    "weakness": {
+      "text": "Cannot attack anyone who has politely declined a sample twice.",
+      "trigger": {
+        "kind": "decline",
+        "count": 2
+      },
+      "effect": {
+        "status": "sated"
+      },
+      "line": "You decline a second time, politely, and you mean it. The Mimic's tray trembles. It can't attack someone who has said no thank you twice. Those are the rules, and it hates them."
+    },
+    "family": {
+      "id": "free_sample_mimic",
+      "name": "Free Sample Mimic",
+      "floor": 1,
+      "description": "A courtesy table that never stops offering. The tray is its tongue, and the tablecloth goes all the way to the floor for a reason.",
+      "stats": {
+        "STR": 6,
+        "DEX": 4,
+        "CON": 7,
+        "INT": 4,
+        "CHA": 6
+      },
+      "hpBase": 9,
+      "armor": 1,
+      "attacks": [
+        {
+          "name": "Free Sample",
+          "power": [
+            2,
+            3,
+            5
+          ],
+          "stat": "CHA",
+          "range": "close",
+          "status": {
+            "id": "poisoned",
+            "chance": 0.35
+          }
+        },
+        {
+          "name": "Tray Slam",
+          "power": [
+            2,
+            4,
+            6
+          ],
+          "stat": "STR",
+          "range": "close",
+          "status": {
+            "id": "stunned",
+            "chance": 0.2
+          },
+          "cooldown": 2
+        }
+      ],
+      "ai": [
+        "special_if_ready",
+        "attack"
+      ],
+      "groupSize": [
+        1,
+        1
+      ],
+      "speed": 3,
+      "glyph": "M",
+      "xp": 12,
+      "tags": [
+        "mimic"
+      ]
+    },
+    "hpMult": 2,
+    "xpMult": 5,
+    "intro": [
+      "At the far end of the room is a courtesy table with a silver tray of samples and a tablecloth that goes all the way to the floor. Then the tablecloth smiles.",
+      "\"Free sample?\""
+    ],
+    "taunts": [
+      "\"Just a taste. It's free. Everything here is free. That's the trick.\"",
+      "\"You look hungry. Everyone looks hungry eventually.\"",
+      "\"Sample? Sample? Sample? It's rude not to.\"",
+      "\"I've got cheese cubes, I've got mini quiche, I've got something I can't pronounce. It was a person.\""
+    ],
+    "defeat": "The Mimic folds up like a card table and goes still. The tray clatters to the carpet, still offering.",
+    "nearby": "From the next room, a cheerful voice: \"Free samples! Don't be shy! Nobody stays shy for long!\"",
+    "drops": {
+      "table": "treasure",
+      "rolls": 2,
+      "items": []
+    }
+  },
+  {
+    "id": "lost_property_golem",
+    "name": "The Lost Property Golem",
+    "floor": 2,
+    "kind": "mini",
+    "weakness": {
+      "text": "Returning a tagged item to its tag stops it for 3 turns.",
+      "trigger": {
+        "kind": "item",
+        "tag": "lost_property"
+      },
+      "effect": {
+        "status": "sorting",
+        "rounds": 3
+      },
+      "line": "You hold out the tagged thing. The Golem stops mid-swing, takes it with enormous care, checks the tag twice, and turns away to file it. This is going to take a while."
+    },
+    "family": {
+      "id": "lost_property_golem",
+      "name": "Lost Property Golem",
+      "floor": 2,
+      "description": "A heap of unclaimed things that stood up: coats for arms, a filing cabinet for a chest, a hundred claim tags rustling where its face should be.",
+      "stats": {
+        "STR": 10,
+        "DEX": 4,
+        "CON": 11,
+        "INT": 5,
+        "CHA": 4
+      },
+      "hpBase": 10,
+      "armor": 2,
+      "attacks": [
+        {
+          "name": "Filing Fist",
+          "power": [
+            2,
+            4,
+            6
+          ],
+          "stat": "STR",
+          "range": "close"
+        },
+        {
+          "name": "Reclaim",
+          "power": [
+            2,
+            3,
+            5
+          ],
+          "stat": "STR",
+          "range": "close",
+          "status": {
+            "id": "slowed",
+            "chance": 0.3
+          },
+          "cooldown": 3
+        }
+      ],
+      "ai": [
+        "special_if_ready",
+        "attack"
+      ],
+      "groupSize": [
+        1,
+        1
+      ],
+      "speed": 2,
+      "glyph": "G",
+      "xp": 14,
+      "tags": [
+        "construct",
+        "armored"
+      ]
+    },
+    "hpMult": 2,
+    "xpMult": 5,
+    "intro": [
+      "The pile in the middle of the room stands up. Coats for arms. A filing cabinet for a chest. A hundred claim tags rustling where a face should be.",
+      "\"Item,\" it says. \"Item. Item. You are carrying items that are not yours.\""
+    ],
+    "taunts": [
+      "\"Describe the item. No. In more detail.\"",
+      "\"Everything is somebody's. You are somebody's. Have you checked your tag?\"",
+      "\"Lost: one crawler. Found: soon.\""
+    ],
+    "defeat": "The Golem comes apart into what it was made of: coats, umbrellas, a cabinet, a thousand tags. Somewhere in the pile, a phone starts ringing.",
+    "nearby": "Through the wall, something big is reading claim numbers out loud, very slowly, and getting angrier.",
+    "drops": {
+      "table": "treasure",
+      "rolls": 2,
+      "items": []
+    }
+  },
+  {
+    "id": "valet_kraken",
+    "name": "The Valet Kraken",
+    "floor": 3,
+    "kind": "mini",
+    "weakness": {
+      "text": "A stamped parking ticket forces it to park itself for 2 turns.",
+      "trigger": {
+        "kind": "item",
+        "tag": "stamped_ticket"
+      },
+      "effect": {
+        "status": "parked",
+        "rounds": 2
+      },
+      "line": "You hold up the stamped ticket. The Kraken's eyes go wide. Validated. It has to park. It sinks back into its bay, every arm folded neatly, and waits for its turn to come up."
+    },
+    "family": {
+      "id": "valet_kraken",
+      "name": "Valet Kraken",
+      "floor": 3,
+      "description": "A kraken in a red valet vest, living in the flooded valet lot. It parks your car. It parks you. It keeps the keys.",
+      "stats": {
+        "STR": 11,
+        "DEX": 7,
+        "CON": 11,
+        "INT": 6,
+        "CHA": 6
+      },
+      "hpBase": 11,
+      "armor": 1,
+      "attacks": [
+        {
+          "name": "Tentacle Valet",
+          "power": [
+            2,
+            4,
+            6
+          ],
+          "stat": "STR",
+          "range": "close"
+        },
+        {
+          "name": "Key Toss",
+          "power": [
+            1,
+            3,
+            5
+          ],
+          "stat": "DEX",
+          "range": "near"
+        },
+        {
+          "name": "Ink the Windshield",
+          "power": [
+            1,
+            2,
+            3
+          ],
+          "stat": "DEX",
+          "range": "near",
+          "status": {
+            "id": "blinded",
+            "chance": 0.4
+          },
+          "cooldown": 3
+        }
+      ],
+      "ai": [
+        "special_if_ready",
+        "attack"
+      ],
+      "groupSize": [
+        1,
+        1
+      ],
+      "speed": 3,
+      "glyph": "K",
+      "xp": 16,
+      "tags": [
+        "beast"
+      ]
+    },
+    "hpMult": 2,
+    "xpMult": 5,
+    "intro": [
+      "The flooded valet lot has one car left in it, and eight arms coming up out of the water around it.",
+      "\"Ticket?\" says the Valet Kraken, holding out a tentacle with a tiny podium on the end."
+    ],
+    "taunts": [
+      "\"No ticket, no car. No car, no exit. No exit, no you.\"",
+      "\"I park everything. Tighter than you'd think.\"",
+      "\"Tips are appreciated. Limbs are accepted.\""
+    ],
+    "defeat": "The Kraken sinks into the oily water with a long, defeated honk. A ring of keys floats up after it.",
+    "nearby": "Somewhere close, a car horn honks three times, then something says \"Ticket?\" in a voice like a drain.",
+    "drops": {
+      "table": "treasure",
+      "rolls": 2,
+      "items": []
+    }
+  },
+  {
+    "id": "lunch_lady_colossus",
+    "name": "The Lunch Lady Colossus",
+    "floor": 4,
+    "kind": "mini",
+    "weakness": {
+      "text": "Cannot hit anyone holding pudding. Do not eat the pudding."
+    }
+  },
+  {
+    "id": "house",
+    "name": "The House",
+    "floor": 5,
+    "kind": "gate",
+    "weakness": {
+      "text": "Make it lose one trivial bet and its luck turns for the rest of the fight."
+    }
+  },
+  {
+    "id": "overdue_librarian_wraith",
+    "name": "The Overdue Librarian Wraith",
+    "floor": 6,
+    "kind": "gate",
+    "weakness": {
+      "text": "Returning an overdue book stuns it. Shouting enrages it."
+    }
+  },
+  {
+    "id": "fern_matriarch",
+    "name": "The Fern Matriarch",
+    "floor": 7,
+    "kind": "gate",
+    "weakness": {
+      "text": "Salt drains her. Echo's hum wakes her up."
+    }
+  },
+  {
+    "id": "executive_producers_intern",
+    "name": "The Executive Producer's Intern",
+    "floor": 8,
+    "kind": "gate",
+    "weakness": {
+      "text": "Decline its sponsor invitation, or hand it a signed waiver, and it loses a turn."
+    }
+  },
+  {
+    "id": "ringmaster_of_chargebacks",
+    "name": "The Ringmaster of Chargebacks",
+    "floor": 9,
+    "kind": "gate",
+    "weakness": {
+      "text": "Hand him a receipt and he must honor the refund, which removes his buffs."
+    }
+  },
+  {
+    "id": "curator_of_tanks",
+    "name": "The Curator of Tanks",
+    "floor": 10,
+    "kind": "gate",
+    "weakness": {
+      "text": "Cold drinks and ice items deal triple damage. Filling a drained tank makes it stop and tend it."
+    }
+  },
+  {
+    "id": "anchor_store",
+    "name": "The Anchor Store",
+    "floor": 11,
+    "kind": "gate",
+    "weakness": {
+      "text": "After closing time (turn 20) it shuts and stops attacking."
+    }
+  },
+  {
+    "id": "foreman",
+    "name": "The Foreman",
+    "floor": 12,
+    "kind": "gate",
+    "weakness": {
+      "text": "Burst the pipes behind him. He has to stop and fix them."
+    }
+  },
+  {
+    "id": "mother_below",
+    "name": "The Mother Below",
+    "floor": 13,
+    "kind": "finale",
+    "weakness": {
+      "text": "Unknown until you reach her. Her hunger is for hearts offered freely."
+    }
+  }
+]

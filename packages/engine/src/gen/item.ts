@@ -47,10 +47,15 @@ export function itemFromConsumable(c: Consumable, qty = 1): ItemInstance {
   };
 }
 
-/** Build an item from a base or consumable id. */
+/** Workbook rarities for the hand-written oddities. */
+const ODDITY_RARITY: Record<string, ItemInstance["rarity"]> = { Common: "common", Uncommon: "uncommon", Rare: "rare", Unique: "legendary" };
+
+/** Build an item from a base or consumable id. Oddities keep their workbook rarity. */
 export function itemFromRef(content: Content, id: string, qty = 1): ItemInstance {
-  if (content.items.bases.has(id)) return itemFromBase(content.items.bases.get(id));
-  return itemFromConsumable(content.items.consumables.get(id), qty);
+  const item = content.items.bases.has(id) ? itemFromBase(content.items.bases.get(id)) : itemFromConsumable(content.items.consumables.get(id), qty);
+  const odd = content.oddities.byId[id];
+  if (odd) item.rarity = ODDITY_RARITY[odd.rarityText] ?? "common";
+  return item;
 }
 
 export function isWeapon(item: ItemInstance): boolean {

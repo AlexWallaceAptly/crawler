@@ -58,7 +58,7 @@ export const DamageTypeSchema = z.enum(DAMAGE_TYPES);
 
 /**
  * Shared effect shape for items, spells, events and boss rulings (per spec).
- * `cure` (removes `statusId`) is an addition to the spec's kinds; see DECISIONS.md.
+ * `cure` (removes `statusId`) is an addition to the spec's kinds; see the decision log in docs/DESIGN.md.
  */
 export const EffectSchema = z.strictObject({
   kind: z.enum(["damage", "heal", "status", "cure", "stat", "xp", "loot", "flag", "mood", "move", "spawn"]),
@@ -340,9 +340,27 @@ export const FloorThemeSchema = z.strictObject({
     /** Extra junk on a workshop's floor. */
     workshopTable: IdSchema.optional(),
     workbenchLines: LinePool.default([]),
+    /**
+     * Things scattered across the floor's ordinary rooms (not the start, stairwells or
+     * safe rooms): Echo's module parts, a boss's counter item, the odd hand-written oddity.
+     * Each entry rolls `count` pickups from exactly one source.
+     */
+    scatter: z.array(z.strictObject({
+      table: IdSchema.optional(),
+      item: IdSchema.optional(),
+      /** A random oddity whose floor range includes this floor (boss counters excluded). */
+      oddity: z.literal(true).optional(),
+      count: IntRangeSchema,
+      /** Chance each one is only turned up by `search`. */
+      hiddenChance: z.number().min(0).max(1).default(0.5),
+    }).refine((s) => [s.table, s.item, s.oddity].filter((v) => v !== undefined).length === 1, {
+      message: "a scatter entry needs exactly one of table, item or oddity",
+    })).default([]),
   }).prefault({}),
   /** Grid-combat dressing: what arenas on this floor are furnished with (ids in arenaFeatures.json). */
   arena: z.strictObject({
+    /** Floor sprite set to draw: `<floorArt>_1.png` ..; defaults to the theme id. */
+    floorArt: IdSchema.optional(),
     /** Floor sprite variants: `<theme id>_1.png` .. `<theme id>_N.png`. */
     floorVariants: z.number().int().min(1).default(1),
     /** How often each variant shows up (same length as floorVariants); equal if omitted. */
@@ -593,3 +611,269 @@ export const NarrationSchema = z.strictObject({
   })).min(1),
 });
 export type NarrationTemplate = z.infer<typeof NarrationSchema>;
+
+// ---------------------------------------------------------------- the thread (Echo, shards, the Codex)
+
+export const ShardIdSchema = z.string().regex(/^S\d{2}$/, "shard ids look like S01");
+export const ModuleIdSchema = z.string().regex(/^M\d{2}$/, "module ids look like M01");
+export const STRANDS = ["Echo's Past", "Previous Carriers", "The Mother Below", "The Cut"] as const;
+export const StrandSchema = z.enum(STRANDS);
+/** 1-3 are the acts; 4 is the Floor 13 finale. */
+export const ActSchema = z.number().int().min(1).max(4);
+
+/** S01-S52. Room shards turn up in a room's description; the boss one is the boss's opening line. */
+export const ShardSchema = z.strictObject({
+  id: ShardIdSchema,
+  floor: z.number().int().min(1).max(13),
+  clue: z.string().min(1),
+  delivery: z.enum(["room", "boss"]),
+  strand: StrandSchema,
+  /** Echo's reaction, already written for the floor's act. */
+  reaction: z.string().min(1).optional(),
+  /** Floor 13: Echo's reaction depends on Temper. */
+  reactionCalm: z.string().min(1).optional(),
+  reactionFed: z.string().min(1).optional(),
+}).refine((s) => s.reaction !== undefined || (s.reactionCalm !== undefined && s.reactionFed !== undefined), {
+  message: "a shard needs a reaction, or both reactionCalm and reactionFed",
+});
+export type Shard = z.infer<typeof ShardSchema>;
+
+/**
+ * What a module variant does, as flags and numbers the engine reads. A variant's bag
+ * is complete on its own (the Fed variant doesn't inherit from base).
+ */
+export const ModuleEffectSchema = z.strictObject({
+  /** Glow: chance on a first visit to turn up what's hidden (items, hidden stairwells). */
+  revealHidden: z.number().min(0).max(1).optional(),
+  /** Glow (Calm): trap rooms are spotted automatically. */
+  spotTraps: z.boolean().optional(),
+  /** Glow (Fed): enemies are blinded this many rounds when a fight starts (light-sensitive ones stunned). */
+  blindOnStart: z.number().int().min(1).optional(),
+  /** Nervous Ping: chance an ambush is called out, so you act first. */
+  ambushGuard: z.number().min(0).max(1).optional(),
+  /** Nervous Ping (Calm): added to your initiative. */
+  initiative: z.number().int().optional(),
+  /** Nervous Ping (Fed): `shout` deals this to everything within near range (1 AP, once a fight). */
+  shout: DiceSchema.optional(),
+  /** Lost Property Index: value, curses and lost-property tags show in item details. */
+  appraise: z.boolean().optional(),
+  /** Lost Property Index (Calm), Salt Reader: what a consumable does shows in its details. */
+  identify: z.boolean().optional(),
+  /** Lost Property Index (Fed): sale price bonus, once shops exist. */
+  sellBonus: z.number().min(0).optional(),
+  /** Fault Sense: hidden stairwells within this many rooms show up. */
+  senseStairs: z.number().int().min(1).optional(),
+  /** Fault Sense: a boss lair within this many rooms is marked on the map. */
+  senseLair: z.number().int().min(1).optional(),
+  /** Fault Sense (Calm): every safe room on the floor is marked. */
+  markSafe: z.boolean().optional(),
+  /** Fault Sense (Fed): `break <dir>` knocks through to a neighbouring room. */
+  breakWalls: z.boolean().optional(),
+  /** Salt Reader (Calm): poison is neutralized the moment it lands. */
+  curePoison: z.boolean().optional(),
+  /** Salt Reader (Fed): `coat` poisons your weapon for this many hits (once a floor). */
+  coat: z.number().int().min(1).optional(),
+  /** Rope Bind: `bind <enemy>` tethers it for this many rounds (1 AP, once a fight). */
+  tether: z.number().int().min(1).optional(),
+  /** Rope Bind (Fed): the bind yanks the enemy into melee for this much damage instead. */
+  yank: z.number().int().min(1).optional(),
+});
+export type ModuleEffect = z.infer<typeof ModuleEffectSchema>;
+
+export const ModuleSchema = z.strictObject({
+  id: ModuleIdSchema,
+  name: z.string().min(1),
+  /** The shard that unlocks it for the run. */
+  unlockedBy: ShardIdSchema,
+  /** Workbook wording ("Cracked screen, 1 battery"). */
+  partsText: z.string().min(1),
+  /** What `craft` uses up: item ids and counts. Empty until the module is built. */
+  parts: z.array(z.strictObject({ item: IdSchema, qty: z.number().int().min(1).default(1) })).default([]),
+  base: z.string().min(1),
+  calm: z.string().min(1),
+  fed: z.string().min(1),
+  /** Structured effects per variant; absent until the module is built. */
+  effects: z.strictObject({ base: ModuleEffectSchema, calm: ModuleEffectSchema, fed: ModuleEffectSchema }).optional(),
+  /** Game minutes at the bench. */
+  minutes: z.number().int().min(1).default(30),
+}).refine((m) => !m.effects || m.parts.length > 0, { message: "a built module (with effects) needs parts", path: ["parts"] });
+export type EchoModule = z.infer<typeof ModuleSchema>;
+
+const TemperSourceSchema = z.strictObject({
+  /** Negative is Calm, positive is Fed. */
+  delta: z.number().int(),
+  /** How many times this source counts per floor; omitted = every time. */
+  perFloor: z.number().int().min(1).optional(),
+});
+
+export const URGE_KINDS = ["rummage", "listen", "zap"] as const;
+
+export const TemperSchema = z.strictObject({
+  min: z.number().int().default(-5),
+  max: z.number().int().default(5),
+  /** At or above: modules use the Fed variant. */
+  fedAt: z.number().int().default(3),
+  /** At or below: modules use the Calm variant. */
+  calmAt: z.number().int().default(-3),
+  stages: z.array(z.strictObject({
+    id: IdSchema,
+    name: z.string(),
+    act: ActSchema,
+    wholeness: z.string(),
+    voice: z.string(),
+    calm: z.string(),
+    fed: z.string(),
+    mechanics: z.string(),
+  })).length(4),
+  sources: z.strictObject({
+    rest: TemperSourceSchema,
+    refuse: TemperSourceSchema,
+    allow: TemperSourceSchema,
+    feed: TemperSourceSchema,
+    damagingModule: TemperSourceSchema,
+    soothe: TemperSourceSchema,
+  }),
+  /** Echo asks to do something; `let echo` or `hush`. Chance per first room visit / per fight. */
+  urges: z.strictObject({
+    explore: z.strictObject({ chance: z.number().min(0).max(1), kinds: z.array(z.enum(URGE_KINDS)).min(1) }),
+    combat: z.strictObject({ chance: z.number().min(0).max(1), kinds: z.array(z.enum(URGE_KINDS)).min(1) }),
+    /** What a zap does (lightning), plus the floor number. */
+    zap: DiceSchema,
+  }),
+});
+export type TemperRules = z.infer<typeof TemperSchema>;
+
+export const BOSS_GATES = ["none", "obviousStairs", "finale"] as const;
+
+export const ThreadSchema = z.strictObject({
+  /** The Thread sheet: the master thread, the strands, the mechanic. */
+  threads: z.array(z.strictObject({
+    id: IdSchema,
+    name: z.string(),
+    codename: z.string(),
+    premise: z.string(),
+    reveal: z.string(),
+    status: z.string(),
+  })).min(1),
+  delivery: z.strictObject({
+    /** First visit to a room (not the start): chance a room shard turns up. */
+    roomChance: z.number().min(0).max(1),
+    /** A boss fight starting: chance its throwaway shard is the opening line. */
+    bossChance: z.number().min(0).max(1),
+  }),
+  /** Where Echo wakes each run. Cosmetic. */
+  vessels: z.array(z.strictObject({
+    id: IdSchema,
+    name: z.string(),
+    /** Narrator line when the run starts. */
+    wake: z.string(),
+    /** Short form for the Echo panel ("a music box, lid cracked"). */
+    short: z.string(),
+  })).min(1),
+  /** The 13-floor arc (the Floor Arc sheet plus the boss gate). */
+  floors: z.array(z.strictObject({
+    floor: z.number().int().min(1).max(13),
+    theme: z.string(),
+    boss: IdSchema,
+    beat: z.string(),
+    act: ActSchema,
+    voice: z.string(),
+    jointMouth: z.string(),
+    /** Percent. */
+    wholenessAfter: z.number().min(0).max(100),
+    bossGate: z.enum(BOSS_GATES),
+  })).length(13),
+  endings: z.array(z.strictObject({
+    id: IdSchema,
+    name: z.string(),
+    /** Inclusive Temper range. */
+    temper: z.tuple([z.number().int(), z.number().int()]),
+    host: z.string(),
+  })).length(3),
+  contract: z.array(z.string()).length(4),
+});
+export type Thread = z.infer<typeof ThreadSchema>;
+
+export const CODEX_TYPES = ["lore", "recipe", "weakness", "ending"] as const;
+
+export const CodexEntrySchema = z.strictObject({
+  id: IdSchema,
+  type: z.enum(CODEX_TYPES),
+  name: z.string(),
+  text: z.string(),
+  /** Workbook wording of the unlock rule and floor range. */
+  unlockText: z.string(),
+  floorText: z.string(),
+  unlock: z.strictObject({
+    shards: z.array(ShardIdSchema).optional(),
+    module: ModuleIdSchema.optional(),
+    boss: IdSchema.optional(),
+    ending: IdSchema.optional(),
+  }),
+  /** Lore: the shards whose clues fill this entry in, one line each. */
+  lines: z.array(ShardIdSchema).default([]),
+  /** Not in the workbook yet (written in the JSON). */
+  draft: z.boolean().optional(),
+});
+export type CodexEntry = z.infer<typeof CodexEntrySchema>;
+
+/** What a boss's weakness does when it triggers. */
+export const WeaknessSchema = z.strictObject({
+  text: z.string(),
+  /** decline: `decline` this many times. item: use or return an item with this tag. Absent: not built yet. */
+  trigger: z.discriminatedUnion("kind", [
+    z.strictObject({ kind: z.literal("decline"), count: z.number().int().min(1) }),
+    z.strictObject({ kind: z.literal("item"), tag: z.string().min(1) }),
+  ]).optional(),
+  /** Status put on the boss; no `rounds` = the rest of the fight. */
+  effect: z.strictObject({ status: IdSchema, rounds: z.number().int().min(1).optional() }).optional(),
+  /** Said (narrator) when it lands. */
+  line: z.string().optional(),
+});
+
+export const BossSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string(),
+  floor: z.number().int().min(1).max(13),
+  kind: z.enum(["mini", "gate", "finale"]),
+  weakness: WeaknessSchema,
+  /** The fight. Absent until the boss's floor is built. */
+  family: EnemyFamilySchema.optional(),
+  hpMult: z.number().positive().default(4),
+  xpMult: z.number().positive().default(6),
+  /** Said when the fight starts. */
+  intro: z.array(z.string()).default([]),
+  /** Said now and then on its turn. */
+  taunts: z.array(z.string()).default([]),
+  defeat: z.string().optional(),
+  /** Said the first time you walk into a room next to its lair. */
+  nearby: z.string().optional(),
+  /** Dropped on the lair floor when it dies. */
+  drops: z.strictObject({ table: IdSchema.optional(), rolls: z.number().int().min(0).default(0), items: z.array(IdSchema).default([]) }).prefault({}),
+}).refine((b) => !b.family || b.family.floor === b.floor, { message: "the boss's family.floor must match its floor", path: ["family", "floor"] });
+export type Boss = z.infer<typeof BossSchema>;
+
+/** I01-I30: hand-written items from the workbook, built as an item base or a consumable. */
+export const OdditySchema = z.strictObject({
+  id: IdSchema,
+  ref: z.string().regex(/^I\d{2}$/),
+  name: z.string(),
+  description: z.string(),
+  type: z.enum(["Weapon", "Armor", "Consumable", "Trinket", "Tool", "Junk"]),
+  rarityText: z.string(),
+  effectText: z.string(),
+  threadTie: z.enum(["None", "Echo", "Previous Carriers", "The Mother Below", "Boss weakness"]),
+  /** Inclusive floor range it can turn up on. */
+  floors: z.tuple([z.number().int().min(1), z.number().int().max(13)]),
+  /** Picking it up records this boss's weakness in the Codex. */
+  hintFor: IdSchema.optional(),
+  /** Temper change each time you change floors carrying it. */
+  temperPerFloor: z.number().int().optional(),
+  /** Temper change each hit (weapons). */
+  temperOnHit: z.number().int().optional(),
+  /** Exactly one of these is the item the engine spawns (same id and name). */
+  gear: ItemBaseSchema.optional(),
+  consumable: ConsumableSchema.optional(),
+}).refine((o) => (o.gear ? 1 : 0) + (o.consumable ? 1 : 0) === 1, { message: "an oddity is exactly one of gear or consumable" })
+  .refine((o) => (o.gear ?? o.consumable)!.id === o.id && (o.gear ?? o.consumable)!.name === o.name, { message: "the item's id and name must match the oddity's" });
+export type Oddity = z.infer<typeof OdditySchema>;

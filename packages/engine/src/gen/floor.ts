@@ -5,7 +5,7 @@
  * Connectivity holds by construction (every room is carved off an existing one),
  * and the property test re-proves it with BFS anyway.
  */
-import type { FloorTheme, RoomShape } from "../content/schemas";
+import type { BOSS_GATES, FloorTheme, RoomShape } from "../content/schemas";
 import { chance, int, pick, shuffle, weightedKey } from "../rng";
 import { DIRS, type Dir, type FloorState, type Room, type RoomType } from "../state";
 
@@ -59,7 +59,43 @@ function connect(rooms: Room[], a: Room, b: Room): void {
   throw new Error("connect: rooms are not adjacent");
 }
 
-export function generateFloor(theme: FloorTheme): FloorState {
+/** BFS hop distance like bfsDistances, but never walking through `avoid`. */
+export function bfsAvoiding(rooms: Room[], from: number, avoid: number): number[] {
+  const dist = rooms.map(() => -1);
+  dist[from] = 0;
+  const queue = [from];
+  while (queue.length) {
+    const id = queue.shift()!;
+    for (const next of Object.values(rooms[id]!.exits)) {
+      if (next === avoid || dist[next] !== -1) continue;
+      dist[next] = dist[id]! + 1;
+      queue.push(next);
+    }
+  }
+  return dist;
+}
+
+export interface FloorOptions {
+  /** How the floor's boss sits (thread.json floors → bossGate). */
+  bossGate?: (typeof BOSS_GATES)[number];
+  /** The boss's id; no boss is placed without one. */
+  boss?: string;
+}
+
+/**
+ * Generate a floor. On gate floors a layout where no hidden stairwell can be reached
+ * without walking through the boss is thrown away and carved again.
+ */
+export function generateFloor(theme: FloorTheme, opts: FloorOptions = {}): FloorState {
+  for (let tries = 0; tries < 50; tries++) {
+    const floor = carveFloor(theme, opts);
+    if (floor) return floor;
+  }
+  // Practically unreachable (3-5 stairwells spread far apart); fall back to an ungated floor.
+  return carveFloor(theme, { ...opts, bossGate: "none" })!;
+}
+
+function carveFloor(theme: FloorTheme, opts: FloorOptions): FloorState | null {
   const { width, height } = theme;
   const at = new Map<string, Room>(); // "x,y" -> room
   const key = (x: number, y: number) => `${x},${y}`;
@@ -146,6 +182,35 @@ export function generateFloor(theme: FloorTheme): FloorState {
     if (room.type !== "empty") continue;
     room.type = room === start ? pick(["corridor", "empty"] as const) : weightedKey(TYPE_WEIGHTS);
   }
+
+  // --- the floor boss ---
+  let bossRoom: number | undefined;
+  if (opts.boss && (opts.bossGate ?? "none") === "none") {
+    // Mini-boss: its own lair, well away from the start, preferably a dead end, never next to stairs or a safe room.
+    const special = (r: Room) => r.type === "stairwell" || r.type === "safe";
+    const far = Math.max(...distFromStart);
+    const pool = rooms.filter((r) => r !== start && !special(r) && distFromStart[r.id]! >= Math.max(4, Math.round(far * 0.4)) &&
+      !Object.values(r.exits).some((id) => special(rooms[id]!)));
+    // It must never cut the stairs off: a dead end can't, anything else is checked.
+    const bypassable = (r: Room) => { const d = bfsAvoiding(rooms, start.id, r.id); return stairs.every((s) => d[s.id]! >= 0); };
+    const deadEnds = pool.filter((r) => Object.keys(r.exits).length === 1);
+    const others = deadEnds.length ? [] : pool.filter(bypassable);
+    if (!deadEnds.length && !others.length) return null;
+    const lair = pick(deadEnds.length ? deadEnds : others);
+    lair.type = "lair";
+    lair.boss = opts.boss;
+    bossRoom = lair.id;
+  } else if (opts.boss && opts.bossGate === "obviousStairs") {
+    // Gate boss: on the stairwell nearest the start. The rest are hidden, and one must be reachable around it.
+    const order = stairs.slice().sort((a, b) => distFromStart[a.id]! - distFromStart[b.id]!);
+    const gate = order[0]!;
+    const around = bfsAvoiding(rooms, start.id, gate.id);
+    if (!order.some((s) => s !== gate && around[s.id]! >= 0)) return null;
+    gate.boss = opts.boss;
+    bossRoom = gate.id;
+    for (const s of stairs) if (s !== gate) s.concealed = true;
+  }
+
   for (const room of rooms) room.shape = shapeFor(room.type);
   for (const room of rooms) {
     if (room.type === "trap" && theme.trapTypes.length > 0) room.trap = pick(theme.trapTypes).id;
@@ -175,5 +240,6 @@ export function generateFloor(theme: FloorTheme): FloorState {
     timeLeft: Math.round(theme.days * MINUTES_PER_DAY),
     warned: [],
     fights: 0,
+    ...(bossRoom !== undefined ? { bossRoom, bossDefeated: false } : {}),
   };
 }

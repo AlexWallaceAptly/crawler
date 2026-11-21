@@ -247,3 +247,12 @@
     flex: 0 0 auto;
   }
 }
+
+.tabSub {
+  color: var(--faint);
+  font-size: 11px;
+  text-transform: uppercase;
+  margin: 10px 0 2px;
+  border-top: 1px dashed var(--border-hi);
+  padding-top: 6px;
+}

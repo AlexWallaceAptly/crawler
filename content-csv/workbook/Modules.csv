@@ -1,0 +1,15 @@
+ID,Module,Unlocked by,Parts,Base effect,Calm variant,Fed variant
+M01,Glow,S02,"Cracked screen, 1 battery",Lights dark rooms. 20% chance to reveal a hidden door.,Also shows traps.,"Blinding bright: stuns light-sensitive enemies for 1 turn, but Echo refuses to dim."
+M02,Nervous Ping,S01,"Speaker scrap, copper wire",Warns you 1 turn before an ambush.,Warns 2 turns ahead and is never wrong.,Ping becomes a small sonic shout that does damage. The ambush warning becomes unreliable.
+M03,Lost Property Index,S05,"Tag gun, 2 luggage tags",Appraises items and flags curses.,Free appraisal on every item.,Sells items by intimidation for +20% gold. Some NPCs turn hostile.
+M04,Fault Sense,S06,"Chalk, surveyor's string",Detects hidden passages that follow old tears in the floor.,Also marks safe resting spots.,Marks weak walls you can break through.
+M05,Salt Reader,S10,"Glass vial, saltwater",Identifies liquids and poisons.,Neutralizes mild poisons.,Coats a weapon with poison for 3 attacks.
+M06,Rope Bind,S11,"Yellow rope, 2 hooks",Tethers an enemy in place for 1 turn.,Tether lasts 2 turns and does no damage.,Yanks the enemy into melee for 5 damage. Echo enjoys it.
+M07,Soothe,S16,"Pudding cup, tuning fork","Calms a boss for 1 turn, once per floor.",Calm lasts 2 turns and heals you a little.,Unavailable. Replaced by Rile: boss takes extra damage for 2 turns but hits harder.
+M08,Thread Pull,S17,"2 silver threads, hook",Pulls one enemy to you.,Also pulls loot across a room.,Pull deals damage and pins the enemy.
+M09,Quiet Field,S24,"Foam pad, bell jar",Silences spellcasters in a small area.,Silence zone follows you.,"Silence also covers you, but your damage doubles inside it."
+M10,Counter-Snap,S29,"Spring, stapler",Blocks the first attack of each fight.,Block also heals 3 HP.,Block becomes a counter for 8 damage. Echo starts picking fights.
+M11,Suture,S38,"Needle, silver thread, gauze",Heals 2 HP per turn for 3 turns.,Also removes bleeding.,Stitches a wound into an enemy instead: bleeding damage.
+M12,Tremor Mapper,S43,"Seismograph scrap, tuning fork",Shows how much the Mother is stirring. Warns of quakes.,Predicts quakes 2 turns ahead.,Triggers small quakes that knock enemies down. 20% chance it knocks you down too.
+M13,Override,S45,"Pipe wrench, circuit board, key",Takes over a dungeon machine or door for 1 turn.,Overrides locks safely.,"Overrides enemy abilities too, but Echo may keep control for a turn."
+M14,Node Key,S51,"Floor 13 bolt, silver thread, gold thread",Opens the Main Constraint Node on Floor 13.,"Echo shares its memory with the Host: Share the Load, and the Host becomes Sonance.","Echo takes the Host's memory for itself: Take the Node, and the Host's last word is Cord."

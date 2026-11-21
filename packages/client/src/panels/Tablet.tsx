@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CommandOption } from "@crawler/engine";
 import { EnemyStrip, LogView } from "./LogView";
-import { CharacterSheet, EffectsList, EquipmentList, InventoryList, RecipeBook } from "./Sheets";
+import { CharacterSheet, CodexSheet, EchoPanel, EffectsList, EquipmentList, InventoryList, RecipeBook } from "./Sheets";
 import { InputBar } from "./InputBar";
 import { MiniMapGrid } from "./MiniMapGrid";
 import { BattleGrid } from "./BattleGrid";
@@ -15,13 +15,14 @@ import { StatusStrip, Toggle, useShown, type ShellProps } from "./Mobile";
 import { readPref, writePref } from "../storage";
 import s from "./tablet.module.css";
 
-type Tab = "character" | "equipment" | "inventory" | "crafting" | "effects";
+type Tab = "character" | "equipment" | "inventory" | "crafting" | "effects" | "echo";
 const TABS: { id: Tab; label: string }[] = [
   { id: "character", label: "Character" },
   { id: "equipment", label: "Gear" },
   { id: "inventory", label: "Pack" },
   { id: "crafting", label: "Crafting" },
   { id: "effects", label: "Effects" },
+  { id: "echo", label: "Echo" },
 ];
 const DIRS = ["north", "east", "south", "west"] as const;
 
@@ -56,7 +57,7 @@ export function TabletShell({ view, log, battle, commands, submit, onLocal, arme
   };
   const button = (c: CommandOption, cls: string) => (
     <button
-      key={c.label}
+      key={`${c.label}|${c.input}`}
       className={`${cls} ${(c.primary && !c.disabled) || armed?.label === c.label ? s.on : ""}`}
       disabled={c.disabled}
       onClick={() => press(c)}
@@ -134,6 +135,13 @@ export function TabletShell({ view, log, battle, commands, submit, onLocal, arme
               {tab === "inventory" && <InventoryList view={view} />}
               {tab === "crafting" && <RecipeBook view={view} submit={submit} />}
               {tab === "effects" && <EffectsList view={view} />}
+              {tab === "echo" && (
+                <>
+                  <EchoPanel view={view} />
+                  <div className={s.tabSub}>Codex</div>
+                  <CodexSheet view={view} />
+                </>
+              )}
             </div>
           )}
         </section>

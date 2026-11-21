@@ -88,7 +88,7 @@ describe("board art hooks", () => {
 });
 
 describe("arena generation", () => {
-  const theme = content.floors.get("undercroft");
+  const theme = content.floors.get("welcome_lobby");
   const room = (shape: Room["shape"], exits: Dir[]): Room => ({
     id: 0, x: 0, y: 0, type: shape === "corridor" ? "corridor" : "chamber", shape, name: "Test", visited: true,
     seen: true, searched: false, desc: null,

@@ -142,7 +142,7 @@ function layout(plan: ArenaPlan, content: Content, furnish: boolean): ArenaState
     let pool: Pos[];
     if (ambushers.has(e.uid)) {
       pool = options.filter((p) => dist(p, crawler) >= 2 && dist(p, crawler) <= 3);
-    } else if (e.tier === "elite") {
+    } else if (e.tier === "elite" || e.tier === "boss") {
       const best = Math.max(...options.map((p) => dist(p, crawler)));
       const cx = (w - 1) / 2;
       const cy = (h - 1) / 2;

@@ -34,5 +34,9 @@
     { "item": "lead_pipe", "weight": 3 }, { "item": "rebar", "weight": 2 }, { "item": "table_leg", "weight": 2 },
     { "item": "broken_glass", "weight": 2 }, { "item": "empty_bottle", "weight": 2 }, { "item": "padlock", "weight": 1 },
     { "item": "thumbtacks", "weight": 1 }, { "item": "trash_can_lid", "weight": 1 }
-  ] }
+  ] },
+  { "id": "parts_f1", "entries": [{ "item": "cracked_screen", "weight": 3 }, { "item": "speaker_scrap", "weight": 3 }, { "item": "copper_wire", "weight": 2 }, { "item": "d_batteries", "weight": 2 }] },
+  { "id": "parts_f2", "entries": [{ "item": "tag_gun", "weight": 2 }, { "item": "luggage_tag", "weight": 3, "qty": [1, 2] }, { "item": "chalk", "weight": 2 }, { "item": "surveyors_string", "weight": 2 }] },
+  { "id": "parts_f3", "entries": [{ "item": "glass_vial", "weight": 2 }, { "item": "saltwater", "weight": 2 }, { "item": "nylon_rope", "weight": 2 }, { "item": "hook", "weight": 3, "qty": [1, 2] }] },
+  { "id": "lost_property", "entries": [{ "item": "tagged_umbrella" }, { "item": "tagged_retainer" }, { "item": "tagged_glove" }] }
 ]

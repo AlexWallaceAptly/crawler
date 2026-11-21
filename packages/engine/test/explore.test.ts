@@ -103,7 +103,7 @@ describe("exploring floor 1", () => {
     expect(slept.world.game.floor!.timeLeft).toBe(floor.timeLeft - 8 * 60);
   });
 
-  it("descend is refused off the stairs and clears the floor on them", () => {
+  it("descend is refused off the stairs and takes you down to Floor 2 on them", () => {
     const world = freshRun();
     const refused = engine.step(world, { type: "descend" });
     expect(refused.world.game.phase).toBe("exploring");
@@ -113,10 +113,26 @@ describe("exploring floor 1", () => {
     const deaths = world.account.deaths;
     const done = engine.step(world, { type: "descend" });
     expect(of(done.events, "floorCleared")).toHaveLength(1);
-    expect(done.world.game.phase).toBe("dead");
+    expect(of(done.events, "floorEntered")[0]!.floor).toBe(2);
+    expect(done.world.game.phase).toBe("exploring");
+    expect(done.world.game.floor!.floor).toBe(2);
+    expect(done.world.game.floor!.theme).toBe("lost_and_found_warrens");
     expect(done.world.account.bestFloor).toBe(2);
     expect(done.world.account.deaths).toBe(deaths); // a win, not a death
-    expect(done.world.game.floor).toBeNull();
+  });
+
+  it("descending past the deepest built floor ends the run as a win and records it", () => {
+    let world = freshRun();
+    const deepest = Math.max(...content.floors.all.map((t) => t.floor));
+    for (let f = 1; f <= deepest; f++) {
+      const floor = world.game.floor!;
+      floor.currentRoom = floor.rooms.find((r) => r.type === "stairwell" && !r.concealed && !r.boss)!.id;
+      world = engine.step(world, { type: "descend" }).world;
+    }
+    expect(world.game.phase).toBe("dead");
+    expect(world.game.floor).toBeNull();
+    expect(world.account.bestFloor).toBe(deepest + 1);
+    expect(world.account.thread.history.at(-1)!.outcome).toBe(`descended past Floor ${deepest}`);
   });
 
   it("warnings fire once per threshold as time crosses them", () => {
@@ -159,7 +175,7 @@ describe("exploring floor 1", () => {
     const floor = world.game.floor!;
     const room = floor.rooms[floor.currentRoom]!;
     room.type = "trap";
-    room.trap = "scald_vent";
+    room.trap = "steam_radiator";
     const ctx = new StepContext(world, content);
     const before = ctx.crawler.hp;
     setRandomSource(() => 0.99); // no status proc; d20s and damage come from forceDice

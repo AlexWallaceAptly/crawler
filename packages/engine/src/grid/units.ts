@@ -25,7 +25,8 @@ export function crawlerSpeed(ctx: StepContext): number {
 }
 
 /** Tiles an enemy gets per AP spent moving. */
-export function enemySpeed(_ctx: StepContext, e: Enemy): number {
+export function enemySpeed(ctx: StepContext, e: Enemy): number {
+  if (hasFlag(e.statuses, ctx.content, "noMove")) return 0;
   return e.speed;
 }
 

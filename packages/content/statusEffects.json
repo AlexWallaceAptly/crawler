@@ -224,5 +224,55 @@
       "noShove",
       "endsOnTurnStart"
     ]
+  },
+  {
+    "id": "tethered",
+    "name": "Tethered",
+    "kind": "debuff",
+    "defaultDuration": 1,
+    "stacking": "refresh",
+    "description": "Tied in place by Echo's rope. Can't move or run, and anything swinging at it gets an edge.",
+    "modifiers": [
+      {
+        "to": "defense",
+        "value": -2
+      }
+    ],
+    "flags": [
+      "noMove"
+    ]
+  },
+  {
+    "id": "sated",
+    "name": "Politely Declined",
+    "kind": "debuff",
+    "defaultDuration": 99,
+    "stacking": "ignore",
+    "description": "You said no thank you twice, and meant it. It can't bring itself to attack you.",
+    "flags": [
+      "noAttack"
+    ]
+  },
+  {
+    "id": "sorting",
+    "name": "Sorting",
+    "kind": "debuff",
+    "defaultDuration": 3,
+    "stacking": "refresh",
+    "description": "Busy re-filing the thing you returned. Loses its turns.",
+    "flags": [
+      "skipTurn"
+    ]
+  },
+  {
+    "id": "parked",
+    "name": "Parked",
+    "kind": "debuff",
+    "defaultDuration": 2,
+    "stacking": "refresh",
+    "description": "Has parked itself, as the ticket demands. Loses its turns until it remembers it's a kraken.",
+    "flags": [
+      "skipTurn"
+    ]
   }
 ]

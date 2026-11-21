@@ -1,0 +1,779 @@
+{
+  "id": "undercroft",
+  "name": "The Undercroft",
+  "floor": 1,
+  "rooms": 60,
+  "width": 12,
+  "height": 9,
+  "days": 5,
+  "encounters": {
+    "pack": [
+      2,
+      4
+    ],
+    "corridorPack": [
+      2,
+      3
+    ],
+    "mixedChance": 0.35,
+    "eliteAloneChance": 0.5,
+    "eliteEscorts": [
+      1,
+      2
+    ],
+    "easyFights": 3,
+    "easyPool": [
+      "sump_rat",
+      "drain_leech",
+      "scrap_goblin"
+    ],
+    "hardPool": [
+      "sump_rat",
+      "drain_leech",
+      "scrap_goblin",
+      "mold_shambler",
+      "pipe_snake",
+      "fuse_imp",
+      "gutter_crab"
+    ],
+    "easyPack": [
+      1,
+      2
+    ],
+    "easyLevelOffset": -1,
+    "levelOffset": 0,
+    "mobChance": 0.25
+  },
+  "roomNames": {
+    "adjectives": [
+      "Weeping",
+      "Scalded",
+      "Forgotten",
+      "Flooded",
+      "Sweating",
+      "Condemned",
+      "Buckled",
+      "Mildewed",
+      "Humming",
+      "Drowned",
+      "Lightless",
+      "Rusted",
+      "Sunken",
+      "Clogged",
+      "Bloated",
+      "Gutted",
+      "Soot-Black",
+      "Dripping",
+      "Echoing",
+      "Tilted",
+      "Curdled",
+      "Overflowing",
+      "Shuttered",
+      "Flickering",
+      "Half-Collapsed",
+      "Groaning",
+      "Silted"
+    ],
+    "nouns": {
+      "corridor": [
+        "Crawlway",
+        "Culvert",
+        "Service Tunnel",
+        "Storm Drain",
+        "Steam Tunnel",
+        "Track Bed",
+        "Cable Run",
+        "Overflow Pipe",
+        "Catwalk",
+        "Sluice Channel",
+        "Utility Trench",
+        "Underpass",
+        "Sewer Main",
+        "Dead Escalator"
+      ],
+      "chamber": [
+        "Cistern",
+        "Pump Gallery",
+        "Boiler Hall",
+        "Subway Platform",
+        "Settling Basin",
+        "Parking Level",
+        "Turbine Hall",
+        "Interchange",
+        "Reservoir",
+        "Outfall Chamber",
+        "Ghost Station",
+        "Loading Dock",
+        "Flood Vault",
+        "Concourse"
+      ],
+      "small": [
+        "Storage Cage",
+        "Meter Closet",
+        "Laundry Room",
+        "Valve Room",
+        "Fuse Room",
+        "Break Room",
+        "Janitor's Closet",
+        "Signal Hut"
+      ]
+    }
+  },
+  "fragments": {
+    "openings": {
+      "corridor": [
+        "The passage narrows until your shoulders touch both walls, then keeps going like it has somewhere to be.",
+        "A long, low tunnel runs ahead of you, its ceiling sagging in the middle like an old mattress.",
+        "You step into a corridor so straight and so dark that the far end might be ten yards off or a mile.",
+        "The tunnel bends just enough that you never quite see where it's going.",
+        "A brick-lined channel stretches out in front of you, ankle-deep and sloping gently toward somewhere worse.",
+        "The ceiling drops to stooping height and stays there for longer than seems fair.",
+        "You come out onto a narrow walkway bolted to the wall, with black water moving slowly underneath.",
+        "Old rails run down the middle of this tunnel, and the gravel between them crunches like teeth.",
+        "The passage here is wide enough for one person and a lot of pipes, and the pipes got here first.",
+        "You duck into a round pipe just tall enough to walk through, if you don't mind walking like a question mark.",
+        "A dead escalator carries you nowhere, its steps sloping down into a long, tiled passage."
+      ],
+      "chamber": [
+        "The tunnel widens into a chamber somebody once tried, and failed, to keep dry.",
+        "The walls fall away and the ceiling climbs out of reach of your light, leaving you in a space too big to see the edges of.",
+        "You enter a vaulted hall held up by brick pillars, each one wearing a collar of green slime at knee height.",
+        "The room opens out around a concrete pit wide enough to park a bus in, and someone has.",
+        "You step onto a long platform with a tiled wall on one side and a drop to the tracks on the other.",
+        "A cathedral of pipework rises around you, valves the size of tractor wheels stacked three stories high.",
+        "The floor slopes down into a broad, low basin where the water has gone still and opaque.",
+        "You walk out into a parking level where the columns go on in rows until the dark eats them.",
+        "The space ahead is a huge round tank, big enough that your footsteps take a while to come back.",
+        "The passage spills out into a ticket hall the size of a church, its booths dark and its benches bolted down.",
+        "You climb down into a vast flooded vault where the pillars stand in the water like the legs of something enormous."
+      ],
+      "small": [
+        "You squeeze into a room roughly the size of a walk-in closet, which it was.",
+        "The door gives onto a cramped little room where the ceiling is close and the air is closer.",
+        "You step into a chain-link cage bolted to the wall, its door hanging from one hinge.",
+        "This is a utility room, square and windowless, built for one bored technician at a time.",
+        "You enter a small, low room where every surface has a dial, a switch, or a warning label.",
+        "A narrow side room opens off the passage, barely deep enough to turn around in.",
+        "The room is tiny, tiled, and much too warm, like the inside of a mouth.",
+        "You shoulder open a door into a closet that smells of floor wax and is barely bigger than the mop inside it.",
+        "The room is a squat concrete box with one bulb, one chair, and no good reason to exist."
+      ]
+    },
+    "sights": [
+      "Brown tide lines climb the walls, each one a little higher than the last.",
+      "A shopping cart lies on its side, full of wet newspaper that has fused into one gray brick.",
+      "Someone has spray-painted an arrow on the wall pointing back the way you came. Underneath it says NOPE.",
+      "A row of lockers stands open and empty, except for one, which is padlocked and dented from the inside.",
+      "Tree roots have punched through the ceiling and hang down in pale bundles, still dripping.",
+      "A single rain boot stands upright in the middle of the floor, perfectly placed, as if waiting for its foot.",
+      "The emergency lights still work, one in three of them, and the ones that do are red.",
+      "A subway map is bolted to the wall, its lines rerouted in marker to stations that don't exist.",
+      "A pile of bones sits neatly in the corner, sorted by size.",
+      "A car sits up to its windows in black water. Its hazard lights are still blinking.",
+      "Fat white mushrooms grow in a ring around a drain grate, as though they're guarding it.",
+      "A wall of electrical meters spins in unison, measuring something that isn't electricity.",
+      "Somebody left a sleeping bag here, zipped all the way shut, and you decide not to check.",
+      "Coins carpet the floor around a dead fountain, every one of them gone green.",
+      "A rusted ladder climbs to a manhole cover that has been welded shut from above.",
+      "Thousands of plastic bottles have washed up against a grate and formed a glittering, crackling dam.",
+      "A fire hose hangs from its reel, unspooled, running off into the dark like it's still trying to reach something.",
+      "Chalk tally marks cover one wall from floor to ceiling, and the last few rows get very shaky.",
+      "A wedding dress hangs from a pipe, gray with mold, its hem chewed into a second kind of lace.",
+      "A bank of washing machines lines the wall, and one of them is still churning something heavy.",
+      "A turnstile stands alone in the middle of the room, attached to no wall at all.",
+      "Something has gnawed every cable along the ceiling down to bright, bare copper.",
+      "A maintenance cart sits abandoned with its toolbox open, every tool gone except one bent spoon.",
+      "Water pours from a cracked pipe in a smooth, glassy sheet, and the wall behind it is covered in handprints.",
+      "An office chair is bolted to the ceiling upside down, with a coffee mug duct-taped to the armrest.",
+      "A slick of oil on the water makes rainbows that drift against the current.",
+      "Rows of dead fluorescent tubes hang on chains, swaying slightly, though there's no breeze.",
+      "A vending machine lies face-down on the floor like it fainted.",
+      "Rat-sized holes riddle the bottom of the wall in a pattern too regular to be an accident.",
+      "A pallet of canned beans has burst open, and every single can is bulging.",
+      "A painted sign reads FLOOD LEVEL 1972, and the water line is a foot above it.",
+      "A shed snakeskin as thick as a fire hose is draped over the railing.",
+      "Dozens of shoes, no two a pair, are lined up along the wall heel to toe.",
+      "A security camera on the wall swivels to follow you, its little light blinking green.",
+      "Cracked floor tiles spell out the name of a station, most of the letters long since washed away.",
+      "A janitor's mop bucket stands full of water so clean and clear it looks wrong down here.",
+      "An apartment buzzer panel is mounted on bare concrete with no building above it. One button is worn smooth.",
+      "A great iron wheel valve is chained shut, with a handwritten note taped to it that just says DON'T.",
+      "Garbage bags are stacked to the ceiling in one corner, and the bottom row rises and falls, very slightly.",
+      "A payphone hangs on the wall, its receiver off the hook and swinging gently.",
+      "A row of payment kiosks blinks PLEASE INSERT CARD at nobody, over and over.",
+      "Someone has stacked traffic cones into a careful pyramid, and the top one has a face drawn on it."
+    ],
+    "sounds": [
+      "Something behind the pipes drips with no rhythm at all, which is worse than a rhythm.",
+      "Far off, a train horn sounds, though nothing has run on these tracks in years.",
+      "The pipes knock three times, pause, and knock three times again.",
+      "Water gurgles in a drain close by, like a throat clearing.",
+      "A fluorescent tube buzzes overhead and flickers in time with your heartbeat.",
+      "Somewhere far above, muffled by tons of concrete, a car alarm goes off and never stops.",
+      "The room is silent except for a faint ticking, like an engine cooling down.",
+      "Something drags slowly across the floor of the next room, then stops when you stop.",
+      "Wind moans through a grate in one long, low note that almost sounds like a word.",
+      "You hear distant splashing, steady and patient, the sound of something wading.",
+      "The concrete creaks under some vast, slow weight, the way a ship's hull complains at sea.",
+      "Every drop of water here lands with a tiny metallic ping, like loose change.",
+      "A radio somewhere plays static, and every so often the static laughs.",
+      "Rats chatter inside the walls, then all go quiet at once.",
+      "A pump thrums somewhere deep below, so low you feel it in your fillings more than hear it.",
+      "Your footsteps echo back half a second late, and one time too many.",
+      "Steam hisses from a valve in short bursts, like something trying to get your attention.",
+      "A phone rings once in another room and doesn't ring again.",
+      "The water around your ankles makes small sucking sounds whenever you shift your weight.",
+      "A heavy door swings slowly on its hinges somewhere close, squealing in a key nobody uses.",
+      "Grit trickles down from the ceiling in small, nervous showers.",
+      "Something wet slaps against stone, once, a long way off.",
+      "The silence is so complete you can hear the blood moving in your ears.",
+      "A metal grate rattles in its frame, though nothing is touching it.",
+      "Faint music drifts out of a vent, an elevator tune with half its notes missing.",
+      "A toilet flushes somewhere in the dark, and it is the most frightening thing you've heard all day.",
+      "Far down the tunnel, a recorded voice announces the next stop, then cuts out mid-word."
+    ],
+    "smells": [
+      "Smells like a wet dog that works in a copper mine.",
+      "The air tastes of rust, the way your mouth does after a nosebleed.",
+      "It smells like a basement that has been holding its breath for forty years.",
+      "Old motor oil and standing water: the smell of a garage after a flood.",
+      "Mildew hangs thick in the air, sweet and furry, like a gym bag left in a hot car.",
+      "It smells of hot dust and burnt wiring, the scent of a machine dying slowly.",
+      "Wet concrete and lime, cold enough to feel in your sinuses.",
+      "The sewer stink hits you like a slap, then settles in like it pays rent.",
+      "Bleach, a lot of it, poured by someone trying very hard to cover up something else.",
+      "It smells like pennies and pond water.",
+      "A sharp chemical tang fills the air, like a swimming pool built over a battery factory.",
+      "Diesel exhaust, faint and old, soaked into the walls by decades of trains.",
+      "The room smells like rotten eggs and wet matches.",
+      "Damp cardboard and mouse droppings, the perfume of every storage unit ever rented.",
+      "The air is warm, wet and faintly meaty, like breath.",
+      "It smells of grease, the burnt-on black kind from the back of a fryer.",
+      "Stagnant water with something green blooming in it, rich and swampy.",
+      "Ozone prickles your nose, the smell right before lightning strikes.",
+      "It smells like a laundromat, clean and soapy, which down here is deeply suspicious.",
+      "Coal smoke and wet brick, like an old city in the rain.",
+      "The air reeks of ammonia so sharp it makes your eyes water.",
+      "It smells like the inside of an old thermos.",
+      "Rust and rot in equal measure, like the hold of a ship.",
+      "Someone's cheap cologne lingers here, fresh, and there is nobody in sight to be wearing it.",
+      "Nothing. The air smells of absolutely nothing, which is the most unsettling thing yet.",
+      "Hot pretzels and bus exhaust, the ghost of a subway concourse at rush hour.",
+      "It smells like the bottom of a fish tank nobody has cleaned since the fish died."
+    ]
+  },
+  "typeLines": {
+    "stairwell": [
+      "The sign over the door says EXIT in letters that have stopped trying.",
+      "A concrete stairwell spirals down past floor numbers that skip from B1 straight to something unreadable.",
+      "The stairs going down are dry, swept and well lit, which is the most threatening thing on this floor.",
+      "Fresh air rises from the stairwell below, cold and clean and completely untrustworthy.",
+      "Someone has painted DOWN on the stairwell door and then, in much smaller letters, sorry.",
+      "A freight elevator waits with its gate open and a single button left on the panel: DOWN.",
+      "The stairs down are strung with yellow tape and a sign reading AUTHORIZED CRAWLERS ONLY."
+    ],
+    "safe": [
+      "The door has a real lock, the lights are steady, and for the first time in hours your shoulders come down from your ears.",
+      "A battered sofa, a working kettle and a sign that says NO FIGHTING: the closest thing to mercy down here.",
+      "The air in here is dry and warm, and the noises from the tunnels stop at the threshold as if they've been told to.",
+      "It's only a break room, but after the tunnels it feels like a cathedral.",
+      "Someone has hung a string of fairy lights in here, the only warm color you've seen since you arrived.",
+      "The door seals behind you with a hiss, and the silence on this side is the clean kind."
+    ],
+    "treasure": [
+      "Something glints in the corner, and for once it isn't an eye.",
+      "A chest sits on a little raised platform, lit from above like it's in a shop window.",
+      "Soggy cardboard boxes are stacked here, and one of them is much heavier than cardboard has any right to be.",
+      "Coins and broken trinkets are heaped in a nest of rags, the hoard of something that no longer needs it.",
+      "A lockbox is chained to a pipe, and the chain has rusted much worse than the lock.",
+      "A duffel bag lies half-zipped on the floor, something inside it catching your light."
+    ],
+    "puzzle": [
+      "A row of valves lines the wall, each stenciled with a number, and none of the numbers are in order.",
+      "Strange symbols are scratched into the floor in a ring, and the dust around them hasn't been disturbed.",
+      "An old control panel blinks patiently, waiting for an input it clearly expects you to get wrong.",
+      "A heavy door blocks the far side. It has no handle, only a keypad and a great many scratch marks.",
+      "Light switches cover an entire wall, and only one bulb in the room is wired to any of them.",
+      "Three pipes come out of the wall, labeled HOT, COLD and NO, and each one has a tap."
+    ],
+    "npc": [
+      "Someone has been living here: a cot, a camp stove, and a hand-lettered sign that says KNOCK FIRST.",
+      "A figure sits in the corner, very still, watching you with the patience of someone who has seen a lot of crawlers walk through.",
+      "A folding table holds a cash box and a little bell, and the bell is polished.",
+      "Someone is humming behind a stack of crates, and the humming stops when you step inside.",
+      "A shopping cart piled with junk is parked neatly against the wall under a hand-painted sign that says OPEN.",
+      "Someone has set up a lawn chair and a cooler here, and they look up at you like you're late."
+    ],
+    "empty": [
+      "There's nothing else here, and the nothing feels deliberate.",
+      "The room is empty and swept clean, as if it's waiting for a delivery.",
+      "Nothing in here but water and echoes.",
+      "Whatever was in this room has been taken, right down to the screws in the walls.",
+      "Bare concrete, nothing else. Even the dust looks like it's thinking about leaving.",
+      "Nothing here. Not even rats, and the rats go everywhere."
+    ]
+  },
+  "trapTypes": [
+    {
+      "id": "scald_vent",
+      "name": "Scald Vent",
+      "dice": "2d6",
+      "damageType": "fire",
+      "spotTier": "easy",
+      "avoidTier": "medium",
+      "avoidStat": "DEX",
+      "spotted": "The tiles ahead are cleaner than the rest. Boiled clean. You find the vent and wedge it shut with a rag.",
+      "triggered": "A valve snaps open with a shriek and the corridor fills with live steam.",
+      "avoided": "A valve snaps open with a shriek. You drop flat and the steam combs over you, close enough to iron your shirt.",
+      "arenaHazard": "steam_vent"
+    },
+    {
+      "id": "rust_spikes",
+      "name": "Rust Spike Grate",
+      "dice": "1d8",
+      "damageType": "physical",
+      "status": {
+        "id": "bleeding",
+        "chance": 0.5,
+        "duration": 2
+      },
+      "spotTier": "medium",
+      "avoidTier": "medium",
+      "avoidStat": "DEX",
+      "spotted": "One floor grate sits a half-inch proud of the others. Underneath, something waits with the patience of scrap metal.",
+      "triggered": "The grate flips and a bed of rusted spikes comes up to meet you like an old friend with knives.",
+      "avoided": "The grate flips under your heel and you throw yourself sideways as the spikes punch up through empty air.",
+      "arenaHazard": "rust_spikes"
+    },
+    {
+      "id": "sump_sinkhole",
+      "name": "Sump Sinkhole",
+      "dice": "2d4",
+      "damageType": "physical",
+      "status": {
+        "id": "slowed",
+        "chance": 0.6,
+        "duration": 2
+      },
+      "spotTier": "medium",
+      "avoidTier": "easy",
+      "avoidStat": "DEX",
+      "spotted": "The concrete here sags like a stage prop. You skirt the edge and hear the hollow space under it sigh.",
+      "triggered": "The floor opens like a trapdoor with no opinion about what happens to you next, and you ride the rubble down.",
+      "avoided": "The floor drops away. You lunge, catch the lip, and haul yourself out with all the grace of laundry.",
+      "arenaHazard": "sludge"
+    },
+    {
+      "id": "live_wire",
+      "name": "Live Wire",
+      "dice": "2d6",
+      "damageType": "lightning",
+      "status": {
+        "id": "stunned",
+        "chance": 0.4,
+        "duration": 1
+      },
+      "spotTier": "easy",
+      "avoidTier": "hard",
+      "avoidStat": "INT",
+      "spotted": "A cable hangs across the passage at neck height, humming a note you feel in your teeth. You limbo under it with dignity intact.",
+      "triggered": "The cable kisses your shoulder and every muscle you own files a formal resignation.",
+      "avoided": "You trace the cable back to a junction box and flip the breaker, feeling briefly like a professional.",
+      "arenaHazard": "live_wire"
+    },
+    {
+      "id": "gas_pocket",
+      "name": "Gas Pocket",
+      "dice": "1d6",
+      "damageType": "poison",
+      "status": {
+        "id": "poisoned",
+        "chance": 0.6,
+        "duration": 3
+      },
+      "spotTier": "medium",
+      "avoidTier": "medium",
+      "avoidStat": "INT",
+      "spotted": "The air ahead shimmers wrong, and the rats have chewed a detour around this stretch. Smart rats. You follow their route.",
+      "triggered": "You taste rotten eggs a half-second before the pocket of sewer gas folds around your head like a bag.",
+      "avoided": "You catch the smell in time, pull your collar over your face, and sprint through the worst of it.",
+      "arenaHazard": "gas_leak"
+    },
+    {
+      "id": "flood_valve",
+      "name": "Flood Valve",
+      "dice": "1d6",
+      "damageType": "physical",
+      "status": {
+        "id": "slowed",
+        "chance": 0.5,
+        "duration": 1
+      },
+      "spotTier": "easy",
+      "avoidTier": "medium",
+      "avoidStat": "DEX",
+      "spotted": "A tripwire runs to a wheel valve the size of a dinner table. You step over the wire, insulted on its behalf.",
+      "triggered": "Something clicks, a valve spins, and a wall of black water takes you off your feet and introduces you to the floor.",
+      "avoided": "Something clicks. You grab a pipe as the water hits, and it only steals your footing and a little of your pride.",
+      "arenaHazard": "sludge"
+    }
+  ],
+  "loot": {
+    "rooms": {
+      "treasure": {
+        "table": "treasure",
+        "visible": [
+          2,
+          3
+        ],
+        "hidden": [
+          1,
+          2
+        ]
+      },
+      "lair": {
+        "table": "junk",
+        "visible": [
+          1,
+          2
+        ],
+        "hidden": [
+          0,
+          1
+        ]
+      },
+      "chamber": {
+        "table": "junk",
+        "visible": [
+          0,
+          2
+        ],
+        "hidden": [
+          0,
+          1
+        ]
+      },
+      "trap": {
+        "table": "sharp",
+        "visible": [
+          0,
+          1
+        ],
+        "hidden": [
+          1,
+          1
+        ]
+      },
+      "corridor": {
+        "table": "junk",
+        "visible": [
+          0,
+          1
+        ],
+        "hidden": [
+          0,
+          0
+        ]
+      },
+      "empty": {
+        "table": "junk",
+        "visible": [
+          0,
+          1
+        ],
+        "hidden": [
+          0,
+          1
+        ]
+      },
+      "puzzle": {
+        "table": "junk",
+        "visible": [
+          0,
+          1
+        ],
+        "hidden": [
+          0,
+          1
+        ]
+      },
+      "event": {
+        "table": "junk",
+        "visible": [
+          0,
+          1
+        ],
+        "hidden": [
+          0,
+          1
+        ]
+      },
+      "npc": {
+        "table": "junk",
+        "visible": [
+          0,
+          1
+        ],
+        "hidden": [
+          0,
+          1
+        ]
+      },
+      "safe": {
+        "table": "safe_supplies",
+        "visible": [
+          1,
+          2
+        ],
+        "hidden": [
+          0,
+          0
+        ]
+      }
+    },
+    "firstSafe": [
+      {
+        "item": "lead_pipe",
+        "qty": 1
+      },
+      {
+        "item": "thumbtacks",
+        "qty": 1
+      },
+      {
+        "item": "duct_tape",
+        "qty": 1
+      }
+    ],
+    "workshops": [
+      1,
+      2
+    ],
+    "workshopTable": "junk",
+    "workbenchLines": [
+      "A steel workbench is bolted to the wall: a vise, three clamps, a coffee can of screws, and a sign that says NO HORSEPLAY. Someone underlined it in blood.",
+      "Somebody set up a workbench down here out of a door and two sawhorses. The vise still works. The previous owner, presumably, does not.",
+      "A maintenance workbench, pegboard and all. The outline of every tool is painted on the wall. Most of the tools are gone. The outlines stayed."
+    ]
+  },
+  "arena": {
+    "floorVariants": 4,
+    "floorWeights": [
+      10,
+      1,
+      3,
+      1
+    ],
+    "obstacles": [
+      {
+        "id": "pillar",
+        "weight": 3
+      },
+      {
+        "id": "rubble",
+        "weight": 3
+      },
+      {
+        "id": "crate",
+        "weight": 2
+      },
+      {
+        "id": "barrel",
+        "weight": 2
+      },
+      {
+        "id": "pipe_cluster",
+        "weight": 2
+      },
+      {
+        "id": "dead_boiler",
+        "weight": 1
+      },
+      {
+        "id": "lockers",
+        "weight": 1
+      },
+      {
+        "id": "shopping_cart",
+        "weight": 1
+      },
+      {
+        "id": "tool_chest",
+        "weight": 0.5
+      },
+      {
+        "id": "shelf",
+        "weight": 0.5
+      },
+      {
+        "id": "rack",
+        "weight": 0.5
+      },
+      {
+        "id": "file_cabinet",
+        "weight": 0.5
+      },
+      {
+        "id": "trash_can",
+        "weight": 0.5
+      },
+      {
+        "id": "workbench",
+        "weight": 0.25
+      },
+      {
+        "id": "washer",
+        "weight": 0.25
+      },
+      {
+        "id": "dryer",
+        "weight": 0.25
+      },
+      {
+        "id": "fridge",
+        "weight": 0.25
+      },
+      {
+        "id": "freezer",
+        "weight": 0.25
+      },
+      {
+        "id": "stove",
+        "weight": 0.25
+      },
+      {
+        "id": "dish_sink",
+        "weight": 0.25
+      },
+      {
+        "id": "cot",
+        "weight": 0.25
+      },
+      {
+        "id": "chair",
+        "weight": 0.25
+      },
+      {
+        "id": "stall",
+        "weight": 0.25
+      },
+      {
+        "id": "toilet",
+        "weight": 0.25
+      },
+      {
+        "id": "sink",
+        "weight": 0.25
+      },
+      {
+        "id": "urinal",
+        "weight": 0.15
+      },
+      {
+        "id": "trough_sink",
+        "weight": 0.15
+      },
+      {
+        "id": "shower",
+        "weight": 0.15
+      },
+      {
+        "id": "bathtub",
+        "weight": 0.15
+      },
+      {
+        "id": "bin_cart",
+        "weight": 0.25
+      },
+      {
+        "id": "flatbed_dolly",
+        "weight": 0.25
+      },
+      {
+        "id": "janitor_cart",
+        "weight": 0.25
+      },
+      {
+        "id": "laundry_cart",
+        "weight": 0.25
+      },
+      {
+        "id": "tool_cart",
+        "weight": 0.25
+      },
+      {
+        "id": "utility_cart",
+        "weight": 0.25
+      },
+      {
+        "id": "wire_basket_cart",
+        "weight": 0.25
+      },
+      {
+        "id": "surgical_cart",
+        "weight": 0.25
+      },
+      {
+        "id": "bloody_table",
+        "weight": 0.25
+      },
+      {
+        "id": "heavy_steel_table",
+        "weight": 0.25
+      },
+      {
+        "id": "steel_table",
+        "weight": 0.25
+      },
+      {
+        "id": "steel_trough_table",
+        "weight": 0.25
+      },
+      {
+        "id": "folding_table",
+        "weight": 0.25
+      },
+      {
+        "id": "small_table",
+        "weight": 0.25
+      },
+      {
+        "id": "office_desk",
+        "weight": 0.25
+      },
+      {
+        "id": "vise_workbench",
+        "weight": 0.25
+      },
+      {
+        "id": "concrete_bench",
+        "weight": 0.25
+      },
+      {
+        "id": "slatted_steel_bench",
+        "weight": 0.25
+      }
+    ],
+    "terrain": [
+      {
+        "id": "sludge",
+        "weight": 1
+      }
+    ],
+    "hazards": [
+      {
+        "id": "steam_vent",
+        "weight": 2
+      },
+      {
+        "id": "live_wire",
+        "weight": 1
+      },
+      {
+        "id": "gas_leak",
+        "weight": 1
+      }
+    ],
+    "scrap": "arena_scrap"
+  }
+}

@@ -8,7 +8,7 @@ import { EnemyStrip, LogView } from "./panels/LogView";
 import { MobileShell } from "./panels/Mobile";
 import { TabletShell } from "./panels/Tablet";
 import { useLayout } from "./layout";
-import { CharacterSheet, EffectsList, EquipmentList, InventoryList, MiniMap, RecipeBook } from "./panels/Sheets";
+import { CharacterSheet, CodexSheet, EchoPanel, EffectsList, EquipmentList, InventoryList, MiniMap, RecipeBook } from "./panels/Sheets";
 import { StatusBar } from "./panels/StatusBar";
 import { Ticker } from "./panels/Ticker";
 import { InputBar } from "./panels/InputBar";
@@ -20,6 +20,7 @@ export function App({ engine }: { engine: Engine }) {
   const layoutControl = useLayout();
   const narrow = false; // the dashboard below is only drawn at desktop size
   const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [codexOpen, setCodexOpen] = useState(false);
   const [split, setSplit] = useState<boolean>(() => readPref("combatSplit", false));
   /** A grid command waiting for the player to pick a tile. */
   const [armed, setArmed] = useState<CommandOption | null>(null);
@@ -37,6 +38,12 @@ export function App({ engine }: { engine: Engine }) {
       const t = text.trim().toLowerCase();
       if (t === "i" || t === "inv" || t === "inventory") {
         setInventoryOpen((o) => !o);
+        setCodexOpen(false);
+        return true;
+      }
+      if (t === "codex sheet") {
+        setCodexOpen((o) => !o);
+        setInventoryOpen(false);
         return true;
       }
       if (t === "wipe save") {
@@ -52,6 +59,7 @@ export function App({ engine }: { engine: Engine }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setInventoryOpen(false);
+        setCodexOpen(false);
         setArmed(null);
       }
     };
@@ -139,6 +147,19 @@ export function App({ engine }: { engine: Engine }) {
           </Panel>
         </div>
       )}
+      {codexOpen && (
+        <div className={s.overlay} role="dialog" aria-label="Codex">
+          <Panel
+            id="codex"
+            title="Codex"
+            collapsible={false}
+            className={s.grow}
+            extra={<button className={s.linkBtn} onClick={() => setCodexOpen(false)}>close [esc]</button>}
+          >
+            <CodexSheet view={view} />
+          </Panel>
+        </div>
+      )}
     </div>
   );
 
@@ -147,6 +168,11 @@ export function App({ engine }: { engine: Engine }) {
       <Panel id="character" title="Character">
         <CharacterSheet view={view} />
       </Panel>
+      {view.echo && (
+        <Panel id="echo" title="Echo">
+          <EchoPanel view={view} />
+        </Panel>
+      )}
       <Panel id="equipment" title="Equipment">
         <EquipmentList view={view} />
       </Panel>
@@ -166,12 +192,18 @@ export function App({ engine }: { engine: Engine }) {
       {side}
       <Ticker events={ticker} />
       <InputBar
-        commands={commands}
+        // the desktop opens the Codex as an overlay instead of printing it
+        commands={commands.filter((c) => c.input !== "codex")}
         onSubmit={submit}
         onLocal={onLocal}
         onArm={setArmed}
         armed={armed}
-        extraButtons={view.character ? [{ label: inventoryOpen ? "Close inventory" : "Inventory", input: "inventory" }] : []}
+        extraButtons={view.character
+          ? [
+              { label: inventoryOpen ? "Close inventory" : "Inventory", input: "inventory" },
+              { label: codexOpen ? "Close codex" : "Codex", input: "codex sheet" },
+            ]
+          : []}
       />
     </div>
   );

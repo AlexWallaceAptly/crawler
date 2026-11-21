@@ -11,6 +11,14 @@ function text(e: GameEvent): string {
       return `FLOOR ${e.floor} CLEARED`;
     case "recipeLearned":
       return `⚒ NEW RECIPE — ${e.name}`;
+    case "shardFound":
+      return `◆ SHARD — ${e.strand}${e.first ? " (new)" : ""}`;
+    case "codexUpdated":
+      return `❖ CODEX — ${e.entry}`;
+    case "moduleBuilt":
+      return `ECHO MODULE — ${e.name}`;
+    case "floorEntered":
+      return `FLOOR ${e.floor} — ${e.name}`;
     case "narration":
     case "info":
     case "error":

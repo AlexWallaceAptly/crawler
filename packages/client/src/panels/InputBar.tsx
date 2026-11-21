@@ -70,7 +70,7 @@ export function InputBar({ commands, onSubmit, onLocal, extraButtons = [], onArm
       <div className={s.buttons}>
         {[...commands, ...extraButtons].map((c) => (
           <button
-            key={c.label}
+            key={`${c.label}|${c.input}`}
             className={`${s.btn} ${c.primary && !c.disabled || armed?.label === c.label ? s.primary : ""}`}
             disabled={c.disabled}
             title={c.ap === undefined ? undefined : c.disabled ? `Costs ${c.ap} AP: more than you have left` : `Costs ${c.ap} AP`}

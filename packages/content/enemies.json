@@ -98,7 +98,8 @@
     "xp": 10,
     "tags": [
       "undead",
-      "plant"
+      "plant",
+      "lightSensitive"
     ]
   },
   {
@@ -245,7 +246,8 @@
     "xp": 5,
     "tags": [
       "beast",
-      "swarm"
+      "swarm",
+      "lightSensitive"
     ]
   },
   {
@@ -298,7 +300,8 @@
     "glyph": "i",
     "xp": 11,
     "tags": [
-      "spark"
+      "spark",
+      "lightSensitive"
     ]
   },
   {
@@ -350,5 +353,465 @@
       "beast",
       "armored"
     ]
+  },
+  {
+    "id": "tag_moth",
+    "name": "Claim-Tag Moth",
+    "floor": 2,
+    "description": "A moth whose wings are two paper claim tags, stapled on. Drawn to light, and to anyone who has lost something, which is everyone.",
+    "stats": {
+      "STR": 5,
+      "DEX": 8,
+      "CON": 5,
+      "INT": 3,
+      "CHA": 3
+    },
+    "hpBase": 4,
+    "armor": 0,
+    "attacks": [
+      {
+        "name": "Paper-Cut Wings",
+        "power": [1, 2, 3],
+        "stat": "DEX",
+        "range": "close",
+        "status": {
+          "id": "bleeding",
+          "chance": 0.2
+        }
+      },
+      {
+        "name": "Dust Puff",
+        "power": [1, 1, 2],
+        "stat": "DEX",
+        "range": "close",
+        "status": {
+          "id": "blinded",
+          "chance": 0.15
+        }
+      }
+    ],
+    "ai": [
+      "flee_below_20",
+      "attack"
+    ],
+    "groupSize": [2, 4],
+    "speed": 5,
+    "glyph": "m",
+    "xp": 6,
+    "tags": [
+      "beast",
+      "swarm",
+      "lightSensitive"
+    ]
+  },
+  {
+    "id": "unclaimed_suitcase",
+    "name": "Unclaimed Suitcase",
+    "floor": 2,
+    "description": "A hard-shell suitcase that waited on the carousel so long it learned to walk. The zipper is the mouth. The mouth is the zipper.",
+    "stats": {
+      "STR": 7,
+      "DEX": 4,
+      "CON": 8,
+      "INT": 3,
+      "CHA": 3
+    },
+    "hpBase": 9,
+    "armor": 2,
+    "attacks": [
+      {
+        "name": "Zipper Bite",
+        "power": [2, 3, 5],
+        "stat": "STR",
+        "range": "close"
+      },
+      {
+        "name": "Overpacked Slam",
+        "power": [2, 4, 6],
+        "stat": "STR",
+        "range": "close",
+        "status": {
+          "id": "stunned",
+          "chance": 0.2
+        },
+        "cooldown": 3
+      }
+    ],
+    "ai": [
+      "special_if_ready",
+      "attack"
+    ],
+    "groupSize": [1, 2],
+    "speed": 2,
+    "glyph": "u",
+    "xp": 11,
+    "tags": [
+      "construct",
+      "armored"
+    ]
+  },
+  {
+    "id": "umbrella_bat",
+    "name": "Umbrella Bat",
+    "floor": 2,
+    "description": "A black umbrella that opens and shuts like a wing. It roosts upside down in the umbrella vaults and drops on whatever walks under.",
+    "stats": {
+      "STR": 5,
+      "DEX": 8,
+      "CON": 5,
+      "INT": 3,
+      "CHA": 3
+    },
+    "hpBase": 4,
+    "armor": 0,
+    "attacks": [
+      {
+        "name": "Ferrule Jab",
+        "power": [1, 3, 4],
+        "stat": "DEX",
+        "range": "close"
+      },
+      {
+        "name": "Snap Open",
+        "power": [1, 2, 3],
+        "stat": "DEX",
+        "range": "close",
+        "status": {
+          "id": "feared",
+          "chance": 0.15
+        },
+        "cooldown": 2
+      }
+    ],
+    "ai": [
+      "flee_below_20",
+      "special_if_ready",
+      "attack"
+    ],
+    "groupSize": [2, 3],
+    "speed": 5,
+    "glyph": "b",
+    "xp": 8,
+    "tags": [
+      "beast",
+      "lightSensitive"
+    ]
+  },
+  {
+    "id": "odd_sock_wraith",
+    "name": "Odd Sock Wraith",
+    "floor": 2,
+    "description": "The ghost of every sock that came out of the dryer alone. It floats at arm's length and clings, statically, to anything warm.",
+    "stats": {
+      "STR": 4,
+      "DEX": 6,
+      "CON": 5,
+      "INT": 5,
+      "CHA": 3
+    },
+    "hpBase": 6,
+    "armor": 0,
+    "attacks": [
+      {
+        "name": "Static Cling",
+        "power": [1, 2, 4],
+        "stat": "DEX",
+        "range": "near",
+        "damageType": "lightning",
+        "status": {
+          "id": "slowed",
+          "chance": 0.3
+        }
+      },
+      {
+        "name": "Lint Choke",
+        "power": [1, 2, 3],
+        "stat": "DEX",
+        "range": "close"
+      }
+    ],
+    "ai": [
+      "flee_below_15",
+      "keep_range",
+      "special_if_ready",
+      "attack"
+    ],
+    "groupSize": [1, 2],
+    "speed": 3,
+    "glyph": "w",
+    "xp": 9,
+    "tags": [
+      "undead"
+    ],
+    "preferRange": "near"
+  },
+  {
+    "id": "finders_keeper",
+    "name": "Finders Keeper",
+    "floor": 2,
+    "description": "A grubby little goblin in a coat of claim tags who has decided everything down here is his. He's open to negotiation. Everything is.",
+    "stats": {
+      "STR": 5,
+      "DEX": 7,
+      "CON": 5,
+      "INT": 6,
+      "CHA": 5
+    },
+    "hpBase": 6,
+    "armor": 1,
+    "attacks": [
+      {
+        "name": "Grabby Hands",
+        "power": [1, 3, 4],
+        "stat": "DEX",
+        "range": "close"
+      },
+      {
+        "name": "Thrown Lost Thing",
+        "power": [1, 2, 3],
+        "stat": "DEX",
+        "range": "near"
+      }
+    ],
+    "ai": [
+      "flee_below_25",
+      "attack"
+    ],
+    "groupSize": [2, 3],
+    "speed": 4,
+    "glyph": "k",
+    "xp": 9,
+    "tags": [
+      "goblinoid",
+      "talkable"
+    ],
+    "talkable": true
+  },
+  {
+    "id": "brake_eel",
+    "name": "Brake-Line Eel",
+    "floor": 3,
+    "description": "A long black eel with a brake line for a spine. It lives in the flooded drive aisles and bleeds whatever it wraps.",
+    "stats": {
+      "STR": 8,
+      "DEX": 9,
+      "CON": 7,
+      "INT": 3,
+      "CHA": 3
+    },
+    "hpBase": 6,
+    "armor": 0,
+    "attacks": [
+      {
+        "name": "Line Lash",
+        "power": [2, 3, 5],
+        "stat": "DEX",
+        "range": "close"
+      },
+      {
+        "name": "Bleed the Brakes",
+        "power": [1, 3, 4],
+        "stat": "DEX",
+        "range": "close",
+        "status": {
+          "id": "bleeding",
+          "chance": 0.3
+        }
+      }
+    ],
+    "ai": [
+      "flee_below_20",
+      "attack"
+    ],
+    "groupSize": [1, 3],
+    "speed": 4,
+    "glyph": "e",
+    "xp": 10,
+    "tags": [
+      "beast"
+    ]
+  },
+  {
+    "id": "hubcap_crab",
+    "name": "Hubcap Crab",
+    "floor": 3,
+    "description": "A crab wearing a chrome hubcap as a shell. It spins it when it's angry, which is always.",
+    "stats": {
+      "STR": 9,
+      "DEX": 6,
+      "CON": 10,
+      "INT": 3,
+      "CHA": 3
+    },
+    "hpBase": 8,
+    "armor": 3,
+    "attacks": [
+      {
+        "name": "Rim Pinch",
+        "power": [2, 4, 5],
+        "stat": "STR",
+        "range": "close"
+      },
+      {
+        "name": "Spin Out",
+        "power": [1, 3, 4],
+        "stat": "STR",
+        "range": "close",
+        "status": {
+          "id": "stunned",
+          "chance": 0.15
+        },
+        "cooldown": 2
+      }
+    ],
+    "ai": [
+      "special_if_ready",
+      "attack"
+    ],
+    "groupSize": [1, 2],
+    "speed": 3,
+    "glyph": "c",
+    "xp": 11,
+    "tags": [
+      "beast",
+      "armored"
+    ]
+  },
+  {
+    "id": "oil_slick",
+    "name": "Oil Slick",
+    "floor": 3,
+    "description": "A puddle of motor oil with ambitions. It flows uphill toward warmth and leaves you slow and shining.",
+    "stats": {
+      "STR": 8,
+      "DEX": 4,
+      "CON": 11,
+      "INT": 3,
+      "CHA": 3
+    },
+    "hpBase": 11,
+    "armor": 1,
+    "attacks": [
+      {
+        "name": "Engulf",
+        "power": [2, 3, 5],
+        "stat": "STR",
+        "range": "close",
+        "status": {
+          "id": "slowed",
+          "chance": 0.4
+        }
+      },
+      {
+        "name": "Spit Sludge",
+        "power": [1, 2, 3],
+        "stat": "DEX",
+        "range": "near"
+      }
+    ],
+    "ai": [
+      "attack"
+    ],
+    "groupSize": [1, 2],
+    "speed": 2,
+    "glyph": "o",
+    "xp": 11,
+    "tags": [
+      "ooze",
+      "lightSensitive"
+    ]
+  },
+  {
+    "id": "valet_imp",
+    "name": "Valet Imp",
+    "floor": 3,
+    "description": "A red-vested imp with a ring of keys to cars that drowned years ago. He'll leave you alone for a tip. He'll leave a scratch on you either way.",
+    "stats": {
+      "STR": 6,
+      "DEX": 10,
+      "CON": 6,
+      "INT": 7,
+      "CHA": 7
+    },
+    "hpBase": 5,
+    "armor": 1,
+    "attacks": [
+      {
+        "name": "Key Scratch",
+        "power": [1, 3, 4],
+        "stat": "DEX",
+        "range": "close"
+      },
+      {
+        "name": "Door Ding",
+        "power": [1, 2, 4],
+        "stat": "STR",
+        "range": "close"
+      }
+    ],
+    "ai": [
+      "flee_below_25",
+      "attack"
+    ],
+    "groupSize": [2, 3],
+    "speed": 5,
+    "glyph": "v",
+    "xp": 9,
+    "tags": [
+      "goblinoid",
+      "talkable"
+    ],
+    "talkable": true
+  },
+  {
+    "id": "car_alarm",
+    "name": "Car Alarm",
+    "floor": 3,
+    "description": "A car's alarm, loose from the car. It hangs in the dark like a jellyfish made of headlights and grief.",
+    "stats": {
+      "STR": 5,
+      "DEX": 7,
+      "CON": 7,
+      "INT": 4,
+      "CHA": 4
+    },
+    "hpBase": 6,
+    "armor": 0,
+    "attacks": [
+      {
+        "name": "Shriek",
+        "power": [1, 2, 3],
+        "stat": "DEX",
+        "range": "near",
+        "status": {
+          "id": "stunned",
+          "chance": 0.15
+        }
+      },
+      {
+        "name": "High Beams",
+        "power": [1, 2, 2],
+        "stat": "DEX",
+        "range": "near",
+        "status": {
+          "id": "blinded",
+          "chance": 0.2
+        },
+        "cooldown": 2
+      }
+    ],
+    "ai": [
+      "keep_range",
+      "special_if_ready",
+      "attack"
+    ],
+    "groupSize": [1, 2],
+    "speed": 2,
+    "glyph": "a",
+    "xp": 10,
+    "tags": [
+      "construct"
+    ],
+    "preferRange": "near"
   }
 ]

@@ -3,19 +3,22 @@ import type { Action, ActionType } from "./actions";
 import type { Content } from "./content/load";
 import type { GameEvent, GameEventBody } from "./events";
 import { generateCrawler, introContext } from "./gen/backstory";
-import { generateFloor } from "./gen/floor";
-import { advanceTime, clearFloor, enterRoom, formatTimer, renderMap, springTrap, tickTravelStatuses, TIME_COST } from "./explore";
 import {
-  aliveEnemies, beginTurn, combatSummary, findEnemy, isGrid, maybeEncounter, playerAttack, playerFlee, playerStep,
+  clearFloor, enterFloor, enterRoom, formatTimer, openStairwell, renderMap, springTrap, tickTravelStatuses, timePassed, TIME_COST,
+} from "./explore";
+import {
+  aliveEnemies, beginTurn, checkVictory, combatSummary, findEnemy, isGrid, maybeEncounter, playerAttack, playerFlee, playerStep,
   playerTalk, playerUseItem, playerWait,
 } from "./combat";
 import { gridAdvance, gridMove, gridRetreat } from "./grid/play";
-import { seedFloorLoot } from "./gen/loot";
 import { addToPile, dropItem, equipItem, findItems, takeItems, unequipItem } from "./inventory";
 import { gridDash, isThrowable, playerDefend, playerShove, playerThrow, takeInArena } from "./maneuvers";
 import { combine, craftKnown, nudge, showRecipes } from "./craft";
 import { renderArena } from "./grid/view";
 import { narrate } from "./narrate/narrator";
+import { answerUrge, echoNarration, feedEcho, lapseUrge, pushTemper, recordRun, showCodex, showEcho, wakeEcho } from "./echo";
+import { craftModule, moduleAction } from "./modules";
+import { noticeHints, playerDecline, useAgainstBoss } from "./boss";
 import { derive } from "./rules/derived";
 import { LOG_LIMIT, type Crawler, type FloorState, type Phase, type Room, type World } from "./state";
 
@@ -49,6 +52,16 @@ export class StepContext {
   say(key: string, data: object = {}): void {
     const ctx = { crawler: this.world.game.crawler, mood: this.world.game.narrator.mood, ...data };
     this.emit({ type: "narration", voice: "system", key, text: narrate(this.content, this.world.game.narrator, key, ctx) });
+  }
+  /** Echo, from a narration template (`echo.*`); templates see `{echo.act}`, `{echo.side}`, `{echo.vessel}`. */
+  echoSay(key: string, data: object = {}): void {
+    if (!this.world.game.echo) return;
+    const ctx = { crawler: this.world.game.crawler, mood: this.world.game.narrator.mood, echo: echoNarration(this.world.game, this.content), ...data };
+    this.emit({ type: "narration", voice: "echo", key, text: narrate(this.content, this.world.game.narrator, key, ctx) });
+  }
+  /** Echo, verbatim (shard reactions come straight from the workbook). */
+  echoLine(text: string): void {
+    this.emit({ type: "narration", voice: "echo", text });
   }
   /** Plain narrator voice (room descriptions etc). */
   describe(text: string): void {
@@ -102,6 +115,11 @@ export const HELP_LINES = [
   "use <item>           drink or eat something from your pack",
   "take <item> / take all   pick things up (weight limit applies); drop <item>",
   "equip <item> / unequip   wield or wear gear (mid-fight: 1 AP, or a tile of movement on the board)",
+  "decline / no thanks  boss fights: politely refuse what you're offered (1 AP)",
+  "let echo / hush      Echo asked to do something: let it (Fed) or don't (Calm)",
+  "feed <junk>          give Echo a piece of salvage (Fed)",
+  "echo / codex         how Echo is doing / what the account remembers (free)",
+  "shout / bind <x> / coat / break <dir>   Echo's modules, once built (`craft glow` at a bench)",
   "accept / reroll      during crawler creation",
   "abandon              end this crawler's run (asks to confirm)",
   "set combat grid|bands  how the next fight plays (tactical grid or range bands)",
@@ -112,6 +130,7 @@ function startNewCrawler(ctx: StepContext): void {
   const crawler = generateCrawler(ctx.content);
   ctx.game.crawler = crawler;
   ctx.game.floor = null;
+  ctx.game.echo = null;
   ctx.game.turn = 0;
   ctx.game.clock = 0;
   ctx.setPhase("creation");
@@ -146,12 +165,10 @@ const handlers: Handlers = {
     run(ctx) {
       ctx.account.runs += 1;
       ctx.say("crawler.accepted");
-      ctx.setPhase("exploring");
       const theme = ctx.content.floors.all.find((t) => t.floor === 1);
       if (!theme) throw new Error("no floor 1 theme in floors.json");
-      ctx.game.floor = generateFloor(theme);
-      seedFloorLoot(ctx.game.floor, theme, ctx.content);
-      enterRoom(ctx, ctx.game.floor.startRoom, "first");
+      wakeEcho(ctx);
+      enterFloor(ctx, theme);
     },
   },
   look: {
@@ -241,6 +258,8 @@ const handlers: Handlers = {
         ctx.error(`You don't have anything like "${action.item}".`);
         return;
       }
+      // A boss's counter (a stamped ticket, a tagged umbrella) does its job instead of anything else.
+      if (ctx.game.phase === "combat" && useAgainstBoss(ctx, item)) return;
       // On the board, using something you'd throw means throwing it at the nearest target.
       const def = ctx.content.items.consumables.byId[item.baseId];
       if (isGrid(ctx) && def && isThrowable(def) && (def.hazard || def.effects.some((e) => e.target === "target" || e.target === "all_enemies"))) {
@@ -258,7 +277,7 @@ const handlers: Handlers = {
       const explored = floor.rooms.filter((r) => r.visited).length;
       ctx.info(
         `${theme.name} — ${explored}/${floor.rooms.length} rooms, collapse in ${formatTimer(floor.timeLeft)}`,
-        [...renderMap(floor), "", "@ you   · visited   ? seen   S safe   > stairs"],
+        [...renderMap(floor), "", "@ you   · visited   ? seen   S safe   > stairs   ! boss"],
       );
     },
   },
@@ -266,10 +285,14 @@ const handlers: Handlers = {
     phases: ["exploring"],
     run(ctx) {
       const { room } = here(ctx);
-      advanceTime(ctx, TIME_COST.search);
-      if (ctx.game.phase === "dead") return;
+      if (!timePassed(ctx, TIME_COST.search)) return;
       room.searched = true;
       const found = room.hidden ?? [];
+      if (room.concealed) {
+        room.concealed = false;
+        ctx.describe("Behind a panel that doesn't quite match the wall, a stairwell goes down into the dark. It was here all along. Of course it was.");
+        if (found.length === 0) return;
+      }
       if (found.length === 0) {
         ctx.say("explore.searchNothing");
         return;
@@ -284,8 +307,7 @@ const handlers: Handlers = {
   rest: {
     phases: ["exploring"],
     run(ctx) {
-      advanceTime(ctx, TIME_COST.rest);
-      if (ctx.game.phase === "dead") return;
+      if (!timePassed(ctx, TIME_COST.rest)) return;
       const c = ctx.crawler;
       const d = derive(c, ctx.content);
       c.hp = Math.min(d.maxHP, c.hp + Math.ceil(d.maxHP * 0.25));
@@ -294,6 +316,7 @@ const handlers: Handlers = {
       for (const s of c.statuses) s.remaining -= 2;
       c.statuses = c.statuses.filter((s) => s.remaining > 0);
       ctx.say("explore.rest");
+      pushTemper(ctx, "rest");
     },
   },
   sleep: {
@@ -304,21 +327,21 @@ const handlers: Handlers = {
         ctx.say("explore.sleepRefused");
         return;
       }
-      advanceTime(ctx, TIME_COST.sleep);
-      if (ctx.game.phase === "dead") return; // slept straight through the collapse
+      if (!timePassed(ctx, TIME_COST.sleep)) return; // slept straight through the collapse
       const c = ctx.crawler;
       const d = derive(c, ctx.content);
       c.hp = d.maxHP;
       c.mp = d.maxMP;
       c.statuses = [];
       ctx.say("explore.sleep");
+      pushTemper(ctx, "rest");
     },
   },
   descend: {
     phases: ["exploring"],
     run(ctx) {
-      const { room } = here(ctx);
-      if (room.type !== "stairwell") {
+      const { floor, room } = here(ctx);
+      if (!openStairwell(floor, room)) {
         ctx.say("explore.descendRefused");
         return;
       }
@@ -330,6 +353,7 @@ const handlers: Handlers = {
     run(ctx, action) {
       if (ctx.game.phase !== "combat") takeItems(ctx, action.item);
       else if (beginTurn(ctx)) takeInArena(ctx, action.item);
+      if (ctx.game.crawler && ctx.game.phase !== "dead") noticeHints(ctx);
       if (ctx.game.phase === "exploring") nudge(ctx);
     },
   },
@@ -342,6 +366,7 @@ const handlers: Handlers = {
   craft: {
     phases: ["exploring"],
     run(ctx, action) {
+      if (craftModule(ctx, action.recipe)) return;
       craftKnown(ctx, action.recipe);
     },
   },
@@ -424,6 +449,49 @@ const handlers: Handlers = {
       ctx.info("Commands:", HELP_LINES);
     },
   },
+  decline: {
+    phases: ["combat"],
+    run(ctx) {
+      playerDecline(ctx);
+    },
+  },
+  allowEcho: {
+    phases: ["exploring", "combat"],
+    run(ctx) {
+      answerUrge(ctx, true);
+      if (ctx.game.phase === "combat") checkVictory(ctx);
+    },
+  },
+  refuseEcho: {
+    phases: ["exploring", "combat"],
+    run(ctx) {
+      answerUrge(ctx, false);
+    },
+  },
+  feed: {
+    phases: ["exploring"],
+    run(ctx, action) {
+      feedEcho(ctx, action.item);
+    },
+  },
+  codex: {
+    phases: "any",
+    run(ctx) {
+      showCodex(ctx);
+    },
+  },
+  echo: {
+    phases: "any",
+    run(ctx) {
+      showEcho(ctx);
+    },
+  },
+  module: {
+    phases: ["exploring", "combat"],
+    run(ctx, action) {
+      moduleAction(ctx, action.verb, action.arg);
+    },
+  },
   abandon: {
     phases: ["creation", "exploring", "combat"],
     run(ctx, action) {
@@ -443,8 +511,8 @@ const handlers: Handlers = {
 export function travel(ctx: StepContext, dest: number): void {
   const floor = ctx.game.floor!;
   const cameFrom = floor.currentRoom;
-  advanceTime(ctx, TIME_COST.move);
-  if (ctx.game.phase === "dead") return; // the floor ran out mid-step
+  lapseUrge(ctx); // whatever Echo wanted in that room, it's moot now
+  if (!timePassed(ctx, TIME_COST.move)) return; // the floor ran out mid-step
   const target = floor.rooms[dest]!;
   const firstVisit = !target.visited;
   // out-of-combat regen per room moved (spec: Derived values)
@@ -463,13 +531,15 @@ export function travel(ctx: StepContext, dest: number): void {
 }
 
 /** Actions that don't advance the turn counter (no game effect). */
-const FREE_ACTIONS = new Set<ActionType>(["help", "set", "recipes"]);
+const FREE_ACTIONS = new Set<ActionType>(["help", "set", "recipes", "codex", "echo"]);
 
 export function killCrawler(ctx: StepContext, cause: string, key = "died"): void {
   ctx.game.combat = null;
   ctx.account.deaths += 1;
   ctx.say(key, { cause });
+  ctx.echoSay(cause === "quit" ? "echo.quit" : "echo.died");
   ctx.emit({ type: "died", cause });
+  recordRun(ctx, cause === "quit" ? "quit" : `died: ${cause}`);
   ctx.setPhase("dead");
 }
 

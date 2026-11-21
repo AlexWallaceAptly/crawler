@@ -1,6 +1,6 @@
 # Crawler
 
-A browser text adventure (TypeScript monorepo). The source of truth is `docs/SPEC.md`. Build in that file's milestone order, and log every assumption in `DECISIONS.md` instead of asking.
+A browser text adventure (TypeScript monorepo). The source of truth is `docs/DESIGN.md`. Build in that file's milestone order, and log every assumption in its Decision log (the last section) instead of asking. Story content (shards, Echo's reactions, modules, the Codex, hand-written items) comes from the workbook linked at the top of `docs/DESIGN.md`.
 
 ## Commands
 
@@ -8,16 +8,19 @@ A browser text adventure (TypeScript monorepo). The source of truth is `docs/SPE
 - `npm run check`: validates content, typechecks and runs the tests. Run it before calling a milestone done.
 - `npm test`: runs Vitest (tests are in `packages/*/test`).
 - `npm run validate`: checks only the JSON content.
+- `npm run import:workbook`: re-imports the workbook's text columns from the CSV exports in `content-csv/workbook/` into the thread JSON files. Engine-only fields in the JSON are kept.
+- `npm run sim`: headless auto-play balance tool.
 
 ## Layout
 
-- `packages/engine`: pure game logic with no DOM, React or `fetch`. All randomness goes through `src/rng.ts`. The reducer is `step()` in `src/step.ts`, and the UI projection is `src/view.ts`.
+- `packages/engine`: pure game logic with no DOM, React or `fetch`. All randomness goes through `src/rng.ts`. The reducer is `step()` in `src/step.ts`, and the UI projection is `src/view.ts`. The story layer is `src/echo.ts` (Echo, Temper, shards, Codex), `src/modules.ts` (Echo's modules) and `src/boss.ts` (floor bosses and their weaknesses).
 - `packages/content`: the JSON tables. `index.ts` imports each file, and the engine's `CONTENT_FILES` maps each file to its Zod schema.
 - `packages/client`: Vite + React terminal UI. Panels render from `engine.view()` and routed events, never from raw state.
 - `packages/server`: Hono. It will proxy `/api/boss` to Claude in Milestone 10.
+- `content-csv/workbook/`: CSV exports of the workbook (live). `content-csv/archive/`: old one-time import sources, kept for the record.
 
 ## Rules
 
 - Content is data. A new entry is a JSON edit. A new content file needs both `content/index.ts` and `CONTENT_FILES` updated.
-- All game text is original. Never use names, characters or lines from the books. Tone: crude, bored, cruel, funny.
+- All game text is original. Never use names, characters or lines from the books. Tone: crude, bored, cruel, funny, with real dread underneath. Echo is the exception: anxious and sincere, and its speech follows the act (see "Echo's voice" in the design doc).
 - The engine state must stay JSON-serializable, because it's cloned and saved to `localStorage` every step.

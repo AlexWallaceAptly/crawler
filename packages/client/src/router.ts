@@ -21,11 +21,18 @@ const ROUTES: Record<GameEventType, LogPanel[]> = {
   combatEnded: ["log", "battle"],
   died: ["log", "ticker", "battle"],
   recipeLearned: ["log", "ticker"],
+  shardFound: ["log", "battle", "ticker"],
+  codexUpdated: ["log", "ticker"],
+  temperChanged: ["log"],
+  moduleBuilt: ["log", "ticker"],
+  floorEntered: ["log", "ticker"],
   phaseChanged: [],
   stateChanged: [],
 };
 
 export function routeEvent(e: GameEvent): LogPanel[] {
+  // Echo talks in fights too: its lines go to the battle log as well.
+  if (e.type === "narration" && e.voice === "echo") return ["log", "battle"];
   return ROUTES[e.type] ?? ["log"];
 }
 

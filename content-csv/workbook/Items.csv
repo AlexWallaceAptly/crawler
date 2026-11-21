@@ -1,0 +1,31 @@
+ID,Item,Unhinged description,Type,Rarity,Effect,Thread tie-in,Floors
+I01,Complimentary Eyeball,"Labelled FREE SAMPLE. Slightly warm. It looks at things when you are not looking at it, and it is judging.",Consumable,Common,Eat it: reveals the layout of one room.,Boss weakness,F1-2
+I02,Left-Handed Blender,Spins counterclockwise out of spite. The smoothie setting has never once been used for smoothies.,Weapon,Common,ATK +3. 10% chance to blend an enemy's morale.,None,F1-5
+I03,Jar of Smaller Jars,Each jar holds a smaller jar. The smallest jar holds an opinion about your life choices.,Tool,Common,+2 inventory slots.,None,F1-12
+I04,Gummy Femur,Chewy. Stamped with a tiny signature. Do not read the signature.,Consumable,Common,Heal 8 HP.,The Mother Below,F2-6
+I05,Fork of Late Arrival,Shows up after everyone has left and stabs the aftermath. Extremely apologetic about it.,Weapon,Uncommon,"ATK +2. Always acts last, but crits 25%.",None,F1-8
+I06,Hat Made of Other Hats,Not a hat. A hostile takeover. Each hat in it thinks it is the boss hat.,Armor,Uncommon,"DEF +3. Each hat absorbs 2 damage, then falls off.",None,F3-9
+I07,Boots of Quiet Disappointment,They remember your mother's face when you said 'I'm fine.' They sigh for you.,Armor,Uncommon,"DEF +2, SPD +1. Sighs reduce enemy morale.",None,F2-8
+I08,Bag of Sunlight (Wet),"Do not open indoors. Do not open outdoors. Open it where it hurts the most, and mean it.",Consumable,Uncommon,"Lights the room. Heals you in the dark, hurts undead.",None,F4-12
+I09,Pocket Lava Lamp of Foreboding,The wax forms a shape. You pretend it looks like a duck. It looks like a duck with a lawyer.,Trinket,Uncommon,The blob takes the silhouette of the next boss.,None,F1-12
+I10,Chewed Contract,Someone has chewed out every verb. You can still tell it is a threat.,Junk,Common,Sells for 2 gold. Reading it costs a turn.,None,F1-12
+I11,"Clamshell Phone, Still Ringing","Has been ringing since before the dungeon opened. Answer it and someone sighs, 'Finally.'",Trinket,Rare,"Once per floor, answer for a random ally NPC.",Previous Carriers,F3-10
+I12,Candle That Burns Only Nouns,"You light it and something stops being there. You are never sure what, until you need it.",Tool,Uncommon,Burn a noun: remove one object from a room.,None,F4-12
+I13,Spare Shadow,"A second shadow, folded. Wear it and enemies hit the wrong one. The shadow resents this and files complaints.",Armor,Rare,Enemies attack the wrong target 25% of the time.,None,F5-12
+I14,Pocket Sink,"A tiny sink, running. Chaos in a small, wet, porcelain package.",Tool,Common,Places a puddle that slows enemies.,None,F1-8
+I15,Mild Curse,"Slightly cursed. Not enough to matter, just enough that you do not want to be holding it at midnight.",Junk,Common,Does nothing. Suitable for gifting.,None,F1-12
+I16,Bone China Mouth,A small porcelain mouth on a handle. It bites. It whispers 'more'. It is nearly always right.,Weapon,Rare,ATK +6. Bleeds. Each hit pushes Temper +1 toward Fed.,The Mother Below,F5-12
+I17,Spool of Silver Thread,Warm. Hums. Sews itself into things you did not ask it to.,Junk,Uncommon,Crafting part for several modules.,Echo,F2-13
+I18,Tooth Dust Pepper,Seasoning by the day. Add it to anything and anything starts to taste like a rumor.,Consumable,Common,Restores stamina. Your dreams get worse.,The Mother Below,F4-9
+I19,"Valet Ticket, Stamped","Your car is somewhere. So are you, just later.",Tool,Uncommon,Forces a boss to park for 2 turns.,Boss weakness,F3
+I20,Overdue Book of Unknown Genre,Seventy-two years overdue. The fine is now larger than the dungeon.,Tool,Uncommon,Stuns the Overdue Librarian Wraith.,Boss weakness,F6
+I21,Pudding Cup of the Brave,Strictly decorative. Strictly not edible. The pudding disagrees.,Consumable,Common,Immune to Lunch Lady attacks while held.,Boss weakness,F4
+I22,Receipt for a Refund That Has Not Happened Yet,Dated tomorrow. Signed by yesterday.,Tool,Rare,Removes a boss's buffs once.,Boss weakness,F9
+I23,Rue's Braid Tie,A faded elastic. Smells like someone who did the right thing and paid for it.,Trinket,Unique,Temper -1 each floor you carry it.,Previous Carriers,F4-12
+I24,Stitch Counter,A tally clicker that clicks by itself. It is counting something. You do not want to be the something.,Tool,Rare,Shows Wholeness and how much the Mother stirs.,Echo,F3-13
+I25,The Wishbone,Two halves held together with wax. Do not make a wish. They both heard you.,Weapon,Rare,ATK +5. Splits in two when it crits.,The Mother Below,F7-13
+I26,Emergency Cork,"Fits any hole. Any. Including that one. Yes, that one.",Consumable,Uncommon,Plugs a hole or drain for the rest of the floor.,The Mother Below,F2-12
+I27,Lanyard of Reasonable Access,Reads VIP ALL ACCESS in crayon. It works. That is the scariest part.,Trinket,Common,Guards ask fewer questions.,None,F1-10
+I28,Unlabelled Thing,Might be a keyring. Might be a dentist. Do not ask the dentist.,Junk,Common,Sells for 1 gold. Occasionally hums.,None,F1-12
+I29,Handwarmer of the Earth,Warm like a hand on your back that you are not sure belongs to a person.,Trinket,Uncommon,Quakes shake you 20% less.,The Mother Below,F8-12
+I30,Cage Opener (Metaphorical),Not a weapon. A tool for undoing. Echo goes quiet whenever you hold it.,Weapon,Rare,ATK +4. Removes one enemy buff per hit.,Echo,F9-13

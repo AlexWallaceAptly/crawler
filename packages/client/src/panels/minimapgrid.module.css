@@ -64,3 +64,4 @@
 .goS { align-items: flex-start; justify-content: center; }
 .goE { align-items: center; justify-content: flex-start; }
 .goW { align-items: center; justify-content: flex-end; }
+.boss { position: absolute; top: 0; right: 2px; z-index: 3; color: var(--danger); font-weight: bold; font-size: 11px; line-height: 1; text-shadow: 0 0 2px #000; }

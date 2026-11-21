@@ -10,7 +10,7 @@
  */
 import type { Content } from "../content/load";
 import type { FloorTheme, LootTable } from "../content/schemas";
-import { int, pick, shuffle, weightedPick } from "../rng";
+import { chance, int, pick, shuffle, weightedPick } from "../rng";
 import type { FloorState, ItemInstance, Room } from "../state";
 import { bfsDistances } from "./floor";
 import { itemFromRef } from "./item";
@@ -63,6 +63,33 @@ export function seedFloorLoot(floor: FloorState, theme: FloorTheme, content: Con
       for (const it of rollMany(content, loot.workshopTable, [1, 2])) addToPile(r.items, it);
     }
   }
+  scatterFloorLoot(floor, theme, content);
+}
+
+/**
+ * The floor's scatter list (floors.json → loot.scatter): module parts, a boss's counter
+ * item, a hand-written oddity. Spread over ordinary rooms, some only found by searching.
+ */
+export function scatterFloorLoot(floor: FloorState, theme: FloorTheme, content: Content): void {
+  const open = floor.rooms.filter((r) => r.id !== floor.startRoom && r.type !== "stairwell" && r.type !== "safe" && !r.boss);
+  if (open.length === 0) return;
+  for (const s of theme.loot.scatter) {
+    for (let n = int(s.count[0], s.count[1]); n > 0; n--) {
+      const item = s.table ? rollLoot(content.lootTables.get(s.table), content)
+        : s.item ? itemFromRef(content, s.item)
+        : oddityFor(content, floor.floor);
+      if (!item) continue;
+      const room = pick(open);
+      const pile = chance(s.hiddenChance) ? (room.hidden ??= []) : (room.items ??= []);
+      addToPile(pile, item);
+    }
+  }
+}
+
+/** A random oddity whose floor range covers this floor (boss counters are placed on purpose instead). */
+export function oddityFor(content: Content, floor: number): ItemInstance | undefined {
+  const pool = content.oddities.all.filter((o) => o.threadTie !== "Boss weakness" && o.floors[0] <= floor && floor <= o.floors[1]);
+  return pool.length ? itemFromRef(content, pick(pool).id) : undefined;
 }
 
 /** One line for a workshop's description. */

@@ -7,7 +7,7 @@ import { rawContent } from "@crawler/content";
 import type { FloorState } from "../src/state";
 
 const content = loadContent(rawContent as never);
-const theme = content.floors.get("undercroft");
+const theme = content.floors.get("welcome_lobby");
 
 describe("floor generation (100 floors, spec acceptance)", () => {
   beforeEach(() => resetRng());

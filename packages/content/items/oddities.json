@@ -1,0 +1,937 @@
+[
+  {
+    "id": "complimentary_eyeball",
+    "ref": "I01",
+    "name": "Complimentary Eyeball",
+    "description": "Labelled FREE SAMPLE. Slightly warm. It looks at things when you are not looking at it, and it is judging.",
+    "type": "Consumable",
+    "rarityText": "Common",
+    "effectText": "Eat it: reveals the layout of one room.",
+    "threadTie": "Boss weakness",
+    "floors": [
+      1,
+      2
+    ],
+    "hintFor": "free_sample_mimic",
+    "consumable": {
+      "id": "complimentary_eyeball",
+      "name": "Complimentary Eyeball",
+      "text": "Labelled FREE SAMPLE. Slightly warm. It looks at things when you are not looking at it, and it is judging.",
+      "type": "food",
+      "effects": [
+        {
+          "kind": "flag",
+          "flag": "revealRoom"
+        }
+      ],
+      "usableInCombat": false,
+      "weight": 0.2,
+      "value": 3,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ]
+    }
+  },
+  {
+    "id": "left_handed_blender",
+    "ref": "I02",
+    "name": "Left-Handed Blender",
+    "description": "Spins counterclockwise out of spite. The smoothie setting has never once been used for smoothies.",
+    "type": "Weapon",
+    "rarityText": "Common",
+    "effectText": "ATK +3. 10% chance to blend an enemy's morale.",
+    "threadTie": "None",
+    "floors": [
+      1,
+      5
+    ],
+    "gear": {
+      "id": "left_handed_blender",
+      "name": "Left-Handed Blender",
+      "slot": "mainHand",
+      "weight": 3,
+      "value": 8,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "weaponType": "improvised",
+      "power": [
+        2,
+        4,
+        7
+      ],
+      "stat": "STR",
+      "onHit": {
+        "id": "feared",
+        "chance": 0.1
+      },
+      "flavor": "Spins counterclockwise out of spite. The smoothie setting has never once been used for smoothies."
+    }
+  },
+  {
+    "id": "jar_of_smaller_jars",
+    "ref": "I03",
+    "name": "Jar of Smaller Jars",
+    "description": "Each jar holds a smaller jar. The smallest jar holds an opinion about your life choices.",
+    "type": "Tool",
+    "rarityText": "Common",
+    "effectText": "+2 inventory slots.",
+    "threadTie": "None",
+    "floors": [
+      1,
+      12
+    ],
+    "gear": {
+      "id": "jar_of_smaller_jars",
+      "name": "Jar of Smaller Jars",
+      "slot": "belt",
+      "weight": 2,
+      "value": 6,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "modifiers": [
+        {
+          "to": "carry",
+          "value": 8,
+          "note": "jars all the way down"
+        }
+      ],
+      "flavor": "Each jar holds a smaller jar. The smallest jar holds an opinion about your life choices."
+    }
+  },
+  {
+    "id": "gummy_femur",
+    "ref": "I04",
+    "name": "Gummy Femur",
+    "description": "Chewy. Stamped with a tiny signature. Do not read the signature.",
+    "type": "Consumable",
+    "rarityText": "Common",
+    "effectText": "Heal 8 HP.",
+    "threadTie": "The Mother Below",
+    "floors": [
+      2,
+      6
+    ],
+    "consumable": {
+      "id": "gummy_femur",
+      "name": "Gummy Femur",
+      "text": "Chewy. Stamped with a tiny signature. Do not read the signature.",
+      "type": "food",
+      "effects": [
+        {
+          "kind": "heal",
+          "value": 8
+        }
+      ],
+      "usableInCombat": true,
+      "weight": 0.5,
+      "value": 6,
+      "generate": false,
+      "tags": [
+        "oddity",
+        "healing"
+      ]
+    }
+  },
+  {
+    "id": "fork_of_late_arrival",
+    "ref": "I05",
+    "name": "Fork of Late Arrival",
+    "description": "Shows up after everyone has left and stabs the aftermath. Extremely apologetic about it.",
+    "type": "Weapon",
+    "rarityText": "Uncommon",
+    "effectText": "ATK +2. Always acts last, but crits 25%.",
+    "threadTie": "None",
+    "floors": [
+      1,
+      8
+    ],
+    "gear": {
+      "id": "fork_of_late_arrival",
+      "name": "Fork of Late Arrival",
+      "slot": "mainHand",
+      "weight": 1,
+      "value": 10,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "weaponType": "blades",
+      "power": [
+        2,
+        4,
+        6
+      ],
+      "stat": "DEX",
+      "flavor": "Shows up after everyone has left and stabs the aftermath. Extremely apologetic about it."
+    }
+  },
+  {
+    "id": "hat_made_of_other_hats",
+    "ref": "I06",
+    "name": "Hat Made of Other Hats",
+    "description": "Not a hat. A hostile takeover. Each hat in it thinks it is the boss hat.",
+    "type": "Armor",
+    "rarityText": "Uncommon",
+    "effectText": "DEF +3. Each hat absorbs 2 damage, then falls off.",
+    "threadTie": "None",
+    "floors": [
+      3,
+      9
+    ],
+    "gear": {
+      "id": "hat_made_of_other_hats",
+      "name": "Hat Made of Other Hats",
+      "slot": "head",
+      "weight": 2,
+      "value": 14,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "armor": 3,
+      "flavor": "Not a hat. A hostile takeover. Each hat in it thinks it is the boss hat."
+    }
+  },
+  {
+    "id": "boots_of_quiet_disappointment",
+    "ref": "I07",
+    "name": "Boots of Quiet Disappointment",
+    "description": "They remember your mother's face when you said 'I'm fine.' They sigh for you.",
+    "type": "Armor",
+    "rarityText": "Uncommon",
+    "effectText": "DEF +2, SPD +1. Sighs reduce enemy morale.",
+    "threadTie": "None",
+    "floors": [
+      2,
+      8
+    ],
+    "gear": {
+      "id": "boots_of_quiet_disappointment",
+      "name": "Boots of Quiet Disappointment",
+      "slot": "feet",
+      "weight": 1.5,
+      "value": 12,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "armor": 2,
+      "modifiers": [
+        {
+          "to": "speed",
+          "value": 1
+        }
+      ],
+      "flavor": "They remember your mother's face when you said 'I'm fine.' They sigh for you."
+    }
+  },
+  {
+    "id": "bag_of_sunlight_wet",
+    "ref": "I08",
+    "name": "Bag of Sunlight (Wet)",
+    "description": "Do not open indoors. Do not open outdoors. Open it where it hurts the most, and mean it.",
+    "type": "Consumable",
+    "rarityText": "Uncommon",
+    "effectText": "Lights the room. Heals you in the dark, hurts undead.",
+    "threadTie": "None",
+    "floors": [
+      4,
+      12
+    ],
+    "consumable": {
+      "id": "bag_of_sunlight_wet",
+      "name": "Bag of Sunlight (Wet)",
+      "text": "Do not open indoors. Do not open outdoors. Open it where it hurts the most, and mean it.",
+      "type": "potion",
+      "effects": [
+        {
+          "kind": "heal",
+          "value": "2d6"
+        }
+      ],
+      "usableInCombat": true,
+      "weight": 0.5,
+      "value": 14,
+      "generate": false,
+      "tags": [
+        "oddity",
+        "healing"
+      ]
+    }
+  },
+  {
+    "id": "pocket_lava_lamp_of_foreboding",
+    "ref": "I09",
+    "name": "Pocket Lava Lamp of Foreboding",
+    "description": "The wax forms a shape. You pretend it looks like a duck. It looks like a duck with a lawyer.",
+    "type": "Trinket",
+    "rarityText": "Uncommon",
+    "effectText": "The blob takes the silhouette of the next boss.",
+    "threadTie": "None",
+    "floors": [
+      1,
+      12
+    ],
+    "gear": {
+      "id": "pocket_lava_lamp_of_foreboding",
+      "name": "Pocket Lava Lamp of Foreboding",
+      "slot": "neck",
+      "weight": 0.5,
+      "value": 10,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "flavor": "The wax forms a shape. You pretend it looks like a duck. It looks like a duck with a lawyer."
+    }
+  },
+  {
+    "id": "chewed_contract",
+    "ref": "I10",
+    "name": "Chewed Contract",
+    "description": "Someone has chewed out every verb. You can still tell it is a threat.",
+    "type": "Junk",
+    "rarityText": "Common",
+    "effectText": "Sells for 2 gold. Reading it costs a turn.",
+    "threadTie": "None",
+    "floors": [
+      1,
+      12
+    ],
+    "consumable": {
+      "id": "chewed_contract",
+      "name": "Chewed Contract",
+      "text": "Someone has chewed out every verb. You can still tell it is a threat.",
+      "type": "junk",
+      "effects": [],
+      "usableInCombat": false,
+      "weight": 0.1,
+      "value": 2,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ]
+    }
+  },
+  {
+    "id": "clamshell_phone_still_ringing",
+    "ref": "I11",
+    "name": "Clamshell Phone, Still Ringing",
+    "description": "Has been ringing since before the dungeon opened. Answer it and someone sighs, 'Finally.'",
+    "type": "Trinket",
+    "rarityText": "Rare",
+    "effectText": "Once per floor, answer for a random ally NPC.",
+    "threadTie": "Previous Carriers",
+    "floors": [
+      3,
+      10
+    ],
+    "gear": {
+      "id": "clamshell_phone_still_ringing",
+      "name": "Clamshell Phone, Still Ringing",
+      "slot": "neck",
+      "weight": 0.5,
+      "value": 25,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "flavor": "Has been ringing since before the dungeon opened. Answer it and someone sighs, 'Finally.'"
+    }
+  },
+  {
+    "id": "candle_that_burns_only_nouns",
+    "ref": "I12",
+    "name": "Candle That Burns Only Nouns",
+    "description": "You light it and something stops being there. You are never sure what, until you need it.",
+    "type": "Tool",
+    "rarityText": "Uncommon",
+    "effectText": "Burn a noun: remove one object from a room.",
+    "threadTie": "None",
+    "floors": [
+      4,
+      12
+    ],
+    "consumable": {
+      "id": "candle_that_burns_only_nouns",
+      "name": "Candle That Burns Only Nouns",
+      "text": "You light it and something stops being there. You are never sure what, until you need it.",
+      "type": "junk",
+      "effects": [],
+      "usableInCombat": false,
+      "weight": 0.3,
+      "value": 10,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ]
+    }
+  },
+  {
+    "id": "spare_shadow",
+    "ref": "I13",
+    "name": "Spare Shadow",
+    "description": "A second shadow, folded. Wear it and enemies hit the wrong one. The shadow resents this and files complaints.",
+    "type": "Armor",
+    "rarityText": "Rare",
+    "effectText": "Enemies attack the wrong target 25% of the time.",
+    "threadTie": "None",
+    "floors": [
+      5,
+      12
+    ],
+    "gear": {
+      "id": "spare_shadow",
+      "name": "Spare Shadow",
+      "slot": "back",
+      "weight": 0.5,
+      "value": 30,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "modifiers": [
+        {
+          "to": "defense",
+          "value": 2,
+          "note": "they hit the wrong one"
+        }
+      ],
+      "flavor": "A second shadow, folded. Wear it and enemies hit the wrong one. The shadow resents this and files complaints."
+    }
+  },
+  {
+    "id": "pocket_sink",
+    "ref": "I14",
+    "name": "Pocket Sink",
+    "description": "A tiny sink, running. Chaos in a small, wet, porcelain package.",
+    "type": "Tool",
+    "rarityText": "Common",
+    "effectText": "Places a puddle that slows enemies.",
+    "threadTie": "None",
+    "floors": [
+      1,
+      8
+    ],
+    "consumable": {
+      "id": "pocket_sink",
+      "name": "Pocket Sink",
+      "text": "A tiny sink, running. Chaos in a small, wet, porcelain package.",
+      "type": "explosive",
+      "effects": [
+        {
+          "kind": "status",
+          "statusId": "slowed",
+          "duration": 2,
+          "target": "all_enemies"
+        }
+      ],
+      "usableInCombat": true,
+      "weight": 1,
+      "value": 4,
+      "generate": false,
+      "tags": [
+        "oddity",
+        "thrown"
+      ],
+      "hazard": {
+        "id": "oil_slick",
+        "shape": "plus"
+      }
+    }
+  },
+  {
+    "id": "mild_curse",
+    "ref": "I15",
+    "name": "Mild Curse",
+    "description": "Slightly cursed. Not enough to matter, just enough that you do not want to be holding it at midnight.",
+    "type": "Junk",
+    "rarityText": "Common",
+    "effectText": "Does nothing. Suitable for gifting.",
+    "threadTie": "None",
+    "floors": [
+      1,
+      12
+    ],
+    "consumable": {
+      "id": "mild_curse",
+      "name": "Mild Curse",
+      "text": "Slightly cursed. Not enough to matter, just enough that you do not want to be holding it at midnight.",
+      "type": "junk",
+      "effects": [],
+      "usableInCombat": false,
+      "weight": 0.1,
+      "value": 0,
+      "generate": false,
+      "tags": [
+        "oddity",
+        "cursed"
+      ]
+    }
+  },
+  {
+    "id": "bone_china_mouth",
+    "ref": "I16",
+    "name": "Bone China Mouth",
+    "description": "A small porcelain mouth on a handle. It bites. It whispers 'more'. It is nearly always right.",
+    "type": "Weapon",
+    "rarityText": "Rare",
+    "effectText": "ATK +6. Bleeds. Each hit pushes Temper +1 toward Fed.",
+    "threadTie": "The Mother Below",
+    "floors": [
+      5,
+      12
+    ],
+    "temperOnHit": 1,
+    "gear": {
+      "id": "bone_china_mouth",
+      "name": "Bone China Mouth",
+      "slot": "mainHand",
+      "weight": 1,
+      "value": 35,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "weaponType": "blades",
+      "power": [
+        3,
+        6,
+        9
+      ],
+      "stat": "DEX",
+      "onHit": {
+        "id": "bleeding",
+        "chance": 0.5
+      },
+      "flavor": "A small porcelain mouth on a handle. It bites. It whispers 'more'. It is nearly always right."
+    }
+  },
+  {
+    "id": "spool_of_silver_thread",
+    "ref": "I17",
+    "name": "Spool of Silver Thread",
+    "description": "Warm. Hums. Sews itself into things you did not ask it to.",
+    "type": "Junk",
+    "rarityText": "Uncommon",
+    "effectText": "Crafting part for several modules.",
+    "threadTie": "Echo",
+    "floors": [
+      2,
+      13
+    ],
+    "consumable": {
+      "id": "spool_of_silver_thread",
+      "name": "Spool of Silver Thread",
+      "text": "Warm. Hums. Sews itself into things you did not ask it to.",
+      "type": "junk",
+      "effects": [],
+      "usableInCombat": false,
+      "weight": 0.1,
+      "value": 8,
+      "generate": false,
+      "tags": [
+        "oddity",
+        "module_part",
+        "cord"
+      ]
+    }
+  },
+  {
+    "id": "tooth_dust_pepper",
+    "ref": "I18",
+    "name": "Tooth Dust Pepper",
+    "description": "Seasoning by the day. Add it to anything and anything starts to taste like a rumor.",
+    "type": "Consumable",
+    "rarityText": "Common",
+    "effectText": "Restores stamina. Your dreams get worse.",
+    "threadTie": "The Mother Below",
+    "floors": [
+      4,
+      9
+    ],
+    "consumable": {
+      "id": "tooth_dust_pepper",
+      "name": "Tooth Dust Pepper",
+      "text": "Seasoning by the day. Add it to anything and anything starts to taste like a rumor.",
+      "type": "food",
+      "effects": [
+        {
+          "kind": "heal",
+          "value": "1d6"
+        }
+      ],
+      "usableInCombat": true,
+      "weight": 0.1,
+      "value": 3,
+      "generate": false,
+      "tags": [
+        "oddity",
+        "healing"
+      ]
+    }
+  },
+  {
+    "id": "valet_ticket_stamped",
+    "ref": "I19",
+    "name": "Valet Ticket, Stamped",
+    "description": "Your car is somewhere. So are you, just later.",
+    "type": "Tool",
+    "rarityText": "Uncommon",
+    "effectText": "Forces a boss to park for 2 turns.",
+    "threadTie": "Boss weakness",
+    "floors": [
+      3,
+      3
+    ],
+    "hintFor": "valet_kraken",
+    "consumable": {
+      "id": "valet_ticket_stamped",
+      "name": "Valet Ticket, Stamped",
+      "text": "Your car is somewhere. So are you, just later.",
+      "type": "junk",
+      "effects": [],
+      "usableInCombat": true,
+      "weight": 0.05,
+      "value": 12,
+      "generate": false,
+      "tags": [
+        "oddity",
+        "stamped_ticket"
+      ]
+    }
+  },
+  {
+    "id": "overdue_book_of_unknown_genre",
+    "ref": "I20",
+    "name": "Overdue Book of Unknown Genre",
+    "description": "Seventy-two years overdue. The fine is now larger than the dungeon.",
+    "type": "Tool",
+    "rarityText": "Uncommon",
+    "effectText": "Stuns the Overdue Librarian Wraith.",
+    "threadTie": "Boss weakness",
+    "floors": [
+      6,
+      6
+    ],
+    "hintFor": "overdue_librarian_wraith",
+    "consumable": {
+      "id": "overdue_book_of_unknown_genre",
+      "name": "Overdue Book of Unknown Genre",
+      "text": "Seventy-two years overdue. The fine is now larger than the dungeon.",
+      "type": "junk",
+      "effects": [],
+      "usableInCombat": true,
+      "weight": 1,
+      "value": 12,
+      "generate": false,
+      "tags": [
+        "oddity",
+        "overdue_book"
+      ]
+    }
+  },
+  {
+    "id": "pudding_cup_of_the_brave",
+    "ref": "I21",
+    "name": "Pudding Cup of the Brave",
+    "description": "Strictly decorative. Strictly not edible. The pudding disagrees.",
+    "type": "Consumable",
+    "rarityText": "Common",
+    "effectText": "Immune to Lunch Lady attacks while held.",
+    "threadTie": "Boss weakness",
+    "floors": [
+      4,
+      4
+    ],
+    "hintFor": "lunch_lady_colossus",
+    "consumable": {
+      "id": "pudding_cup_of_the_brave",
+      "name": "Pudding Cup of the Brave",
+      "text": "Strictly decorative. Strictly not edible. The pudding disagrees.",
+      "type": "junk",
+      "effects": [],
+      "usableInCombat": true,
+      "weight": 0.3,
+      "value": 4,
+      "generate": false,
+      "tags": [
+        "oddity",
+        "pudding"
+      ]
+    }
+  },
+  {
+    "id": "refund_receipt",
+    "ref": "I22",
+    "name": "Receipt for a Refund That Has Not Happened Yet",
+    "description": "Dated tomorrow. Signed by yesterday.",
+    "type": "Tool",
+    "rarityText": "Rare",
+    "effectText": "Removes a boss's buffs once.",
+    "threadTie": "Boss weakness",
+    "floors": [
+      9,
+      9
+    ],
+    "hintFor": "ringmaster_of_chargebacks",
+    "consumable": {
+      "id": "refund_receipt",
+      "name": "Receipt for a Refund That Has Not Happened Yet",
+      "text": "Dated tomorrow. Signed by yesterday.",
+      "type": "junk",
+      "effects": [],
+      "usableInCombat": true,
+      "weight": 0.05,
+      "value": 30,
+      "generate": false,
+      "tags": [
+        "oddity",
+        "receipt"
+      ]
+    }
+  },
+  {
+    "id": "rues_braid_tie",
+    "ref": "I23",
+    "name": "Rue's Braid Tie",
+    "description": "A faded elastic. Smells like someone who did the right thing and paid for it.",
+    "type": "Trinket",
+    "rarityText": "Unique",
+    "effectText": "Temper -1 each floor you carry it.",
+    "threadTie": "Previous Carriers",
+    "floors": [
+      4,
+      12
+    ],
+    "temperPerFloor": -1,
+    "gear": {
+      "id": "rues_braid_tie",
+      "name": "Rue's Braid Tie",
+      "slot": "ring",
+      "weight": 0.05,
+      "value": 60,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "flavor": "A faded elastic. Smells like someone who did the right thing and paid for it."
+    }
+  },
+  {
+    "id": "stitch_counter",
+    "ref": "I24",
+    "name": "Stitch Counter",
+    "description": "A tally clicker that clicks by itself. It is counting something. You do not want to be the something.",
+    "type": "Tool",
+    "rarityText": "Rare",
+    "effectText": "Shows Wholeness and how much the Mother stirs.",
+    "threadTie": "Echo",
+    "floors": [
+      3,
+      13
+    ],
+    "gear": {
+      "id": "stitch_counter",
+      "name": "Stitch Counter",
+      "slot": "neck",
+      "weight": 0.3,
+      "value": 30,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "flavor": "A tally clicker that clicks by itself. It is counting something. You do not want to be the something."
+    }
+  },
+  {
+    "id": "wishbone",
+    "ref": "I25",
+    "name": "The Wishbone",
+    "description": "Two halves held together with wax. Do not make a wish. They both heard you.",
+    "type": "Weapon",
+    "rarityText": "Rare",
+    "effectText": "ATK +5. Splits in two when it crits.",
+    "threadTie": "The Mother Below",
+    "floors": [
+      7,
+      13
+    ],
+    "gear": {
+      "id": "wishbone",
+      "name": "The Wishbone",
+      "slot": "mainHand",
+      "weight": 1,
+      "value": 35,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "weaponType": "blunt",
+      "power": [
+        3,
+        5,
+        8
+      ],
+      "stat": "STR",
+      "flavor": "Two halves held together with wax. Do not make a wish. They both heard you."
+    }
+  },
+  {
+    "id": "emergency_cork",
+    "ref": "I26",
+    "name": "Emergency Cork",
+    "description": "Fits any hole. Any. Including that one. Yes, that one.",
+    "type": "Consumable",
+    "rarityText": "Uncommon",
+    "effectText": "Plugs a hole or drain for the rest of the floor.",
+    "threadTie": "The Mother Below",
+    "floors": [
+      2,
+      12
+    ],
+    "consumable": {
+      "id": "emergency_cork",
+      "name": "Emergency Cork",
+      "text": "Fits any hole. Any. Including that one. Yes, that one.",
+      "type": "junk",
+      "effects": [
+        {
+          "kind": "cure",
+          "statusId": "bleeding"
+        }
+      ],
+      "usableInCombat": true,
+      "weight": 0.1,
+      "value": 10,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ]
+    }
+  },
+  {
+    "id": "lanyard_of_reasonable_access",
+    "ref": "I27",
+    "name": "Lanyard of Reasonable Access",
+    "description": "Reads VIP ALL ACCESS in crayon. It works. That is the scariest part.",
+    "type": "Trinket",
+    "rarityText": "Common",
+    "effectText": "Guards ask fewer questions.",
+    "threadTie": "None",
+    "floors": [
+      1,
+      10
+    ],
+    "gear": {
+      "id": "lanyard_of_reasonable_access",
+      "name": "Lanyard of Reasonable Access",
+      "slot": "neck",
+      "weight": 0.1,
+      "value": 5,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "modifiers": [
+        {
+          "to": "stat:CHA",
+          "value": 1
+        }
+      ],
+      "flavor": "Reads VIP ALL ACCESS in crayon. It works. That is the scariest part."
+    }
+  },
+  {
+    "id": "unlabelled_thing",
+    "ref": "I28",
+    "name": "Unlabelled Thing",
+    "description": "Might be a keyring. Might be a dentist. Do not ask the dentist.",
+    "type": "Junk",
+    "rarityText": "Common",
+    "effectText": "Sells for 1 gold. Occasionally hums.",
+    "threadTie": "None",
+    "floors": [
+      1,
+      12
+    ],
+    "consumable": {
+      "id": "unlabelled_thing",
+      "name": "Unlabelled Thing",
+      "text": "Might be a keyring. Might be a dentist. Do not ask the dentist.",
+      "type": "junk",
+      "effects": [],
+      "usableInCombat": false,
+      "weight": 0.2,
+      "value": 1,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ]
+    }
+  },
+  {
+    "id": "handwarmer_of_the_earth",
+    "ref": "I29",
+    "name": "Handwarmer of the Earth",
+    "description": "Warm like a hand on your back that you are not sure belongs to a person.",
+    "type": "Trinket",
+    "rarityText": "Uncommon",
+    "effectText": "Quakes shake you 20% less.",
+    "threadTie": "The Mother Below",
+    "floors": [
+      8,
+      12
+    ],
+    "gear": {
+      "id": "handwarmer_of_the_earth",
+      "name": "Handwarmer of the Earth",
+      "slot": "hands",
+      "weight": 0.3,
+      "value": 15,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "flavor": "Warm like a hand on your back that you are not sure belongs to a person."
+    }
+  },
+  {
+    "id": "cage_opener_metaphorical",
+    "ref": "I30",
+    "name": "Cage Opener (Metaphorical)",
+    "description": "Not a weapon. A tool for undoing. Echo goes quiet whenever you hold it.",
+    "type": "Weapon",
+    "rarityText": "Rare",
+    "effectText": "ATK +4. Removes one enemy buff per hit.",
+    "threadTie": "Echo",
+    "floors": [
+      9,
+      13
+    ],
+    "gear": {
+      "id": "cage_opener_metaphorical",
+      "name": "Cage Opener (Metaphorical)",
+      "slot": "mainHand",
+      "weight": 2,
+      "value": 35,
+      "generate": false,
+      "tags": [
+        "oddity"
+      ],
+      "weaponType": "improvised",
+      "power": [
+        2,
+        5,
+        7
+      ],
+      "stat": "STR",
+      "flavor": "Not a weapon. A tool for undoing. Echo goes quiet whenever you hold it."
+    }
+  }
+]

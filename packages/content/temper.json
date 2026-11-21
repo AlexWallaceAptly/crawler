@@ -1,0 +1,87 @@
+{
+  "min": -5,
+  "max": 5,
+  "fedAt": 3,
+  "calmAt": -3,
+  "stages": [
+    {
+      "id": "cautious",
+      "name": "Cautious",
+      "act": 1,
+      "wholeness": "0% to 32%",
+      "voice": "Hedges, apologizes, asks permission before speaking. Echoes fragments of what it hears.",
+      "calm": "Echo thanks you and relaxes. Module mistakes drop.",
+      "fed": "Echo flinches. First spark of 'I could do this myself'.",
+      "mechanics": "Modules run at base. Temper is a track from -5 (Calm) to +5 (Fed). Calm means Echo shares memory with the Host, and the Host's PA voice slowly gains personality. Fed means Echo keeps memory for itself, the Host's voice thins and the quakes grow. Resting, refusing kills Echo urges, and using Soothe push Calm. Letting it act, feeding it salvage and using damaging modules push Fed."
+    },
+    {
+      "id": "confident",
+      "name": "Confident",
+      "act": 2,
+      "wholeness": "33% to 64%",
+      "voice": "Dry, quipping, corrects your plans. Echoes your words back, then corrects them.",
+      "calm": "Jokes and trusts your calls.",
+      "fed": "Argues and suggests bolder plans.",
+      "mechanics": "At Temper +3 or higher, modules use their Fed variant. At -3 or lower, their Calm variant. In between, base."
+    },
+    {
+      "id": "angry",
+      "name": "Angry",
+      "act": 3,
+      "wholeness": "65% to 96%",
+      "voice": "Curt, furious, hungry. Stops echoing. Speaks only for itself.",
+      "calm": "Grudging cooperation. Asks you to hold it back.",
+      "fed": "Acts on its own once per floor and may refuse a command.",
+      "mechanics": "A Fed Echo takes one free action per floor. A Calm Echo's Soothe works on bosses. Every shard found makes the Mother's tremors stronger."
+    },
+    {
+      "id": "whole",
+      "name": "Whole",
+      "act": 4,
+      "wholeness": "97% to 100%",
+      "voice": "Decided. Its own words only.",
+      "calm": "Resolve.",
+      "fed": "Wrath.",
+      "mechanics": "Floor 13 only. The Node Key variant sets the ending: Calm shares the load (Sonance), Fed takes the node (Cord). A mixed Temper triggers Peace Terms (Dox)."
+    }
+  ],
+  "sources": {
+    "rest": {
+      "delta": -1,
+      "perFloor": 2
+    },
+    "refuse": {
+      "delta": -1
+    },
+    "allow": {
+      "delta": 1
+    },
+    "feed": {
+      "delta": 1,
+      "perFloor": 2
+    },
+    "damagingModule": {
+      "delta": 1,
+      "perFloor": 2
+    },
+    "soothe": {
+      "delta": -1
+    }
+  },
+  "urges": {
+    "explore": {
+      "chance": 0.08,
+      "kinds": [
+        "rummage",
+        "listen"
+      ]
+    },
+    "combat": {
+      "chance": 0.2,
+      "kinds": [
+        "zap"
+      ]
+    },
+    "zap": "1d4"
+  }
+}

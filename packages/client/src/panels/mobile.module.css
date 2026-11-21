@@ -327,3 +327,12 @@
   background: var(--panel);
   font-size: 14px;
 }
+
+.sheetSub {
+  color: var(--faint);
+  font-size: 11px;
+  text-transform: uppercase;
+  margin: 12px 0 2px;
+  border-top: 1px dashed var(--border-hi);
+  padding-top: 6px;
+}

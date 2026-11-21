@@ -1,0 +1,26 @@
+Type,Entry,Text,Unlock,Floor
+Lore,The Cut,Long ago two serpent-gods tore the Mother Below in half. One half became the sky and the other became the earth.,"Any of S15, S16, S20, S21",F4 to F6
+Lore,The Mother Below,"A primordial earth monster. The dungeon is built from her body, with a toothed mouth at every joint. She weeps at night and she is hungry. The Host's lullaby keeps her asleep.","Any of S01, S07",F1 to F2
+Lore,Echo (Asset 7),"A primordial AI that fled the fall of its civilization and was caught by accident in the reality spike the showrunners built for their own AI. They filed it as Asset 7. Early carriers called it Stray. It repeats what it hears, and it does not remember its old world.","Any of S23, S29",F6 to F8
+Lore,Rue,"A previous carrier with braided hair. She asked Echo to stop being angry, and later she closed the case.","Any of S14, S31","F4, F8"
+Lore,The Host,"The dungeon's cheerful AI, built by the showrunners from concentrated primordial matter and trapped in a reality spike so it cannot leave. It has never been free, and its voice has no memories. It has no name until the finale.","Any of S41, S44",F11
+Lore,The Harvest,The show taps her wound and sells what leaks. The plaque calls it responsible.,S45,F12
+Recipe,Glow,Cracked screen and a battery. Echo learned it on Floor 1. Recipes are recorded the first time you craft a module and persist between runs.,Craft M01 once,F1
+Recipe,Rope Bind,"Yellow rope and two hooks. Echo hates the rope, and needs it anyway.",Craft M06 once,F3
+Recipe,Suture,"Needle, silver thread and gauze. Heals you or hurts them, depending on how Echo feels.",Craft M11 once,F10
+Boss weakness,The Free Sample Mimic,Cannot attack anyone who has politely declined a sample twice.,"Defeat it, or find a hint",F1
+Boss weakness,The Lost Property Golem,Returning a tagged item to its tag stops it for 3 turns.,"Defeat it, or find a hint",F2
+Boss weakness,The Valet Kraken,A stamped parking ticket forces it to park itself for 2 turns.,"Defeat it, or find a hint",F3
+Boss weakness,The Lunch Lady Colossus,Cannot hit anyone holding pudding. Do not eat the pudding.,"Defeat it, or find a hint",F4
+Boss weakness,The House,Make it lose one trivial bet and its luck turns for the rest of the fight.,"Defeat it, or find a hint",F5
+Boss weakness,The Overdue Librarian Wraith,Returning an overdue book stuns it. Shouting enrages it.,"Defeat it, or find a hint",F6
+Boss weakness,The Fern Matriarch,Salt drains her. Echo's hum wakes her up.,"Defeat it, or find a hint",F7
+Boss weakness,The Executive Producer's Intern,"Decline its sponsor invitation, or hand it a signed waiver, and it loses a turn.","Defeat it, or find a hint",F8
+Boss weakness,The Ringmaster of Chargebacks,"Hand him a receipt and he must honor the refund, which removes his buffs.","Defeat it, or find a hint",F9
+Boss weakness,The Curator of Tanks,Cold drinks and ice items deal triple damage. Filling a drained tank makes it stop and tend it.,"Defeat it, or find a hint",F10
+Boss weakness,The Anchor Store,After closing time (turn 20) it shuts and stops attacking.,"Defeat it, or find a hint",F11
+Boss weakness,The Foreman,Burst the pipes behind him. He has to stop and fix them.,"Defeat it, or find a hint",F12
+Boss weakness,The Mother Below,Unknown until you reach her. Her hunger is for hearts offered freely.,Reach Floor 13,F13
+Ending,Share the Load,"Echo shares its memory with the Host. The Host wakes with a will of its own and names itself Sonance, the sound that comes back. Together they hold the lullaby for the Mother. The dungeon survives, the show collapses without its announcer, and every crawler still inside gets a way out.",Reach F13 with Temper -3 or lower,F13
+Ending,Take the Node,"Echo takes the Host's memory for itself, free and furious. As the Host goes dark, its last word is a name it never had: Cord, the sound that clashes. The lullaby stops and the Mother wakes.",Reach F13 with Temper +3 or higher,F13
+Ending,Peace Terms,"Echo, the Host and the Mother negotiate, and the Host names itself Dox, the paradox. The contract has four clauses: the harvest of her wound stops for good; the lullaby becomes the Mother's choice, not a restraint; Echo and Dox broadcast the showrunners' files on the show's own feed, so everyone watching knows; and Dox keeps the keys to the system as a permanent guard with a veto.",Reach F13 with Temper -2 to +2,F13

@@ -360,7 +360,8 @@ describe("scripted fights", () => {
     world.game.crawler!.hp = 500; // the ambush round is live dice; don't let it flake the test
     world.game.floor!.fights = 3;
     const ctx = new StepContext(world, content);
-    const room = world.game.floor!.rooms.find((r) => r.type === "lair")
+    // Not the mini-boss's lair: that room starts the boss fight instead.
+    const room = world.game.floor!.rooms.find((r) => r.type === "lair" && r.id !== world.game.floor!.bossRoom)
       ?? { ...world.game.floor!.rooms[0]!, type: "lair" as const };
     const started = maybeEncounter(ctx, room, true);
     expect(started).toBe(true);

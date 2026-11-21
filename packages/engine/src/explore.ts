@@ -10,8 +10,11 @@ import { rollDice } from "./rules/dice";
 import { collectModifiers, derive, modTotal } from "./rules/derived";
 import { applyStatus, decrementStatuses, tickStatuses } from "./rules/effects";
 import { killCrawler, type StepContext } from "./step";
-import { MINUTES_PER_DAY } from "./gen/floor";
-import { workbenchLine } from "./gen/loot";
+import { generateFloor, MINUTES_PER_DAY } from "./gen/floor";
+import { seedFloorLoot, workbenchLine } from "./gen/loot";
+import { echoOnNewFloor, maybeRoomShard, maybeUrge, recordRun, shardFound, wholenessOn } from "./echo";
+import { modulesOnEnter, neutralizePoison, trapAutoSpotted } from "./modules";
+import { bossGateOf, bossNearby, bossOfFloor } from "./boss";
 import type { Dir, FloorState, Room, RoomType } from "./state";
 import { DIRS } from "./state";
 
@@ -59,8 +62,23 @@ export function exitList(floor: FloorState, room: Room): Dir[] {
 /** Badge shown beside the room name; only types the player should recognize on sight. */
 export function roomBadge(room: Room): string | undefined {
   if (room.type === "safe") return "SAFE ROOM";
-  if (room.type === "stairwell") return "STAIRWELL";
+  if (room.type === "stairwell" && !room.concealed) return "STAIRWELL";
   return undefined;
+}
+
+/** A stairwell you can actually take: found, and not held by a living boss. */
+export function openStairwell(floor: FloorState, room: Room): boolean {
+  return room.type === "stairwell" && !room.concealed && !(room.boss && !floor.bossDefeated);
+}
+
+/**
+ * Spend time and report whether the run carries on in the same place: false if the
+ * crawler died or the collapse pushed them down onto a new floor meanwhile.
+ */
+export function timePassed(ctx: StepContext, minutes: number): boolean {
+  const floor = ctx.game.floor;
+  advanceTime(ctx, minutes);
+  return !ctx.dead() && ctx.game.floor === floor;
 }
 
 // ---------------------------------------------------------------- time
@@ -87,7 +105,7 @@ export function advanceTime(ctx: StepContext, minutes: number): void {
 
   if (floor.timeLeft <= 0) {
     const room = floor.rooms[floor.currentRoom]!;
-    if (room.type === "stairwell") {
+    if (room.type === "stairwell" && !room.concealed) {
       ctx.describe("The floor gives way behind you, and the stairwell does the only thing it knows how to do.");
       clearFloor(ctx);
     } else {
@@ -104,14 +122,37 @@ export function advanceTime(ctx: StepContext, minutes: number): void {
   }
 }
 
-/** Descending (or surviving a collapse on the stairs) ends the run as a win, not a death. */
+/**
+ * Descending (or surviving a collapse on the stairs): on to the next floor if one is
+ * built, otherwise the run ends as a win, not a death.
+ */
 export function clearFloor(ctx: StepContext): void {
   const floor = ctx.game.floor!;
   ctx.account.bestFloor = Math.max(ctx.account.bestFloor, floor.floor + 1);
   ctx.emit({ type: "floorCleared", floor: floor.floor });
-  ctx.say("floor.cleared");
-  ctx.game.floor = null;
-  ctx.setPhase("dead"); // run over until Floor 2 exists; "new" starts the next crawler
+  ctx.say("floor.cleared", { floor: floor.floor });
+  ctx.game.combat = null;
+  const next = ctx.content.floors.all.find((t) => t.floor === floor.floor + 1);
+  if (!next) {
+    recordRun(ctx, `descended past Floor ${floor.floor}`);
+    ctx.game.floor = null;
+    ctx.setPhase("dead"); // the deepest built floor is done; "new" starts the next crawler
+    return;
+  }
+  echoOnNewFloor(ctx);
+  enterFloor(ctx, next);
+  ctx.echoSay("echo.newFloor", { floor: next.floor, wholeness: wholenessOn(ctx.content, next.floor) });
+}
+
+/** Generate a floor (with its boss), stock it, and walk in at the start. */
+export function enterFloor(ctx: StepContext, theme: FloorTheme): void {
+  const boss = bossOfFloor(ctx.content, theme.floor);
+  ctx.game.floor = generateFloor(theme, { bossGate: bossGateOf(ctx.content, theme.floor), ...(boss ? { boss: boss.id } : {}) });
+  seedFloorLoot(ctx.game.floor, theme, ctx.content);
+  ctx.setPhase("exploring");
+  ctx.emit({ type: "floorEntered", floor: theme.floor, name: theme.name });
+  if (theme.floor > 1) ctx.say("floor.entered", { floor: theme.floor, name: theme.name });
+  enterRoom(ctx, ctx.game.floor.startRoom, "first");
 }
 
 // ---------------------------------------------------------------- movement
@@ -126,8 +167,12 @@ export function enterRoom(ctx: StepContext, roomId: number, kind: "first" | "rev
   room.seen = true;
   for (const id of Object.values(room.exits)) floor.rooms[id]!.seen = true;
 
-  if (!room.desc) room.desc = describeRoom(theme, room);
   const first = kind === "first";
+  let shard = null;
+  if (!room.desc) {
+    room.desc = describeRoom(theme, room);
+    if (first) shard = maybeRoomShard(ctx, room);
+  }
   const items = itemLabels(room);
   ctx.emit({
     type: "roomEntered",
@@ -139,8 +184,12 @@ export function enterRoom(ctx: StepContext, roomId: number, kind: "first" | "rev
     ...(items.length ? { items } : {}),
     ...(room.workbench ? { workbench: true } : {}),
   });
+  if (shard) shardFound(ctx, shard);
+  if (kind !== "look") modulesOnEnter(ctx, room, first);
+  if (first) bossNearby(ctx, room);
   if (kind === "revisit" && chance(0.3)) ctx.say("explore.revisit");
   if (first && chance(0.1)) ctx.say("explore.interjection");
+  if (first && room.id !== floor.startRoom) maybeUrge(ctx, "explore");
 }
 
 /**
@@ -150,6 +199,7 @@ export function enterRoom(ctx: StepContext, roomId: number, kind: "first" | "rev
 export function tickTravelStatuses(ctx: StepContext): void {
   const c = ctx.crawler;
   if (c.statuses.length === 0) return;
+  neutralizePoison(ctx, false);
   for (const t of tickStatuses(c.statuses, ctx.content)) {
     const max = derive(c, ctx.content).maxHP;
     c.hp = Math.min(max, c.hp - t.amount);
@@ -178,6 +228,11 @@ export function springTrap(ctx: StepContext, room: Room): void {
   const mods = collectModifiers(c, ctx.content);
   const floorNo = ctx.game.floor!.floor;
 
+  if (trapAutoSpotted(ctx)) {
+    ctx.echoSay("echo.glowTrap");
+    ctx.describe(trap.spotted);
+    return;
+  }
   const spot = resolveCheck({
     label: `Spot the ${trap.name}`,
     modifier: d.stats.INT + (c.skills["perception"]?.rank ?? 0) + modTotal(mods, "skill:perception"),
@@ -226,9 +281,10 @@ export function renderMap(floor: FloorState): string[] {
   const symbol = (r: Room | null): string => {
     if (!r || (!r.visited && !r.seen)) return " ";
     if (r.id === floor.currentRoom) return "@";
-    if (!r.visited) return "?";
+    if (r.boss && !floor.bossDefeated && (r.visited || r.marked)) return "!";
+    if (!r.visited && !r.marked) return "?";
     if (r.type === "safe") return "S";
-    if (r.type === "stairwell") return ">";
+    if (r.type === "stairwell" && !r.concealed) return ">";
     return "·";
   };
   const known = (r: Room | null) => !!r && (r.visited || r.seen);
@@ -256,11 +312,13 @@ export type TileKind = RoomType | "workshop" | "unknown";
 export interface MapCell {
   x: number;
   y: number;
-  /** Real room type once visited; `unknown` for rooms only seen from next door (no spoilers). */
+  /** Real room type once visited (or marked by Echo); `unknown` for rooms only seen from next door (no spoilers). */
   kind: TileKind;
   current: boolean;
   visited: boolean;
   trapSprung: boolean;
+  /** A living floor boss is known to be here. */
+  boss: boolean;
   /** Connections to other *known* rooms. */
   exits: { north: boolean; east: boolean; south: boolean; west: boolean };
 }
@@ -281,13 +339,16 @@ export function mapGrid(floor: FloorState): MapGrid {
     if (!known(r)) continue;
     const open = (dir: "north" | "east" | "south" | "west", dx: number, dy: number) =>
       r.exits[dir] !== undefined && known(at(r.x + dx, r.y + dy));
+    const shown = r.visited || !!r.marked;
+    const type: TileKind = r.concealed ? (r.shape === "corridor" ? "corridor" : "empty") : r.type;
     cells.push({
       x: r.x,
       y: r.y,
-      kind: !r.visited ? "unknown" : r.workbench && r.type !== "safe" ? "workshop" : r.type,
+      kind: !shown ? "unknown" : r.visited && r.workbench && r.type !== "safe" ? "workshop" : type,
       current: r.id === floor.currentRoom,
       visited: r.visited,
       trapSprung: !!r.trapSprung,
+      boss: !!r.boss && !floor.bossDefeated && shown,
       exits: { north: open("north", 0, -1), east: open("east", 1, 0), south: open("south", 0, 1), west: open("west", -1, 0) },
     });
   }

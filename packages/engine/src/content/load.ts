@@ -16,6 +16,13 @@ import {
   QuirkSchema,
   SkillSchema,
   StatusEffectSchema,
+  ThreadSchema,
+  ShardSchema,
+  ModuleSchema,
+  TemperSchema,
+  CodexEntrySchema,
+  BossSchema,
+  OdditySchema,
   type ArenaFeature,
   type LootTable,
   type Recipe,
@@ -32,6 +39,13 @@ import {
   type Quirk,
   type Skill,
   type StatusEffect,
+  type Thread,
+  type Shard,
+  type EchoModule,
+  type TemperRules,
+  type CodexEntry,
+  type Boss,
+  type Oddity,
 } from "./schemas";
 
 /** Every content file, keyed by its path under packages/content. */
@@ -52,6 +66,13 @@ export const CONTENT_FILES = {
   "arenaFeatures.json": z.array(ArenaFeatureSchema),
   "lootTables.json": z.array(LootTableSchema),
   "recipes.json": z.array(RecipeSchema),
+  "thread.json": ThreadSchema,
+  "shards.json": z.array(ShardSchema),
+  "modules.json": z.array(ModuleSchema),
+  "temper.json": TemperSchema,
+  "codex.json": z.array(CodexEntrySchema),
+  "bosses.json": z.array(BossSchema),
+  "items/oddities.json": z.array(OdditySchema),
 } as const;
 
 export type ContentFileName = keyof typeof CONTENT_FILES;
@@ -86,6 +107,15 @@ export interface Content {
   arenaFeatures: Table<ArenaFeature>;
   lootTables: Table<LootTable>;
   recipes: Table<Recipe>;
+  /** The story layer (see "The thread" in docs/DESIGN.md). */
+  thread: Thread;
+  shards: Table<Shard>;
+  modules: Table<EchoModule>;
+  temper: TemperRules;
+  codex: Table<CodexEntry>;
+  bosses: Table<Boss>;
+  /** I01-I30; each is also registered as an item base or consumable under the same id. */
+  oddities: Table<Oddity>;
 }
 
 export class ContentError extends Error {
@@ -148,6 +178,11 @@ export function loadContent(raw: RawContent): Content {
     narration[t.key] = t;
   }
 
+  // Oddities spawn through the ordinary item tables, so register each under its own id.
+  const oddities = p["items/oddities.json"];
+  const bases = [...p["items/bases.json"], ...oddities.flatMap((o) => (o.gear ? [o.gear] : []))];
+  const consumables = [...p["items/consumables.json"], ...oddities.flatMap((o) => (o.consumable ? [o.consumable] : []))];
+
   const content: Content = {
     skills: table("skills.json", p["skills.json"], problems),
     statusEffects: table("statusEffects.json", p["statusEffects.json"], problems),
@@ -163,12 +198,19 @@ export function loadContent(raw: RawContent): Content {
       names: p["backstory/names.json"],
     },
     items: {
-      bases: table("items/bases.json", p["items/bases.json"], problems),
-      consumables: table("items/consumables.json", p["items/consumables.json"], problems),
+      bases: table("items/bases.json", bases, problems),
+      consumables: table("items/consumables.json", consumables, problems),
     },
     arenaFeatures: table("arenaFeatures.json", p["arenaFeatures.json"], problems),
     lootTables: table("lootTables.json", p["lootTables.json"], problems),
     recipes: table("recipes.json", p["recipes.json"], problems),
+    thread: p["thread.json"],
+    shards: table("shards.json", p["shards.json"], problems),
+    modules: table("modules.json", p["modules.json"], problems),
+    temper: p["temper.json"],
+    codex: table("codex.json", p["codex.json"], problems),
+    bosses: table("bosses.json", p["bosses.json"], problems),
+    oddities: table("items/oddities.json", oddities, problems),
   };
 
   checkReferences(content, problems);
@@ -261,5 +303,55 @@ function checkReferences(c: Content, problems: string[]): void {
     for (const a of e.attacks) {
       if (a.status) ref(`enemies.json "${e.id}".attacks "${a.name}"`, "status", c.statusEffects.has(a.status.id), a.status.id);
     }
+  }
+  checkThread(c, problems, ref);
+}
+
+type RefCheck = (where: string, kind: string, ok: boolean, id: string) => void;
+
+/** The story layer's cross-references: shards, modules, the Codex, bosses, oddities, the floor arc. */
+function checkThread(c: Content, problems: string[], ref: RefCheck): void {
+  for (const m of c.modules.all) {
+    const where = `modules.json "${m.id}"`;
+    ref(`${where}.unlockedBy`, "shard", c.shards.has(m.unlockedBy), m.unlockedBy);
+    for (const part of m.parts) ref(`${where}.parts`, "item", itemRefExists(c, part.item), part.item);
+  }
+  for (const e of c.codex.all) {
+    const where = `codex.json "${e.id}"`;
+    for (const s of [...(e.unlock.shards ?? []), ...e.lines]) ref(where, "shard", c.shards.has(s), s);
+    if (e.unlock.module) ref(`${where}.unlock.module`, "module", c.modules.has(e.unlock.module), e.unlock.module);
+    if (e.unlock.boss) ref(`${where}.unlock.boss`, "boss", c.bosses.has(e.unlock.boss), e.unlock.boss);
+    if (e.unlock.ending) ref(`${where}.unlock.ending`, "ending", c.thread.endings.some((x) => x.id === e.unlock.ending), e.unlock.ending);
+    const ways = Object.values(e.unlock).filter((v) => v !== undefined).length;
+    if (ways !== 1) problems.push(`${where}.unlock: needs exactly one of shards, module, boss or ending`);
+  }
+  const floors = new Set(c.thread.floors.map((f) => f.floor));
+  if (floors.size !== 13) problems.push("thread.json.floors: needs each floor 1-13 exactly once");
+  for (const f of c.thread.floors) ref(`thread.json.floors[${f.floor}].boss`, "boss", c.bosses.has(f.boss), f.boss);
+  for (const b of c.bosses.all) {
+    const where = `bosses.json "${b.id}"`;
+    if (b.weakness.effect) ref(`${where}.weakness.effect`, "status", c.statusEffects.has(b.weakness.effect.status), b.weakness.effect.status);
+    for (const a of b.family?.attacks ?? []) {
+      if (a.status) ref(`${where}.family.attacks "${a.name}"`, "status", c.statusEffects.has(a.status.id), a.status.id);
+    }
+    if (b.drops.table) ref(`${where}.drops.table`, "loot table", c.lootTables.has(b.drops.table), b.drops.table);
+    for (const it of b.drops.items) ref(`${where}.drops.items`, "item", itemRefExists(c, it), it);
+    if (b.family && !b.weakness.trigger) problems.push(`${where}: a built boss (with a family) needs a weakness trigger`);
+  }
+  for (const o of c.oddities.all) {
+    if (o.hintFor) ref(`items/oddities.json "${o.id}".hintFor`, "boss", c.bosses.has(o.hintFor), o.hintFor);
+    const def = o.consumable;
+    for (const e of def?.effects ?? []) {
+      if (e.statusId) ref(`items/oddities.json "${o.id}".effects`, "status", c.statusEffects.has(e.statusId), e.statusId);
+    }
+    if (o.gear?.onHit) ref(`items/oddities.json "${o.id}".onHit`, "status", c.statusEffects.has(o.gear.onHit.id), o.gear.onHit.id);
+  }
+  for (const t of c.floors.all) {
+    if (!c.thread.floors.some((f) => f.floor === t.floor)) problems.push(`floors.json "${t.id}": floor ${t.floor} has no row in thread.json floors`);
+    t.loot.scatter.forEach((s, i) => {
+      const where = `floors.json "${t.id}".loot.scatter[${i}]`;
+      if (s.table) ref(where, "loot table", c.lootTables.has(s.table), s.table);
+      if (s.item) ref(where, "item", itemRefExists(c, s.item), s.item);
+    });
   }
 }
