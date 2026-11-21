@@ -111,3 +111,62 @@ export function uid(prefix = "id"): string {
   const r = Math.floor(source() * 36 ** 6).toString(36).padStart(6, "0");
   return `${prefix}_${r}${uidCounter.toString(36)}`;
 }
+
+// ---------------------------------------------------------------- looks only
+
+/*
+ * Randomness for how things look (which floor tile, where the puddles go), kept
+ * apart from the game's dice: none of it reads or advances the source above, so
+ * adding a cosmetic roll never shifts a fight's outcome or a test's forced dice.
+ * Seeds come from state that's already random (an arena's layout, say).
+ */
+
+/** Mix integers into a 32-bit hash. Same inputs, same hash. */
+export function hash32(...values: number[]): number {
+  let h = 0x811c9dc5;
+  for (const v of values) {
+    h = Math.imul(h ^ (v | 0), 0x01000193);
+    h ^= h >>> 15;
+    h = Math.imul(h, 0x2c1b3c6d);
+    h ^= h >>> 12;
+  }
+  return h >>> 0;
+}
+
+/** Hash a string (for seeding from a layout). */
+export function hashString(text: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
+  return hash32(h);
+}
+
+/** A stable [0, 1) value for these integers: a cosmetic coin with no state. */
+export function hashUnit(...values: number[]): number {
+  return hash32(...values) / 0x1_0000_0000;
+}
+
+export interface CosmeticStream {
+  random(): number;
+  int(min: number, max: number): number;
+  pick<T>(items: readonly T[]): T;
+}
+
+/** A seeded stream for cosmetic layouts (mulberry32). Never touches the game's dice. */
+export function cosmeticStream(seed: number): CosmeticStream {
+  let s = seed >>> 0;
+  const random = () => {
+    s = (s + 0x6d2b79f5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 0x1_0000_0000;
+  };
+  return {
+    random,
+    int: (min, max) => (max < min ? max : min + Math.floor(random() * (max - min + 1))),
+    pick: (items) => {
+      if (items.length === 0) throw new Error("cosmeticStream.pick: empty list");
+      return items[Math.floor(random() * items.length)]!;
+    },
+  };
+}

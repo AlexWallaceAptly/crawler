@@ -9,6 +9,7 @@
     "dev": "npm run validate && concurrently -k -n client,server -c cyan,magenta \"npm -w @crawler/client run dev\" \"npm -w @crawler/server run dev\"",
     "validate": "tsx scripts/validate-content.ts",
     "import:workbook": "tsx scripts/import-workbook.ts",
+    "import:tileset": "tsx scripts/import-tileset.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p packages/engine && tsc -p packages/content && tsc -p packages/client && tsc -p packages/server && tsc -p scripts",

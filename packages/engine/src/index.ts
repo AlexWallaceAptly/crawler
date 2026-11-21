@@ -20,4 +20,4 @@ export * from "./parser";
 export * from "./view";
 export * from "./engine";
 export { loadDefaultContent } from "./content/default";
-export type { GridView, GridTileView, GridUnitView } from "./grid/view";
+export type { GridView, GridTileView, GridUnitView, FloorTileView } from "./grid/view";

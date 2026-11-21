@@ -7,17 +7,20 @@
  *   chamber   8x8
  *
  * One door tile sits in the middle of each edge that has a room exit; the one you
- * came through is the entry. Obstacles are single-tile props (no walls, no
- * auto-tiling: the board edge is the wall). Then a little terrain, maybe a hazard,
+ * came through is the entry. Obstacles are single-tile props (no walls: the board
+ * edge is the wall). Then a little terrain, maybe a hazard,
  * then the spawns: you just inside the entry, the enemies in the far half — or,
  * if they won initiative, close enough to hurt. Every enemy and every door must be
  * reachable from you; otherwise it rerolls, and finally gives up on obstacles.
+ * Last, the looks: the ground's terrains, autotiled when the board is drawn
+ * (tiles/ground.ts, tiles/tileset.ts).
  */
 import type { Content } from "../content/load";
 import type { FloorTheme, RoomShape } from "../content/schemas";
 import { int, pick, shuffle, weightedPick } from "../rng";
 import { DIRS, type ArenaExit, type ArenaState, type Dir, type Enemy, type ItemInstance, type Pos, type Room } from "../state";
 import { allTiles, blocksMove, dist, index, inBounds, pathField, same } from "./geometry";
+import { groundLayout, lookSeed } from "../tiles/ground";
 
 const SIZES: Record<RoomShape, [number, number]> = { corridor: [9, 4], small: [6, 6], chamber: [8, 8] };
 const OBSTACLES: Record<RoomShape, [number, number]> = { corridor: [1, 2], small: [1, 3], chamber: [3, 6] };
@@ -62,10 +65,18 @@ export interface ArenaPlan {
 export function buildArena(plan: ArenaPlan, content: Content): ArenaState {
   for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
     const a = layout(plan, content, true);
-    if (a && valid(a, plan.enemies, content)) return a;
+    if (a && valid(a, plan.enemies, content)) return withLooks(a, plan);
   }
   // Unlucky rolls: an empty room still works.
-  return layout(plan, content, false)!;
+  return withLooks(layout(plan, content, false)!, plan);
+}
+
+/** The ground's terrains and the art seed: seeded by the layout itself, so no dice are spent on looks. */
+function withLooks(a: ArenaState, plan: ArenaPlan): ArenaState {
+  a.lookSeed = lookSeed([a.w, a.h, a.tiles, a.hazards, a.crawler, plan.enemies.map((e) => e.pos)]);
+  const g = plan.theme.arena.ground;
+  if (g) a.ground = groundLayout(g, a.w, a.h, a.lookSeed);
+  return a;
 }
 
 function layout(plan: ArenaPlan, content: Content, furnish: boolean): ArenaState | null {

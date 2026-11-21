@@ -4,7 +4,7 @@
  * what tapping a tile does) so the client never re-implements a rule.
  */
 import type { Content } from "../content/load";
-import type { CombatState, Crawler, Enemy, Pos } from "../state";
+import type { ArenaState, CombatState, Crawler, Enemy } from "../state";
 import { derive } from "../rules/derived";
 import { hasFlag } from "../rules/effects";
 import {
@@ -12,14 +12,15 @@ import {
 } from "./geometry";
 import { speedOf } from "./units";
 import { AP_COST, apNow } from "../rules/ap";
-import type { RangeBand } from "../content/schemas";
+import type { FloorTheme, RangeBand } from "../content/schemas";
+import { choiceArt, paintGround } from "../tiles/tileset";
 
 export interface GridTileView {
   x: number;
   y: number;
   coord: string;
-  /** Floor sprite name (theme variant), e.g. "undercroft_2". */
-  floor: string;
+  /** The floor tile drawn under everything else on this square. */
+  floor: FloorTileView;
   feature?: { id: string; name: string; kind: string; glyph: string };
   hazard?: { id: string; name: string; glyph: string; rounds?: number };
   exit?: { dir: string; entry: boolean };
@@ -31,6 +32,22 @@ export interface GridTileView {
   attack?: true;
   /** The command a tap on this tile submits, if any. */
   tap?: string;
+}
+
+/** One square of floor art, picked by the tileset's autotiler. */
+export interface FloorTileView {
+  /** The PNG under public/, without ".png". Missing when the tileset has no tile for this terrain. */
+  image?: string;
+  /** Atlas tiles: the tile's pixel rectangle [x, y, w, h] in the sheet, and the sheet's size. */
+  region?: [number, number, number, number];
+  sheet?: [number, number];
+  /** Godot's flips: transpose first (swap x and y), then flip_h / flip_v. */
+  flipH?: true;
+  flipV?: true;
+  transpose?: true;
+  /** The terrain shown, and its color: drawn under the art, and on its own until the art exists. */
+  terrain?: string;
+  color?: string;
 }
 
 export interface GridUnitView {
@@ -69,19 +86,30 @@ export interface GridView {
 }
 
 /**
- * Which floor sprite a tile shows: a stable hash of its position (so the board
- * doesn't reshuffle every turn), weighted by the theme's floorWeights.
+ * The floor art for every square (row-major): the arena's ground terrains,
+ * autotiled with the floor theme's tileset. Squares with no ground on record
+ * (older saves, test boards) are the theme's base terrain.
  */
-export function floorVariant(theme: string, variants: number, p: Pos, weights?: number[]): string {
-  const h = ((p.x * 73856093) ^ (p.y * 19349663)) >>> 0;
-  const w = weights && weights.length === variants ? weights : new Array<number>(Math.max(1, variants)).fill(1);
-  const total = w.reduce((a, b) => a + b, 0);
-  let roll = h % total;
-  for (let i = 0; i < w.length; i++) {
-    if (roll < w[i]!) return `${theme}_${i + 1}`;
-    roll -= w[i]!;
-  }
-  return `${theme}_1`;
+export function floorTiles(a: ArenaState, theme: FloorTheme | undefined, content: Content): FloorTileView[] {
+  const ts = theme?.arena.tileset ? content.tilesets.byId[theme.arena.tileset] : undefined;
+  if (!ts) return new Array<FloorTileView>(a.w * a.h).fill({});
+  const setIndex = theme?.arena.ground?.terrainSet ?? 0;
+  const set = ts.terrainSets[setIndex]!;
+  const base = theme?.arena.ground?.base ?? set.terrains[0]!.name;
+  const terrain = a.ground && a.ground.length === a.w * a.h ? a.ground : new Array<string>(a.w * a.h).fill(base);
+  const colors = new Map(set.terrains.map((t) => [t.name, t.color]));
+  return paintGround(ts, setIndex, { w: a.w, h: a.h, terrain }, a.lookSeed ?? 0).map((c, i) => {
+    const color = colors.get(terrain[i]!);
+    if (!c) return { terrain: terrain[i]!, ...(color ? { color } : {}) };
+    return {
+      ...choiceArt(c),
+      ...(c.flip.flipH ? { flipH: true as const } : {}),
+      ...(c.flip.flipV ? { flipV: true as const } : {}),
+      ...(c.flip.transpose ? { transpose: true as const } : {}),
+      terrain: c.terrain,
+      ...(colors.get(c.terrain) ? { color: colors.get(c.terrain)! } : {}),
+    };
+  });
 }
 
 function enemyGlyph(content: Content, e: Enemy): string {
@@ -93,8 +121,7 @@ export function gridView(combat: CombatState, crawler: Crawler, themeId: string,
   const a = combat.arena;
   if (!a) return undefined;
   const theme = content.floors.byId[themeId];
-  const variants = theme?.arena.floorVariants ?? 1;
-  const weights = theme?.arena.floorWeights;
+  const floors = floorTiles(a, theme, content);
   const field = pathField(a, content, a.crawler, { blocked: (p) => occupied(combat, p, "crawler") });
   // Before your first command of the round, the whole turn's AP is still ahead of you.
   const speed = speedOf(crawler, content);
@@ -103,7 +130,7 @@ export function gridView(combat: CombatState, crawler: Crawler, themeId: string,
   const reach = moveLeft + ap * AP_COST.move * speed;
   const live = combat.enemies.filter((e) => e.hp > 0 && e.pos);
   const tiles: GridTileView[] = allTiles(a).map((p) => {
-    const t: GridTileView = { x: p.x, y: p.y, coord: coord(p), floor: floorVariant(theme?.arena.floorArt ?? themeId, variants, p, weights) };
+    const t: GridTileView = { x: p.x, y: p.y, coord: coord(p), floor: floors[index(a, p)]! };
     const f = featureAt(a, content, p);
     if (f) t.feature = { id: f.id, name: f.name, kind: f.kind, glyph: f.glyph };
     const hz = hazardAt(a, p);

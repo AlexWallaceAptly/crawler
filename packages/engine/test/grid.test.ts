@@ -6,9 +6,6 @@ import {
   bandOf, coord, dist, index, lineOfSight, pathField, parseCoord, blocksMove,
 } from "../src/grid/geometry";
 import { generateEnemy } from "../src/gen/enemy";
-import { floorVariant } from "../src/grid/view";
-import { loadContent } from "../src/content/load";
-import { rawContent } from "@crawler/content";
 import { parseCommand } from "../src/parser";
 import { forceDice, resetRng, setRandomSource } from "../src/rng";
 import { DIRS, type ArenaState, type Dir, type Room } from "../src/state";
@@ -60,23 +57,20 @@ describe("grid geometry", () => {
 });
 
 describe("board art hooks", () => {
-  it("floor variants follow the theme's weights and stay put", () => {
-    const counts = [0, 0, 0, 0];
-    for (let y = 0; y < 60; y++) for (let x = 0; x < 60; x++) {
-      const v = floorVariant("undercroft", 4, { x, y }, [10, 1, 3, 1]);
-      counts[Number(v.split("_")[1]) - 1]!++;
-      expect(floorVariant("undercroft", 4, { x, y }, [10, 1, 3, 1])).toBe(v);
+  it("every square gets floor art from the floor's tileset, with its terrain color", () => {
+    const world = gridWorld(["@....", ".....", "....."], []);
+    const g = engine.view(world).combat!.grid!;
+    const lobby = content.tilesets.get("lobby");
+    expect(g.tiles).toHaveLength(15);
+    for (const t of g.tiles) {
+      expect(t.floor.image).toBe("combat/floor/lobby");
+      expect(t.floor.region).toHaveLength(4);
+      expect(t.floor.sheet).toEqual(lobby.sources[0]!.textureSize);
+      expect(t.floor.terrain).toBe("stone");
+      expect(t.floor.color).toBe(lobby.terrainSets[0]!.terrains[0]!.color);
     }
-    const share = counts.map((n) => n / 3600);
-    expect(share[0]).toBeGreaterThan(0.55);
-    expect(share[2]).toBeGreaterThan(share[1]!);
-    expect(counts.every((n) => n > 0)).toBe(true);
-  });
-
-  it("floorWeights must match floorVariants", () => {
-    const bad = JSON.parse(JSON.stringify(rawContent)) as Record<string, { arena: { floorWeights: number[] } }[]>;
-    bad["floors.json"]![0]!.arena.floorWeights = [1, 2];
-    expect(() => loadContent(bad as never)).toThrow(/floorWeights/);
+    // The same board draws the same way every time.
+    expect(engine.view(world).combat!.grid!.tiles.map((t) => t.floor)).toEqual(g.tiles.map((t) => t.floor));
   });
 
   it("units carry status ids for icons", () => {

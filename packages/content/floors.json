@@ -499,14 +499,24 @@
       ]
     },
     "arena": {
-      "floorArt": "undercroft",
-      "floorVariants": 4,
-      "floorWeights": [
-        10,
-        1,
-        3,
-        1
-      ],
+      "tileset": "lobby",
+      "ground": {
+        "base": "stone",
+        "areas": [
+          {
+            "terrain": "carpet",
+            "shape": "strip",
+            "count": [
+              0,
+              1
+            ],
+            "size": [
+              2,
+              3
+            ]
+          }
+        ]
+      },
       "obstacles": [
         {
           "id": "pillar",
@@ -1043,14 +1053,24 @@
       ]
     },
     "arena": {
-      "floorArt": "undercroft",
-      "floorVariants": 4,
-      "floorWeights": [
-        10,
-        1,
-        3,
-        1
-      ],
+      "tileset": "warrens",
+      "ground": {
+        "base": "floor",
+        "areas": [
+          {
+            "terrain": "tags",
+            "shape": "blob",
+            "count": [
+              1,
+              3
+            ],
+            "size": [
+              3,
+              7
+            ]
+          }
+        ]
+      },
       "obstacles": [
         {
           "id": "shelf",
@@ -1559,14 +1579,24 @@
       ]
     },
     "arena": {
-      "floorArt": "undercroft",
-      "floorVariants": 4,
-      "floorWeights": [
-        10,
-        1,
-        3,
-        1
-      ],
+      "tileset": "garage",
+      "ground": {
+        "base": "concrete",
+        "areas": [
+          {
+            "terrain": "water",
+            "shape": "blob",
+            "count": [
+              1,
+              2
+            ],
+            "size": [
+              6,
+              14
+            ]
+          }
+        ]
+      },
       "obstacles": [
         {
           "id": "pillar",

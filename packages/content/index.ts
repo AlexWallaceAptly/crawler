@@ -26,6 +26,7 @@ import temper from "./temper.json";
 import codex from "./codex.json";
 import bosses from "./bosses.json";
 import oddities from "./items/oddities.json";
+import tilesets from "./tilesets.json";
 
 export const rawContent = {
   "skills.json": skills,
@@ -51,4 +52,5 @@ export const rawContent = {
   "codex.json": codex,
   "bosses.json": bosses,
   "items/oddities.json": oddities,
+  "tilesets.json": tilesets,
 } satisfies Record<string, unknown>;

@@ -287,6 +287,144 @@ const ShapePools = z.strictObject({
   small: LinePool.min(1),
 });
 
+// ---------------------------------------------------------------- tilesets (floor tiling)
+
+/*
+ * Floor tilesets, shaped like Godot 4's TileSet so a set built in the Godot
+ * editor imports one-to-one (`npm run import:tileset`). The names follow Godot's:
+ * terrain sets with a match mode, tiles with a center terrain and peering bits,
+ * per-tile probability, and flipped/transposed alternative tiles. Terrains are
+ * referred to by name here (Godot uses their index). See "Floor tiling" in
+ * docs/DESIGN.md for how the tiler picks a tile.
+ */
+
+/** Godot's TileSet.TerrainMode: which neighbours a tile's art has to agree with. */
+export const TERRAIN_MODES = ["cornersAndSides", "corners", "sides"] as const;
+
+/** Godot's square-tile peering bits, clockwise from the right. */
+export const PEERING_BITS = [
+  "right_side", "bottom_right_corner", "bottom_side", "bottom_left_corner",
+  "left_side", "top_left_corner", "top_side", "top_right_corner",
+] as const;
+export type PeeringBit = (typeof PEERING_BITS)[number];
+
+/** Terrain name per bit. A missing or null bit is Godot's -1 (no terrain). */
+const PeeringSchema = z.partialRecord(z.enum(PEERING_BITS), IdSchema.nullable());
+
+const HexColorSchema = z.string().regex(/^#[0-9a-f]{6}([0-9a-f]{2})?$/i, "colors are #rrggbb or #rrggbbaa");
+
+/** Crawler's shortcut (Godot has no equivalent): also use the art flipped or turned, with its bits turned to match. */
+export const TILE_TRANSFORMS = ["none", "flips", "rotations", "all"] as const;
+
+const TileFlipsSchema = {
+  /** Godot flip_h / flip_v / transpose (swap x and y; applied before the flips). */
+  flipH: z.boolean().default(false),
+  flipV: z.boolean().default(false),
+  transpose: z.boolean().default(false),
+};
+
+export const TilesetTileSchema = z.strictObject({
+  /** Atlas sources: the tile's column and row in the sheet (Godot's atlas coords). */
+  atlas: z.tuple([z.number().int().min(0), z.number().int().min(0)]).optional(),
+  /** Image sources: the PNG under public/combat/floor/, without ".png". */
+  image: z.string().regex(/^[a-z0-9_-]+$/).optional(),
+  ...TileFlipsSchema,
+  /** Index into the tileset's terrainSets (Godot terrain_set). */
+  terrainSet: z.number().int().min(0).default(0),
+  /** The terrain at the tile's center (Godot terrain). */
+  terrain: IdSchema,
+  peering: PeeringSchema.default({}),
+  /** Relative chance among tiles that fit equally well (Godot probability). */
+  probability: z.number().min(0).default(1),
+  /**
+   * Godot alternative tiles: the same art flipped or transposed. Peering bits and
+   * terrain default to the base tile's, turned to match the flip.
+   */
+  alternatives: z.array(z.strictObject({
+    ...TileFlipsSchema,
+    terrain: IdSchema.optional(),
+    peering: PeeringSchema.optional(),
+    probability: z.number().min(0).default(1),
+  })).default([]),
+  /** Generate the flipped/turned copies automatically; the tile's probability is split between them. */
+  transforms: z.enum(TILE_TRANSFORMS).default("none"),
+}).refine((t) => (t.atlas === undefined) !== (t.image === undefined), { message: "a tile needs exactly one of atlas or image" });
+export type TilesetTile = z.infer<typeof TilesetTileSchema>;
+
+const PairSchema = z.tuple([z.number().int().min(0), z.number().int().min(0)]);
+
+export const TilesetSourceSchema = z.strictObject({
+  /** Godot's source id (sources/<id> in a .tres). */
+  id: z.number().int().min(0),
+  /**
+   * "atlas": tiles cut from one sheet (Godot's TileSetAtlasSource).
+   * "images": one PNG per tile, for art drawn as separate squares (a Crawler shortcut).
+   */
+  kind: z.enum(["atlas", "images"]),
+  /** Atlas: the sheet under public/combat/floor/, without ".png". */
+  texture: z.string().regex(/^[a-z0-9_-]+$/).optional(),
+  /** Atlas: the sheet's size in pixels (the board needs it to cut tiles out with CSS). */
+  textureSize: PairSchema.optional(),
+  /** Atlas: each tile's size in the sheet (Godot texture_region_size). */
+  regionSize: PairSchema.optional(),
+  margins: PairSchema.default([0, 0]),
+  separation: PairSchema.default([0, 0]),
+  tiles: z.array(TilesetTileSchema).min(1),
+}).superRefine((s, ctx) => {
+  if (s.kind === "atlas") {
+    for (const k of ["texture", "textureSize", "regionSize"] as const) {
+      if (s[k] === undefined) ctx.addIssue({ code: "custom", message: `atlas sources need ${k}`, path: [k] });
+    }
+    s.tiles.forEach((t, i) => {
+      if (!t.atlas) ctx.addIssue({ code: "custom", message: "tiles in an atlas source need atlas coords", path: ["tiles", i] });
+    });
+  } else {
+    s.tiles.forEach((t, i) => {
+      if (!t.image) ctx.addIssue({ code: "custom", message: "tiles in an images source need an image", path: ["tiles", i] });
+    });
+  }
+});
+export type TilesetSource = z.infer<typeof TilesetSourceSchema>;
+
+export const TilesetSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string(),
+  /** Godot tile_size: the art's square size in pixels. Informative; the board scales every tile to its squares. */
+  tileSize: z.number().int().positive().default(128),
+  terrainSets: z.array(z.strictObject({
+    mode: z.enum(TERRAIN_MODES).default("cornersAndSides"),
+    /**
+     * Listed bottom first: where two terrains meet, the later one draws the edge
+     * over the earlier one (so the first is the floor everything sits on).
+     */
+    terrains: z.array(z.strictObject({
+      name: IdSchema,
+      /** Godot's terrain color. The board fills the square with it under the art, and on its own until the art exists. */
+      color: HexColorSchema,
+    })).min(1),
+  })).min(1),
+  sources: z.array(TilesetSourceSchema).min(1),
+  /** The Godot .tres this was imported from, if any (for re-importing). */
+  importedFrom: z.string().optional(),
+});
+export type Tileset = z.infer<typeof TilesetSchema>;
+
+/** A floor's ground layout: the terrain under everything, and areas of other terrains painted over it. */
+export const GroundSchema = z.strictObject({
+  terrainSet: z.number().int().min(0).default(0),
+  /** The terrain that fills the board. */
+  base: IdSchema,
+  areas: z.array(z.strictObject({
+    terrain: IdSchema,
+    /** "blob": a grown puddle of `size` squares. "strip": a runner `size` squares wide across the board's long side. */
+    shape: z.enum(["blob", "strip"]),
+    /** How many areas of this kind an arena gets. */
+    count: IntRangeSchema,
+    size: IntRangeSchema,
+  })).default([]),
+});
+export type Ground = z.infer<typeof GroundSchema>;
+
 /** A floor's text identity: name parts and description fragment pools. */
 export const FloorThemeSchema = z.strictObject({
   id: IdSchema,
@@ -359,12 +497,10 @@ export const FloorThemeSchema = z.strictObject({
   }).prefault({}),
   /** Grid-combat dressing: what arenas on this floor are furnished with (ids in arenaFeatures.json). */
   arena: z.strictObject({
-    /** Floor sprite set to draw: `<floorArt>_1.png` ..; defaults to the theme id. */
-    floorArt: IdSchema.optional(),
-    /** Floor sprite variants: `<theme id>_1.png` .. `<theme id>_N.png`. */
-    floorVariants: z.number().int().min(1).default(1),
-    /** How often each variant shows up (same length as floorVariants); equal if omitted. */
-    floorWeights: z.array(z.number().int().min(0)).optional(),
+    /** The tileset (tilesets.json) the board's floor is drawn from. */
+    tileset: IdSchema.optional(),
+    /** Where each ground terrain goes. Looks only: no rule reads it. */
+    ground: GroundSchema.optional(),
     obstacles: WeightedIdsSchema.default([]),
     terrain: WeightedIdsSchema.default([]),
     hazards: WeightedIdsSchema.default([]),
@@ -408,9 +544,6 @@ export const FloorThemeSchema = z.strictObject({
   }),
 }).refine((t) => t.rooms <= t.width * t.height * 0.7, {
   message: "rooms must fit the grid with slack (<= 70% of cells) or the walk jams",
-}).refine((t) => !t.arena.floorWeights || (t.arena.floorWeights.length === t.arena.floorVariants && t.arena.floorWeights.some((w) => w > 0)), {
-  message: "arena.floorWeights needs one weight per floor variant (and at least one above zero)",
-  path: ["arena", "floorWeights"],
 });
 export type FloorTheme = z.infer<typeof FloorThemeSchema>;
 

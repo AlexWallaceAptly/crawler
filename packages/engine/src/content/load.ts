@@ -23,6 +23,7 @@ import {
   CodexEntrySchema,
   BossSchema,
   OdditySchema,
+  TilesetSchema,
   type ArenaFeature,
   type LootTable,
   type Recipe,
@@ -46,6 +47,7 @@ import {
   type CodexEntry,
   type Boss,
   type Oddity,
+  type Tileset,
 } from "./schemas";
 
 /** Every content file, keyed by its path under packages/content. */
@@ -73,6 +75,7 @@ export const CONTENT_FILES = {
   "codex.json": z.array(CodexEntrySchema),
   "bosses.json": z.array(BossSchema),
   "items/oddities.json": z.array(OdditySchema),
+  "tilesets.json": z.array(TilesetSchema),
 } as const;
 
 export type ContentFileName = keyof typeof CONTENT_FILES;
@@ -116,6 +119,8 @@ export interface Content {
   bosses: Table<Boss>;
   /** I01-I30; each is also registered as an item base or consumable under the same id. */
   oddities: Table<Oddity>;
+  /** Floor tilesets for the battle board (Godot-style terrains; see "Floor tiling" in docs/DESIGN.md). */
+  tilesets: Table<Tileset>;
 }
 
 export class ContentError extends Error {
@@ -211,6 +216,7 @@ export function loadContent(raw: RawContent): Content {
     codex: table("codex.json", p["codex.json"], problems),
     bosses: table("bosses.json", p["bosses.json"], problems),
     oddities: table("items/oddities.json", oddities, problems),
+    tilesets: table("tilesets.json", p["tilesets.json"], problems),
   };
 
   checkReferences(content, problems);
@@ -305,6 +311,7 @@ function checkReferences(c: Content, problems: string[]): void {
     }
   }
   checkThread(c, problems, ref);
+  checkTilesets(c, problems);
 }
 
 type RefCheck = (where: string, kind: string, ok: boolean, id: string) => void;
@@ -353,5 +360,58 @@ function checkThread(c: Content, problems: string[], ref: RefCheck): void {
       if (s.table) ref(where, "loot table", c.lootTables.has(s.table), s.table);
       if (s.item) ref(where, "item", itemRefExists(c, s.item), s.item);
     });
+  }
+}
+
+/** Tilesets: every terrain a tile or a floor names exists, and atlas tiles sit inside their sheet. */
+function checkTilesets(c: Content, problems: string[]): void {
+  for (const ts of c.tilesets.all) {
+    const where = `tilesets.json "${ts.id}"`;
+    for (const src of ts.sources) {
+      if (ts.sources.filter((s) => s.id === src.id).length > 1) problems.push(`${where}: duplicate source id ${src.id}`);
+      src.tiles.forEach((t, i) => {
+        const at = `${where}.sources[${src.id}].tiles[${i}]`;
+        const set = ts.terrainSets[t.terrainSet];
+        if (!set) {
+          problems.push(`${at}: unknown terrain set ${t.terrainSet}`);
+          return;
+        }
+        const names = new Set(set.terrains.map((x) => x.name));
+        const named = [t.terrain, ...Object.values(t.peering), ...t.alternatives.flatMap((a) => [a.terrain, ...Object.values(a.peering ?? {})])];
+        for (const n of named) if (n && !names.has(n)) problems.push(`${at}: unknown terrain "${n}" in terrain set ${t.terrainSet}`);
+        if (src.kind === "atlas" && t.atlas && src.textureSize && src.regionSize) {
+          const right = src.margins[0] + t.atlas[0] * (src.regionSize[0] + src.separation[0]) + src.regionSize[0];
+          const bottom = src.margins[1] + t.atlas[1] * (src.regionSize[1] + src.separation[1]) + src.regionSize[1];
+          if (right > src.textureSize[0] || bottom > src.textureSize[1]) problems.push(`${at}: atlas ${t.atlas.join(",")} is outside the ${src.textureSize.join("x")} sheet`);
+        }
+      });
+    }
+    ts.terrainSets.forEach((set, si) => {
+      const seen = new Set<string>();
+      for (const t of set.terrains) {
+        if (seen.has(t.name)) problems.push(`${where}.terrainSets[${si}]: duplicate terrain "${t.name}"`);
+        seen.add(t.name);
+      }
+    });
+  }
+  for (const f of c.floors.all) {
+    const where = `floors.json "${f.id}".arena`;
+    const ts = f.arena.tileset ? c.tilesets.byId[f.arena.tileset] : undefined;
+    if (f.arena.tileset && !ts) problems.push(`${where}.tileset: unknown tileset "${f.arena.tileset}"`);
+    const g = f.arena.ground;
+    if (!g) continue;
+    if (!ts) {
+      if (!f.arena.tileset) problems.push(`${where}.ground: a ground layout needs a tileset`);
+      continue;
+    }
+    const set = ts.terrainSets[g.terrainSet];
+    if (!set) {
+      problems.push(`${where}.ground.terrainSet: tileset "${ts.id}" has no terrain set ${g.terrainSet}`);
+      continue;
+    }
+    const names = new Set(set.terrains.map((x) => x.name));
+    for (const n of [g.base, ...g.areas.map((a) => a.terrain)]) {
+      if (!names.has(n)) problems.push(`${where}.ground: unknown terrain "${n}" in tileset "${ts.id}"`);
+    }
   }
 }

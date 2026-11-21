@@ -3,8 +3,9 @@
  * decides which tiles you can walk to, what you can hit, and what each tap does.
  * Tapping submits command text, exactly like typing it.
  */
-import type { CommandOption, GridTileView, GridUnitView, ViewModel } from "@crawler/engine";
-import { Sprite } from "./Sprite";
+import type { CSSProperties } from "react";
+import type { CommandOption, FloorTileView, GridTileView, GridUnitView, ViewModel } from "@crawler/engine";
+import { Sprite, spriteUrl } from "./Sprite";
 import s from "./battlegrid.module.css";
 
 interface Props {
@@ -18,6 +19,32 @@ interface Props {
 
 /** Small, low-contrast debris hazards get a dark outline so they read on stone. */
 const OUTLINED_HAZARDS = new Set(["caltrops", "tacks", "broken_glass", "marbles", "barbed_wire", "rust_spikes", "trip_wire"]);
+
+/**
+ * One square of floor, as the engine's autotiler picked it. Atlas tiles are cut
+ * out of their sheet with background-size/position (percentages, so they scale
+ * with the square); Godot's flips become a CSS matrix. The terrain's color sits
+ * underneath, so a missing sheet still shows where the water is.
+ */
+function FloorTile({ f }: { f: FloorTileView }) {
+  const style: CSSProperties = {};
+  if (f.color) style.backgroundColor = f.color;
+  if (f.image) {
+    style.backgroundImage = `url(${spriteUrl(f.image)})`;
+    if (f.region && f.sheet) {
+      const [x, y, w, h] = f.region;
+      const [sw, sh] = f.sheet;
+      style.backgroundSize = `${(sw / w) * 100}% ${(sh / h) * 100}%`;
+      style.backgroundPosition = `${sw === w ? 0 : (x / (sw - w)) * 100}% ${sh === h ? 0 : (y / (sh - h)) * 100}%`;
+    }
+  }
+  const sx = f.flipH ? -1 : 1;
+  const sy = f.flipV ? -1 : 1;
+  // transpose (x, y) -> (y, x), then the flips: matrix(a, b, c, d) maps x' = a x + c y, y' = b x + d y.
+  if (f.transpose) style.transform = `matrix(0, ${sy}, ${sx}, 0, 0, 0)`;
+  else if (sx < 0 || sy < 0) style.transform = `scale(${sx}, ${sy})`;
+  return <span className={s.floorTile} style={style} aria-hidden="true" />;
+}
 
 /** A highlight: the ui/ sprite if it exists, otherwise a CSS tint. */
 function Highlight({ kind, faint }: { kind: "move" | "attack" | "target"; faint?: boolean }) {
@@ -97,7 +124,7 @@ export function BattleGrid({ view, submit, armed, onArmedDone, className }: Prop
                 onClick={() => tap(t)}
                 aria-label={tileTitle(t, u, it?.name)}
               >
-                <Sprite paths={[`combat/floor/${t.floor}`, `combat/floor/${g.theme}_1`]} glyph="" className={s.floor} />
+                <FloorTile f={t.floor} />
                 {t.exit && <Sprite paths={["combat/floor/door"]} glyph="+" className={s.layer} glyphClassName={`${s.glyph} ${s.door}`} />}
                 {t.feature && (
                   <Sprite paths={[`combat/${featureFolder(t.feature.kind)}/${t.feature.id}`]} glyph={t.feature.glyph}

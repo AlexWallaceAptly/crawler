@@ -240,6 +240,10 @@ export interface ArenaState {
   crawler: Pos;
   /** Tiles of movement already paid for this turn (1 AP buys your speed in tiles). */
   moveLeft: number;
+  /** Ground terrain per tile, row-major. Looks only (tiles/ground.ts); missing means the floor's base terrain. */
+  ground?: string[];
+  /** Seed for which floor art each square gets. Looks only. */
+  lookSeed?: number;
 }
 
 export interface CombatState {

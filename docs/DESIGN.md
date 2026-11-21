@@ -388,6 +388,29 @@ Fights can also play on a small tactical board. Which mode an account uses is a 
 - **The pack bonus is the one positional rule.** A melee enemy gets an edge for each other enemy next to you, up to two. In bands mode the same edge counts other enemies at close range.
 - **Flee.** Reach a door and spend 2 AP to roll DEX against enemies within 3 tiles that can see you; with none, you're out automatically. The door you came in by leads back; any other door leads onward.
 
+### Floor tiling (Milestone 4c)
+
+The board's floor is drawn by a terrain autotiler shaped like Godot 4's TileSet, so a tileset built in the Godot editor imports one-to-one. It's looks only: no rule reads the ground.
+
+- **Tilesets** live in `tilesets.json` (engine: `tiles/tileset.ts`). Each has terrain sets, and each terrain set has a Godot match mode and its terrains, listed bottom first:
+  - `cornersAndSides`: a tile agrees with all eight neighbours (Godot's 47-tile blob).
+  - `corners`: only the four corners (16 tiles; terrains show inset by half a square).
+  - `sides`: only the four sides (16 tiles).
+- **Tiles** come from an atlas sheet (Godot's TileSetAtlasSource: texture, region size, margins, separation) or, as a shortcut for art drawn as separate squares, one PNG each. A tile has a center terrain, Godot's peering bits (`right_side` ... `top_right_corner`, by terrain name), a probability, and `flipH` / `flipV` / `transpose`. Alternative tiles are the same art flipped, with their own bits.
+- **Transforms** (a Crawler shortcut): `"transforms": "flips" | "rotations" | "all"` adds a tile's flipped or turned copies with their bits turned to match, splitting its probability between them. One drawing per symmetry class then covers a whole terrain pair: 14 tiles in `cornersAndSides` mode, 6 in `corners` or `sides`.
+- **Picking a tile.**
+  1. Each square's bits come from its neighbours: a side bit takes the lower of the two squares' terrains, and a corner bit the lowest of the four. The terrain listed later draws the edge over the earlier one, and the bits on both sides of every seam agree.
+  2. The board edge repeats the square next to it, so nothing frames the board.
+  3. Every tile is scored: 2 for each wrong bit, 1 for a wrong center. An empty bit (Godot's -1) fits any terrain but the tile's own.
+  4. Among the best fits, a tile is picked by probability on a stable per-square coin. So a complete set always joins up, and a set with gaps still draws the closest fit.
+- **Ground layout.** A floor's `arena.ground` names a base terrain and areas painted over it: `blob` (a grown puddle of N squares) or `strip` (a runner N squares wide along the board's long side). Arenas store the result as `ground` and a `lookSeed`. Both are seeded from the arena's own random layout through `rng.ts`'s cosmetic stream, so the looks never spend the game's dice.
+- **The board** cuts atlas tiles out with CSS background size and position, turns Godot's flips into a CSS matrix, and fills each square with its terrain's color underneath, so a missing sheet still shows where the water is.
+- **Godot import:** `npm run import:tileset -- path/to/set.tres [--id x] [--name "..."]`.
+  - It reads a Godot 4 TileSet (text format 3, square tiles), copies each atlas texture to `public/combat/floor/<id>.png`, and replaces the tileset with that id.
+  - It skips what the board can't use (physics, navigation, custom data, scene sources, multi-square tiles; animations use frame 0) and says so.
+  - `npm run validate` fails if an imported tileset no longer matches its `.tres`.
+  - The Godot project for tilesets is `sprites/tilesets/`.
+
 ### Death and the hybrid run model
 
 The crawler dies at 0 HP (unless a skill or item says otherwise) or when the floor collapses while they're off the stairs. Death is permanent for that crawler.
@@ -952,6 +975,7 @@ All content lives in `packages/content/*.json` and is validated by Zod schemas a
 | `narration.json` | System AI templates | every event key |
 | `statusEffects.json`, `unlocks.json` | Rules data | 11 / 15 |
 | `arenaFeatures.json` | Grid-combat obstacles, terrain and hazards | 20+ |
+| `tilesets.json` | Floor tilesets for the board: Godot-style terrain sets, atlas or image sources, tiles with peering bits (see Floor tiling) | 3 |
 | `lootTables.json` | Weighted item tables (room junk now; drops and boxes later) | 5+ |
 | `recipes.json` | Crafting recipes | 19+ |
 | `thread.json`, `shards.json`, `modules.json`, `temper.json`, `codex.json`, `bosses.json` | The thread (see The thread → Thread data files) | 1 / 52 / 14 / 1 / 36 / 13 |
@@ -1032,7 +1056,7 @@ Remaining types (floors, events, quests, narration, boxes, unlocks) follow the s
 
 ## Build order
 
-Build in 13 milestones, each ending in something playable or testable. Milestones 4b and T were pulled forward ahead of Milestone 5 at the player's request. Don't start a milestone until the previous one's acceptance checks pass. Content files can start small (5-10 entries each) and grow in Milestone 13.
+Build in 13 milestones, each ending in something playable or testable. Milestones 4b, 4c and T were pulled forward ahead of Milestone 5 at the player's request. Don't start a milestone until the previous one's acceptance checks pass. Content files can start small (5-10 entries each) and grow in Milestone 13.
 
 | # | Milestone | Done when |
 | --- | --- | --- |
@@ -1042,6 +1066,7 @@ Build in 13 milestones, each ending in something playable or testable. Milestone
 | 3 | Floor 1: map generator, room types, descriptions, `look`/`map`/`go`, game clock, collapse timer, stairwells | 100 generated floors all pass reachability test; timer kills you off-stairs |
 | 4 | Combat: initiative, action points, power rolls, range bands, status effects, enemy families, priority AI, flee | Scripted fight tests; a Floor 1 run is winnable and losable |
 | 4b | Grid combat (account toggle, grid default), mob packs and minions, junk seeding with a minimal inventory (take/drop/equip, weight), crafting at workbenches | Scripted grid fights and arena property tests pass; recipes craft from seeded junk; the sim runs both combat modes with zero stuck runs |
+| 4c | Floor tiling: Godot-style tilesets (terrain autotiling in all three match modes, probability, flips and transposes), looks-only ground layouts per floor, a Godot `.tres` importer | A complete set fits every square exactly in each mode; looks never change an arena's layout or dice; an imported tileset matches its `.tres` |
 | T | Thread layer: Echo (Wholeness, Temper, urges, vessel), shard delivery, the thread Codex and run history, modules M01-M06, floor mini-bosses with enforced weaknesses (rule-based), gate-boss floor generation, the Floor 1-3 re-theme and descending into Floors 2-3 | Shards deliver and persist across runs; Temper thresholds pick module variants; each Floor 1-3 boss's weakness works in scripted fights; gate floors always leave a hidden stairwell reachable; the sim reports shard find rates |
 | 5 | Items: generator, rarity, affixes, equip slots, inventory, weight, consumables | 1,000 generated items all valid; equipping changes derived stats |
 | 6 | Progression: XP and levels, stat points, skills with use-XP, spells and tomes, MP | Skills rank up from use; a spell levels after N casts |
@@ -1628,3 +1653,72 @@ Pulled forward ahead of Milestone 5, the way 4b was, when the story design doc a
 - Floor 1's clear rate is where it was before the re-skin (51% grid, 58% bands), and still nobody dies in the first three fights.
 - About 30-35% of runs reach Floor 3, the bottom of the old spec's 30-60% target, without any leveling.
 - The coin-flip urge policy ends runs about 45% Calm, 53% base and 2% Fed: resting pushes Calm and nothing in the policy feeds Echo. A real Fed run takes intent (feeding, letting Echo act, the Fed modules).
+
+### Milestone 4c: floor tiling (Godot-style)
+
+Asked for after Milestone T: a custom floor tiler that mirrors Godot's tiling, built on the `floor-tiling` branch. The rules are under Grid mode → Floor tiling.
+
+#### Decisions made with the player
+
+- **Scope:** terrain autotiling, plus random variants and flips. Godot's layers, animated tiles and patterns are left out.
+- **Format:** both. Crawler's own JSON (`tilesets.json`) is what the game reads, and `npm run import:tileset` converts Godot `.tres` TileSets into it.
+- **Ground:** the arena generator lays out terrain areas per floor, for looks only. Movement and combat don't read them, so balance is untouched.
+
+#### How it maps onto Godot
+
+- **Names follow Godot's:**
+  - Match modes `cornersAndSides`, `corners` and `sides` are MATCH_CORNERS_AND_SIDES, MATCH_CORNERS and MATCH_SIDES.
+  - The peering bits keep Godot's names (`right_side`, `bottom_right_corner` and so on).
+  - Each tile has `terrainSet`, `terrain`, `probability`, `flipH`, `flipV`, `transpose`.
+  - Sources keep their ids, region size, margins and separation.
+- **Terrains are referred to by name, not index**, so hand-written JSON reads and diffs well. The importer turns Godot's indexes into names, slugging the terrain names ("Wet Concrete" becomes `wet_concrete`).
+- **Flips apply in Godot's order:** transpose first, then flip_h and flip_v. A clockwise quarter turn is transpose + flip_h.
+- **Godot alternative tiles carry their own bits.** In the JSON, an alternative that leaves out `peering` gets the base tile's bits turned to match its flip. Imported alternatives always spell them out.
+- **Two shortcuts Godot doesn't have:**
+  - `images` sources, one PNG per tile, so square-by-square art works without a sheet.
+  - `transforms`, which generates the flipped and turned copies and splits the probability between them.
+
+#### Matching rules (choices where Godot leaves it to the painter)
+
+- **Godot paints terrains region by region, and the result depends on paint order.** Crawler always knows every square's terrain, so a bit takes the lowest terrain among the squares that share it. The terrain listed first sits underneath, and later terrains draw their own edges, as if the base were painted first and the others painted over it in Godot's "connect" mode. The bits always agree across a seam.
+- **Scoring:** a wrong bit costs 2 and a wrong center 1, because a wrong bit shows as a seam. All equally good tiles go into one probability-weighted pick. Godot instead picks a pattern first, then a tile inside it.
+- **An empty bit (Godot's -1) fits any terrain except the tile's own.** Godot matches -1 only against empty neighbours. Crawler's boards have no empty squares, so this lets a set painted with one terrain and blank edges work over a base.
+- **The board edge repeats the square next to it**, so terrain runs off the edge instead of being framed.
+- **In `corners` mode a terrain shows inset by half a square.** Godot's corner sets behave the same way, so the Garage's water blobs are 6-14 squares.
+- **Random picks use a stable per-square hash** of the square and the arena's `lookSeed`. The board looks the same every turn and differs between fights.
+
+#### Ground layout
+
+- **Two area shapes cover the three floors:**
+  - Lobby: a carpet strip 2-3 wide, on 0-1 per fight.
+  - Warrens: 1-3 drifts of claim tags, 3-7 squares each.
+  - Garage: 1-2 water blobs, 6-14 squares each.
+  - Blobs grow from a random square and fill their notches, so their edges read as shapes.
+- **Cosmetic randomness lives in `rng.ts`:** `hash32`, `hashUnit` and a seeded `cosmeticStream`. Nothing in it reads or advances the game's dice. The seed is a hash of the arena's layout, which is already random, so ground layouts cost no rolls.
+  - A test builds the same arena with and without a ground layout and checks that the dice calls, tiles and spawns are identical.
+  - Another runs the ground and tile code with the game's dice set to throw.
+- **No save bump.** `ArenaState` gained optional `ground` and `lookSeed`. A fight saved before this draws the base terrain everywhere.
+
+#### Content and art
+
+- **`floors.json` → `arena` lost `floorArt`, `floorVariants` and `floorWeights`.** In their place are `tileset` and `ground`. The Undercroft's 10/1/3/1 variant weights are now tile probabilities.
+- **The Undercroft stone is flipped and turned for variety.** Tiles 1-3 use all eight orientations. The brick tile (4) only flips, so its courses stay horizontal.
+- **All three floor tilesets use placeholder art**, generated in code from the Undercroft stone. Replace it with real art from the art list.
+  - `warrens`: claim-tag drifts, `sides` mode, five tiles plus transforms.
+  - `garage`: water, `corners` mode, five tiles plus transforms.
+  - `lobby`: a carpet runner, `cornersAndSides` mode, all 47 blob tiles plus the four stone tiles. It was built as a Godot `.tres` (`sprites/tilesets/lobby.tres`) and imported with the importer.
+- **The standalone Undercroft tileset was dropped.** No floor uses it; the Warrens and Garage take its stone images as their base terrain.
+- **What the importer leaves out, with a warning:** physics, navigation, occlusion, custom data, scene-collection sources, tiles bigger than one square, and tiles with no terrain. Animated tiles use frame 0. It refuses non-square tile shapes and Godot 3's format 2.
+- **The importer has only been tested on hand-written `.tres` files** in Godot 4's text format (format 3). The first real export from the Godot editor may turn up properties it doesn't expect. Unknown properties are skipped, not fatal.
+- **`npm run validate` re-converts each imported tileset from its `.tres`** and fails if the result differs, so an edit made in Godot can't silently miss the game.
+
+#### Client
+
+- **The floor layer is a `<span>` with a CSS background, not an `<img>`.** That way one sheet serves every tile.
+  - Background size and position are percentages, so tiles scale with the square.
+  - Flips are a CSS matrix (`matrix(0, sy, sx, 0, 0, 0)` for a transpose).
+  - The terrain color fills the square underneath, and on its own if the sheet is missing.
+- **Checked in headless Chrome with saved mid-fight games on all three floors:**
+  - All 64 squares drew, with flipped tiles where expected (none on the imported lobby set).
+  - The Garage water joined up across squares, and the Lobby's carpet border followed its edge.
+  - No console errors or failed requests.

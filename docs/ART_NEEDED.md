@@ -4,13 +4,13 @@ As of 2026-11-20, after Floors 2 and 3 and the story layer (Echo, bosses, the Co
 
 Every piece is optional to the game. Until a file exists, the game draws a text glyph instead, so art can land one file at a time and shows up on the next deploy. The full format notes are in [`packages/client/public/combat/README.md`](../packages/client/public/combat/README.md).
 
-**Needed now: 33 files** (13 characters, 11 status icons, 8 floor tiles, 1 map tile). Four more floor tiles are optional.
+**Needed now: 62 drawings** (13 characters, 11 status icons, 37 floor tiles in three floor sets, 1 map tile).
 
 ## How to deliver
 
 - **Transparent PNG**, in the same painted pixel-art style as the existing sprites. Draw around 128px; the board shrinks each image to fit its square (30-56px on screen, pixelated), so it has to read at small size.
 - **The file name is the id in the tables below**, plus `.png`, dropped into the folder named in each section.
-- Floor tiles are the exception: opaque, top-down, low-contrast, filling the square edge to edge.
+- Floor tiles are the exception: opaque, top-down, low-contrast, filling the square edge to edge. They have their own format (section 3).
 
 ## 1. Characters: `packages/client/public/combat/unit/`
 
@@ -61,17 +61,37 @@ Small symbols drawn in a unit's top-right corner, two at most. A status with no 
 
 Later: `charmed.png` (nothing in the game applies it yet).
 
-## 3. Floor tiles: `packages/client/public/combat/floor/` (8)
+## 3. Floor tiles: `packages/client/public/combat/floor/` (37)
 
-Floors 2 and 3 borrow the Undercroft's stone tiles for now. Each set is four tiles. `_1` is the main tile, used on most squares, and `_2` to `_4` are accents, mixed in at a 10 : 1 : 3 : 1 ratio. A 1px dark gap separates squares, so seams don't need to line up. Keep them quiet so units read on top.
+The floor is drawn by an autotiler that works like Godot's terrains. Each floor has a **base** terrain and a second terrain the game paints over it in patches. The game picks the right edge or corner piece for every square from its neighbours. All three floors show programmer-art placeholders now: Undercroft stone with water, claim tags or carpet drawn on top.
 
-| Files | Floor | Look |
-| --- | --- | --- |
-| `lost_and_found_warrens_1.png` to `_4` | 2: The Lost-and-Found Warrens | Worn concrete or linoleum aisles between shelves so tall they lean together overhead. Accents: scattered claim tags "drifting in the corners like snow", a dropped box flap, a scuff. |
-| `flooded_parking_garage_1.png` to `_4` | 3: The Flooded Parking Garage | Wet concrete under ankle-deep water with a rainbow oil sheen. Accents: a stretch of painted parking line, a drain grate, a ripple or floating hubcap. |
-| `welcome_lobby_1.png` to `_4` *(optional)* | 1: The Welcome Lobby | It uses the Undercroft's sewer stone today. It's really a hotel lobby: carpet patterned "in swirls designed by someone who hated eyes", or polished marble with hairline cracks that all point down. |
+Each floor needs:
 
-When a set lands, the floor switches to it with a one-line edit: delete `"floorArt": "undercroft"` from that floor in `packages/content/floors.json`.
+- **4 base tiles**: the main tile, used on most squares, plus 3 accents, mixed in at 10 : 1 : 3 : 1.
+- **The transition pieces** for its second terrain. How many depends on the floor's mode.
+
+| Floor | Base | Painted over it | Mode | Transition pieces | Total |
+| --- | --- | --- | --- | --- | --- |
+| 1: The Welcome Lobby | Marble with hairline cracks that all point down | A carpet runner across the room, patterned "in swirls designed by someone who hated eyes", with a border | Corners and sides | 14 | 18 |
+| 2: The Lost-and-Found Warrens | Worn concrete or linoleum aisle | Drifts of paper claim tags, "drifting in the corners like snow" | Sides | 6 | 10 |
+| 3: The Flooded Parking Garage | Wet concrete, maybe a painted line on an accent | Ankle-deep water with a rainbow oil sheen | Corners | 5 | 9 |
+
+### The pieces, by mode
+
+The game flips and rotates each piece to cover every direction, so one drawing per shape is enough. That only works if the art has no direction: no light from one side, no text, no brick courses. If a set has a direction, say so. It will then only be flipped, or you can draw each direction.
+
+- **Corners (Garage water): 5 pieces.** Water in all four corners (full water), in one corner, along one edge (two corners next to each other), in two opposite corners, and in three corners.
+- **Sides (Warrens tags): 6 pieces.** Tags reaching all four sides (full), three sides, two sides next to each other, two opposite sides, one side, and a lone patch touching no side.
+- **Corners and sides (Lobby carpet): 14 pieces.** The standard 47-tile "blob" set, cut down to one piece per shape. The full carpet and a lone square are two of the 14. If the carpet's pattern has a direction, draw all 47 instead.
+
+Wherever the second terrain meets the base at a tile's edge, cross the edge at the same place on every tile (the middle of the edge for corners mode, the same distance in for the other two). That way neighbouring squares join up.
+
+### Two ways to deliver
+
+1. **A sheet:** 128px squares in a grid, any order, with a note saying which piece is which.
+2. **A Godot 4 TileSet:** open the project in `sprites/tilesets/` in Godot, make an atlas from your sheet, paint the terrain bits, and save the `.tres`. It's imported with `npm run import:tileset -- sprites/tilesets/<floor>.tres --id <floor>`. `lobby.tres` there is a worked example (the placeholder carpet).
+
+The placeholders show what each piece does: `garage_water.png`, `warrens_tags.png` and `lobby.png` in `packages/client/public/combat/floor/`.
 
 ## 4. Map tile: `packages/client/public/tiles/` (1)
 

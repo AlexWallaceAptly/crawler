@@ -31,6 +31,7 @@ npm run dev      # Vite client on :5173 + Hono server on :8787
 npm run check    # content validation, typecheck, tests
 npm run sim      # headless auto-play balance tool (`-- 400 --floors 3 --craft`)
 npm run import:workbook  # re-import the story workbook's CSV exports (content-csv/workbook/)
+npm run import:tileset -- sprites/tilesets/lobby.tres --id lobby  # import a Godot 4 TileSet
 npm run deploy   # build and push to GitHub Pages
 ```
 

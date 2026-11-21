@@ -9,11 +9,12 @@ A browser text adventure (TypeScript monorepo). The source of truth is `docs/DES
 - `npm test`: runs Vitest (tests are in `packages/*/test`).
 - `npm run validate`: checks only the JSON content.
 - `npm run import:workbook`: re-imports the workbook's text columns from the CSV exports in `content-csv/workbook/` into the thread JSON files. Engine-only fields in the JSON are kept.
+- `npm run import:tileset -- <file.tres> [--id <id>]`: imports a Godot 4 TileSet into `packages/content/tilesets.json` and copies its textures to `packages/client/public/combat/floor/`. The Godot project for tilesets is `sprites/tilesets/`; `npm run validate` fails if an imported tileset no longer matches its `.tres`.
 - `npm run sim`: headless auto-play balance tool.
 
 ## Layout
 
-- `packages/engine`: pure game logic with no DOM, React or `fetch`. All randomness goes through `src/rng.ts`. The reducer is `step()` in `src/step.ts`, and the UI projection is `src/view.ts`. The story layer is `src/echo.ts` (Echo, Temper, shards, Codex), `src/modules.ts` (Echo's modules) and `src/boss.ts` (floor bosses and their weaknesses).
+- `packages/engine`: pure game logic with no DOM, React or `fetch`. All randomness goes through `src/rng.ts`. The reducer is `step()` in `src/step.ts`, and the UI projection is `src/view.ts`. The story layer is `src/echo.ts` (Echo, Temper, shards, Codex), `src/modules.ts` (Echo's modules) and `src/boss.ts` (floor bosses and their weaknesses). The board's floor art is `src/tiles/`: a Godot-style terrain autotiler (`tileset.ts`), the looks-only ground layout (`ground.ts`) and the `.tres` reader (`godot.ts`).
 - `packages/content`: the JSON tables. `index.ts` imports each file, and the engine's `CONTENT_FILES` maps each file to its Zod schema.
 - `packages/client`: Vite + React terminal UI. Panels render from `engine.view()` and routed events, never from raw state.
 - `packages/server`: Hono. It will proxy `/api/boss` to Claude in Milestone 10.
