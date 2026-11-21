@@ -5,7 +5,7 @@ Every sprite here is optional. Until a file exists, the board draws a text glyph
 ## Format
 
 - **Any size works.** Each image is scaled to fit its board square (30-56px on screen, with `image-rendering: pixelated`). Images cropped to the subject are fine, but every sprite then fills its square, so a rat is drawn as big as a crab.
-- **Floor tiles** (`floor/`) are opaque and top-down, filling the square with no frame. A 1px dark gap separates squares, so perfect seams aren't needed. Keep them low-contrast so things on top read.
+- **Floor tiles** (`floor/`) are opaque and top-down, filling the square with no frame. A 1px dark gap separates squares, so perfect seams aren't needed. Keep them low-contrast so things on top read. They're drawn by the autotiler from `packages/content/tilesets.json` (see "Floor tiling" in docs/DESIGN.md), as separate squares or cut from a sheet, and may be flipped and rotated.
 - **Everything else** is transparent PNG.
 - **Names.** The file name is the JSON id in snake_case. Status icons are named by status id.
 
@@ -13,7 +13,7 @@ Every sprite here is optional. Until a file exists, the board draws a text glyph
 
 | Folder | Named after | Used for |
 | --- | --- | --- |
-| `floor/` | `<theme>_<n>` (n = 1..`floorVariants`), plus `door` | Ground under each square, and door tiles on the board edge. `floors.json` → `arena.floorWeights` sets how often each variant appears (Undercroft: 10/1/3/1, so `_1` is the main tile and the rest are accents). |
+| `floor/` | Whatever the floor's tileset names (an `image` per tile, or an atlas `texture`), plus `door` | Ground under each square, and door tiles on the board edge. The tileset sets which tile fits where and how often each variant appears (the stone base: 10/1/3/1, so `undercroft_1` is the main tile and the rest are accents). |
 | `obstacle/` | `arenaFeatures.json` id (kind `obstacle`) | Pillars, crates and props; they block movement, and some block sight |
 | `terrain/` | `arenaFeatures.json` id (kind `terrain`) | Sludge (slow ground) |
 | `hazard/` | `arenaFeatures.json` id (kind `hazard`) | Standing and thrown hazards. Small debris (caltrops, tacks, glass, marbles, barbed wire, spikes, trip wire) gets a CSS dark outline so it reads on stone. |
@@ -26,14 +26,14 @@ Every sprite here is optional. Until a file exists, the board draws a text glyph
 
 | Folder | Have | Still missing |
 | --- | --- | --- |
-| floor | `undercroft_1`-`_4`, `door` | Sets for later floor themes |
+| floor | `undercroft_1`-`_4`, `door`, and placeholder sheets `garage_water`, `warrens_tags`, `lobby` | Real tilesets for Floors 1-3 (base tiles plus transition pieces). See [docs/ART_NEEDED.md](../../../../docs/ART_NEEDED.md) |
 | obstacle | All 52 obstacles: the original eight (pillar, rubble, crate, barrel, pipe_cluster, dead_boiler, lockers, shopping_cart), 21 props (appliances, storage, bathroom fixtures, trash_can), and 23 pieces of furniture (carts, tables, benches, the vise workbench) | — |
 | terrain | `sludge` | — |
 | hazard | All 14 | — |
-| unit | `crawler` + all 7 Floor 1 families | Floor 2+ families |
+| unit | `crawler` + all 7 Floor 1 families | The 10 Floor 2-3 families and the 3 floor bosses (see docs/ART_NEEDED.md) |
 | item | `junk_pile` | Per-item icons (optional) |
 | ui | `move`, `attack`, `target` | — |
-| status | `bleeding`, `burning`, `confused`, `poisoned`, `stunned` (the "shock" icon), `slowed` (the "freeze" icon) | `blinded`, `hasted`, `feared`, `charmed`, `shielded`, `regenerating`, `invisible`, `braced` |
+| status | `bleeding`, `burning`, `confused`, `poisoned`, `stunned` (the "shock" icon), `slowed` (the "freeze" icon) | `blinded`, `hasted`, `feared`, `charmed`, `shielded`, `regenerating`, `invisible`, `braced`, plus the boss and Echo ones: `tethered`, `sated`, `sorting`, `parked` |
 
 Also still missing: the minimap tile `../tiles/workshop.png` (glyph ⚒ until then).
 
