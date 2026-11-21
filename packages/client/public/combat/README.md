@@ -26,14 +26,14 @@ Every sprite here is optional. Until a file exists, the board draws a text glyph
 
 | Folder | Have | Still missing |
 | --- | --- | --- |
-| floor | `undercroft_1`-`_4`, `door` | Sets for later floor themes |
+| floor | `undercroft_1`-`_4`, `door` | Sets for Floors 2-3 (they borrow `undercroft_` for now). See [docs/ART_NEEDED.md](../../../../docs/ART_NEEDED.md) |
 | obstacle | All 52 obstacles: the original eight (pillar, rubble, crate, barrel, pipe_cluster, dead_boiler, lockers, shopping_cart), 21 props (appliances, storage, bathroom fixtures, trash_can), and 23 pieces of furniture (carts, tables, benches, the vise workbench) | — |
 | terrain | `sludge` | — |
 | hazard | All 14 | — |
-| unit | `crawler` + all 7 Floor 1 families | Floor 2+ families |
+| unit | `crawler` + all 7 Floor 1 families | The 10 Floor 2-3 families and the 3 floor bosses (see docs/ART_NEEDED.md) |
 | item | `junk_pile` | Per-item icons (optional) |
 | ui | `move`, `attack`, `target` | — |
-| status | `bleeding`, `burning`, `confused`, `poisoned`, `stunned` (the "shock" icon), `slowed` (the "freeze" icon) | `blinded`, `hasted`, `feared`, `charmed`, `shielded`, `regenerating`, `invisible`, `braced` |
+| status | `bleeding`, `burning`, `confused`, `poisoned`, `stunned` (the "shock" icon), `slowed` (the "freeze" icon) | `blinded`, `hasted`, `feared`, `charmed`, `shielded`, `regenerating`, `invisible`, `braced`, plus the boss and Echo ones: `tethered`, `sated`, `sorting`, `parked` |
 
 Also still missing: the minimap tile `../tiles/workshop.png` (glyph ⚒ until then).
 
