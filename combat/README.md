@@ -26,7 +26,7 @@ Every sprite here is optional. Until a file exists, the board draws a text glyph
 
 | Folder | Have | Still missing |
 | --- | --- | --- |
-| floor | `undercroft_1`-`_4`, `door`, and placeholder sheets `garage_water`, `warrens_tags`, `lobby` | Real tilesets for Floors 1-3 (base tiles plus transition pieces). See [docs/ART_NEEDED.md](../../../../docs/ART_NEEDED.md) |
+| floor | `undercroft_1`-`_4`, `door`, the `lobby` and `warrens` tilesets, and the placeholder sheet `garage_water` | The Garage's real tileset (base tiles plus transition pieces). See [docs/ART_NEEDED.md](../../../../docs/ART_NEEDED.md) |
 | obstacle | All 52 obstacles: the original eight (pillar, rubble, crate, barrel, pipe_cluster, dead_boiler, lockers, shopping_cart), 21 props (appliances, storage, bathroom fixtures, trash_can), and 23 pieces of furniture (carts, tables, benches, the vise workbench) | — |
 | terrain | `sludge` | — |
 | hazard | All 14 | — |
