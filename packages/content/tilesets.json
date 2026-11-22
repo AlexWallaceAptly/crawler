@@ -1,19 +1,19 @@
 [
   {
     "id": "warrens",
-    "name": "The Lost-and-Found Warrens (placeholder)",
+    "name": "The Lost-and-Found Warrens",
     "tileSize": 128,
     "terrainSets": [
       {
-        "mode": "sides",
+        "mode": "corners",
         "terrains": [
           {
-            "name": "floor",
-            "color": "#58534c"
+            "name": "tags",
+            "color": "#ddcdac"
           },
           {
-            "name": "tags",
-            "color": "#c8bd9a"
+            "name": "floor",
+            "color": "#6f7976"
           }
         ]
       }
@@ -21,81 +21,11 @@
     "sources": [
       {
         "id": 0,
-        "kind": "images",
-        "tiles": [
-          {
-            "image": "undercroft_1",
-            "terrain": "floor",
-            "peering": {
-              "right_side": "floor",
-              "bottom_right_corner": "floor",
-              "bottom_side": "floor",
-              "bottom_left_corner": "floor",
-              "left_side": "floor",
-              "top_left_corner": "floor",
-              "top_side": "floor",
-              "top_right_corner": "floor"
-            },
-            "probability": 10,
-            "transforms": "all"
-          },
-          {
-            "image": "undercroft_2",
-            "terrain": "floor",
-            "peering": {
-              "right_side": "floor",
-              "bottom_right_corner": "floor",
-              "bottom_side": "floor",
-              "bottom_left_corner": "floor",
-              "left_side": "floor",
-              "top_left_corner": "floor",
-              "top_side": "floor",
-              "top_right_corner": "floor"
-            },
-            "probability": 1,
-            "transforms": "all"
-          },
-          {
-            "image": "undercroft_3",
-            "terrain": "floor",
-            "peering": {
-              "right_side": "floor",
-              "bottom_right_corner": "floor",
-              "bottom_side": "floor",
-              "bottom_left_corner": "floor",
-              "left_side": "floor",
-              "top_left_corner": "floor",
-              "top_side": "floor",
-              "top_right_corner": "floor"
-            },
-            "probability": 3,
-            "transforms": "all"
-          },
-          {
-            "image": "undercroft_4",
-            "terrain": "floor",
-            "peering": {
-              "right_side": "floor",
-              "bottom_right_corner": "floor",
-              "bottom_side": "floor",
-              "bottom_left_corner": "floor",
-              "left_side": "floor",
-              "top_left_corner": "floor",
-              "top_side": "floor",
-              "top_right_corner": "floor"
-            },
-            "probability": 1,
-            "transforms": "flips"
-          }
-        ]
-      },
-      {
-        "id": 1,
         "kind": "atlas",
-        "texture": "warrens_tags",
+        "texture": "warrens",
         "textureSize": [
-          640,
-          128
+          384,
+          384
         ],
         "regionSize": [
           128,
@@ -107,13 +37,14 @@
               0,
               0
             ],
-            "terrain": "tags",
+            "terrain": "floor",
             "peering": {
-              "right_side": "tags",
-              "bottom_side": "tags",
-              "left_side": "tags",
-              "top_side": "tags"
+              "top_left_corner": "floor",
+              "top_right_corner": "floor",
+              "bottom_right_corner": "floor",
+              "bottom_left_corner": "floor"
             },
+            "probability": 10,
             "transforms": "all"
           },
           {
@@ -121,13 +52,14 @@
               1,
               0
             ],
-            "terrain": "tags",
+            "terrain": "floor",
             "peering": {
-              "right_side": "tags",
-              "bottom_side": "floor",
-              "left_side": "floor",
-              "top_side": "floor"
+              "top_left_corner": "floor",
+              "top_right_corner": "floor",
+              "bottom_right_corner": "floor",
+              "bottom_left_corner": "floor"
             },
+            "probability": 3,
             "transforms": "all"
           },
           {
@@ -135,40 +67,96 @@
               2,
               0
             ],
-            "terrain": "tags",
+            "terrain": "floor",
             "peering": {
-              "right_side": "tags",
-              "bottom_side": "tags",
-              "left_side": "floor",
-              "top_side": "floor"
+              "top_left_corner": "floor",
+              "top_right_corner": "floor",
+              "bottom_right_corner": "floor",
+              "bottom_left_corner": "floor"
             },
             "transforms": "all"
           },
           {
             "atlas": [
-              3,
-              0
+              0,
+              1
             ],
-            "terrain": "tags",
+            "terrain": "floor",
             "peering": {
-              "right_side": "tags",
-              "bottom_side": "floor",
-              "left_side": "tags",
-              "top_side": "floor"
+              "top_left_corner": "floor",
+              "top_right_corner": "floor",
+              "bottom_right_corner": "floor",
+              "bottom_left_corner": "floor"
             },
             "transforms": "all"
           },
           {
             "atlas": [
-              4,
-              0
+              1,
+              1
             ],
             "terrain": "tags",
             "peering": {
-              "right_side": "tags",
-              "bottom_side": "tags",
-              "left_side": "tags",
-              "top_side": "floor"
+              "top_left_corner": "tags",
+              "top_right_corner": "tags",
+              "bottom_right_corner": "tags",
+              "bottom_left_corner": "tags"
+            },
+            "transforms": "all"
+          },
+          {
+            "atlas": [
+              2,
+              1
+            ],
+            "terrain": "floor",
+            "peering": {
+              "top_left_corner": "tags",
+              "top_right_corner": "floor",
+              "bottom_right_corner": "floor",
+              "bottom_left_corner": "floor"
+            },
+            "transforms": "all"
+          },
+          {
+            "atlas": [
+              0,
+              2
+            ],
+            "terrain": "floor",
+            "peering": {
+              "top_left_corner": "tags",
+              "top_right_corner": "floor",
+              "bottom_right_corner": "floor",
+              "bottom_left_corner": "tags"
+            },
+            "transforms": "all"
+          },
+          {
+            "atlas": [
+              1,
+              2
+            ],
+            "terrain": "floor",
+            "peering": {
+              "top_left_corner": "tags",
+              "top_right_corner": "floor",
+              "bottom_right_corner": "tags",
+              "bottom_left_corner": "floor"
+            },
+            "transforms": "all"
+          },
+          {
+            "atlas": [
+              2,
+              2
+            ],
+            "terrain": "floor",
+            "peering": {
+              "top_left_corner": "tags",
+              "top_right_corner": "tags",
+              "bottom_right_corner": "floor",
+              "bottom_left_corner": "tags"
             },
             "transforms": "all"
           }
@@ -355,7 +343,7 @@
   },
   {
     "id": "lobby",
-    "name": "The Welcome Lobby (placeholder)",
+    "name": "The Welcome Lobby",
     "tileSize": 128,
     "terrainSets": [
       {
@@ -363,7 +351,7 @@
         "terrains": [
           {
             "name": "stone",
-            "color": "#6b665e"
+            "color": "#d8d1c6"
           },
           {
             "name": "carpet",
@@ -378,8 +366,8 @@
         "kind": "atlas",
         "texture": "lobby",
         "textureSize": [
-          1024,
-          896
+          768,
+          384
         ],
         "regionSize": [
           128,
@@ -402,7 +390,8 @@
               "top_side": "stone",
               "top_right_corner": "stone"
             },
-            "probability": 10
+            "probability": 10,
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -419,7 +408,9 @@
               "top_left_corner": "stone",
               "top_side": "stone",
               "top_right_corner": "stone"
-            }
+            },
+            "probability": 3,
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -437,7 +428,7 @@
               "top_side": "stone",
               "top_right_corner": "stone"
             },
-            "probability": 3
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -454,7 +445,8 @@
               "top_left_corner": "stone",
               "top_side": "stone",
               "top_right_corner": "stone"
-            }
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -463,15 +455,16 @@
             ],
             "terrain": "carpet",
             "peering": {
-              "right_side": "stone",
-              "bottom_right_corner": "stone",
-              "bottom_side": "stone",
-              "bottom_left_corner": "stone",
-              "left_side": "stone",
-              "top_left_corner": "stone",
-              "top_side": "stone",
-              "top_right_corner": "stone"
-            }
+              "right_side": "carpet",
+              "bottom_right_corner": "carpet",
+              "bottom_side": "carpet",
+              "bottom_left_corner": "carpet",
+              "left_side": "carpet",
+              "top_left_corner": "carpet",
+              "top_side": "carpet",
+              "top_right_corner": "carpet"
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -481,48 +474,15 @@
             "terrain": "carpet",
             "peering": {
               "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "stone",
-              "bottom_left_corner": "stone",
-              "left_side": "stone",
-              "top_left_corner": "stone",
-              "top_side": "stone",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              6,
-              0
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "stone",
-              "bottom_right_corner": "stone",
+              "bottom_right_corner": "carpet",
               "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "stone",
+              "bottom_left_corner": "carpet",
+              "left_side": "carpet",
               "top_left_corner": "stone",
               "top_side": "stone",
               "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              7,
-              0
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "stone",
-              "top_left_corner": "stone",
-              "top_side": "stone",
-              "top_right_corner": "stone"
-            }
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -539,7 +499,8 @@
               "top_left_corner": "stone",
               "top_side": "stone",
               "top_right_corner": "stone"
-            }
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -548,15 +509,16 @@
             ],
             "terrain": "carpet",
             "peering": {
-              "right_side": "stone",
+              "right_side": "carpet",
               "bottom_right_corner": "stone",
-              "bottom_side": "stone",
-              "bottom_left_corner": "stone",
+              "bottom_side": "carpet",
+              "bottom_left_corner": "carpet",
               "left_side": "carpet",
               "top_left_corner": "stone",
               "top_side": "stone",
               "top_right_corner": "stone"
-            }
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -566,14 +528,15 @@
             "terrain": "carpet",
             "peering": {
               "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "stone",
-              "bottom_left_corner": "stone",
+              "bottom_right_corner": "carpet",
+              "bottom_side": "carpet",
+              "bottom_left_corner": "carpet",
               "left_side": "carpet",
               "top_left_corner": "stone",
-              "top_side": "stone",
-              "top_right_corner": "stone"
-            }
+              "top_side": "carpet",
+              "top_right_corner": "carpet"
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -582,15 +545,16 @@
             ],
             "terrain": "carpet",
             "peering": {
-              "right_side": "stone",
-              "bottom_right_corner": "stone",
+              "right_side": "carpet",
+              "bottom_right_corner": "carpet",
               "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
+              "bottom_left_corner": "carpet",
               "left_side": "carpet",
               "top_left_corner": "stone",
-              "top_side": "stone",
+              "top_side": "carpet",
               "top_right_corner": "stone"
-            }
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -602,12 +566,13 @@
               "right_side": "carpet",
               "bottom_right_corner": "stone",
               "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
+              "bottom_left_corner": "carpet",
               "left_side": "carpet",
               "top_left_corner": "stone",
-              "top_side": "stone",
-              "top_right_corner": "stone"
-            }
+              "top_side": "carpet",
+              "top_right_corner": "carpet"
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -617,48 +582,15 @@
             "terrain": "carpet",
             "peering": {
               "right_side": "carpet",
-              "bottom_right_corner": "carpet",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "stone",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              6,
-              1
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "stone",
               "bottom_right_corner": "stone",
               "bottom_side": "carpet",
               "bottom_left_corner": "carpet",
               "left_side": "carpet",
               "top_left_corner": "stone",
-              "top_side": "stone",
+              "top_side": "carpet",
               "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              7,
-              1
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "carpet",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "stone",
-              "top_right_corner": "stone"
-            }
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -667,15 +599,16 @@
             ],
             "terrain": "carpet",
             "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "carpet",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "carpet",
-              "left_side": "carpet",
+              "right_side": "stone",
+              "bottom_right_corner": "stone",
+              "bottom_side": "stone",
+              "bottom_left_corner": "stone",
+              "left_side": "stone",
               "top_left_corner": "stone",
               "top_side": "stone",
               "top_right_corner": "stone"
-            }
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -684,15 +617,16 @@
             ],
             "terrain": "carpet",
             "peering": {
-              "right_side": "stone",
+              "right_side": "carpet",
               "bottom_right_corner": "stone",
-              "bottom_side": "stone",
+              "bottom_side": "carpet",
               "bottom_left_corner": "stone",
-              "left_side": "stone",
+              "left_side": "carpet",
               "top_left_corner": "stone",
               "top_side": "carpet",
               "top_right_corner": "stone"
-            }
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -701,15 +635,16 @@
             ],
             "terrain": "carpet",
             "peering": {
-              "right_side": "carpet",
+              "right_side": "stone",
               "bottom_right_corner": "stone",
-              "bottom_side": "stone",
+              "bottom_side": "carpet",
               "bottom_left_corner": "stone",
-              "left_side": "stone",
+              "left_side": "carpet",
               "top_left_corner": "stone",
               "top_side": "carpet",
               "top_right_corner": "stone"
-            }
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -718,15 +653,16 @@
             ],
             "terrain": "carpet",
             "peering": {
-              "right_side": "stone",
+              "right_side": "carpet",
               "bottom_right_corner": "stone",
               "bottom_side": "carpet",
               "bottom_left_corner": "stone",
               "left_side": "stone",
               "top_left_corner": "stone",
-              "top_side": "carpet",
+              "top_side": "stone",
               "top_right_corner": "stone"
-            }
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -735,7 +671,7 @@
             ],
             "terrain": "carpet",
             "peering": {
-              "right_side": "carpet",
+              "right_side": "stone",
               "bottom_right_corner": "stone",
               "bottom_side": "carpet",
               "bottom_left_corner": "stone",
@@ -743,7 +679,8 @@
               "top_left_corner": "stone",
               "top_side": "carpet",
               "top_right_corner": "stone"
-            }
+            },
+            "transforms": "all"
           },
           {
             "atlas": [
@@ -752,512 +689,19 @@
             ],
             "terrain": "carpet",
             "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "carpet",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "stone",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              6,
-              2
-            ],
-            "terrain": "carpet",
-            "peering": {
               "right_side": "stone",
               "bottom_right_corner": "stone",
               "bottom_side": "stone",
               "bottom_left_corner": "stone",
               "left_side": "carpet",
               "top_left_corner": "stone",
-              "top_side": "carpet",
+              "top_side": "stone",
               "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              7,
-              2
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "stone",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              0,
-              3
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "stone",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              1,
-              3
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              2,
-              3
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "carpet",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              3,
-              3
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "stone",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "carpet",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              4,
-              3
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "carpet",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              5,
-              3
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "carpet",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "carpet",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              6,
-              3
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "stone",
-              "bottom_right_corner": "stone",
-              "bottom_side": "stone",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "carpet",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              7,
-              3
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "stone",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "carpet",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              0,
-              4
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "stone",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "carpet",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              1,
-              4
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "carpet",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              2,
-              4
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "carpet",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "carpet",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              3,
-              4
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "stone",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "carpet",
-              "left_side": "carpet",
-              "top_left_corner": "carpet",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              4,
-              4
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "carpet",
-              "left_side": "carpet",
-              "top_left_corner": "carpet",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              5,
-              4
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "carpet",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "carpet",
-              "left_side": "carpet",
-              "top_left_corner": "carpet",
-              "top_side": "carpet",
-              "top_right_corner": "stone"
-            }
-          },
-          {
-            "atlas": [
-              6,
-              4
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "stone",
-              "bottom_left_corner": "stone",
-              "left_side": "stone",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "carpet"
-            }
-          },
-          {
-            "atlas": [
-              7,
-              4
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "stone",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "carpet"
-            }
-          },
-          {
-            "atlas": [
-              0,
-              5
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "carpet",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "stone",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "carpet"
-            }
-          },
-          {
-            "atlas": [
-              1,
-              5
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "stone",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "carpet"
-            }
-          },
-          {
-            "atlas": [
-              2,
-              5
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "carpet"
-            }
-          },
-          {
-            "atlas": [
-              3,
-              5
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "carpet",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "carpet"
-            }
-          },
-          {
-            "atlas": [
-              4,
-              5
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "carpet",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "carpet"
-            }
-          },
-          {
-            "atlas": [
-              5,
-              5
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "carpet",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "carpet",
-              "left_side": "carpet",
-              "top_left_corner": "stone",
-              "top_side": "carpet",
-              "top_right_corner": "carpet"
-            }
-          },
-          {
-            "atlas": [
-              6,
-              5
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "stone",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "carpet",
-              "top_side": "carpet",
-              "top_right_corner": "carpet"
-            }
-          },
-          {
-            "atlas": [
-              7,
-              5
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "carpet",
-              "top_side": "carpet",
-              "top_right_corner": "carpet"
-            }
-          },
-          {
-            "atlas": [
-              0,
-              6
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "carpet",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "stone",
-              "left_side": "carpet",
-              "top_left_corner": "carpet",
-              "top_side": "carpet",
-              "top_right_corner": "carpet"
-            }
-          },
-          {
-            "atlas": [
-              1,
-              6
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "stone",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "carpet",
-              "left_side": "carpet",
-              "top_left_corner": "carpet",
-              "top_side": "carpet",
-              "top_right_corner": "carpet"
-            }
-          },
-          {
-            "atlas": [
-              2,
-              6
-            ],
-            "terrain": "carpet",
-            "peering": {
-              "right_side": "carpet",
-              "bottom_right_corner": "carpet",
-              "bottom_side": "carpet",
-              "bottom_left_corner": "carpet",
-              "left_side": "carpet",
-              "top_left_corner": "carpet",
-              "top_side": "carpet",
-              "top_right_corner": "carpet"
-            }
+            },
+            "transforms": "all"
           }
         ]
       }
-    ],
-    "importedFrom": "sprites/tilesets/lobby.tres"
+    ]
   }
 ]

@@ -1722,3 +1722,37 @@ Asked for after Milestone T: a custom floor tiler that mirrors Godot's tiling, b
   - All 64 squares drew, with flipped tiles where expected (none on the imported lobby set).
   - The Garage water joined up across squares, and the Lobby's carpet border followed its edge.
   - No console errors or failed requests.
+
+### Floor art: the Lobby and Warrens tilesets
+
+- **Real art replaces the placeholders on Floors 1 and 2.** The Garage keeps its placeholder.
+  - **Source:** three square 3x3 sheets from an image generator, in `sprites/floor_sheets/`: `lobby_1.jpg`, `lobby_2.jpg` and `warrens.jpg`.
+  - **How they were made:** each prompt had two attachments, a flat-colour layout guide that drew every piece's exact shape and the floor's earlier sheet for style. Without the guide, the first attempts got the shapes wrong: paper framing each square instead of filling it, a quarter of one tile missing, and no solid piece.
+- **How the sheets were cut:**
+  - Each cell is 656px, between 20px gutters.
+  - Tiles are cut 4px inside each cell. JPEG blur from the black gutters darkens the outermost pixel, which would have drawn a faint line between squares.
+  - They're shrunk to 128px (Lanczos) and packed into one atlas per floor: `lobby.png` (6x3, 18 tiles) and `warrens.png` (3x3, 9 tiles).
+  - **Lobby atlas order:** the four marble tiles (sheet 2, cells 1, 2, 3, 9), then sheet 1's cells 1-9, then sheet 2's cells 4-8.
+  - **Warrens atlas order:** the floor tiles (cells 6, 8, 7, 9), then cells 1-5.
+- **Both sets are written by hand in `tilesets.json`**, with one drawing per shape and `transforms: "all"`, like the placeholders.
+  - Neither came from Godot, so the Lobby no longer has `importedFrom`.
+  - **The old Godot example is renamed** `sprites/tilesets/example_carpet.tres` (and `.png`). The importer names an import after its file, so re-importing `lobby.tres` would have replaced the real Lobby set.
+  - The README's example import command now says `<floor>`.
+  - The unused `warrens_tags.png` placeholder is deleted.
+- **The Warrens moved from `sides` to `corners` mode.** The design asked for sides. But the generator naturally heaped paper in corners, and corners mode needs one piece fewer (5, not 6).
+- **The Warrens list paper first, under the floor.** A drift then spreads half a square past its own squares, and the floor squares around it carry the edge pieces.
+  - With the floor listed first, every drift would shrink by half a square instead, and most of the floor's 3-7 square drifts would vanish.
+  - A one-square hole of floor inside a drift fills with paper.
+- **The Lobby has all 14 blob shapes.** The carpet's gold border sits a quarter of the way in from any edge where marble shows. A runner of any width, one-square carpet paths and carpet patches all join.
+  - The runner stays 2-3 squares wide. Today it only uses the solid and straight-edge pieces.
+  - The one-square-wide pieces (cross, T, corner, straight, end cap) are there for door-to-door runners or carpet patches later.
+- **Accent weights:**
+  - Lobby marble: plain 10, more cracks 3, grey stain 1, chip 1.
+  - Warrens floor: plain 10, scuff 3, coffee ring 1, one stray tag 1.
+- **The Lobby's cracks run every way,** not "all pointing down" as the floor's description has it. The tiles are turned and flipped for variety, which a direction would rule out.
+- **Terrain colours** (the fill under each square) are the new art's average colours. The carpet keeps its old red, because the average of its pattern came out purple.
+- **Checked:**
+  - Every transition piece crosses its tile edges within 4% of where the guide put it.
+  - For both floors, grounds generated on all three board sizes went through `paintGround`, each square was cut from the packed atlas by `choiceArt`'s region, and every board joined up.
+  - `npm run check` passes.
+  - Not yet looked at in a browser. The client's drawing code is unchanged, and the old Lobby set already drew from an atlas sheet.

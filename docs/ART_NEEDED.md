@@ -1,10 +1,10 @@
 # Crawler: art still needed
 
-As of 2026-11-20, after Floors 2 and 3 and the story layer (Echo, bosses, the Codex) went in.
+As of 2026-11-21, after Floors 2 and 3, the story layer (Echo, bosses, the Codex), and the Lobby and Warrens floor tiles went in.
 
 Every piece is optional to the game. Until a file exists, the game draws a text glyph instead, so art can land one file at a time and shows up on the next deploy. The full format notes are in [`packages/client/public/combat/README.md`](../packages/client/public/combat/README.md).
 
-**Needed now: 62 drawings** (13 characters, 11 status icons, 37 floor tiles in three floor sets, 1 map tile).
+**Needed now: 34 drawings** (13 characters, 11 status icons, 9 floor tiles for the Garage, 1 map tile).
 
 ## How to deliver
 
@@ -61,37 +61,37 @@ Small symbols drawn in a unit's top-right corner, two at most. A status with no 
 
 Later: `charmed.png` (nothing in the game applies it yet).
 
-## 3. Floor tiles: `packages/client/public/combat/floor/` (37)
+## 3. Floor tiles: `packages/client/public/combat/floor/` (9)
 
-The floor is drawn by an autotiler that works like Godot's terrains. Each floor has a **base** terrain and a second terrain the game paints over it in patches. The game picks the right edge or corner piece for every square from its neighbours. All three floors show programmer-art placeholders now: Undercroft stone with water, claim tags or carpet drawn on top.
+The floor is drawn by an autotiler that works like Godot's terrains. Each floor has a **base** terrain and a second terrain the game paints over it in patches. The game picks the right edge or corner piece for every square from its neighbours.
 
-Each floor needs:
+The Lobby (marble and a carpet runner) and the Warrens (linoleum and claim-tag drifts) have their real sets, in `lobby.png` and `warrens.png`. Only the Garage still shows a programmer-art placeholder: Undercroft stone with water drawn on top.
+
+The Garage needs:
 
 - **4 base tiles**: the main tile, used on most squares, plus 3 accents, mixed in at 10 : 1 : 3 : 1.
-- **The transition pieces** for its second terrain. How many depends on the floor's mode.
+- **5 transition pieces** for its water.
 
 | Floor | Base | Painted over it | Mode | Transition pieces | Total |
 | --- | --- | --- | --- | --- | --- |
-| 1: The Welcome Lobby | Marble with hairline cracks that all point down | A carpet runner across the room, patterned "in swirls designed by someone who hated eyes", with a border | Corners and sides | 14 | 18 |
-| 2: The Lost-and-Found Warrens | Worn concrete or linoleum aisle | Drifts of paper claim tags, "drifting in the corners like snow" | Sides | 6 | 10 |
 | 3: The Flooded Parking Garage | Wet concrete, maybe a painted line on an accent | Ankle-deep water with a rainbow oil sheen | Corners | 5 | 9 |
 
 ### The pieces, by mode
 
 The game flips and rotates each piece to cover every direction, so one drawing per shape is enough. That only works if the art has no direction: no light from one side, no text, no brick courses. If a set has a direction, say so. It will then only be flipped, or you can draw each direction.
 
-- **Corners (Garage water): 5 pieces.** Water in all four corners (full water), in one corner, along one edge (two corners next to each other), in two opposite corners, and in three corners.
-- **Sides (Warrens tags): 6 pieces.** Tags reaching all four sides (full), three sides, two sides next to each other, two opposite sides, one side, and a lone patch touching no side.
-- **Corners and sides (Lobby carpet): 14 pieces.** The standard 47-tile "blob" set, cut down to one piece per shape. The full carpet and a lone square are two of the 14. If the carpet's pattern has a direction, draw all 47 instead.
+- **Corners (the Garage's water, and the Warrens' tags): 5 pieces.** Water in all four corners (full water), in one corner, along one edge (two corners next to each other), in two opposite corners, and in three corners.
+- **Sides (no floor uses it yet): 6 pieces.** The second terrain reaching all four sides (full), three sides, two sides next to each other, two opposite sides, one side, and a lone patch touching no side.
+- **Corners and sides (the Lobby's carpet): 14 pieces.** The standard 47-tile "blob" set, cut down to one piece per shape. The full carpet and a lone square are two of the 14. If the pattern has a direction, draw all 47 instead.
 
-Wherever the second terrain meets the base at a tile's edge, cross the edge at the same place on every tile (the middle of the edge for corners mode, the same distance in for the other two). That way neighbouring squares join up.
+Wherever the second terrain meets the base at a tile's edge, cross the edge at the same place on every tile (the middle of the edge for corners mode, the same distance in for the other two; the Lobby uses a quarter of the way in). That way neighbouring squares join up.
 
 ### Two ways to deliver
 
-1. **A sheet:** 128px squares in a grid, any order, with a note saying which piece is which.
-2. **A Godot 4 TileSet:** open the project in `sprites/tilesets/` in Godot, make an atlas from your sheet, paint the terrain bits, and save the `.tres`. It's imported with `npm run import:tileset -- sprites/tilesets/<floor>.tres --id <floor>`. `lobby.tres` there is a worked example (the placeholder carpet).
+1. **A sheet:** 128px squares in a grid, any order, with a note saying which piece is which. The Lobby and the Warrens came in this way, as square 3x3 sheets from an image generator. Two attachments made them come out right: a flat-colour layout guide showing each piece's exact shape, and the floor's earlier sheet for style. Those source sheets are in `sprites/floor_sheets/`.
+2. **A Godot 4 TileSet:** open the project in `sprites/tilesets/` in Godot, make an atlas from your sheet, paint the terrain bits, and save the `.tres`. It's imported with `npm run import:tileset -- sprites/tilesets/<floor>.tres --id <floor>`. `example_carpet.tres` there is a worked example (an old placeholder carpet). Import it under its own id if you want to try it, because importing it as `lobby` would replace the real Lobby set.
 
-The placeholders show what each piece does: `garage_water.png`, `warrens_tags.png` and `lobby.png` in `packages/client/public/combat/floor/`.
+The Garage placeholder, `garage_water.png` in `packages/client/public/combat/floor/`, shows what each piece does.
 
 ## 4. Map tile: `packages/client/public/tiles/` (1)
 
