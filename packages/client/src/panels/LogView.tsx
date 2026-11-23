@@ -87,6 +87,8 @@ function Line({ e }: { e: GameEvent }) {
       return <div className={`${s.line} ${s.death}`}>── DEAD ({e.cause}) ──</div>;
     case "recipeLearned":
       return <div className={`${s.line} ${s.divider}`}>── NEW RECIPE: {e.name} ──</div>;
+    case "shardVoice":
+      return <div className={`${s.line} ${s.shard}`}>◇ A FAINT VOICE · search the room to find it</div>;
     case "shardFound":
       return <div className={`${s.line} ${s.shard}`}>◆ SHARD · {e.strand}{e.first ? " · new in the Codex" : ""}</div>;
     case "codexUpdated":

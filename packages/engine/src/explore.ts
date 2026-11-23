@@ -12,7 +12,7 @@ import { applyStatus, decrementStatuses, tickStatuses } from "./rules/effects";
 import { killCrawler, type StepContext } from "./step";
 import { generateFloor, MINUTES_PER_DAY } from "./gen/floor";
 import { seedFloorLoot, workbenchLine } from "./gen/loot";
-import { echoOnNewFloor, maybeRoomShard, maybeUrge, recordRun, shardFound, wholenessOn } from "./echo";
+import { echoOnNewFloor, maybeRoomShard, maybeUrge, pendingShard, recordRun, shardVoice, wholenessOn } from "./echo";
 import { modulesOnEnter, neutralizePoison, trapAutoSpotted } from "./modules";
 import { bossGateOf, bossNearby, bossOfFloor } from "./boss";
 import type { Dir, FloorState, Room, RoomType } from "./state";
@@ -168,10 +168,10 @@ export function enterRoom(ctx: StepContext, roomId: number, kind: "first" | "rev
   for (const id of Object.values(room.exits)) floor.rooms[id]!.seen = true;
 
   const first = kind === "first";
-  let shard = null;
+  let placed = null;
   if (!room.desc) {
     room.desc = describeRoom(theme, room);
-    if (first) shard = maybeRoomShard(ctx, room);
+    if (first) placed = maybeRoomShard(ctx, room);
   }
   const items = itemLabels(room);
   ctx.emit({
@@ -184,7 +184,7 @@ export function enterRoom(ctx: StepContext, roomId: number, kind: "first" | "rev
     ...(items.length ? { items } : {}),
     ...(room.workbench ? { workbench: true } : {}),
   });
-  if (shard) shardFound(ctx, shard);
+  if (pendingShard(ctx.game, ctx.content, room)) shardVoice(ctx, room, !!placed);
   if (kind !== "look") modulesOnEnter(ctx, room, first);
   if (first) bossNearby(ctx, room);
   if (kind === "revisit" && chance(0.3)) ctx.say("explore.revisit");

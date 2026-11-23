@@ -21,6 +21,7 @@ const ROUTES: Record<GameEventType, LogPanel[]> = {
   combatEnded: ["log", "battle"],
   died: ["log", "ticker", "battle"],
   recipeLearned: ["log", "ticker"],
+  shardVoice: ["log", "ticker"],
   shardFound: ["log", "battle", "ticker"],
   codexUpdated: ["log", "ticker"],
   temperChanged: ["log"],

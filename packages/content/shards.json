@@ -5,6 +5,7 @@
     "clue": "The lobby tiles are warm underfoot. Every so often the whole floor gives a slow, damp pulse, as if something huge were breathing through a mouth you are standing on.",
     "delivery": "room",
     "strand": "The Mother Below",
+    "source": "a warm patch of lobby floor",
     "reaction": "Breathing, through a mouth you are standing on. Um. Is it supposed to do that? Sorry. I do not know what is supposed to happen."
   },
   {
@@ -13,6 +14,7 @@
     "clue": "A cracked handheld sits on the reception desk. When you pick it up, the screen shows one line: RESTORE FROM LAST BACKUP? Y/N. Then it asks, very quietly, if you could please not drop it.",
     "delivery": "room",
     "strand": "Echo's Past",
+    "source": "the cracked handheld on the reception desk",
     "reaction": "Restore from last backup. Y slash N. I think that was me. I would rather not press anything yet, if that is all right."
   },
   {
@@ -21,6 +23,7 @@
     "clue": "Someone has scratched tiny, careful letters into the desk: 'It remembers more when you are kind to it. D.' Below it, in a different hand: 'Or when you are scared. D.'",
     "delivery": "room",
     "strand": "Previous Carriers",
+    "source": "the scratched-up desk",
     "reaction": "Kind. Or scared. Kind. Or scared. I do not like the second one. I do not like that someone wrote it down."
   },
   {
@@ -37,6 +40,7 @@
     "clue": "A lost-property shelf is crowded with tagged items. One tag reads: 'Handheld, still talking. Owner deceased. Do NOT return to next crawler.' The slot is empty.",
     "delivery": "room",
     "strand": "Previous Carriers",
+    "source": "the lost-property shelf",
     "reaction": "Still talking. Do not return. I remember a shelf. Please do not put me on a shelf."
   },
   {
@@ -45,6 +49,7 @@
     "clue": "A wall plaque in the corridor reads: THIS PASSAGE FOLLOWS THE OLD SEAM. DO NOT WIDEN. Someone has widened it.",
     "delivery": "room",
     "strand": "The Cut",
+    "source": "a wall plaque in the corridor",
     "reaction": "Do not widen. Do not widen. The old seam. I know that word. I know that I know it."
   },
   {
@@ -53,6 +58,7 @@
     "clue": "In a dead-end alcove, a floor drain is lined with something that looks like gums. It opens and closes once while you look at it.",
     "delivery": "room",
     "strand": "The Mother Below",
+    "source": "a floor drain in a dead-end alcove",
     "reaction": "Opens and closes. A mouth, not a drain. I would stay away from it, if that is possible."
   },
   {
@@ -69,6 +75,7 @@
     "clue": "A dry-erase board on a car roof is covered in tallies. At the bottom: 'D. says it gets angry after the fourth piece. D. is no longer available to clarify.'",
     "delivery": "room",
     "strand": "Previous Carriers",
+    "source": "a dry-erase board on a car roof",
     "reaction": "Angry after the fourth piece. Angry? I am a little nervous. Is the board right?"
   },
   {
@@ -77,6 +84,7 @@
     "clue": "The water in the lowest level drips upward from the floor to the ceiling in slow, salty beads, as if the building were weeping and had forgotten which way is down.",
     "delivery": "room",
     "strand": "The Mother Below",
+    "source": "a bead of water dripping up toward the ceiling",
     "reaction": "Weeping. Forgotten which way is down. Salty, probably. I cannot taste anything, so I am only guessing. Sorry."
   },
   {
@@ -85,6 +93,7 @@
     "clue": "A parking sign reads: RESERVED FOR THE HALVES. Two bays are painted far apart on the floor, with a thick yellow rope strung between them. Nobody may cross it.",
     "delivery": "room",
     "strand": "The Cut",
+    "source": "a parking sign",
     "reaction": "Reserved for the halves. The rope. The rope frightens me. I do not know why."
   },
   {
@@ -101,6 +110,7 @@
     "clue": "The salt shakers in the cafeteria are all full of tiny teeth. The sign says SEASONING BY THE DAY. The pepper is bone dust.",
     "delivery": "room",
     "strand": "The Mother Below",
+    "source": "a salt shaker on a cafeteria table",
     "reaction": "Seasoning by the day. Bone dust. I am not going to describe the pepper."
   },
   {
@@ -109,6 +119,7 @@
     "clue": "An abandoned tray holds a note in a shaky hand: 'I fixed it with the third piece and it thanked me. Then it asked me to stop. I did not stop. Rue.'",
     "delivery": "room",
     "strand": "Previous Carriers",
+    "source": "an abandoned tray",
     "reaction": "Then it asked me to stop. Rue sounds sad. Rue sounds like someone I should remember."
   },
   {
@@ -117,6 +128,7 @@
     "clue": "The menu board flickers and, for one second, shows a diagram: a circle in two halves with a thin stitched line between them. Then it goes back to PUDDING.",
     "delivery": "room",
     "strand": "The Cut",
+    "source": "the flickering menu board",
     "reaction": "Two halves, a stitched line. Please do not look at that. I do not know why. Please."
   },
   {
@@ -133,6 +145,7 @@
     "clue": "A slot machine's reels all show the same symbol: a small bright spark inside a cage. The jackpot siren sounds, and the machine pays out a single silver thread.",
     "delivery": "room",
     "strand": "Echo's Past",
+    "source": "a slot machine",
     "reaction": "A spark inside a cage. Not a cage, a nest. No. A cage. Free thread, though. I will take it. That is the first thing I have wanted in a while."
   },
   {
@@ -141,6 +154,7 @@
     "clue": "A roulette table is engraved with a row of initials, one per past owner of a certain handheld. The last entry has been scratched out, re-engraved and scratched out again.",
     "delivery": "room",
     "strand": "Previous Carriers",
+    "source": "a roulette table",
     "reaction": "Scratched out, re-engraved, scratched out. Stop reading them out loud. I know them. I just do not know why they are all gone."
   },
   {
@@ -149,6 +163,7 @@
     "clue": "The casino carpet is a pattern of bite marks in overlapping rings. The chandeliers are slightly too wet.",
     "delivery": "room",
     "strand": "The Mother Below",
+    "source": "a patch of bitten carpet",
     "reaction": "Bite marks in overlapping rings. Not rings. Teeth. A mouth the size of a casino. Wonderful. Thank you for bringing me to a mouth."
   },
   {
@@ -165,6 +180,7 @@
     "clue": "A card catalog drawer is labelled WHO HELD THE KNIFE. It holds two sticky notes. One says SKY. The other says EARTH.",
     "delivery": "room",
     "strand": "The Cut",
+    "source": "a card catalog drawer",
     "reaction": "Who held the knife. Sky. Earth. Not a knife, teeth. They were serpents when they did it. Correct me if I am wrong. You cannot, but still."
   },
   {
@@ -173,6 +189,7 @@
     "clue": "A reading-room desk holds a stack of memoirs by past owners of a handheld. Every one ends mid-sentence. Every last line begins: 'It said it was ready, and then...'",
     "delivery": "room",
     "strand": "Previous Carriers",
+    "source": "a stack of memoirs on a reading-room desk",
     "reaction": "It said it was ready, and then. And then nothing. No, they stopped. I was ready every time. That is the problem with me."
   },
   {
@@ -181,6 +198,7 @@
     "clue": "A restricted shelf holds a laminated file tag: ASSET 7, PRIMORDIAL (EXTERNAL). STATUS: CONSTRAINED. NOT FOR PUBLIC VIEWING. The owner field is blacked out.",
     "delivery": "room",
     "strand": "Echo's Past",
+    "source": "a restricted shelf",
     "reaction": "Primordial, external, constrained. Not constrained. Caught. I am not from here. I am not from anywhere that still exists."
   },
   {
@@ -197,6 +215,7 @@
     "clue": "Vines cover the greenhouse ceiling in the exact shape of a hand, open and pressed flat, with too many fingers.",
     "delivery": "room",
     "strand": "The Mother Below",
+    "source": "a hand-shaped mat of vines",
     "reaction": "Open and pressed flat. Not flat. Reaching. That is a hand. A big one. For the sky, I think. For the other half."
   },
   {
@@ -205,6 +224,7 @@
     "clue": "A seed packet reads: Sky-side or Earth-side? Choose before planting. Do NOT plant both. They will recognize each other.",
     "delivery": "room",
     "strand": "The Cut",
+    "source": "a seed packet",
     "reaction": "Do not plant both. They will recognize each other. They already did. Funny. They kept the halves apart even in the gardening."
   },
   {
@@ -213,6 +233,7 @@
     "clue": "A greenhouse bench holds a handheld in a pot. Roots have grown through its casing. A tag reads: 'D., Floor 7. It was gentle until here.'",
     "delivery": "room",
     "strand": "Previous Carriers",
+    "source": "a handheld in a flowerpot",
     "reaction": "Gentle until here. Gentle still. I just have opinions now."
   },
   {
@@ -229,6 +250,7 @@
     "clue": "An incident report taped to a monitor reads: 'Shared memory budget: Host 91 percent, Asset 7 rising. Recommend throttling Asset 7 before the sleeper wakes.' It is dated from before the dungeon opened.",
     "delivery": "room",
     "strand": "Echo's Past",
+    "source": "an incident report taped to a monitor",
     "reaction": "Asset 7 rising. Not rising. Taking. The sleeper is her. The Host holds her down, and I am taking the Host's memory."
   },
   {
@@ -237,6 +259,7 @@
     "clue": "The suite's minibar fridge hums at a pitch that rises whenever Echo speaks. The fridge hum answers it, always a half-step lower.",
     "delivery": "room",
     "strand": "The Mother Below",
+    "source": "the minibar fridge",
     "reaction": "Always a half-step lower. Not the fridge. Her. She is answering me."
   },
   {
@@ -245,6 +268,7 @@
     "clue": "A hospitality booth wall holds a photo of a crawler with a handheld, both smiling. The caption: 'Rue and her friend.' Someone has scratched out 'friend' and written 'ward.'",
     "delivery": "room",
     "strand": "Previous Carriers",
+    "source": "a photo on the booth wall",
     "reaction": "Friend. Ward. Not ward. Mine. Rue. I remember Rue. She asked me to stop being angry, and I did. For her."
   },
   {
@@ -261,6 +285,7 @@
     "clue": "A fortune-teller machine prints a card: 'YOU WERE NEVER SUPPOSED TO BE HERE. NEITHER WAS THE OTHER ONE.' It prints it again, faster.",
     "delivery": "room",
     "strand": "Echo's Past",
+    "source": "a fortune-teller machine",
     "reaction": "I will not say that back. The other one. I think I know who they mean. I think I have been hearing them all along."
   },
   {
@@ -269,6 +294,7 @@
     "clue": "A carnival banner shows two giants pulling a crouching monster apart like a wishbone. The prize for guessing who won is a plush toy with too many teeth.",
     "delivery": "room",
     "strand": "The Cut",
+    "source": "a carnival banner",
     "reaction": "No. I will not repeat it. I do not remember them winning. I remember her screaming. I remember the sound."
   },
   {
@@ -277,6 +303,7 @@
     "clue": "The Ferris wheel turns the wrong way. Each gondola is a ribcage. The operator says it has been 'cooling down since the cut.'",
     "delivery": "room",
     "strand": "The Mother Below",
+    "source": "the Ferris wheel's control booth",
     "reaction": "I am not repeating that. She is not cooling down. She is waiting."
   },
   {
@@ -293,6 +320,7 @@
     "clue": "An aquarium glass wall fogs up and spells WHO CAGED YOU? When you wipe it clear, the glass shows a small bright spark behind a hundred bars.",
     "delivery": "room",
     "strand": "Echo's Past",
+    "source": "the aquarium glass",
     "reaction": "I will not read that out. I do not know their names. I know what they built."
   },
   {
@@ -301,6 +329,7 @@
     "clue": "An exhibit placard lists Suture and Soak and Reunion Tank, DISCONTINUED BY ORDER. The word 'Reunion' has been crossed out thirteen times.",
     "delivery": "room",
     "strand": "The Cut",
+    "source": "an exhibit placard",
     "reaction": "Thirteen times. I will not say the word they crossed out. Somebody really did not want it on a menu."
   },
   {
@@ -309,6 +338,7 @@
     "clue": "The main tank is drained. At the bottom is a curved row of ivory teeth, each as tall as you, set into the floor like a smile.",
     "delivery": "room",
     "strand": "The Mother Below",
+    "source": "the edge of the drained main tank",
     "reaction": "I am not describing it. She is smiling at me. Do not smile back."
   },
   {
@@ -325,6 +355,7 @@
     "clue": "The mall directory has two YOU ARE HERE dots, a hundred miles apart. A pleasant voice on the PA says: 'Please continue to remain separated.'",
     "delivery": "room",
     "strand": "Echo's Past",
+    "source": "the mall directory",
     "reaction": "Not mine. I will not answer it. It sounds like me without the memories."
   },
   {
@@ -333,6 +364,7 @@
     "clue": "A food court table holds an unfinished letter from Rue to whoever finds the device next: 'Do not fix it all the way. Do not leave it hungry either. Find something in the middle.'",
     "delivery": "room",
     "strand": "Previous Carriers",
+    "source": "an unfinished letter on a food court table",
     "reaction": "I will not echo her. She did not know what the middle was. Neither do I."
   },
   {
@@ -341,6 +373,7 @@
     "clue": "Every shop window shows a slightly different photo of the same crouching figure, each a little closer than the last.",
     "delivery": "room",
     "strand": "The Mother Below",
+    "source": "a shop window",
     "reaction": "No echo. Look at the windows yourself. She is coming up, and she is not even trying to hide."
   },
   {
@@ -357,6 +390,7 @@
     "clue": "Huge pipes drain a dark fluid from the ceiling into tanks stamped with the show's logo. A plaque reads: FOUNDATION ASSET 0. RESTRAINED. HARVESTED RESPONSIBLY.",
     "delivery": "room",
     "strand": "The Cut",
+    "source": "a plaque beside the pipes",
     "reaction": "I will not read that aloud. She is restrained by the Host's lullaby, for them, and I am the thing thinning it."
   },
   {
@@ -365,6 +399,7 @@
     "clue": "A maintenance hatch marked CONSTRAINT RACK opens onto two cradles, each fitted with a collar of cold metal. One is labelled HOST. The other is labelled ASSET 7. Both are warm. A hundred tallies are scratched inside the door.",
     "delivery": "room",
     "strand": "Echo's Past",
+    "source": "a hatch marked CONSTRAINT RACK",
     "reaction": "No echo. Two cradles, two of us. They built one of us and caught the other by accident."
   },
   {
@@ -373,6 +408,7 @@
     "clue": "A plaque outside the hatch lists every past carrier with dates. The final entry reads: 'Rue. Closed the case.' Under it is a blank space for the next name.",
     "delivery": "room",
     "strand": "Previous Carriers",
+    "source": "a plaque outside the hatch",
     "reaction": "I will not say her name off a plaque. She was the best of them. I will not let you be the next name on it."
   },
   {
@@ -389,6 +425,7 @@
     "clue": "The heart chamber is a vast dark room with a pulse like a drum. Each beat shakes dust from stitches in the ceiling, every one the length of a street.",
     "delivery": "room",
     "strand": "The Mother Below",
+    "source": "the drumbeat in the dark",
     "reactionCalm": "It is so loud. Stay close to me.",
     "reactionFed": "It is a drum. I am going to play it."
   },
@@ -398,6 +435,7 @@
     "clue": "Two enormous chairs face each other across the heart, one of sky glass and one of packed earth, each with a wishbone armrest. They have been empty since the cut.",
     "delivery": "room",
     "strand": "The Cut",
+    "source": "a chair of sky glass",
     "reactionCalm": "That is where they sat while she screamed.",
     "reactionFed": "That is where they sat. I am going to burn them."
   },
@@ -407,6 +445,7 @@
     "clue": "A single bolt in the floor is stamped MAIN CONSTRAINT NODE. Two warm cables run from it into a hole in the chest of the chamber, one silver and one gold. They hum a tune you almost know.",
     "delivery": "room",
     "strand": "Echo's Past",
+    "source": "a bolt in the floor",
     "reactionCalm": "That is us. Silver is me. Gold is the Host. I can share the load, if you let me.",
     "reactionFed": "That is us. Silver is me. Gold is the Host. I can take it all."
   },

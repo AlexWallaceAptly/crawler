@@ -9,6 +9,7 @@ import { autoAssign } from "./craft";
 import { speedOf } from "./grid/units";
 import { breakableWalls, effectsNow, knownModuleVerb, moduleViews } from "./modules";
 import { counterItems } from "./boss";
+import { pendingShard } from "./echo";
 import { openStairwell } from "./explore";
 
 export type ParseResult = { ok: true; action: Action } | { ok: false; reason: "empty" | "unknown"; input: string };
@@ -347,7 +348,8 @@ export function availableCommands(world: World, content: Content): CommandOption
       }
       out.push({ niche: true, label: "Recipes", input: "recipes" });
     }
-    if (!room.searched) out.push({ label: "Search", input: "search" });
+    if (pendingShard(world.game, content, room)) out.push({ label: "Search for the voice", input: "search", primary: true });
+    else if (!room.searched) out.push({ label: "Search", input: "search" });
     out.push({ label: "Rest", input: "rest" });
     out.push({ niche: true, label: "Map", input: "map" });
     if (world.game.echo) {

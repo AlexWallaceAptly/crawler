@@ -18,7 +18,7 @@ import { autoAssign, atWorkbench } from "../packages/engine/src/craft";
 import { effectsNow, moduleViews } from "../packages/engine/src/modules";
 import { counterItems } from "../packages/engine/src/boss";
 import { openStairwell } from "../packages/engine/src/explore";
-import { sideOf } from "../packages/engine/src/echo";
+import { pendingShard, sideOf } from "../packages/engine/src/echo";
 import { rawContent } from "../packages/content/index";
 
 const args = process.argv.slice(2);
@@ -250,6 +250,8 @@ function runOne(mode: CombatMode | "default"): Outcome {
     if (here.type === "safe" && hpPct(world) < 0.85) { act({ type: "sleep" }); continue; }
     if (hpPct(world) < 0.4 && healItem(world)) { act({ type: "use", item: healItem(world)! }); continue; }
     if (hpPct(world) < 0.65 && timeToSpare) { act({ type: "rest" }); continue; }
+    // A faint voice: search for what's talking (that's the only way to find a room shard).
+    if (pendingShard(world.game, content, here)) { act({ type: "search" }); continue; }
 
     const dist = bfsDistances(floor.rooms, floor.currentRoom);
     const unvisited = floor.rooms.filter((r) => !r.visited && dist[r.id]! >= 0);

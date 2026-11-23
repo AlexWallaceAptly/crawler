@@ -736,6 +736,51 @@
     ]
   },
   {
+    "key": "shard.voice",
+    "variants": [
+      {
+        "text": "You hear a faint voice. Somewhere in this room, something is talking, too quietly to make out. It isn't the System. It isn't coming from your pocket."
+      },
+      {
+        "text": "You hear a faint voice, thin as a radio two apartments over. You can't catch the words. Your pocket has gone very still."
+      },
+      {
+        "text": "You hear a faint voice. Something in here is murmuring to itself, patient, like it has been saying the same thing for a long time and can keep going."
+      },
+      {
+        "text": "You hear a faint voice under the hum of the building. Not a monster. Monsters don't say please."
+      }
+    ]
+  },
+  {
+    "key": "shard.voiceAgain",
+    "variants": [
+      {
+        "text": "The faint voice is still here, still talking to nobody. Search the room."
+      },
+      {
+        "text": "That murmur again. Whatever is saying it hasn't moved. It's waiting for you to look."
+      },
+      {
+        "text": "The voice hasn't stopped. It isn't louder. It's just more sure you can hear it."
+      }
+    ]
+  },
+  {
+    "key": "shard.reveal",
+    "variants": [
+      {
+        "text": "You follow the voice to {source}, and it speaks to you."
+      },
+      {
+        "text": "You walk up to {source}, and it speaks to you."
+      },
+      {
+        "text": "The murmur leads you to {source}. You lean in, and it speaks to you."
+      }
+    ]
+  },
+  {
     "key": "item.tooHeavy",
     "variants": [
       {

@@ -99,8 +99,12 @@ Echo travels with the crawler from the start of every run. Each run it wakes in 
 A shard is one clue about the thread. There are 52 (`shards.json`, S01-S52): four per floor on Floors 1-12 (three room descriptions and one boss throwaway), plus four on Floor 13. Each belongs to one strand: Echo's Past, Previous Carriers, The Mother Below, or The Cut.
 
 - **Delivery is fully random. No shard is guaranteed.**
-  - **Rooms.** On the first entry to a room (not the start room), there is a `roomChance` (`thread.json` → `delivery`, 10%) that one of the floor's unfound room shards becomes part of that room's description. It is cached with the room, so `look` shows it again.
-  - **Bosses.** When a floor boss fight starts, there is a `bossChance` (60%) that the floor's boss throwaway shard becomes the boss's opening line.
+  - **Rooms.** On the first entry to a room (not the start room), there is a `roomChance` (`thread.json` → `delivery`, 10%) that one of the floor's unfound room shards is in that room.
+    - **First, a faint voice.** Walking in pops up "You hear a faint voice..." and offers a search. Coming back reminds you that the voice is still there, and the room's Search button turns into "Search for the voice".
+    - **A search finds what's talking.** A second popup says "You walk up to {source}, and it speaks to you", then shows the clue and Echo's reaction. Only then is the shard found. The clue is cached in the room's description, so `look` shows it again.
+    - **`source`** is the thing that speaks ("the cracked handheld on the reception desk"). It's the workbook's Shards → Source column, required for room shards.
+    - A shard waiting in one room can't turn up in a second room on the same floor. If the floor collapses before you search, the shard is lost with it.
+  - **Bosses.** When a floor boss fight starts, there is a `bossChance` (60%) that the floor's boss throwaway shard becomes the boss's opening line. The same popup shows it ("Echo heard that"), with the boss's line and Echo's reaction.
 - **Echo reacts to every shard.** The reaction is printed in Echo's voice right after the clue. Floor 13 shards have a Calm and a Fed reaction; the engine picks by Temper (Calm at 0 or below, Fed above).
 - **Found this run** goes on the run (`echo.shards`). The shard also goes into the account's Codex permanently.
 - **A shard can unlock a module** for this run (see Modules).
@@ -192,7 +196,7 @@ The workbook's Items sheet (I01-I30, `items/oddities.json`) holds hand-written i
 | File | Holds | Workbook sheet |
 | --- | --- | --- |
 | `thread.json` | Strands, delivery chances, vessels, the 13-floor arc, endings and the contract | Thread, Floor Arc |
-| `shards.json` | S01-S52: floor, clue, delivery, strand, reaction (or Calm and Fed reactions) | Shards |
+| `shards.json` | S01-S52: floor, clue, delivery, strand, source (room shards), reaction (or Calm and Fed reactions) | Shards |
 | `modules.json` | M01-M14: unlock shard, parts, text for base/Calm/Fed, structured effects | Modules |
 | `temper.json` | The four stages, Temper sources and caps, urges | Temper |
 | `codex.json` | Lore, recipe, boss weakness and ending entries, with unlock rules and line lists | Codex |

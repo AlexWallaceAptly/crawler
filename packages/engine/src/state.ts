@@ -146,7 +146,10 @@ export interface Room {
   hidden?: ItemInstance[];
   /** Crafting happens here (safe rooms always count). */
   workbench?: boolean;
-  /** A shard turned up here (its clue is part of `desc`). */
+  /**
+   * A shard is here. Until it's found (a search), the room only has its faint voice;
+   * once found, its clue replaces the voice line in `desc`. Found = in `echo.shards`.
+   */
   shard?: string;
   /** A floor boss lives here (bosses.json id) until it's beaten. */
   boss?: string;

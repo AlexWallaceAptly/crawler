@@ -13,6 +13,7 @@ import { StatusBar } from "./panels/StatusBar";
 import { Ticker } from "./panels/Ticker";
 import { InputBar } from "./panels/InputBar";
 import { BattleGrid } from "./panels/BattleGrid";
+import { ShardPopup } from "./panels/ShardPopup";
 import s from "./App.module.css";
 
 export function App({ engine }: { engine: Engine }) {
@@ -31,6 +32,7 @@ export function App({ engine }: { engine: Engine }) {
   const battle = useMemo(() => eventsFor("battle", world.game.log), [world.game.log]);
   const ticker = useMemo(() => eventsFor("ticker", world.game.log), [world.game.log]);
   const inCombat = view.phase === "combat";
+  const shardPopup = <ShardPopup log={world.game.log} phase={view.phase} submit={submit} />;
 
   // Commands handled by the UI itself rather than the engine.
   const onLocal = useCallback(
@@ -71,17 +73,20 @@ export function App({ engine }: { engine: Engine }) {
   if (layoutControl.layout !== "desktop") {
     const Shell = layoutControl.layout === "phone" ? MobileShell : TabletShell;
     return (
-      <Shell
-        view={view}
-        log={log}
-        battle={battle}
-        commands={commands}
-        submit={submit}
-        onLocal={onLocal}
-        armed={armed}
-        setArmed={setArmed}
-        layout={layoutControl}
-      />
+      <>
+        <Shell
+          view={view}
+          log={log}
+          battle={battle}
+          commands={commands}
+          submit={submit}
+          onLocal={onLocal}
+          armed={armed}
+          setArmed={setArmed}
+          layout={layoutControl}
+        />
+        {shardPopup}
+      </>
     );
   }
 
@@ -205,6 +210,7 @@ export function App({ engine }: { engine: Engine }) {
             ]
           : []}
       />
+      {shardPopup}
     </div>
   );
 }

@@ -11,6 +11,8 @@ function text(e: GameEvent): string {
       return `FLOOR ${e.floor} CLEARED`;
     case "recipeLearned":
       return `⚒ NEW RECIPE — ${e.name}`;
+    case "shardVoice":
+      return `◇ A FAINT VOICE — ${e.room}`;
     case "shardFound":
       return `◆ SHARD — ${e.strand}${e.first ? " (new)" : ""}`;
     case "codexUpdated":

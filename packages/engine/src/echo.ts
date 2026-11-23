@@ -125,12 +125,15 @@ export function echoOnNewFloor(ctx: StepContext): void {
 
 export function unfoundShards(ctx: StepContext, floor: number, delivery: Shard["delivery"]): Shard[] {
   const found = new Set(ctx.game.echo?.shards ?? []);
+  // A shard already waiting in another room of this floor isn't up for grabs either.
+  for (const r of ctx.game.floor?.rooms ?? []) if (r.shard) found.add(r.shard);
   return ctx.content.shards.all.filter((s) => s.floor === floor && s.delivery === delivery && !found.has(s.id));
 }
 
 /**
- * First visit to a room: maybe one of the floor's unfound room shards becomes part of
- * its description. Call after the description is built and before the room block is emitted.
+ * First visit to a room: maybe one of the floor's unfound room shards is in it. The room
+ * gets a faint voice; `search` finds what's talking (revealRoomShard). Call after the
+ * description is built.
  */
 export function maybeRoomShard(ctx: StepContext, room: Room): Shard | null {
   const floor = ctx.game.floor;
@@ -140,8 +143,29 @@ export function maybeRoomShard(ctx: StepContext, room: Room): Shard | null {
   if (pool.length === 0) return null;
   const s = pick(pool);
   room.shard = s.id;
-  room.desc = [...(room.desc ?? []), s.clue];
   return s;
+}
+
+/** The shard in this room that a search hasn't found yet, if any. */
+export function pendingShard(game: GameState, content: Content, room: Room): Shard | null {
+  if (!room.shard || !game.echo || game.echo.shards.includes(room.shard)) return null;
+  return content.shards.byId[room.shard] ?? null;
+}
+
+/** On entering a room with a shard waiting: the faint voice (a popup the first time). */
+export function shardVoice(ctx: StepContext, room: Room, first: boolean): void {
+  if (first) {
+    const text = ctx.describeKey("shard.voice");
+    ctx.emit({ type: "shardVoice", room: room.name, text });
+  } else ctx.describeKey("shard.voiceAgain");
+}
+
+/** A search found what's talking: you walk up to it, it says its piece, Echo reacts. */
+export function revealRoomShard(ctx: StepContext, room: Room, s: Shard): void {
+  const intro = ctx.describeKey("shard.reveal", { source: s.source ?? "it" });
+  ctx.describe(s.clue);
+  room.desc = [...(room.desc ?? []), s.clue];
+  shardFound(ctx, s, { intro });
 }
 
 /** A boss fight starting: maybe its throwaway shard is the opening line. */
@@ -156,7 +180,7 @@ export function reactionTo(content: Content, s: Shard, temper: number): string {
 }
 
 /** A shard was found: it goes on the run and in the Codex, Echo reacts, and a module may unlock. */
-export function shardFound(ctx: StepContext, s: Shard): void {
+export function shardFound(ctx: StepContext, s: Shard, how: { intro?: string; speaker?: string } = {}): void {
   const e = ctx.game.echo;
   if (!e || e.shards.includes(s.id)) return;
   e.shards.push(s.id);
@@ -164,8 +188,12 @@ export function shardFound(ctx: StepContext, s: Shard): void {
   const first = !thread.shards.includes(s.id);
   const before = new Set(thread.shards);
   if (first) thread.shards.push(s.id);
-  ctx.echoLine(reactionTo(ctx.content, s, e.temper));
-  ctx.emit({ type: "shardFound", id: s.id, strand: s.strand, floor: s.floor, first });
+  const reaction = reactionTo(ctx.content, s, e.temper);
+  ctx.echoLine(reaction);
+  ctx.emit({
+    type: "shardFound", id: s.id, strand: s.strand, floor: s.floor, first, delivery: s.delivery, clue: s.clue, reaction,
+    ...(how.intro ? { intro: how.intro } : {}), ...(how.speaker ? { speaker: how.speaker } : {}),
+  });
   if (first) {
     for (const entry of ctx.content.codex.all.filter((c) => c.type === "lore")) {
       const opens = entry.unlock.shards?.includes(s.id) && !entry.unlock.shards.some((x) => before.has(x));

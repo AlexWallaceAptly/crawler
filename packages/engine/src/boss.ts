@@ -59,7 +59,7 @@ function bossIntro(ctx: StepContext, boss: Boss): void {
   const shard = maybeBossShard(ctx, boss.floor);
   if (shard) {
     ctx.fight(shard.clue, "enemy");
-    shardFound(ctx, shard);
+    shardFound(ctx, shard, { speaker: boss.name });
   }
 }
 

@@ -754,13 +754,18 @@ export const StrandSchema = z.enum(STRANDS);
 /** 1-3 are the acts; 4 is the Floor 13 finale. */
 export const ActSchema = z.number().int().min(1).max(4);
 
-/** S01-S52. Room shards turn up in a room's description; the boss one is the boss's opening line. */
+/**
+ * S01-S52. A room shard is a faint voice in a room until a search finds what's talking;
+ * the boss one is the boss's opening line.
+ */
 export const ShardSchema = z.strictObject({
   id: ShardIdSchema,
   floor: z.number().int().min(1).max(13),
   clue: z.string().min(1),
   delivery: z.enum(["room", "boss"]),
   strand: StrandSchema,
+  /** Room shards: the thing that speaks, read after "You walk up to" ("the cracked handheld"). */
+  source: z.string().min(1).optional(),
   /** Echo's reaction, already written for the floor's act. */
   reaction: z.string().min(1).optional(),
   /** Floor 13: Echo's reaction depends on Temper. */
@@ -768,6 +773,8 @@ export const ShardSchema = z.strictObject({
   reactionFed: z.string().min(1).optional(),
 }).refine((s) => s.reaction !== undefined || (s.reactionCalm !== undefined && s.reactionFed !== undefined), {
   message: "a shard needs a reaction, or both reactionCalm and reactionFed",
+}).refine((s) => s.delivery !== "room" || s.source !== undefined, {
+  message: "a room shard needs a source (the thing that speaks: the workbook's Source column)",
 });
 export type Shard = z.infer<typeof ShardSchema>;
 

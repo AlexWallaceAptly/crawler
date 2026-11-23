@@ -16,7 +16,7 @@ import { gridDash, isThrowable, playerDefend, playerShove, playerThrow, takeInAr
 import { combine, craftKnown, nudge, showRecipes } from "./craft";
 import { renderArena } from "./grid/view";
 import { narrate } from "./narrate/narrator";
-import { answerUrge, echoNarration, feedEcho, lapseUrge, pushTemper, recordRun, showCodex, showEcho, wakeEcho } from "./echo";
+import { answerUrge, echoNarration, feedEcho, lapseUrge, pendingShard, pushTemper, recordRun, revealRoomShard, showCodex, showEcho, wakeEcho } from "./echo";
 import { craftModule, moduleAction } from "./modules";
 import { noticeHints, playerDecline, useAgainstBoss } from "./boss";
 import { derive } from "./rules/derived";
@@ -66,6 +66,13 @@ export class StepContext {
   /** Plain narrator voice (room descriptions etc). */
   describe(text: string): void {
     this.emit({ type: "narration", voice: "narrator", text });
+  }
+  /** Narrator voice from a narration template. Returns the line it said. */
+  describeKey(key: string, data: object = {}): string {
+    const ctx = { crawler: this.world.game.crawler, mood: this.world.game.narrator.mood, ...data };
+    const text = narrate(this.content, this.world.game.narrator, key, ctx);
+    this.describe(text);
+    return text;
   }
   /** One line of combat play-by-play (battle log). */
   fight(text: string, actor: "you" | "enemy" | "status"): void {
@@ -288,20 +295,21 @@ const handlers: Handlers = {
       if (!timePassed(ctx, TIME_COST.search)) return;
       room.searched = true;
       const found = room.hidden ?? [];
+      const shard = pendingShard(ctx.game, ctx.content, room);
+      let stairs = false;
       if (room.concealed) {
         room.concealed = false;
+        stairs = true;
         ctx.describe("Behind a panel that doesn't quite match the wall, a stairwell goes down into the dark. It was here all along. Of course it was.");
-        if (found.length === 0) return;
       }
-      if (found.length === 0) {
-        ctx.say("explore.searchNothing");
-        return;
-      }
-      room.items ??= [];
-      for (const it of found) addToPile(room.items, it);
-      delete room.hidden;
-      ctx.describe(`You turn up: ${found.map((i) => (i.qty > 1 ? `${i.name} ×${i.qty}` : i.name)).join(", ")}.`);
-      ctx.say("explore.searchFound");
+      if (found.length > 0) {
+        room.items ??= [];
+        for (const it of found) addToPile(room.items, it);
+        delete room.hidden;
+        ctx.describe(`You turn up: ${found.map((i) => (i.qty > 1 ? `${i.name} ×${i.qty}` : i.name)).join(", ")}.`);
+        ctx.say("explore.searchFound");
+      } else if (!stairs && !shard) ctx.say("explore.searchNothing");
+      if (shard) revealRoomShard(ctx, room, shard);
     },
   },
   rest: {

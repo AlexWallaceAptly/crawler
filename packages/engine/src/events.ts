@@ -35,8 +35,20 @@ export type GameEventBody =
   | { type: "died"; cause: string }
   /** A new recipe went into the book (first time a combination worked, or nearly did). */
   | { type: "recipeLearned"; name: string }
-  /** A shard of the thread turned up (its clue is in the room block or the boss's line). */
-  | { type: "shardFound"; id: string; strand: string; floor: number; first: boolean }
+  /** A room has a shard in it: a faint voice. A search finds what's talking. */
+  | { type: "shardVoice"; room: string; text: string }
+  /**
+   * A shard of the thread turned up: a search found the thing talking (room), or the
+   * boss said it. Carries the words so the client can show them in a popup.
+   */
+  | {
+    type: "shardFound"; id: string; strand: string; floor: number; first: boolean;
+    delivery: "room" | "boss"; clue: string; reaction: string;
+    /** Room shards: "You walk up to the cracked handheld, and it speaks to you." */
+    intro?: string;
+    /** Boss shards: who said it. */
+    speaker?: string;
+  }
   /** The account's Codex gained something. */
   | { type: "codexUpdated"; entry: string; kind: "unlocked" | "line" | "recipe" | "weakness" | "ending" }
   | { type: "temperChanged"; temper: number; delta: number; side: "calm" | "base" | "fed" }

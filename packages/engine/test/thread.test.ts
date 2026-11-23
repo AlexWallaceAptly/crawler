@@ -209,7 +209,7 @@ describe("shards and the Codex", () => {
     expect(maybeRoomShard(ctx, floor.rooms.find((r) => r.id !== floor.startRoom)!)).toBeNull();
   });
 
-  it("puts the clue in the room's cached description, and Echo reacts", () => {
+  it("gives the room a faint voice first; a search finds what's talking, then Echo reacts", () => {
     const world = freshRun();
     const floor = world.game.floor!;
     const room = floor.rooms.find((r) => !r.visited && r.id !== floor.startRoom)!;
@@ -220,8 +220,48 @@ describe("shards and the Codex", () => {
     resetRng();
     expect(room.shard).toBeDefined();
     const s = content.shards.get(room.shard!);
-    expect(room.desc).toContain(s.clue);
-    expect(ctx.events.some((e) => e.type === "narration" && e.voice === "echo" && e.text === s.reaction)).toBe(true);
+    // Heard, not found: no clue in the description, no reaction, nothing on the run yet.
+    expect(ctx.events.some((e) => e.type === "shardVoice")).toBe(true);
+    expect(room.desc).not.toContain(s.clue);
+    expect(ctx.events.some((e) => e.type === "narration" && e.text === s.reaction)).toBe(false);
+    expect(world.game.echo!.shards).toEqual([]);
+
+    const searched = engine.step(world, { type: "search" });
+    const after = searched.world.game.floor!.rooms[room.id]!;
+    expect(after.desc).toContain(s.clue);
+    expect(searched.world.game.echo!.shards).toEqual([s.id]);
+    const found = searched.events.find((e) => e.type === "shardFound");
+    expect(found).toMatchObject({ delivery: "room", clue: s.clue, reaction: s.reaction });
+    expect(found?.type === "shardFound" && found.intro).toContain(s.source!);
+    expect(searched.events.some((e) => e.type === "narration" && e.voice === "echo" && e.text === s.reaction)).toBe(true);
+    expect(searched.events.some((e) => e.type === "narration" && e.key === "explore.searchNothing")).toBe(false);
+  });
+
+  it("reminds you of the voice on a revisit, and never puts one shard in two rooms", () => {
+    const world = freshRun();
+    const floor = world.game.floor!;
+    const ctx = new StepContext(world, content);
+    setRandomSource(() => 0.01);
+    const rooms = floor.rooms.filter((r) => r.id !== floor.startRoom).slice(0, 4);
+    for (const r of rooms) {
+      r.desc = [];
+      maybeRoomShard(ctx, r);
+    }
+    resetRng();
+    const placed = rooms.map((r) => r.shard).filter(Boolean);
+    expect(placed).toHaveLength(3); // the floor has three room shards
+    expect(new Set(placed).size).toBe(3);
+
+    const room = rooms.find((r) => r.shard)!;
+    room.visited = true;
+    const again = new StepContext(world, content);
+    enterRoom(again, room.id, "revisit");
+    expect(again.events.some((e) => e.type === "shardVoice")).toBe(false);
+    expect(again.events.some((e) => e.type === "narration" && e.key === undefined && e.voice === "narrator")).toBe(true);
+  });
+
+  it("gives every room shard a source to walk up to", () => {
+    for (const s of content.shards.all.filter((x) => x.delivery === "room")) expect(s.source, s.id).toBeTruthy();
   });
 
   it("remembers shards in the account across runs; the run's list starts empty", () => {

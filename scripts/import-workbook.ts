@@ -90,15 +90,21 @@ type Json = Record<string, unknown>;
 // ---------------------------------------------------------------- shards
 
 function importShards(): Json[] {
+  const old = new Map(readJson<Json[]>("shards.json", []).map((x) => [x.id as string, x]));
   return sheet("Shards").map((r) => {
+    const id = col(r, "ID");
     const reaction = col(r, "Echo's reaction");
     const split = /^CALM:\s*(.+?)\s*FED:\s*(.+)$/s.exec(reaction);
+    const delivery = col(r, "Delivery") === "Boss throwaway" ? "boss" : "room";
+    // Source (the thing that speaks) is a newer column: keep the JSON's until the sheet has one.
+    const source = r["Source"] || (old.get(id)?.source as string | undefined);
     return {
-      id: col(r, "ID"),
+      id,
       floor: Number(col(r, "Floor")),
       clue: col(r, "Clue text"),
-      delivery: col(r, "Delivery") === "Boss throwaway" ? "boss" : "room",
+      delivery,
       strand: col(r, "Strand"),
+      ...(delivery === "room" && source ? { source } : {}),
       ...(split ? { reactionCalm: split[1], reactionFed: split[2] } : { reaction }),
     };
   });
