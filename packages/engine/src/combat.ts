@@ -31,6 +31,7 @@ import {
 import { buildArena, entrySide } from "./grid/arena";
 import { coord, parseCoord, reaches } from "./grid/geometry";
 import { runEnemyTurnGrid } from "./grid/ai";
+import { igniteUnder } from "./grid/fire";
 import { approachCost, approachTarget, gridFlee, moveBudget } from "./grid/play";
 import { ageHazards, packBonus, standInHazard, syncBands } from "./grid/units";
 import { dropTurnStatuses } from "./maneuvers";
@@ -442,6 +443,7 @@ export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfi
     }
   }
   coatedHit(ctx, target);
+  igniteUnder(ctx, target, w.damageType === "fire"); // a fire hit, or a fresh burn, on oil
   // Some oddities feed Echo every time they bite (the Bone China Mouth).
   const held = c.inventory.find((i) => i.uid === c.equipment.mainHand);
   const perHit = held ? ctx.content.oddities.byId[held.baseId]?.temperOnHit : undefined;
@@ -942,6 +944,8 @@ export function enemyStrike(ctx: StepContext, e: Enemy, attack: LiveAttack, opts
     const what = applyStatus(c.statuses, def, attack.status.duration);
     if (what !== "ignored") ctx.fight(`You are ${def.name.toLowerCase()}.`, "status");
   }
+  if (c.hp > 0) igniteUnder(ctx, "crawler", attack.damageType === "fire"); // fire, or a fresh burn, on oil
+  if (ctx.game.phase !== "combat") return roll; // the fire got you
   if (c.hp <= 0) killInCombat(ctx, e.tier === "boss" ? `the ${e.name}` : `${/^[aeiou]/i.test(e.name) ? "an" : "a"} ${e.name}`);
   return roll;
 }

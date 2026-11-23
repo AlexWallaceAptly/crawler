@@ -13,7 +13,9 @@
     { "item": "lead_pipe", "weight": 3 }, { "item": "rebar", "weight": 2 }, { "item": "two_by_four", "weight": 2 },
     { "item": "broom_handle", "weight": 1 }, { "item": "table_leg", "weight": 2 }, { "item": "trash_can_lid", "weight": 1 },
     { "item": "baseball_bat", "weight": 1 }, { "item": "crowbar", "weight": 1 },
-    { "item": "ball_bearings", "weight": 1 }, { "item": "bowling_pin_cluster", "weight": 1 }, { "item": "lotion_bottle", "weight": 1 }
+    { "item": "ball_bearings", "weight": 1 }, { "item": "bowling_pin_cluster", "weight": 1 }, { "item": "lotion_bottle", "weight": 1 },
+    { "item": "bottle_rocket", "weight": 1 }, { "item": "road_flare", "weight": 1 }, { "item": "hairspray", "weight": 1 },
+    { "item": "horseshoe", "weight": 1 }, { "item": "golf_balls", "weight": 1 }
   ] },
   { "id": "sharp", "entries": [
     { "item": "box_of_nails", "weight": 3 }, { "item": "thumbtacks", "weight": 3 }, { "item": "broken_glass", "weight": 3 },
@@ -24,7 +26,10 @@
     { "item": "duct_tape", "weight": 2 }, { "item": "superglue", "weight": 2 }, { "item": "barbed_wire_coil", "weight": 2 },
     { "item": "d_batteries", "weight": 2 }, { "item": "lighter_fluid", "weight": 2 }, { "item": "smoke_bomb", "weight": 1 },
     { "item": "molotov", "weight": 1 }, { "item": "baseball_bat", "weight": 2 }, { "item": "crowbar", "weight": 2 },
-    { "item": "caltrops_jacks", "weight": 2 }, { "item": "mana_potion", "weight": 1 }
+    { "item": "caltrops_jacks", "weight": 2 }, { "item": "mana_potion", "weight": 1 },
+    { "item": "pipe_bomb", "weight": 1 }, { "item": "propane_tank", "weight": 0.5 }, { "item": "firework_mortar", "weight": 0.5 },
+    { "item": "liquid_nitrogen", "weight": 0.5 }, { "item": "road_flare", "weight": 1 }, { "item": "m80", "weight": 1 },
+    { "item": "dart_set", "weight": 1 }, { "item": "nail_gun", "weight": 0.3 }, { "item": "harpoon_gun", "weight": 0.2 }
   ] },
   { "id": "safe_supplies", "entries": [
     { "item": "duct_tape", "weight": 3 }, { "item": "friction_tape", "weight": 2 }, { "item": "electrical_tape", "weight": 2 },
@@ -33,10 +38,40 @@
   { "id": "arena_scrap", "entries": [
     { "item": "lead_pipe", "weight": 3 }, { "item": "rebar", "weight": 2 }, { "item": "table_leg", "weight": 2 },
     { "item": "broken_glass", "weight": 2 }, { "item": "empty_bottle", "weight": 2 }, { "item": "padlock", "weight": 1 },
-    { "item": "thumbtacks", "weight": 1 }, { "item": "trash_can_lid", "weight": 1 }
+    { "item": "thumbtacks", "weight": 1 }, { "item": "trash_can_lid", "weight": 1 },
+    { "item": "motor_oil", "weight": 1 }, { "item": "lighter_fluid", "weight": 1 }, { "item": "bottle_rocket", "weight": 1 },
+    { "item": "horseshoe", "weight": 1 }, { "item": "bocce_ball", "weight": 1 }
   ] },
   { "id": "parts_f1", "entries": [{ "item": "cracked_screen", "weight": 3 }, { "item": "speaker_scrap", "weight": 3 }, { "item": "copper_wire", "weight": 2 }, { "item": "d_batteries", "weight": 2 }] },
   { "id": "parts_f2", "entries": [{ "item": "tag_gun", "weight": 2 }, { "item": "luggage_tag", "weight": 3, "qty": [1, 2] }, { "item": "chalk", "weight": 2 }, { "item": "surveyors_string", "weight": 2 }] },
   { "id": "parts_f3", "entries": [{ "item": "glass_vial", "weight": 2 }, { "item": "saltwater", "weight": 2 }, { "item": "nylon_rope", "weight": 2 }, { "item": "hook", "weight": 3, "qty": [1, 2] }] },
-  { "id": "lost_property", "entries": [{ "item": "tagged_umbrella" }, { "item": "tagged_retainer" }, { "item": "tagged_glove" }] }
+  { "id": "lost_property", "entries": [{ "item": "tagged_umbrella" }, { "item": "tagged_retainer" }, { "item": "tagged_glove" }] },
+  { "id": "ranged", "entries": [
+    { "item": "dart_set", "weight": 3 }, { "item": "skewer_set", "weight": 3 }, { "item": "horseshoe", "weight": 3 }, { "item": "golf_balls", "weight": 3 },
+    { "item": "lawn_dart", "weight": 2 }, { "item": "bocce_ball", "weight": 2 }, { "item": "horseshoe_pit", "weight": 2 }, { "item": "staple_gun", "weight": 2 },
+    { "item": "bowling_ball", "weight": 2 }, { "item": "garden_gnome", "weight": 1 }, { "item": "film_reel", "weight": 1 }, { "item": "medicine_ball", "weight": 1 },
+    { "item": "roman_candle", "weight": 1 }, { "item": "nail_gun", "weight": 0.5 }, { "item": "meat_slicer_blade", "weight": 0.5 },
+    { "item": "bowling_ball_heavy", "weight": 0.5 }, { "item": "harpoon_gun", "weight": 0.25 }
+  ] },
+  { "id": "throwables_f1", "entries": [
+    { "item": "party_popper", "weight": 3 }, { "item": "confetti_cannon", "weight": 2 }, { "item": "party_sparkler", "weight": 3 },
+    { "item": "champagne_bottle", "weight": 1 }, { "item": "bottle_rocket", "weight": 2 }, { "item": "smoke_bomb", "weight": 2 },
+    { "item": "glitter_bomb", "weight": 2 }, { "item": "hairspray", "weight": 2 }, { "item": "nail_polish_remover", "weight": 2 },
+    { "item": "lotion_bottle", "weight": 2 }, { "item": "pepper_spray", "weight": 2 }, { "item": "lighter_fluid", "weight": 1 },
+    { "item": "m80", "weight": 1 }, { "item": "firework_mortar", "weight": 0.5 }
+  ] },
+  { "id": "throwables_f2", "entries": [
+    { "item": "snap_pops", "weight": 3 }, { "item": "stink_bomb", "weight": 3 }, { "item": "glitter_bomb", "weight": 2 },
+    { "item": "m80", "weight": 2 }, { "item": "bug_spray_can", "weight": 2 }, { "item": "laughing_gas", "weight": 1 },
+    { "item": "hairspray", "weight": 2 }, { "item": "nail_polish_remover", "weight": 2 }, { "item": "bottle_rocket", "weight": 2 },
+    { "item": "roach_bomb", "weight": 1 }, { "item": "wasp_nest", "weight": 1 }, { "item": "lighter_fluid", "weight": 1 },
+    { "item": "pipe_bomb", "weight": 0.5 }, { "item": "liquid_nitrogen", "weight": 0.5 }
+  ] },
+  { "id": "throwables_f3", "entries": [
+    { "item": "road_flare", "weight": 3 }, { "item": "motor_oil", "weight": 3 }, { "item": "lighter_fluid", "weight": 2 },
+    { "item": "bowling_ball_wax", "weight": 1 }, { "item": "charcoal_bag", "weight": 1 }, { "item": "roach_bomb", "weight": 1 },
+    { "item": "car_battery", "weight": 1 }, { "item": "m80", "weight": 2 }, { "item": "bottle_rocket", "weight": 2 },
+    { "item": "fire_ant_jar", "weight": 1 }, { "item": "pipe_bomb", "weight": 1 }, { "item": "propane_tank", "weight": 1 },
+    { "item": "firework_mortar", "weight": 0.5 }, { "item": "liquid_nitrogen", "weight": 0.5 }
+  ] }
 ]

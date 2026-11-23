@@ -293,6 +293,11 @@ function checkReferences(c: Content, problems: string[]): void {
     }
   }
   for (const f of c.arenaFeatures.all) {
+    if (f.flammable) {
+      const into = c.arenaFeatures.byId[f.flammable.becomes];
+      if (!into) problems.push(`arenaFeatures.json "${f.id}".flammable: unknown arena feature "${f.flammable.becomes}"`);
+      else if (into.kind !== "hazard" || !into.ignites) problems.push(`arenaFeatures.json "${f.id}".flammable: "${into.id}" must be an igniting hazard`);
+    }
     for (const eff of [f.enter, f.stay]) {
       if (eff?.status) ref(`arenaFeatures.json "${f.id}"`, "status", c.statusEffects.has(eff.status.id), eff.status.id);
     }

@@ -12,6 +12,7 @@ import { chance } from "../rng";
 import type { StepContext } from "../step";
 import type { ArenaHazard, ArenaState, Crawler, Enemy, Pos } from "../state";
 import { bandOf, coord, dist, hazardAt, same, stepCost } from "./geometry";
+import { igniteUnder } from "./fire";
 
 /** Tiles the crawler gets per AP spent moving. Slow and haste change your AP, not this. */
 export const CRAWLER_SPEED = 4;
@@ -68,6 +69,8 @@ export function walk(ctx: StepContext, who: Mover, path: Pos[], budget: number):
     const h = hazardAt(a, p);
     if (h) triggerHazard(ctx, who, h, "enter");
     if (!stillStanding(ctx, who)) break;
+    igniteUnder(ctx, who); // burning feet on oil
+    if (!stillStanding(ctx, who)) break;
     const statuses = who === "crawler" ? ctx.crawler.statuses : who.statuses;
     if (hasFlag(statuses, ctx.content, "skipTurn")) break;
   }
@@ -82,6 +85,7 @@ export function standInHazard(ctx: StepContext, who: Mover): void {
   if (!at) return;
   const h = hazardAt(a, at);
   if (h) triggerHazard(ctx, who, h, "stay");
+  if (ctx.game.phase === "combat") igniteUnder(ctx, who);
 }
 
 export function triggerHazard(ctx: StepContext, who: Mover, h: ArenaHazard, when: "enter" | "stay"): void {

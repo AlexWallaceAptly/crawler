@@ -389,6 +389,11 @@ Fights can also play on a small tactical board. Which mode an account uses is a 
   - **Dash:** double movement for 1 AP; ends the turn.
   - **Defend:** braced until your next turn: a double bane on everything swung at you, and you can't be shoved.
   - **Pick up and wield:** junk lying on the board, for a tile of movement each.
+- **Fire spreads through oil** (`arenaFeatures.json`: fire `ignites`, an oil slick is `flammable`). An oil slick catches when:
+  - flame touches it (8 ways),
+  - something burning steps onto it or starts its turn on it,
+  - or fire damage hits something standing on it.
+  The whole connected slick goes up at once and burns for 4 rounds, and anyone standing on it takes the fire's effect. Thrown oil (motor oil, lotion, lane oil spray) leaves a slick, so oil-then-fire is a plan.
 - **The pack bonus is the one positional rule.** A melee enemy gets an edge for each other enemy next to you, up to two. In bands mode the same edge counts other enemies at close range.
 - **Flee.** Reach a door and spend 2 AP to roll DEX against enemies within 3 tiles that can see you; with none, you're out automatically. The door you came in by leads back; any other door leads onward.
 
@@ -1879,4 +1884,20 @@ Built on the `items` branch. Before it started, every branch was merged into `ma
   - Floor 3 at 49% sits inside Milestone 13's target of 30-60%, so the numbers above weren't tuned further.
 - **Headless Chrome, desktop and phone:** the inventory's ▲/▼ marks and summaries, a generated weapon's details and Equip button, the Fighting block, the workbench groups opening, the recipe book counts, and both shard popups through to Echo's reaction.
 - **The voice popup fires on any first visit to a room with a waiting shard**, not only when the roll just happened. That's the same in play, and it let a prepared save show the popup.
+
+**Explosives, ranged weapons and fire** (from playtesting: "add them to loot and make fire spread to oil")
+
+- **Every explosive can now be found in a run.**
+  - Each floor scatters 3-5 throwables from its own table: `throwables_f1` is party stuff (poppers, sparklers, confetti, champagne), `throwables_f2` is lost-property odds and ends (snap pops, stink bombs, M-80s, bug spray), and `throwables_f3` is the garage (road flares, motor oil, propane, pipe bombs).
+  - The big ones are rare: Propane Tank, Pipe Bomb, Firework Mortar and Liquid Nitrogen sit at weight 0.5-1 in treasure rooms and the themed tables.
+  - Bottle rockets, road flares and hairspray joined the general junk table, so the Aerosol Torch recipe can be made without the right backstory.
+- **Found ranged weapons:** a new `ranged` table of kit throwing weapons (darts, skewers, horseshoes, golf balls, staple gun, bowling balls, a rare nail gun or speargun). Each floor scatters 1-2, and treasure rooms can hold darts, a nail gun or a speargun.
+- **Three more generated ranged bases:** Slingshot (far, DEX), Javelin (near, STR) and Compact Crossbow (far, DEX, two-handed, from item level 8).
+- **The battle board's scrap** can be motor oil, lighter fluid, bottle rockets, a horseshoe or a bocce ball.
+- **Motor oil is throwable now** (a plus of oil, and it slows), and Lane Oil Spray leaves a 3x3 slick. Both count as Fuel at the workbench.
+- **Fire is data:** `ignites` on flame, and `flammable: { becomes, rounds }` on anything that catches. Validation checks that `becomes` is an igniting hazard.
+  - Gas leaks aren't flammable yet. That's one JSON line once there's an explosion hazard for them to become.
+  - The burning check is the `burning` status by id.
+- **One slick, one fire:** the spread is instant, through every touching tile, not one tile a round. It's easier to read on the board.
+- **Guarded deaths:** fire you start can now kill you mid-action, so throwing and enemy hits stop there instead of killing the crawler twice.
 

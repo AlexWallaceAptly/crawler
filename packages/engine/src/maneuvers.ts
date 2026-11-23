@@ -14,6 +14,7 @@
  *                 until your next turn.
  *   take X        grid: pick up loose junk from your tile or next to it (1 tile of movement).
  */
+import { burn, igniteUnder } from "./grid/fire";
 import {
   afterAction, aliveEnemies, applyItemEffects, beginTurn, canAfford, consumeOne, damageEnemy, endCombat, finishRound,
   findEnemy, isGrid, needsEnemy, shiftEnemyBand, spendAp, type EffectTargets,
@@ -197,10 +198,18 @@ export function playerThrow(ctx: StepContext, item: ItemInstance, at?: string): 
     }
     ctx.fight(`${f.name} now covers ${tiles.length === 1 ? coord(tile) : `${coord(tile)} and around it`}.`, "status");
   }
+  if (ctx.game.phase === "combat" && ctx.crawler.hp > 0) {
+    // Fire meets oil: thrown flame lights touching slicks; thrown oil next to flame catches.
+    burn(ctx);
+    const fireAt = (target: "target" | "all_enemies") => def.effects.some((e) => e.target === target && e.kind === "damage" && e.damageType === "fire");
+    if (primary) igniteUnder(ctx, primary, fireAt("target") || fireAt("all_enemies"));
+    for (const e of t.area) if (e !== primary) igniteUnder(ctx, e, fireAt("all_enemies"));
+  }
   afterSelfHarm(ctx, item.name);
 }
 
 function afterSelfHarm(ctx: StepContext, cause: string): void {
+  if (ctx.game.phase !== "combat") return; // already over (the fire you started got you)
   if (ctx.crawler.hp <= 0) {
     endCombat(ctx);
     killCrawler(ctx, `their own ${cause.toLowerCase()}`);

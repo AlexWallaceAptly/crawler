@@ -749,6 +749,17 @@ export const ArenaFeatureSchema = z.strictObject({
   consumedOnTrigger: z.boolean().default(false),
   /** Enemies path around it. False for things they can't see coming. */
   aiAvoids: z.boolean().default(true),
+  /** Open flame: a flammable hazard touching it (8 ways) catches. */
+  ignites: z.boolean().default(false),
+  /**
+   * Catches fire: turns into `becomes` (an igniting hazard) for `rounds` rounds when
+   * flame touches it, when something burning steps on it, or when fire hits
+   * something standing on it. The whole connected patch goes up at once.
+   */
+  flammable: z.strictObject({
+    becomes: IdSchema,
+    rounds: z.number().int().min(1).optional(),
+  }).optional(),
   description: z.string(),
 }).refine((f) => f.kind !== "obstacle" || f.blocksMove, { message: "obstacles must block movement" });
 export type ArenaFeature = z.infer<typeof ArenaFeatureSchema>;
