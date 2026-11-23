@@ -4,7 +4,7 @@
  * farther than what's paid for buys another AP's worth automatically.
  */
 import {
-  afterAction, aliveEnemies, canAfford, closeRound, finishRound, fleeContest, freeSwings, leaveCombat, endCombat, spendAp,
+  afterAction, aliveEnemies, canAfford, closeRound, finishRound, fledEvent, fleeContest, freeSwings, leaveCombat, endCombat, spendAp,
 } from "../combat";
 import type { RangeBand } from "../content/schemas";
 import { AP_COST } from "../rules/ap";
@@ -284,8 +284,9 @@ function leaveThrough(ctx: StepContext, exit: ArenaExit): void {
     leaveCombat(ctx, combat.fromRoom);
     return;
   }
+  const ended = fledEvent(ctx);
   endCombat(ctx);
-  ctx.emit({ type: "combatEnded", outcome: "fled" });
+  ctx.emit(ended);
   ctx.setPhase("exploring");
   ctx.describe(`You crash through the ${exit.dir} door and keep going.`);
   travel(ctx, dest);

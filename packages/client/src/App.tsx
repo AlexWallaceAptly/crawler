@@ -14,6 +14,7 @@ import { Ticker } from "./panels/Ticker";
 import { InputBar } from "./panels/InputBar";
 import { BattleGrid } from "./panels/BattleGrid";
 import { ShardPopup } from "./panels/ShardPopup";
+import { LevelUpPopup } from "./panels/LevelUpPopup";
 import s from "./App.module.css";
 
 export function App({ engine }: { engine: Engine }) {
@@ -32,7 +33,12 @@ export function App({ engine }: { engine: Engine }) {
   const battle = useMemo(() => eventsFor("battle", world.game.log), [world.game.log]);
   const ticker = useMemo(() => eventsFor("ticker", world.game.log), [world.game.log]);
   const inCombat = view.phase === "combat";
-  const shardPopup = <ShardPopup log={world.game.log} phase={view.phase} submit={submit} />;
+  const shardPopup = (
+    <>
+      <ShardPopup log={world.game.log} phase={view.phase} submit={submit} />
+      <LevelUpPopup log={world.game.log} view={view} submit={submit} />
+    </>
+  );
 
   // Commands handled by the UI itself rather than the engine.
   const onLocal = useCallback(
@@ -171,7 +177,7 @@ export function App({ engine }: { engine: Engine }) {
   const side = (
     <aside className={s.side} style={{ gridArea: "side" }}>
       <Panel id="character" title="Character">
-        <CharacterSheet view={view} />
+        <CharacterSheet view={view} submit={submit} />
       </Panel>
       {view.echo && (
         <Panel id="echo" title="Echo">

@@ -30,6 +30,28 @@ const PLAIN: Record<string, { text: string; unit?: string; percent?: boolean }> 
   secondWind: { text: "HP back, once a fight, when you drop under a quarter", percent: true },
 };
 
+/**
+ * Targets typed by weapon (`damage:blades`), mostly from weapon-skill perks. Each reads
+ * only while you swing that kind of weapon (gear.ts swingNumbers, combat.ts).
+ */
+const TYPED: Record<string, (v: number, type: string) => string> = {
+  attack: (v, t) => `${signed(v)} to the roll with ${t} weapons`,
+  damage: (v, t) => `${signed(v)} damage with ${t} weapons`,
+  critRange: (v, t) => `${t} crits land ${v} lower (on ${19 - v}+)`,
+  armorPierce: (v, t) => `${t} hits ignore ${v} armor`,
+  defense: (v, t) => `${signed(v)} guard while holding a ${t} weapon`,
+  reach: (_v, t) => `${t} weapons swing at near range`,
+  decapitate: (v, t) => `${v}% chance a ${t} hit takes a non-boss's head off`,
+  knockout: (v, t) => `${v}% chance a ${t} hit knocks a non-boss out for good`,
+  tier3Mult: (v, t) => `great ${t} hits do ${v}% more damage`,
+};
+/** Weapon-skill perk flags read by the swing (gear.ts). */
+const PERKS: Record<string, string> = {
+  unarmedD6: "fists hit 2/4/6",
+  unarmedD8: "fists hit 3/5/7",
+  xpBonus: "XP",
+};
+
 /** Does some rule read this modifier target? */
 export function knownTarget(to: string, content: Content): boolean {
   if (to in PLAIN) return true;
@@ -39,6 +61,13 @@ export function knownTarget(to: string, content: Content): boolean {
   if (kind === "skill") return content.skills.has(what);
   if (kind === "resist") return (DAMAGE_TYPES as readonly string[]).includes(what);
   if (kind === "critStatus") return content.statusEffects.has(what);
+  if (kind === "healing") return what === "items";
+  if (kind === "perk") return what in PERKS;
+  const weaponTypes = new Set(content.skills.all.flatMap((s) => (s.weaponType ? [s.weaponType] : [])));
+  if (kind in TYPED) return weaponTypes.has(what) || (kind === "attack" && ["close", "near", "far"].includes(what));
+  // "critStatus@thrown:stunned", "tier3Status@bow:slowed"
+  const [status, type] = kind.split("@") as [string, string | undefined];
+  if (type && (status === "critStatus" || status === "tier3Status")) return weaponTypes.has(type) && content.statusEffects.has(what);
   return false;
 }
 
@@ -55,6 +84,14 @@ export function describeModifier(m: Modifier, content: Content): string {
   if (kind === "critStatus") {
     const name = content.statusEffects.byId[what]?.name.toLowerCase() ?? what;
     return `a crit leaves the target ${name} (${m.value} round${m.value === 1 ? "" : "s"})`;
+  }
+  if (kind === "healing") return `healing items do ${m.value}% more`;
+  if (kind === "perk" && PERKS[what]) return what === "xpBonus" ? `${signed(m.value)}% XP` : PERKS[what]!;
+  if (TYPED[kind]) return TYPED[kind]!(m.value, what);
+  const [status, type] = kind.split("@") as [string, string | undefined];
+  if (type) {
+    const name = content.statusEffects.byId[what]?.name.toLowerCase() ?? what;
+    return `${status === "critStatus" ? `a ${type} crit` : `a great ${type} hit`} leaves the target ${name} (${m.value} round${m.value === 1 ? "" : "s"})`;
   }
   return `${signed(m.value)} ${m.to.replace(/^(skill|stat|perk):/, "")}`;
 }

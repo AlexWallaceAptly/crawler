@@ -5,16 +5,21 @@ import { MiniMapGrid } from "./MiniMapGrid";
 
 const rarityClass = (r: string) => s[r] ?? s.common;
 
-export function CharacterSheet({ view }: { view: ViewModel }) {
+export function CharacterSheet({ view, submit }: { view: ViewModel; submit?: (t: string) => void }) {
   const c = view.character;
   if (!c) return <div className={s.muted}>No crawler. Type "new".</div>;
+  const xp = view.status.xp;
+  const spend = c.unspentStatPoints > 0 && view.phase === "exploring" && submit;
   return (
     <div>
       <div className={s.name}>{c.name}</div>
       <div className={s.sub}>{c.subtitle}</div>
       <dl className={s.kv}>
         <dt>Level</dt>
-        <dd>{c.level}{c.unspentStatPoints > 0 ? ` (+${c.unspentStatPoints} pts)` : ""}</dd>
+        <dd>
+          {c.level}
+          {xp && <span className={s.sub}> · {xp.current}/{xp.max} XP to {c.level + 1}</span>}
+        </dd>
         <dt>Race</dt>
         <dd>{c.race}</dd>
         <dt>Class</dt>
@@ -22,11 +27,20 @@ export function CharacterSheet({ view }: { view: ViewModel }) {
         <dt>Gold</dt>
         <dd>{c.gold}</dd>
       </dl>
+      {xp && <Progress current={xp.current} max={xp.max} />}
+      {c.unspentStatPoints > 0 && (
+        <div className={s.pointsNote}>
+          {c.unspentStatPoints} stat point{c.unspentStatPoints === 1 ? "" : "s"} to spend{spend ? ": tap + on a stat." : view.phase === "combat" ? " after the fight." : "."}
+        </div>
+      )}
       <div className={s.stats}>
         {c.stats.map((st) => (
           <div key={st.stat} className={s.stat} title={st.value !== st.base ? `base ${st.base}` : undefined}>
             <b>{st.value}</b>
             <span>{st.stat}</span>
+            {spend && (
+              <button className={s.statPlus} aria-label={`Raise ${st.stat}`} onClick={() => submit(`raise ${st.stat}`)}>+</button>
+            )}
           </div>
         ))}
       </div>
@@ -40,13 +54,28 @@ export function CharacterSheet({ view }: { view: ViewModel }) {
       </dl>
       <Fighting view={view} />
       <div className={s.sectionLabel}>Skills</div>
-      <ul className={s.list}>
+      <ul className={s.skillList}>
         {c.skills.map((sk) => (
-          <li key={sk.name}>
-            {sk.name} <span className={s.sub}>r{sk.rank}</span>
+          <li key={sk.id} className={s.skill}>
+            <div className={s.skillHead}>
+              <span>{sk.name}</span>
+              <span className={s.skillRank}>
+                {sk.rank ? `rank ${sk.rank}` : "untrained"}
+                {sk.effective !== sk.rank && <span className={s.sub}> ({sk.effective} with gear)</span>}
+              </span>
+            </div>
+            {sk.next > 0 && <Progress current={sk.xp} max={sk.next} />}
+            <div className={s.skillMeta}>
+              {sk.next > 0 ? `${sk.next - sk.xp} more to rank ${sk.rank + 1}` : "maxed"}
+              {sk.nextPerk && ` · rank ${sk.nextPerk.rank}: ${sk.nextPerk.name}`}
+            </div>
+            {sk.perks.length > 0 && (
+              <div className={s.skillPerks}>{sk.perks.map((p) => `★ ${p.name}`).join("  ")}</div>
+            )}
           </li>
         ))}
       </ul>
+      {c.skills.length === 0 && <div className={s.muted}>Nothing yet. Swing something.</div>}
       {c.spells.length > 0 && (
         <>
           <div className={s.sectionLabel}>Spells</div>
@@ -67,6 +96,16 @@ export function CharacterSheet({ view }: { view: ViewModel }) {
   );
 }
 
+/** A thin progress bar: XP to the next level, or a skill's XP to its next rank. */
+function Progress({ current, max }: { current: number; max: number }) {
+  const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0;
+  return (
+    <div className={s.progress} role="progressbar" aria-valuenow={current} aria-valuemin={0} aria-valuemax={max}>
+      <span style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
 /** How you fight right now: what your weapon and stats add up to, and which stat suits you. */
 function Fighting({ view }: { view: ViewModel }) {
   const f = view.character?.fighting;
@@ -76,7 +115,8 @@ function Fighting({ view }: { view: ViewModel }) {
     <>
       <div className={s.sectionLabel}>Fighting</div>
       <div className={s.fight}>
-        <div><span className={s.fightKey}>Weapon</span> {f.weapon} <span className={s.sub}>({f.stat}{f.skill ? `, ${f.skill}` : ""}, {f.apCost} AP)</span></div>
+        <div><span className={s.fightKey}>Weapon</span> {f.weapon} <span className={s.sub}>({f.stat}, {f.apCost} AP)</span></div>
+        {f.skill && <div><span className={s.fightKey}>Skill</span> <span className={s.fightSkill}>{f.skill}</span></div>}
         <div><span className={s.fightKey}>Roll</span> 2d10 {f.roll >= 0 ? "+" : ""}{f.roll} <span className={s.sub}>weak {pct(f.odds[0])} · solid {pct(f.odds[1])} · great {pct(f.odds[2])}</span></div>
         <div><span className={s.fightKey}>Damage</span> {f.damage} <span className={s.sub}>avg {f.average} a swing</span></div>
         <div><span className={s.fightKey}>Armor</span> {f.armor} <span className={s.sub}>off every hit{f.guard ? ` · guard ${f.guard > 0 ? "+" : ""}${f.guard}` : ""}</span></div>
@@ -201,72 +241,52 @@ export function InventoryList({ view, submit }: { view: ViewModel; submit?: (t: 
 }
 
 /**
- * Your pack grouped by crafting property (Sharp (3), Bind (5)...). Open a group, tap
- * things in any groups, hit Combine: the tap version of `combine a b c`.
+ * The workbench: one chip per property you're carrying (Weapon, Sharp 3, Bind 5...).
+ * Tap two or more and hit Combine; the game picks the actual items (your equipped
+ * weapon for an upgrade, the cheapest junk for parts) and says what it used.
  */
 function Workbench({ view, submit }: { view: ViewModel; submit: (t: string) => void }) {
   const [picked, setPicked] = useState<string[]>([]);
-  const [open, setOpen] = useState<string[]>([]);
-  const groups = view.workbench ?? [];
-  const byUid = new Map(view.inventory.map((it) => [it.uid, it]));
-  // things can vanish from the pack (used up, ruined) between tries
-  const chosen = view.inventory.filter((it) => picked.includes(it.uid));
-  const toggle = (uid: string) => setPicked((p) => (p.includes(uid) ? p.filter((u) => u !== uid) : [...p, uid]));
-  const flip = (id: string) => setOpen((o) => (o.includes(id) ? o.filter((x) => x !== id) : [...o, id]));
+  const chips = view.workbench ?? [];
+  // a chip can vanish when its last item is used up
+  const chosen = chips.filter((c) => picked.includes(c.pick));
+  const toggle = (pick: string) => setPicked((p) => (p.includes(pick) ? p.filter((x) => x !== pick) : [...p, pick]));
   const go = () => {
-    submit(`combine ${chosen.map((it) => it.name.toLowerCase()).join(" | ")}`);
+    submit(`combine ${chosen.map((c) => c.pick).join(" | ")}`);
     setPicked([]);
   };
   return (
-    <div className={s.bench}>
+    <div className={s.workbench}>
       <div className={s.benchHead}>⚒ Workbench</div>
       <div className={s.benchIntro}>
-        Open a group, tap two or more things, hit Combine. If they go together you make something, and the recipe is saved.
-        <span className={s.muted}> A wrong guess wastes 5 minutes. A fumbled build can ruin a part.</span>
+        Tap two or more, then Combine. The game picks the junk: cheapest first, your weapon for upgrades.
+        <span className={s.muted}> A wrong guess wastes 5 minutes.</span>
       </div>
-      {groups.length === 0 ? (
-        <div className={s.muted}>Your pack is empty. Go pick up some garbage.</div>
+      {chips.length === 0 ? (
+        <div className={s.muted}>Nothing in your pack goes into anything. Go pick up some garbage.</div>
       ) : (
-        <ul className={s.groups}>
-          {groups.map((g) => {
-            const isOpen = open.includes(g.id);
-            const nPicked = g.items.filter((u) => picked.includes(u)).length;
+        <div className={s.chips}>
+          {chips.map((c) => {
+            const on = picked.includes(c.pick);
             return (
-              <li key={g.id} className={s.group}>
-                <button className={s.groupHead} aria-expanded={isOpen} onClick={() => flip(g.id)}>
-                  <span className={s.groupCaret}>{isOpen ? "▾" : "▸"}</span>
-                  <span className={g.gear ? s.groupGear : s.groupName}>{g.label}</span>
-                  <span className={s.groupCount}>{g.count}</span>
-                  {nPicked > 0 && <span className={s.groupPicked}>{nPicked} picked</span>}
-                </button>
-                {isOpen && (
-                  <div className={s.groupBody}>
-                    {g.hint && <div className={s.groupHint}>{g.hint}</div>}
-                    {g.items.map((uid) => {
-                      const it = byUid.get(uid);
-                      if (!it) return null;
-                      const on = picked.includes(uid);
-                      const also = (it.parts ?? []).filter((p) => p !== g.label);
-                      return (
-                        <button key={uid} className={`${s.groupItem} ${on ? s.benchItemOn : ""}`} aria-pressed={on} onClick={() => toggle(uid)}>
-                          <span className={s.groupTick}>{on ? "✓" : "○"}</span>
-                          <span className={rarityClass(it.rarity)}>{it.name}</span>
-                          {it.qty > 1 && <span className={s.groupQty}> ×{it.qty}</span>}
-                          {it.equippedIn && <span className={s.groupQty}> [E]</span>}
-                          {also.length > 0 && <span className={s.benchRole}>also {also.join(", ").toLowerCase()}</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </li>
+              <button
+                key={c.pick}
+                className={`${s.chip} ${c.kind === "gear" ? s.chipGear : ""} ${on ? s.chipOn : ""}`}
+                aria-pressed={on}
+                title={c.hint}
+                onClick={() => toggle(c.pick)}
+              >
+                <span className={s.chipLabel}>{c.label}</span>
+                {c.kind !== "gear" && <span className={s.chipCount}>{c.count}</span>}
+                {c.detail && <span className={s.chipDetail}>{c.detail}</span>}
+              </button>
             );
           })}
-        </ul>
+        </div>
       )}
       <div className={s.benchBar}>
         <span className={s.benchPicked}>
-          {chosen.length ? chosen.map((it) => it.name).join(" + ") : "Nothing picked yet."}
+          {chosen.length ? chosen.map((c) => c.label).join(" + ") : "Nothing picked yet."}
         </span>
         {chosen.length > 0 && <button className={s.recipeBtn} onClick={() => setPicked([])}>clear</button>}
         <button className={s.benchGo} disabled={chosen.length < 2} onClick={go}>

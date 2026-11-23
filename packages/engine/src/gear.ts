@@ -10,6 +10,8 @@ import { collectModifiers, derive, modTotal, type Derived } from "./rules/derive
 import { AP_COST } from "./rules/ap";
 import { CRIT_NATURAL, tierOdds } from "./rules/power";
 import { equip, equippedSlot } from "./inventory";
+import { skillRank } from "./progression";
+import type { Modifier } from "./content/schemas";
 import type { Crawler, ItemInstance } from "./state";
 
 export interface WeaponProfile {
@@ -31,8 +33,32 @@ export interface WeaponProfile {
 
 export const BARE_HANDS: WeaponProfile = { name: "bare hands", power: [1, 2, 2], apCost: 1, stat: "STR", reach: "close", skillId: "unarmed", weaponType: "unarmed" };
 
-/** A weapon item as a swing profile (or bare hands). */
-export function profileOf(content: Content, weapon: ItemInstance | undefined): WeaponProfile {
+/**
+ * A weapon item as a swing profile (or bare hands). Given the crawler, its skill perks
+ * apply too: Reach (a close polearm swings at near range) and trained fists.
+ */
+export function profileOf(content: Content, weapon: ItemInstance | undefined, c?: Crawler, mods?: readonly Modifier[]): WeaponProfile {
+  const base = baseProfile(content, weapon);
+  return c ? withPerks(base, mods ?? collectModifiers(c, content)) : base;
+}
+
+/** Fists by Unarmed perk: rank 5, rank 10. */
+const FISTS: Record<string, Power> = { "perk:unarmedD6": [2, 4, 6], "perk:unarmedD8": [3, 5, 7] };
+
+function withPerks(w: WeaponProfile, mods: readonly Modifier[]): WeaponProfile {
+  const t = w.weaponType;
+  if (!t) return w;
+  let out = w;
+  if (t === "unarmed") {
+    for (const [perk, fists] of Object.entries(FISTS)) {
+      if (modTotal(mods, perk) > 0) out = { ...out, power: out.power.map((p, i) => Math.max(p, fists[i]!)) as Power };
+    }
+  }
+  if (out.reach === "close" && modTotal(mods, `reach:${t}`) > 0) out = { ...out, reach: "near" };
+  return out;
+}
+
+function baseProfile(content: Content, weapon: ItemInstance | undefined): WeaponProfile {
   if (!weapon?.power) return BARE_HANDS;
   const skill = content.skills.all.find((s) => s.weaponType && s.weaponType === weapon.weaponType);
   return {
@@ -69,9 +95,13 @@ export interface SwingNumbers {
   rollBonus: number;
   /** the stat's flat damage (scaled by the swing's AP) plus damage modifiers */
   flat: number;
-  /** the weapon's power plus `flat`, per tier */
+  /** the weapon's power plus `flat`, per tier (tier 3 with any multiplier) */
   damage: Power;
   critAt: number;
+  /** Armor ignored on each hit (Blunt 15). */
+  pierce: number;
+  /** Extra tier-3 damage, in percent (Improvised 10). */
+  tier3Bonus: number;
   /** chance of tier 1 / 2 / 3, crits counted as 3 */
   odds: [number, number, number];
   /** expected damage per swing against no armor */
@@ -81,17 +111,26 @@ export interface SwingNumbers {
 export function swingNumbers(c: Crawler, content: Content, w: WeaponProfile, d: Derived = derive(c, content), mods = collectModifiers(c, content)): SwingNumbers {
   const statValue = d.stats[w.stat];
   const statBonus = Math.floor(statValue / 2);
-  const skillRank = w.skillId ? (c.skills[w.skillId]?.rank ?? 0) : 0;
+  const rank = w.skillId ? skillRank(c, w.skillId, mods) : 0;
   const skillName = w.skillId ? content.skills.byId[w.skillId]?.name : undefined;
-  const gearBonus = modTotal(mods, "attack", "hit");
-  const rollBonus = statBonus + skillRank + gearBonus;
+  // Typed modifiers come from weapon-skill perks: "attack:improvised", "damage:blades"...
+  const typed = (kind: string) => (w.weaponType ? modTotal(mods, `${kind}:${w.weaponType}`) : 0);
+  const gearBonus = modTotal(mods, "attack", "hit") + typed("attack") + modTotal(mods, `attack:${w.reach}`);
+  const rollBonus = statBonus + rank + gearBonus;
   // The stat's flat bonus scales with the swing's AP: quarter for a 1-AP poke, half at 2, three quarters at 3.
-  const flat = Math.floor((statValue * (w.unwieldy ? 3 : w.apCost)) / 4) + modTotal(mods, "damage");
-  const damage = w.power.map((p) => Math.max(1, p + flat)) as Power;
-  const critAt = CRIT_NATURAL - Math.max(0, modTotal(mods, "critRange"));
+  const flat = Math.floor((statValue * (w.unwieldy ? 3 : w.apCost)) / 4) + modTotal(mods, "damage") + typed("damage");
+  const tier3Bonus = typed("tier3Mult");
+  const damage = w.power.map((p, i) => {
+    const hit = Math.max(1, p + flat);
+    return i === 2 && tier3Bonus ? Math.round(hit * (1 + tier3Bonus / 100)) : hit;
+  }) as Power;
+  const critAt = CRIT_NATURAL - Math.max(0, modTotal(mods, "critRange") + typed("critRange"));
   const odds = tierOdds(rollBonus, critAt);
   const average = Math.round((odds[0] * damage[0] + odds[1] * damage[1] + odds[2] * damage[2]) * 10) / 10;
-  return { stat: w.stat, statValue, statBonus, ...(skillName ? { skillName } : {}), skillRank, gearBonus, rollBonus, flat, damage, critAt, odds, average };
+  return {
+    stat: w.stat, statValue, statBonus, ...(skillName ? { skillName } : {}), skillRank: rank, gearBonus, rollBonus, flat, damage, critAt,
+    pierce: typed("armorPierce"), tier3Bonus, odds, average,
+  };
 }
 
 /**
@@ -135,8 +174,8 @@ export function gearChanges(before: Crawler, after: Crawler, content: Content): 
   num("Guard", a.guard, b.guard);
   num("Initiative", a.initiativeBonus, b.initiativeBonus);
   num("Carry", a.carryLimit, b.carryLimit);
-  const wa = profileOf(content, heldWeapon(before));
-  const wb = profileOf(content, heldWeapon(after));
+  const wa = profileOf(content, heldWeapon(before), before);
+  const wb = profileOf(content, heldWeapon(after), after);
   const sa = swingNumbers(before, content, wa, a);
   const sb = swingNumbers(after, content, wb, b);
   if (sa.rollBonus !== sb.rollBonus) num("Attack roll", sa.rollBonus, sb.rollBonus);

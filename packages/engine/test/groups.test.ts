@@ -42,7 +42,7 @@ describe("encounter packs (milestone 4b)", () => {
       expect(pack.every((e) => e.tier === "minion" && enc.easyPool.includes(e.familyId))).toBe(true);
       expect(new Set(pack.map((e) => e.familyId)).size).toBe(1);
       easyLevels += pack[0]!.level;
-      hardLevels += generateEnemy(content.enemies.get(pack[0]!.familyId), "minion", 1, content).level;
+      hardLevels += generateEnemy(content.enemies.get(pack[0]!.familyId), "minion", 1, content, enc.levelOffset).level;
     }
     expect(easyLevels / n).toBeLessThan(hardLevels / n);
   });

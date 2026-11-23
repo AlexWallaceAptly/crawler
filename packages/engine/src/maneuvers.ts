@@ -26,6 +26,7 @@ import { collectModifiers, derive, modTotal } from "./rules/derived";
 import { applyStatus, hasFlag } from "./rules/effects";
 import { d20 } from "./rng";
 import { killCrawler, type StepContext } from "./step";
+import { skillRank, trainSkill } from "./progression";
 import type { ArenaState, Enemy, ItemInstance, Pos } from "./state";
 import {
   allTiles, blocksMove, coord, dist, featureAt, inBounds, isCoord, occupied, parseCoord, reaches, same, unitAt,
@@ -83,13 +84,14 @@ export function playerShove(ctx: StepContext, target: Enemy): void {
   const c = ctx.crawler;
   const d = derive(c, ctx.content);
   const mods = collectModifiers(c, ctx.content);
-  const mine = d20() + d.stats.STR + (c.skills["athletics"]?.rank ?? 0) + modTotal(mods, "shove", "skill:athletics");
+  const mine = d20() + d.stats.STR + skillRank(c, "athletics", mods) + modTotal(mods, "shove");
   const theirs = d20() + Math.max(target.stats.STR, target.stats.DEX);
   if (mine <= theirs) {
     ctx.fight(`You shove the ${target.name}: ${mine} vs ${theirs}. It shoves back harder.`, "you");
     afterAction(ctx);
     return;
   }
+  trainSkill(ctx, "athletics", 1);
   if (!grid) {
     if (shiftEnemyBand(target, 1)) ctx.fight(`You shove the ${target.name}: ${mine} vs ${theirs}. It staggers back to ${target.range} range.`, "you");
     else ctx.fight(`You shove the ${target.name}: ${mine} vs ${theirs}. It skids, but it was already as far away as it gets.`, "you");
@@ -169,6 +171,7 @@ export function playerThrow(ctx: StepContext, item: ItemInstance, at?: string): 
     consumeOne(ctx, item);
     const applied = applyItemEffects(ctx, def, { area: foes, ...(primary ? { primary } : {}) });
     ctx.fight(`You throw ${item.name}${primary ? ` at the ${primary.name}` : ""}${applied.length ? ` (${applied.join(", ")})` : ""}.`, "you");
+    if (primary) trainSkill(ctx, "thrown", 1);
     return afterSelfHarm(ctx, item.name);
   }
 
@@ -189,6 +192,7 @@ export function playerThrow(ctx: StepContext, item: ItemInstance, at?: string): 
   consumeOne(ctx, item);
   const applied = applyItemEffects(ctx, def, t);
   ctx.fight(`You throw ${item.name} at ${coord(tile)}${primary ? `, right at the ${primary.name}` : ""}${applied.length ? ` (${applied.join(", ")})` : ""}.`, "you");
+  if (primary || t.area.length) trainSkill(ctx, "thrown", 1);
   if (def.hazard && ctx.crawler.hp > 0) {
     const f = ctx.content.arenaFeatures.get(def.hazard.id);
     const tiles = shapeTiles(a, tile, def.hazard.shape).filter((p) => !blocksMove(a, ctx.content, p));

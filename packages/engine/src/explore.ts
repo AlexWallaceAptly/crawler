@@ -10,6 +10,7 @@ import { rollDice } from "./rules/dice";
 import { collectModifiers, derive, modTotal } from "./rules/derived";
 import { applyStatus, decrementStatuses, tickStatuses } from "./rules/effects";
 import { killCrawler, type StepContext } from "./step";
+import { skillRank, trainSkill } from "./progression";
 import { generateFloor, MINUTES_PER_DAY } from "./gen/floor";
 import { seedFloorLoot, workbenchLine } from "./gen/loot";
 import { echoOnNewFloor, maybeRoomShard, maybeUrge, pendingShard, recordRun, shardVoice, wholenessOn } from "./echo";
@@ -235,22 +236,24 @@ export function springTrap(ctx: StepContext, room: Room): void {
   }
   const spot = resolveCheck({
     label: `Spot the ${trap.name}`,
-    modifier: d.stats.INT + (c.skills["perception"]?.rank ?? 0) + modTotal(mods, "skill:perception"),
+    modifier: d.stats.INT + skillRank(c, "perception", mods),
     dc: dcFor(trap.spotTier as DcTier, floorNo),
   });
   ctx.emit({ type: "check", result: spot, text: describeCheck(spot) });
   if (spot.success) {
     ctx.describe(trap.spotted);
+    if (trap.spotTier !== "trivial") trainSkill(ctx, "perception", 1);
     return;
   }
   const avoid = resolveCheck({
     label: `Avoid the ${trap.name}`,
-    modifier: d.stats[trap.avoidStat] + (c.skills["dodge"]?.rank ?? 0),
+    modifier: d.stats[trap.avoidStat] + skillRank(c, "dodge", mods),
     dc: dcFor(trap.avoidTier as DcTier, floorNo),
   });
   ctx.emit({ type: "check", result: avoid, text: describeCheck(avoid) });
   if (avoid.success) {
     ctx.describe(trap.avoided);
+    if (trap.avoidTier !== "trivial") trainSkill(ctx, "dodge", 1);
     return;
   }
   let dmg = rollDice(trap.dice).total;

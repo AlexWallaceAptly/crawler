@@ -9,9 +9,16 @@
  *   npm run sim -- 500 --craft       the crawler also picks up junk, crafts at
  *                                    benches (Echo's modules too), wields its best weapon and throws junk at packs
  *   npm run sim -- 500 --floors 3    keep going down to Floor 3 (default: stop after Floor 1)
+ *   npm run sim -- 300 --offsets 0,-2,-3
+ *                                    try other enemy levelOffsets per floor (floors.json → encounters)
  *
  * Echo's urges are answered at random (half let, half hush), so the Temper spread is a
  * coin-flip baseline. Boss fights use the boss's weakness when the crawler can.
+ *
+ * Leveling (Milestone 6a): stat points go 2 into the held weapon's stat and 1 into CON
+ * each level. The report shows the level and best weapon-skill rank at each floor's end,
+ * the level after Floor 1's first hard fight, and the fight on which a weapon skill
+ * first reaches each rank.
  */
 import { createEngine, loadContent, bfsDistances, powerScore, type World, type Dir, type GameEvent, type CombatMode } from "../packages/engine/src/index";
 import { autoAssign, atWorkbench } from "../packages/engine/src/craft";
@@ -30,6 +37,15 @@ const runs = Number(args.find((a) => /^\d+$/.test(a)) ?? 200);
 const modeArg = flag("mode") ?? "default";
 const modes: (CombatMode | "default")[] = modeArg === "both" ? ["grid", "bands"] : [modeArg as CombatMode | "default"];
 const content = loadContent(rawContent as never);
+// Tuning: `--offsets 0,-2,-3` overrides each floor's encounters.levelOffset, in floor order.
+const offsetsArg = flag("offsets");
+if (offsetsArg) {
+  const offs = offsetsArg.split(",").map(Number);
+  for (const f of content.floors.all) {
+    const o = offs[(f.floor ?? 1) - 1];
+    if (o !== undefined && !Number.isNaN(o)) f.encounters.levelOffset = o;
+  }
+}
 const engine = createEngine(content);
 const crafty = args.includes("--craft");
 /** Play down to (and including) this floor. */
@@ -60,6 +76,19 @@ interface Outcome {
   bossWins: number;
   weakness: number;
   temper: number;
+  /** Level after Floor 1's first hard-pool fight (if it was won). */
+  levelAfterFirstHard?: number;
+  /** Floor number → level and best weapon-skill rank on leaving it (down the stairs). */
+  atFloorEnd: Record<number, { level: number; rank: number }>;
+  /** Floor number → weapon-skill XP earned there (about one per swing). */
+  weaponXp: Record<number, number>;
+  /** Floor number → character XP earned there, and whether its boss died. */
+  floorXp: Record<number, number>;
+  bossDownOn: number[];
+  /** Rank → the fight (counted from the run's start) on which a weapon skill first reached it. */
+  rankAtFight: Record<number, number>;
+  /** Hard fights won on Floor 1 between level 2 and level 3. */
+  hardFightsTo3?: number;
 }
 
 function hpPct(world: World): number {
@@ -123,11 +152,53 @@ function runOne(mode: CombatMode | "default"): Outcome {
   let weakness = 0;
   let deepest = 1;
   let roomsF1 = 0;
+  let levelAfterFirstHard: number | undefined;
+  const atFloorEnd: Record<number, { level: number; rank: number }> = {};
+  const weaponXp: Record<number, number> = {};
+  const floorXp: Record<number, number> = {};
+  const bossDownOn: number[] = [];
+  const rankAtFight: Record<number, number> = {};
+  let hardWinsF1 = 0;
+  let hardAtLevel2: number | undefined;
+  let hardFightsTo3: number | undefined;
+  const weaponSkills = new Set(content.skills.all.filter((s) => s.category === "weapon").map((s) => s.id));
+  const topRank = () => Math.max(0, ...Object.entries(world.game.crawler?.skills ?? {}).filter(([id]) => weaponSkills.has(id)).map(([, s]) => s.rank));
   const act = (a: Parameters<typeof engine.step>[1]) => {
     const wasBoss = !!world.game.combat?.boss;
+    const floorBefore = world.game.floor?.floor ?? 1;
+    const levelBefore = world.game.crawler?.level ?? 1;
+    const rankBefore = topRank();
     const r = engine.step(world, a);
     world = r.world;
     lastEvents = r.events;
+    for (const e of r.events) {
+      if (e.type === "combatEnded") {
+        for (const k of e.skills ?? []) if (weaponSkills.has(k.id)) weaponXp[floorBefore] = (weaponXp[floorBefore] ?? 0) + k.gained;
+        floorXp[floorBefore] = (floorXp[floorBefore] ?? 0) + (e.xp ?? 0);
+        if (wasBoss && e.outcome === "victory") bossDownOn.push(floorBefore);
+        const f = world.game.floor;
+        const easy = f ? content.floors.get(f.theme).encounters.easyFights : 3;
+        if (e.outcome === "victory" && f?.floor === 1 && f.fights > easy) {
+          hardWinsF1++;
+          if (f.fights === easy + 1) levelAfterFirstHard = world.game.crawler!.level;
+        }
+      }
+      if (e.type === "floorEntered" && e.floor > floorBefore) atFloorEnd[floorBefore] = { level: levelBefore, rank: rankBefore };
+    }
+    const lvl = world.game.crawler?.level ?? 1;
+    if (lvl >= 2 && hardAtLevel2 === undefined) hardAtLevel2 = hardWinsF1;
+    if (lvl >= 3 && hardFightsTo3 === undefined && hardAtLevel2 !== undefined && floorBefore === 1) hardFightsTo3 = hardWinsF1 - hardAtLevel2;
+    for (let rank = rankBefore + 1; rank <= topRank(); rank++) rankAtFight[rank] ??= fights;
+    // Spend stat points as soon as there's peace: 2 into the weapon's stat, 1 into CON.
+    for (let k = 0; k < 30; k++) {
+      const c = world.game.crawler;
+      if (!c || c.unspentStatPoints <= 0 || world.game.phase !== "exploring") break;
+      const held = c.inventory.find((i) => i.uid === c.equipment.mainHand);
+      const stat = c.unspentStatPoints % 3 === 1 ? "CON" : (held?.stat ?? "STR");
+      const before = c.unspentStatPoints;
+      world = engine.step(world, { type: "raise", stat, times: 1 }).world;
+      if ((world.game.crawler?.unspentStatPoints ?? 0) >= before) break;
+    }
     for (const e of r.events) if (e.type === "shardFound") shardsByFloor[e.floor] = (shardsByFloor[e.floor] ?? 0) + 1;
     if (r.events.some((e) => e.type === "codexUpdated" && e.kind === "weakness") && (wasBoss || world.game.combat?.boss)) weakness++;
     if (r.events.some((e) => e.type === "combatStarted")) {
@@ -152,7 +223,7 @@ function runOne(mode: CombatMode | "default"): Outcome {
   };
   const stuck = (cause: string, i: number): Outcome => ({
     result: "stuck", cause, actions: i, roomsVisited: 0, xp: 0, fights, level: 1, fightRounds, fightDamage, fled, crafted, earlyDeath,
-    deepest, shardsByFloor, modules: 0, bossFights, bossWins, weakness, temper: 0,
+    deepest, shardsByFloor, modules: 0, bossFights, bossWins, weakness, temper: 0, atFloorEnd, weaponXp, rankAtFight, floorXp, bossDownOn,
   });
   /** Run a command; false if the engine refused it (not enough AP, out of reach...). */
   const tryAct = (a: Parameters<typeof engine.step>[1]) => {
@@ -311,8 +382,27 @@ function runOne(mode: CombatMode | "default"): Outcome {
     bossWins,
     weakness,
     temper: world.game.echo?.temper ?? 0,
+    ...(levelAfterFirstHard !== undefined ? { levelAfterFirstHard } : {}),
+    ...(hardFightsTo3 !== undefined ? { hardFightsTo3 } : {}),
+    atFloorEnd,
+    weaponXp,
+    rankAtFight,
+    floorXp,
+    bossDownOn,
   };
 }
+
+const median = (xs: number[]) => {
+  if (!xs.length) return NaN;
+  const s = xs.slice().sort((a, b) => a - b);
+  return s[Math.floor(s.length / 2)]!;
+};
+const spread = (xs: number[]) => {
+  if (!xs.length) return "-";
+  const s = xs.slice().sort((a, b) => a - b);
+  const at = (p: number) => s[Math.min(s.length - 1, Math.floor(p * s.length))]!;
+  return `median ${at(0.5)} (10th-90th ${at(0.1)}-${at(0.9)})`;
+};
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 const summaries: { mode: string; clear: number; rounds: number; damage: number }[] = [];
@@ -357,6 +447,24 @@ for (const mode of modes) {
   const sides = { calm: 0, base: 0, fed: 0 };
   for (const o of outcomes) sides[sideOf(content, o.temper)]++;
   console.log(`  Echo: modules built per run ${avg(outcomes.map((o) => o.modules)).toFixed(2)}; final Temper calm ${Math.round((100 * sides.calm) / runs)}% / base ${Math.round((100 * sides.base) / runs)}% / fed ${Math.round((100 * sides.fed) / runs)}%`);
+  const firstHard = outcomes.flatMap((o) => (o.levelAfterFirstHard !== undefined ? [o.levelAfterFirstHard] : []));
+  console.log(`  leveling: level 2+ after F1's first hard fight in ${firstHard.length ? Math.round((100 * firstHard.filter((l) => l >= 2).length) / firstHard.length) : 0}% of ${firstHard.length} runs; hard wins from level 2 to 3: ${spread(outcomes.flatMap((o) => (o.hardFightsTo3 !== undefined ? [o.hardFightsTo3] : [])))}`);
+  for (let f = 1; f <= floorsArg; f++) {
+    const done = outcomes.flatMap((o) => (o.atFloorEnd[f] ? [o.atFloorEnd[f]!] : []));
+    if (!done.length) continue;
+    const left = outcomes.filter((o) => o.atFloorEnd[f]);
+    const xp = left.map((o) => o.weaponXp[f] ?? 0);
+    const killed = left.filter((o) => o.bossDownOn.includes(f));
+    console.log(`  leaving F${f} (${done.length} runs): level ${spread(done.map((d) => d.level))}; best weapon rank ${spread(done.map((d) => d.rank))}`);
+    console.log(`      on the floor: XP ${spread(left.map((o) => o.floorXp[f] ?? 0))}; weapon-skill XP ${spread(xp)}; boss killed in ${Math.round((100 * killed.length) / left.length)}%` +
+      (killed.length ? ` (those: level ${spread(killed.map((o) => o.atFloorEnd[f]!.level))}, weapon XP ${spread(killed.map((o) => o.weaponXp[f] ?? 0))})` : ""));
+  }
+  if (cleared.length) console.log(`  level when the last floor was cleared: ${spread(cleared.map((o) => o.level))}`);
+  const rankFights = [1, 2, 3, 5, 10].map((r) => {
+    const xs = outcomes.flatMap((o) => (o.rankAtFight[r] !== undefined ? [o.rankAtFight[r]!] : []));
+    return `r${r} fight ${xs.length ? median(xs) : "-"} (${Math.round((100 * xs.length) / runs)}% of runs)`;
+  });
+  console.log(`  weapon skill, median fight first reached: ${rankFights.join("   ")}`);
   console.log("  deaths by cause:");
   for (const [cause, n] of [...causes.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)) {
     console.log(`    ${String(n).padStart(4)}  ${cause}`);

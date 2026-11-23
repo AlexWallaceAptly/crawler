@@ -42,7 +42,7 @@
         2
       ],
       "easyLevelOffset": -1,
-      "levelOffset": 0,
+      "levelOffset": 2,
       "mobChance": 0.25
     },
     "roomNames": {
@@ -715,7 +715,7 @@
         2
       ],
       "easyLevelOffset": -1,
-      "levelOffset": -4,
+      "levelOffset": -1,
       "mobChance": 0.25
     },
     "roomNames": {
@@ -1262,7 +1262,7 @@
         2
       ],
       "easyLevelOffset": -1,
-      "levelOffset": -6,
+      "levelOffset": -2,
       "mobChance": 0.25
     },
     "roomNames": {

@@ -304,7 +304,7 @@ Every uncertain outcome outside a fight is one roll: d20 + the relevant stat (+ 
 
 ### Stats
 
-Five primary stats. A new crawler has 3-12 in each, set by backstory. Each level grants 3 free points; race, class, gear and loot can add more.
+Five primary stats. A new crawler has 3-12 in each, set by backstory. Each level grants 3 points to spend (`raise STR`); race, class, gear, loot and the rare stat item can add more.
 
 | Stat | Governs |
 | --- | --- |
@@ -477,37 +477,58 @@ An account unlock adds a 20% chance the crawler starts with a pet. Pets have the
 
 ## Leveling, skills and spells
 
-Three things grow independently: character level (from XP), skills (from use and tomes), and spells (from casting and duplicate tomes). Using something is the main way to get better at it.
+Three things grow independently: character level (from XP), skills (from use), and spells (from casting and duplicate tomes). Using something is the only steady way to get better at it. Early progress is fast on purpose, so a new crawler can see it working (`progression.ts`).
 
 ### Character level
 
 ```
-xpToNext(level) = round(100 * level^1.5)
-xpFromKill      = enemy.level * 10 * tierMultiplier   (mob 1, elite 2, neighborhood boss 5, borough boss 10)
+xpToNext(level) = round(25 * level^0.9)          25, 47, 67, 87, 106... (level 5 at 226 XP, level 10 at 944)
+xpFromKill      = family.xp * (1 + 0.15 * enemy.level) * tier.xpMult   (minion 0.6, mob 1, elite 3; bosses scale by their own xpMult)
 xpFromQuest     = quest.xp (set by the quest generator)
-on level up: +3 free stat points, full heal, +1 skill point, System AI comment
+on level up: +3 stat points to spend (`raise STR`), full heal, System AI comment. No skill points.
 ```
 
-No level cap. Expected level at the end of Floor 3 is roughly 12-18.
+- `crawler.xp` is the progress inside the current level, so the bar reads 23/47.
+- Floor 1 pace: level 2 right after the first hard-pool fight, level 3 a couple of hard fights later, about level 5 for a crawler who clears the floor and its boss.
+- No level cap.
 
 ### Skills
 
-Skills have ranks 1-15. Each rank adds +1 to related rolls, and some ranks (5, 10, 15) unlock a perk listed in the skill's data.
+Skills have ranks 0-15. Rank 0 is untrained. Each rank adds +1 to related rolls, and every 5th rank (5, 10, 15) unlocks a milestone perk listed in the skill's data. Trained ranks stop at 15. Gear with a `skill:<id>` modifier adds on top, so the rank that rolls use can pass 15.
 
 | Category | Examples | How it's gained |
 | --- | --- | --- |
-| Weapon | Blades, blunt, polearms, bows, thrown, unarmed, improvised | Hitting things with that weapon type |
-| Defense | Light armor, heavy armor, shields, dodge | Being hit or missed while using it |
-| Utility | Stealth, perception, lockpicking, trap engineering, first aid, cooking, explosives handling | Successful checks |
-| Social | Persuasion, intimidation, deception, bartering | Successful checks |
+| Weapon | Blades, blunt, polearms, bows, thrown, unarmed, improvised | Every swing with that weapon type (nothing misses): 1, or 2 on a crit. Thrown also trains on throwing things at enemies |
+| Defense | Dodge | Avoiding a trap. Light armor, heavy armor and shields don't train yet: power rolls leave no roll for their ranks to add to |
+| Utility | Perception, athletics, first aid, tinkering, trap engineering, explosives handling | Perception: a search that finds something, a trap spotted. Athletics: a shove that lands. First aid: a healing item that heals. Crafting skills: a passed crafting check |
+| Social | Persuasion | Talking a fight down |
 | Class / race | Granted only by a class or race, e.g. a rage skill | Use, plus guaranteed ranks on level up |
 
 ```
-skillXpToNext(rank) = 10 * rank^2
-skillXpPerUse       = 1, or 3 on a critical success, or 0 if DC was trivial
-skill points (1 per level) can be spent for an instant rank in any skill the crawler already has
-skill tomes (loot) grant a new skill at rank 1, or +1 rank if already known
+skillXpToNext(rank) = round(3 + 1.5 * rank + 0.4 * rank^2)   3, 5, 8, 11, 15...
+                      rank 1 after 3 uses, rank 5 after 42, rank 10 after 212, rank 15 after 609
+skillXpPerUse       = 1, or 2 on a crit, or 0 if the check's DC was trivial
+skill potions (loot) raise a trained rank directly, never past 15
 ```
+
+- **Pace.** A weapon skill reaches rank 1 in the first fight and rank 2 by about the fifth. A crawler who sticks to one weapon type reaches rank 5 around the end of Floor 1. Rank 15 is possible around Floor 10, not guaranteed.
+- **Skill potions and stat items** are the only other way up: the Muscle Memory Shot (your weapon's skill), the Correspondence Course (a random skill you've used), and +1 STR, DEX or CON for good. They're rare in treasure rooms, and every floor boss leaves one (the `training` loot table).
+
+### Milestone perks
+
+Every 5th rank of a weapon skill unlocks a perk (`skills.json`). Each one is a modifier that the swing reads (`gear.ts` `swingNumbers`, `combat.ts` `resolvePlayerHit`), and validation fails on a weapon perk that nothing reads.
+
+| Skill | Rank 5 | Rank 10 | Rank 15 |
+| --- | --- | --- | --- |
+| Blades | **Decapitation**: 5% a hit to take a non-boss's head off | Crits on 18-20 | +2 damage |
+| Blunt | **Lights Out**: 5% a hit to knock a non-boss out for good | +2 damage | Ignore 3 armor |
+| Polearms | **Reach**: a close polearm swings at near range | +2 guard while holding one | +2 damage |
+| Bows | **Pinned**: a great hit (tier 3) slows the target | Crits on 18-20 | +2 damage |
+| Thrown | **Bullseye**: a crit stuns for a round | +2 damage | Crits on 18-20 |
+| Unarmed | Fists hit 2/4/6 | Fists hit 3/5/7 | A great hit stuns |
+| Improvised | +2 to the roll | Great hits do 50% more | Crits on 18-20 |
+
+A kill from Decapitation or Lights Out pays XP like any other. Bosses are immune to both.
 
 ### Spells
 
@@ -598,11 +619,12 @@ Rooms are littered with junk (tape, glue, rope, tacks, nails, barbed wire, pipes
 
 - **Discovery, not a menu.** `combine bat tacks tape`. If some recipe in `recipes.json` uses exactly those things, it's made and added to the recipe book; if not, the System AI mocks you and five minutes pass. The book shows hints for unknown recipes whose parts you're carrying.
 - **Recipes are tag-based:** any blunt weapon + anything sharp + anything that binds.
-- **The workbench groups your pack by property** (`craftParts.json`): Weapons, Worn gear, then Sharp (3), Bind (5), Elastic (1) and so on, then Other.
-  - Each group opens to show its items, and you tap things from any groups, then Combine. An item can sit in several groups: a bungee cord is Bind, Cord and Elastic.
-  - Only groups you're carrying something in are shown. The count is units, so a stack of 3 tacks counts 3.
+- **The workbench is a row of chips** (`craftParts.json`): Weapon and Chest gear, then each property you're carrying (Sharp 3, Bind 5, Elastic 1...), then the few exact items a recipe asks for by name (Box of Nails, Broken Glass, Hairspray...).
+  - Tap two or more chips and hit Combine. The game picks the actual items: your equipped weapon or chest gear for an upgrade, the cheapest unequipped junk for parts. The result says what it used ("Used Box of Thumbtacks and Roll of Friction Tape.").
+  - Only chips you're carrying something for, and that some recipe uses, are shown. The count is units, so a stack of 3 tacks counts 3. One tap fills a part a recipe needs twice, from one stack or several items.
+  - The chips send `combine #weapon | #sharp | #bind` (`#item:box_of_nails` for an exact item), which never matches an item's name.
   - The recipe book lists each part with what you have: "Blunt weapon (upgraded) 1/1 + Sharp 3/1 + Bind 0/1".
-  - Typing a property works too: `combine blunt sharp bind` uses the cheapest thing that fits each, and your equipped weapon for an upgrade.
+  - Typing works too: item names (`combine bat tacks tape`) pick exactly those things, and property names (`combine blunt sharp bind`) pick like the chips. A property name beats an item that merely contains the word, so an Accordion File doesn't hijack `cord`. An item whose whole name is the word still wins.
   - A part's name comes from `craftParts.json` (`label`, or `term` in recipes). Every tag a recipe asks for must have an entry, or validation fails.
   - **Outputs.** A recipe either upgrades an item in place (Nail-Studded, Barbed, Live-Wired: damage, on-hit statuses, damage type) or makes something new (pipe spear, caltrop pouch, molotov, magazine armor).
   - **Limits.** Each upgrade applies once per item, and an item takes at most two.
@@ -1137,7 +1159,7 @@ Build in 13 milestones, each ending in something playable or testable. Milestone
 | 4c | Floor tiling: Godot-style tilesets (terrain autotiling in all three match modes, probability, flips and transposes), looks-only ground layouts per floor, a Godot `.tres` importer | A complete set fits every square exactly in each mode; looks never change an arena's layout or dice; an imported tileset matches its `.tres` |
 | T | Thread layer: Echo (Wholeness, Temper, urges, vessel), shard delivery, the thread Codex and run history, modules M01-M06, floor mini-bosses with enforced weaknesses (rule-based), gate-boss floor generation, the Floor 1-3 re-theme and descending into Floors 2-3 | Shards deliver and persist across runs; Temper thresholds pick module variants; each Floor 1-3 boss's weakness works in scripted fights; gate floors always leave a hidden stairwell reachable; the sim reports shard find rates |
 | 5 | Items: generator, rarity, affixes, equip slots, inventory, weight, consumables | 1,000 generated items all valid; equipping changes derived stats |
-| 6 | Progression: XP and levels, stat points, skills with use-XP, spells and tomes, MP | Skills rank up from use; a spell levels after N casts |
+| 6 | Progression: XP and levels, stat points, skills with use-XP, spells and tomes, MP. Split in two: 6a (levels, stat points, skills from use, milestone perks) is built; spells, tomes and MP are still to come | Skills rank up from use; a spell levels after N casts |
 | 7 | Rewards: achievements engine, counters, loot boxes, safe rooms, shops, narration templates, AI mood | 20 achievements fire correctly in tests; boxes only open in safe rooms |
 | 8 | Death and account: permadeath, legacy points, unlocks, codex, bequest | Die, start a new crawler, see unlocks and the bequest on Floor 1 |
 | 9 | Floors 2-3: districts and elites (the themes, descent and floor mini-bosses landed in Milestone T) | Full Floors 1-3 run is playable |
@@ -1907,3 +1929,120 @@ Built on the `items` branch. Before it started, every branch was merged into `ma
 - **Every new crawler now gets 3 free rerolls** (`game.freeRerolls`). They reset with each new crawler, and they're spent before the account's unlocked rerolls, which still stack on top.
 - The button shows the total left ("Reroll (3 left)"), and each reroll says how many remain. Old saves caught mid-creation get the full 3.
 
+
+### Milestone 6a: levels and skills (and the workbench as chips)
+
+Built on the `crafting-and-leveling` branch, from two pieces of playtest feedback: "the crafting menu is too much", and "very difficult to tell how close you are to leveling, or if using stuff is giving you experience. 20 kills with blades and still level 1."
+
+**Why nothing leveled.** Milestone 6 had never been built. Kills added to `crawler.xp`, but nothing compared it with `xpToNext`, and no skill ever gained XP from use. No occupation starts with Blades, so it stayed untrained.
+
+**Decisions made with the player**
+
+- **Scope.** Levels, stat points and skills from use now. Spells, tomes and MP wait for the rest of Milestone 6.
+- **Pace.** Level 2 after the first hard-pool fight, level 3 a few hard fights later, level 5 by the end of Floor 1. A dedicated weapon user reaches rank 5 by the end of Floor 1. Rank 15 is possible around Floor 10 but not guaranteed.
+- **Every 5th rank is a milestone.** Blades 5 is a low chance to decapitate. The other six weapon skills got their own (table under "Milestone perks").
+- **Level rewards.** Stat points only. Skills come from use, or from a skill potion or a stat item. There are no skill points; `crawler.skillPoints` stays 0.
+- **The workbench.** The player picked "tap categories", the simpler option offered when the grouped list was built.
+
+**Levels** (`progression.ts`)
+
+- `xpToNext(level) = round(25 × level^0.9)`. The first try was `30 × level^0.9`: level 2 after the first hard fight landed in only 78-89% of runs, and crawlers who killed the Floor 1 boss left at level 4.
+- **Kill XP stays per family** (`family.xp × (1 + 0.15 × level) × tier.xpMult`), not the design's `level × 10 × tier`. The curve was tuned to the XP the game already pays.
+- `crawler.xp` is the progress inside the level. `gainXp` is the only way XP goes in. It applies the Quick Learner / Slow Learner `perk:xpBonus`, which nothing read before.
+- **A level-up** is +3 stat points, a full heal, a `levelUp` event and a System AI line. A win's VICTORY line prints first; the level-up follows.
+- **`raise <stat>`** (also `raise dex 2`, `level up con`) spends points. It's free, but refused mid-fight. Raising CON gives the new HP at once.
+- **Old saves** banked every point of XP at level 1. On load, `catchUpLevels` turns it into levels and stat points, quietly. No `SAVE_VERSION` bump: every new field is optional.
+
+**Skills**
+
+- `skillXpToNext(rank) = round(3 + 1.5 × rank + 0.4 × rank²)`: 3, 5, 8, 11, 15. Rank 5 comes after 42 uses, rank 10 after 212 and rank 15 after 609.
+  - The first try, `(rank+2)(rank+3)/2`, needed 55 uses for rank 5. Crawlers who cleared Floor 1 and its boss swing about 34 times (median), and 55 times at the 90th percentile. That made rank 5 out of reach for all but the most dedicated.
+- **What trains** (see the table under Skills):
+  - every weapon swing: 1, or 2 on a crit;
+  - throwing at an enemy;
+  - a shove that lands;
+  - a search that finds something;
+  - a trap spotted or avoided;
+  - talking a fight down;
+  - a healing item that heals;
+  - a passed crafting check.
+- **What doesn't train, and why.** Checks at the trivial DC give nothing. Light armor, heavy armor and shields don't train: power rolls leave no roll for their ranks to add to. Stealth, lockpicking, cooking, bartering and the rest wait for their systems.
+- **`skillRank`** is the trained rank plus gear `skill:<id>` modifiers, and every rank read goes through it.
+  - Gear can pass 15. Perks unlock on the trained rank only.
+  - The shove used to add `skill:athletics` gear on top of the rank by hand; it now goes through `skillRank` like everything else.
+- **A skill you've never used** starts at rank 0, so the third swing with a knife says "You picked up Blades".
+
+**Milestone perks**
+
+- **Weapon perks are modifiers**, read where the swing is worked out:
+  - typed by weapon: `attack:`, `damage:`, `critRange:`, `armorPierce:` and `defense:<weaponType>`;
+  - `reach:polearm`, `decapitate:` / `knockout:<type>` and `tier3Mult:<type>`;
+  - `critStatus@<type>:<status>` and `tier3Status@<type>:<status>`.
+  - `rules/modifiers.ts` knows each one, and validation fails if a weapon perk names anything else.
+- **Decapitation and Lights Out** are 5% a hit, on any non-boss the hit leaves standing. They count as kills and pay XP.
+- **Reach turns a close polearm into a near one:** 3 tiles on the grid, the near band in bands mode. The plan said 2 tiles, but there's no 2-tile reach band, and adding one wasn't worth it for one perk.
+- **The old rank-5 perks** (blade crits bleed, blunt crits stun) were never read. They're replaced. Every weapon perk at 5, 10 and 15 works now, so the sheet never promises something the dice don't do.
+- **Non-weapon perks that already had a system** now work: Dodge's +1 guard and +2 flee, First Aid's +25% healing, Tinkering's +2. The rest (Trap Sense, Ambush, Haggler...) stay listed for their systems.
+
+**Feedback you can see**
+
+- **The VICTORY line** reads `+20 XP · 7 to level 3`, then `Blades +5 (rank 2 · 4/10)` (`combatEnded.skills`).
+- **Rank-ups** print a divider (`skillUp`). Skill XP out of a fight is a quiet `skillXp` line.
+- **Popups.** A level-up opens a popup (`LevelUpPopup.tsx`) with `+` on each stat. Ranks 5, 10 and 15 open one with the perk. Like the shard popup, only events that arrive while the page is open pop up.
+- **Status.**
+  - The status bar reads `Lv 2 · 23/47 XP · +3 pts`.
+  - The phone and tablet strip shows `Lv2 +3`, with an XP hairline along its bottom.
+  - The Character menu entry and tab show unspent points.
+- **The character sheet** shows XP to the next level, `+` on each stat while points are unspent, and each skill with a progress bar, what's left to the next rank, the next milestone and the perks unlocked.
+- **The Fighting block and weapon details** show "Blades 2 · 4/10 to rank 3 · rank 5: Decapitation".
+
+**Skill potions and stat items**
+
+- **The `skill` effect kind** has an optional `skillId`. Without one, it trains the weapon in your hand; with `flag: "random"`, one of the skills you've used.
+- **A `stat` effect with `flag: "permanent"`** raises a base stat for good. Timed stat buffs (the tonics, `rooms` on the item) are still unread.
+- **Five items:** the Muscle Memory Shot, the Correspondence Course, Unlabeled Growth Hormone (STR), Gas Station Fish Oil (DEX) and Grandma's Stockpot Stock (CON).
+  - They're rare in treasure rooms, and every floor boss leaves one from the new `training` table.
+  - The ids `pre_workout` and `bone_broth` were taken by existing timed buffs, hence the names.
+
+**The workbench as chips**
+
+- **Chips.** Weapon and Chest gear first, then each junk property a recipe uses that you carry, then the exact items recipes ask for by id. Worn gear and Echo's parts are no longer chips: no recipe uses them.
+- **Picks.** The chips send `#part` and `#item:<id>`, which never match an item's name.
+  - Gear picks try what you have equipped first.
+  - Junk picks spare equipped items first. Next they spare items that are good for more than this pick (a bungee cord is Bind, but also your only Elastic), then go cheapest. Found in the browser check: Weapon + Sharp + Bind spent the bungee cord, the cheapest Bind, over two rolls of tape.
+  - One pick tops up a part needed twice from several items.
+- **Typed property names beat substring item matches.** `combine cord` with an Accordion File carried means the Cord property now. An item whose whole name is the word still wins.
+  - The plan said whole-word item matches would still win. Dropped, because whole-word matches are what hijacked `wire` (Wire Strippers) and `plate` (Collection Plate).
+- **The result says what it used,** since the game picked: "Used Box of Thumbtacks and Roll of Friction Tape."
+
+**Balance**
+
+- **Leveling made the game easier,** as expected: with the old enemy levels, 75% of runs cleared Floor 3, against 35% on `main`.
+  - `levelOffset` is now +2 on Floor 1, -1 on Floor 2 and -2 on Floor 3 (it was 0 / -4 / -6, set when nothing leveled). Floor 1's easy fights move with it, still a level under its hard ones.
+  - `npm run sim` takes `--offsets a,b,c` to try others.
+- **Sweeps** (`npm run sim -- 250 --floors 3 --craft --offsets ...`):
+
+  | Offsets F1, F2, F3 | Reach F2 | Reach F3 | Clear F3 | Damage per fight |
+  | --- | --- | --- | --- | --- |
+  | `main`, no leveling (400 runs) | 63% | 47% | 35% | 7.3 |
+  | 0, -4, -6 | 80% | 75% | 75% | 4.3 |
+  | 0, -2, -3 | 77% | 61% | 58% | 5.3 |
+  | 1, -1, -2 | 72% | 51% | 48% | 6.1 |
+  | 1, 0, -1 | 75% | 48% | 45% | 6.8 |
+  | **2, -1, -2** | 68% | 49% | 48% | 6.5 |
+  | 2, 0, -1 | 62% | 43% | 39% | 6.9 |
+
+- **Pace at +2 / -1 / -2:**
+  - Level 2 after Floor 1's first hard fight in 94% of runs; level 3 two hard wins later (median).
+  - Leaving Floor 1, the median crawler is level 4. Those who killed its boss are level 5. The sim explores about 60% of a floor and then takes the stairs.
+  - The best weapon skill is rank 3 leaving Floor 1, with rank 5 reached by about the 18th fight. Leaving Floor 2: level 7, rank 5.
+  - No deaths in the first three fights.
+- **Confirmed with the committed content** (`npm run sim -- 400 --floors 3 --craft`):
+
+  | | Reach F2 | Reach F3 | Clear F3 | Damage per fight | Died in fights 1-3 | Boss wins |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | `main`, no leveling | 63% | 47% | 35% | 7.3 | 0% | 88% |
+  | This branch | 64% | 45% | 42% | 6.4 | 1% | 97% |
+
+  - Runs that clear Floor 3 end at level 12 (median; 10th-90th 10-14). That's inside Milestone 13's 12-18 target.
+  - Boss wins rose because a crawler who reaches a boss has leveled. "Their own wounds" (bleed and poison) is still the top cause of death.

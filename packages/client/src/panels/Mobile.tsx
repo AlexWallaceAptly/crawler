@@ -105,6 +105,9 @@ export function MobileShell({ view, log, battle, commands, submit, onLocal, arme
           {MENU.map((m) => (
             <button key={m.id} className={`${s.menuItem} ${current === m.id ? s.menuOn : ""}`} onClick={() => pick(m.id)}>
               {m.label}
+              {m.id === "character" && (view.character?.unspentStatPoints ?? 0) > 0 && (
+                <span className={s.stripPts}> +{view.character!.unspentStatPoints} pts</span>
+              )}
             </button>
           ))}
           <button
@@ -132,7 +135,7 @@ export function MobileShell({ view, log, battle, commands, submit, onLocal, arme
           <InputBar commands={commands} onSubmit={submit} onLocal={onLocal} />
         </div>
       )}
-      {current === "character" && <Sheet><CharacterSheet view={view} /></Sheet>}
+      {current === "character" && <Sheet><CharacterSheet view={view} submit={submit} /></Sheet>}
       {current === "equipment" && <Sheet><EquipmentList view={view} submit={submit} /></Sheet>}
       {current === "effects" && <Sheet><EffectsList view={view} /></Sheet>}
       {current === "inventory" && <Sheet><InventoryList view={view} submit={submit} /></Sheet>}
@@ -165,6 +168,17 @@ export function StatusStrip({ view }: { view: ViewModel }) {
       {hp && (
         <span className={s.stripHp} style={{ color: hp.current / hp.max < 0.35 ? "var(--danger)" : undefined }}>
           HP {hp.current}/{hp.max}
+        </span>
+      )}
+      {st.level !== null && st.xp && (
+        <span className={s.stripLv} title={`${st.xp.current}/${st.xp.max} XP to level ${st.level + 1}`}>
+          Lv{st.level}
+          {(view.character?.unspentStatPoints ?? 0) > 0 && <span className={s.stripPts}> +{view.character!.unspentStatPoints}</span>}
+        </span>
+      )}
+      {st.xp && (
+        <span className={s.stripXp} aria-hidden>
+          <span style={{ width: `${Math.max(0, Math.min(100, (st.xp.current / Math.max(1, st.xp.max)) * 100))}%` }} />
         </span>
       )}
     </header>

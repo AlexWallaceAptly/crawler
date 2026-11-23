@@ -4,12 +4,13 @@
 import type { Content } from "./content/load";
 import { STATS, type Stat } from "./content/schemas";
 import { formatTimer, mapGrid, renderMap, roomBadge, type MapGrid } from "./explore";
-import { derive, xpToNext } from "./rules/derived";
+import { collectModifiers, derive } from "./rules/derived";
+import { nextPerk, perkName, skillLine, skillProgress, skillRank, xpToNext } from "./progression";
 import { AP_COST, apNow } from "./rules/ap";
 import { combatModeOf, EQUIP_SLOTS, type CombatMode, type EquipSlot, type Phase, type World } from "./state";
 import { gridView, type GridView } from "./grid/view";
 import { coord } from "./grid/geometry";
-import { partsOf, recipeBook, workbenchGroups, type RecipeBookView, type WorkbenchGroup } from "./craft";
+import { partsOf, recipeBook, workbenchChips, type RecipeBookView, type WorkbenchChip } from "./craft";
 import type { RangeBand } from "./content/schemas";
 import { codexView, sideOf, stageOn, vesselOf, wholenessOn, type CodexView, type Side } from "./echo";
 import { moduleItemDetails, moduleViews, type ModuleView } from "./modules";
@@ -58,7 +59,16 @@ export interface ViewModel {
     level: number;
     stats: { stat: Stat; value: number; base: number }[];
     derived: { label: string; value: string }[];
-    skills: { name: string; rank: number }[];
+    /** Each skill you've used: rank, progress to the next, and the next milestone perk. */
+    skills: {
+      id: string; name: string; rank: number;
+      /** With gear bonuses (`skill:<id>`): what rolls use. */
+      effective: number;
+      xp: number; next: number;
+      nextPerk?: { rank: number; name: string; text: string };
+      /** Perks already unlocked. */
+      perks: { rank: number; name: string; text: string }[];
+    }[];
     spells: { name: string; level: number; cooldown: number }[];
     quirk: { name: string; text: string };
     unspentStatPoints: number;
@@ -67,6 +77,7 @@ export interface ViewModel {
     fighting: {
       weapon: string;
       stat: "STR" | "DEX";
+      /** "Blades 2 · 4/10 to rank 3 · rank 5: Decapitation" */
       skill: string | null;
       roll: number;
       damage: string;
@@ -96,7 +107,7 @@ export interface ViewModel {
   /** Recipes you've discovered, and hints for ones your pack could make. */
   recipeBook: RecipeBookView | null;
   /** Your pack grouped by crafting property, for the workbench. */
-  workbench: WorkbenchGroup[] | null;
+  workbench: WorkbenchChip[] | null;
   /** The thing in your pocket. */
   echo: null | {
     vessel: string;
@@ -201,18 +212,30 @@ export function view(world: World, content: Content): ViewModel {
         { label: "Regen", value: `${d.hpRegen} HP / ${d.mpRegen} MP` },
         { label: "Carry", value: `${Math.round(d.carried * 10) / 10}/${d.carryLimit}` },
       ],
-      skills: Object.entries(c.skills)
-        .map(([id, s]) => ({ name: content.skills.byId[id]?.name ?? id, rank: s.rank }))
-        .sort((a, b) => b.rank - a.rank || a.name.localeCompare(b.name)),
+      skills: (() => {
+        const mods = collectModifiers(c, content);
+        return Object.keys(c.skills)
+          .map((id) => {
+            const p = skillProgress(c, content, id);
+            const coming = nextPerk(content, id, p.rank);
+            const perks = (content.skills.byId[id]?.perks ?? []).filter((x) => x.rank <= p.rank);
+            return {
+              id, name: p.name, rank: p.rank, effective: skillRank(c, id, mods), xp: p.xp, next: p.next,
+              ...(coming ? { nextPerk: { rank: coming.rank, name: perkName(coming), text: coming.text } } : {}),
+              perks: perks.map((x) => ({ rank: x.rank, name: perkName(x), text: x.text })),
+            };
+          })
+          .sort((a, b) => b.rank - a.rank || b.xp - a.xp || a.name.localeCompare(b.name));
+      })(),
       spells: Object.entries(c.spells).map(([id, s]) => ({ name: id, level: s.level, cooldown: s.cooldown })),
       quirk: { name: quirk?.name ?? "", text: quirk?.text ?? "" },
       unspentStatPoints: c.unspentStatPoints,
       gold: c.gold,
       fighting: (() => {
-        const w = profileOf(content, heldWeapon(c));
+        const w = profileOf(content, heldWeapon(c), c);
         const sw = swingNumbers(c, content, w, d);
         return {
-          weapon: w.name, stat: w.stat, skill: sw.skillName ? `${sw.skillName} ${sw.skillRank || "untrained"}` : null, roll: sw.rollBonus,
+          weapon: w.name, stat: w.stat, skill: w.skillId ? skillLine(c, content, w.skillId, "swings") : null, roll: sw.rollBonus,
           damage: sw.damage.join("/"), odds: sw.odds, average: sw.average, apCost: w.apCost,
           armor: d.armor, guard: d.guard, fit: weaponFit(c, content, d).text,
         };
@@ -255,7 +278,7 @@ export function view(world: World, content: Content): ViewModel {
         }
       : null,
     recipeBook: recipeBook(c, content),
-    workbench: workbenchGroups(c, content),
+    workbench: workbenchChips(c, content),
     room: room
       ? {
           items: (room.items ?? []).map((it) => itemView(it.uid, room.items)!).filter(Boolean),

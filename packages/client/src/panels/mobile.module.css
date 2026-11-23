@@ -11,6 +11,7 @@
 
 /* ---- status strip ---- */
 .strip {
+  position: relative;
   display: flex;
   align-items: baseline;
   gap: 10px;
@@ -37,6 +38,27 @@
 }
 .stripHp {
   color: var(--text);
+}
+.stripLv {
+  color: var(--xp);
+  white-space: nowrap;
+}
+.stripPts {
+  color: var(--system);
+}
+/* XP to the next level, as a hairline along the strip's bottom edge */
+.stripXp {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--border);
+}
+.stripXp > span {
+  display: block;
+  height: 100%;
+  background: var(--xp);
 }
 
 /* ---- corner menu ---- */

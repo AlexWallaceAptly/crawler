@@ -13,7 +13,7 @@
  * derives the bands from tile distance. The mode is fixed when the fight starts.
  */
 import type { Content } from "./content/load";
-import type { Consumable, Effect, EnemyAttack, Power, RangeBand } from "./content/schemas";
+import type { Consumable, Effect, EnemyAttack, Modifier, Power, RangeBand } from "./content/schemas";
 import { assignMarks, generateGroup, TIER, type EncounterKind } from "./gen/enemy";
 import { enterRoom, advanceTime, TIME_COST } from "./explore";
 import { dcFor } from "./rules/checks";
@@ -25,6 +25,7 @@ import { describePower, guardShift, powerRoll, type PowerRoll } from "./rules/po
 import { heldWeapon, profileOf, swingNumbers, type WeaponProfile } from "./gear";
 import { chance, d20, pick } from "./rng";
 import { killCrawler, type StepContext } from "./step";
+import type { GameEventBody } from "./events";
 import {
   combatModeOf, type CombatMode, type CombatState, type Enemy, type ItemInstance, type Room, type StatusInstance,
 } from "./state";
@@ -38,6 +39,7 @@ import { dropTurnStatuses } from "./maneuvers";
 import { rollLoot } from "./gen/loot";
 import { generateItem, itemLevelFor, potencyFor } from "./gen/item";
 import { addToPile } from "./inventory";
+import { announceLevels, fightSkillSummary, gainXp, SKILL_CAP, skillRank, trainSkill, xpToNext } from "./progression";
 import { int } from "./rng";
 import { bossDefeated, bossTaunt, startBossFight } from "./boss";
 import { coatedHit, glowFlare, neutralizePoison, pingInitiative, cantMove } from "./modules";
@@ -278,7 +280,7 @@ function fearBlocks(ctx: StepContext, line: string): boolean {
 export type { WeaponProfile } from "./gear";
 
 export function playerWeapon(ctx: StepContext): WeaponProfile {
-  return profileOf(ctx.content, heldWeapon(ctx.crawler));
+  return profileOf(ctx.content, heldWeapon(ctx.crawler), ctx.crawler);
 }
 
 /** Is the target inside this reach right now? Bands compare bands; the grid checks tiles and sight. */
@@ -392,8 +394,9 @@ export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfi
   const round = ctx.game.combat?.round ?? 0;
   const spite = target.hitYouRound !== undefined && round - target.hitYouRound <= 1 ? modTotal(mods, "spite") : 0;
   const flat = sw.flat + spite;
-  const armor = enemyArmor(ctx, target);
+  const armor = Math.max(0, enemyArmor(ctx, target) - sw.pierce);
   let dmg = Math.max(1, w.power[roll.tier - 1]! + flat - armor);
+  if (roll.tier === 3 && sw.tier3Bonus) dmg = Math.round(dmg * (1 + sw.tier3Bonus / 100));
   const execute = modTotal(mods, "executioner");
   if (execute > 0 && target.hp * 2 < target.maxHP) dmg = Math.round(dmg * (1 + execute / 100));
   target.hp -= dmg;
@@ -417,9 +420,14 @@ export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfi
     c.hp += healed;
     ctx.fight(`${w.name} drinks: +${healed} HP (${c.hp}/${d.maxHP}).`, "you");
   }
+  // Every swing trains the weapon's skill: 1, or 2 on a crit. Nothing misses, so this is steady.
+  trainSkill(ctx, w.skillId, roll.crit ? 2 : 1);
+  const finisher = target.hp > 0 ? skillFinisher(ctx, target, w, mods) : undefined;
   if (target.hp <= 0) {
-    ctx.fight(`The ${target.name} drops.`, "you");
-    ctx.say("combat.kill", { target: target.name });
+    if (!finisher) {
+      ctx.fight(`The ${target.name} drops.`, "you");
+      ctx.say("combat.kill", { target: target.name });
+    }
     const back = modTotal(mods, "killAp");
     const combat = ctx.game.combat;
     if (back > 0 && combat) {
@@ -441,6 +449,17 @@ export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfi
         }
       }
     }
+    // Weapon-skill perks: "critStatus@thrown:stunned" (crits), "tier3Status@bow:slowed" (any tier 3).
+    for (const [kind, lands, what] of [["critStatus", roll.crit, "crit"], ["tier3Status", roll.tier === 3, "hit"]] as const) {
+      if (!lands || !w.weaponType) continue;
+      const prefix = `${kind}@${w.weaponType}:`;
+      for (const m of mods.filter((x) => x.to.startsWith(prefix) && x.value > 0)) {
+        const def = ctx.content.statusEffects.byId[m.to.slice(prefix.length)];
+        if (def && applyStatus(target.statuses, def, m.value) !== "ignored") {
+          ctx.fight(`The ${what} leaves the ${target.name} ${def.name.toLowerCase()}.`, "status");
+        }
+      }
+    }
   }
   coatedHit(ctx, target);
   igniteUnder(ctx, target, w.damageType === "fire"); // a fire hit, or a fresh burn, on oil
@@ -449,6 +468,25 @@ export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfi
   const perHit = held ? ctx.content.oddities.byId[held.baseId]?.temperOnHit : undefined;
   if (perHit) shiftTemper(ctx, perHit);
   return roll;
+}
+
+/**
+ * Decapitation (Blades 5) and Lights Out (Blunt 5): a hit that leaves a non-boss standing
+ * has a small chance to end it anyway. Bosses keep their heads. Returns the perk that fired.
+ */
+function skillFinisher(ctx: StepContext, target: Enemy, w: WeaponProfile, mods: readonly Modifier[]): "decapitate" | "knockout" | undefined {
+  if (target.tier === "boss" || !w.weaponType || ctx.game.combat?.boss?.uid === target.uid) return undefined;
+  for (const kind of ["decapitate", "knockout"] as const) {
+    const pct = modTotal(mods, `${kind}:${w.weaponType}`);
+    if (pct <= 0 || !chance(pct / 100)) continue;
+    target.hp = 0;
+    ctx.fight(kind === "decapitate"
+      ? `DECAPITATION. The ${target.name}'s head goes one way and the ${target.name} goes the other.`
+      : `LIGHTS OUT. The ${target.name} folds up like a lawn chair and doesn't get up.`, "you");
+    ctx.say(`combat.${kind}`, { target: target.name });
+    return kind;
+  }
+  return undefined;
 }
 
 /** Damage an enemy from something other than a weapon swing (items, hazards, slams). */
@@ -505,10 +543,17 @@ export function fleeContest(ctx: StepContext, against: Enemy[]): boolean {
   return false;
 }
 
+/** The end of a fight you ran from: what your skills still got out of it. */
+export function fledEvent(ctx: StepContext): Extract<GameEventBody, { type: "combatEnded" }> {
+  const skills = fightSkillSummary(ctx);
+  return { type: "combatEnded", outcome: "fled", ...(skills.length ? { skills } : {}) };
+}
+
 /** End the fight as a flight and put the crawler in `toRoom` (no time cost: you ran). */
 export function leaveCombat(ctx: StepContext, toRoom: number): void {
+  const ended = fledEvent(ctx);
   endCombat(ctx);
-  ctx.emit({ type: "combatEnded", outcome: "fled" });
+  ctx.emit(ended);
   ctx.setPhase("exploring");
   const floor = ctx.game.floor;
   if (floor && toRoom !== floor.currentRoom) enterRoom(ctx, toRoom, "revisit");
@@ -535,7 +580,7 @@ export function playerTalk(ctx: StepContext): void {
   spendAp(ctx, AP_COST.talk);
   const c = ctx.crawler;
   const d = derive(c, ctx.content);
-  const rank = c.skills["persuasion"]?.rank ?? 0;
+  const rank = skillRank(c, "persuasion", collectModifiers(c, ctx.content));
   const dc = dcFor("medium", ctx.game.floor?.floor ?? 1);
   const nat = d20();
   const total = nat + d.stats.CHA + rank;
@@ -547,8 +592,9 @@ export function playerTalk(ctx: StepContext): void {
       xp += Math.ceil(e.xp / 2);
       ctx.fight(`The ${e.name} hears you out, shrugs, and wanders off.`, "enemy");
     }
-    c.xp += xp;
-    ctx.fight(`Persuasion: d20(${nat})+${d.stats.CHA + rank} = ${total} vs DC ${dc}. They buy it. +${xp} XP.`, "you");
+    trainSkill(ctx, "persuasion", 1);
+    const { gained } = gainXp(ctx, xp);
+    ctx.fight(`Persuasion: d20(${nat})+${d.stats.CHA + rank} = ${total} vs DC ${dc}. They buy it. +${gained} XP.`, "you");
     ctx.say("combat.talkSuccess");
     afterAction(ctx);
     return;
@@ -692,9 +738,12 @@ function applyEffectToCrawler(ctx: StepContext, e: Effect, value: number, applie
         c.mp = Math.min(d.maxMP, c.mp + value);
         applied.push(`+${c.mp - before} MP`);
       } else {
+        // First Aid 5: healing items do 25% more. Patching yourself up trains First Aid.
+        const pct = modTotal(collectModifiers(c, ctx.content), "healing:items");
         const before = c.hp;
-        c.hp = Math.min(d.maxHP, c.hp + value);
+        c.hp = Math.min(d.maxHP, c.hp + Math.round(value * (1 + pct / 100)));
         applied.push(`+${c.hp - before} HP`);
+        if (c.hp > before) trainSkill(ctx, "first_aid", 1);
       }
       return;
     case "damage": {
@@ -719,9 +768,33 @@ function applyEffectToCrawler(ctx: StepContext, e: Effect, value: number, applie
         applied.push(`you: ${def.name.toLowerCase()}`);
       }
       return;
-    case "xp":
-      c.xp += value;
-      applied.push(`+${value} XP`);
+    case "xp": {
+      const { gained } = gainXp(ctx, value);
+      applied.push(`+${gained} XP`);
+      return;
+    }
+    case "skill": {
+      // Skill potions: ranks straight into a skill (never past 15). No skillId: the weapon in your hand;
+      // flag "random": one of the skills you've already used.
+      const used = Object.entries(c.skills).filter(([, s]) => s.rank < SKILL_CAP).map(([id]) => id);
+      const id = e.skillId ?? (e.flag === "random" ? (used.length ? pick(used) : undefined) : playerWeapon(ctx).skillId);
+      const skill = id ? ctx.content.skills.byId[id] : undefined;
+      if (!skill || (c.skills[skill.id]?.rank ?? 0) >= SKILL_CAP) {
+        applied.push("nothing left to learn");
+        return;
+      }
+      trainSkill(ctx, skill.id, 0, Math.max(1, value));
+      applied.push(`${skill.name} ${c.skills[skill.id]!.rank}`);
+      return;
+    }
+    case "stat":
+      // Permanent stat items ("flag": "permanent"). Timed buffs (`rooms` on the item) arrive with their system.
+      if (e.flag === "permanent" && e.stat) {
+        c.baseStats[e.stat] += value;
+        const after = derive(c, ctx.content);
+        if (after.maxHP > d.maxHP) c.hp += after.maxHP - d.maxHP;
+        applied.push(`${e.stat} ${d.stats[e.stat]} → ${after.stats[e.stat]}, for good`);
+      }
       return;
     case "loot":
       if (e.flag === "gold") {
@@ -986,14 +1059,20 @@ export function checkVictory(ctx: StepContext): void {
   if (ctx.game.phase !== "combat") return;
   if (aliveEnemies(ctx).length > 0) return;
   const combat = ctx.game.combat!;
-  const xp = combat.enemies.reduce((sum, e) => sum + (e.hp <= 0 && !e.fate ? e.xp : 0), 0);
+  const earned = combat.enemies.reduce((sum, e) => sum + (e.hp <= 0 && !e.fate ? e.xp : 0), 0);
   // talked enemies already paid half in playerTalk; fled ones pay nothing
-  ctx.crawler.xp += xp;
+  const { gained: xp, levels } = gainXp(ctx, earned, false);
   if (combat.boss) bossDefeated(ctx);
   const drops = rollDrops(ctx);
+  const skills = fightSkillSummary(ctx);
   endCombat(ctx);
-  ctx.emit({ type: "combatEnded", outcome: "victory", xp });
+  const c = ctx.crawler;
+  ctx.emit({
+    type: "combatEnded", outcome: "victory", xp, level: c.level, xpNow: c.xp, xpNext: xpToNext(c.level),
+    ...(skills.length ? { skills } : {}),
+  });
   ctx.say("combat.victory", { xp });
+  announceLevels(ctx, levels);
   placeDrops(ctx, drops);
   ctx.setPhase("exploring");
 }

@@ -30,7 +30,22 @@ export type GameEventBody =
   | { type: "combatStarted"; names: string[] }
   /** One line of fight play-by-play; routed to the battle log only. */
   | { type: "combatLine"; text: string; actor: "you" | "enemy" | "status" }
-  | { type: "combatEnded"; outcome: "victory" | "fled" | "talked"; xp?: number }
+  | {
+    type: "combatEnded"; outcome: "victory" | "fled" | "talked"; xp?: number;
+    /** After the fight's XP: your level and how far into it you are. */
+    level?: number; xpNow?: number; xpNext?: number;
+    /** Skill XP the fight earned: "Blades +5 (rank 2 · 4/10)". */
+    skills?: { id: string; name: string; gained: number; rank: number; xp: number; next: number }[];
+  }
+  /** You went up a level: a full heal and stat points to spend. */
+  | { type: "levelUp"; level: number; statPoints: number; unspent: number; next: number }
+  /** A skill went up a rank. `perk` when this rank unlocks one (every 5th). */
+  | {
+    type: "skillUp"; skillId: string; name: string; rank: number; perk?: string; perkName?: string;
+    nextPerk?: { rank: number; name: string };
+  }
+  /** Skill XP out of a fight (a search, a crafting check): "Perception +1 (2/6)". */
+  | { type: "skillXp"; skillId: string; name: string; gained: number; rank: number; xp: number; next: number }
   | { type: "phaseChanged"; from: Phase; to: Phase }
   | { type: "died"; cause: string }
   /** A new recipe went into the book (first time a combination worked, or nearly did). */

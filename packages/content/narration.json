@@ -1452,5 +1452,78 @@
         "text": "Looks expensive. It isn't. Nothing here is."
       }
     ]
+  },
+  {
+    "key": "progress.levelUp",
+    "variants": [
+      {
+        "text": "Level {level}. You're fully healed, which is the nicest thing anyone will do for you down here. {points} stat points to spend. Spend them before you die, ideally."
+      },
+      {
+        "text": "Ding. Level {level}. The audience barely looked up, but the numbers did. {points} stat points are burning a hole in your pocket."
+      },
+      {
+        "text": "Congratulations on level {level}, crawler. Full heal, {points} points to spend, and absolutely no reason to feel safe."
+      },
+      {
+        "text": "Level {level}! Your body knits itself back together out of spite and loot. {points} stat points. Try not to put them all into hope."
+      }
+    ]
+  },
+  {
+    "key": "progress.skillLearned",
+    "variants": [
+      {
+        "text": "{skill}, rank 1. You've done it enough times to stop doing it wrong. Mostly."
+      },
+      {
+        "text": "Look at that: {skill}. Three tries and you're officially an amateur."
+      },
+      {
+        "text": "New skill: {skill}. The bar was on the floor and you stepped over it."
+      }
+    ]
+  },
+  {
+    "key": "progress.milestone",
+    "variants": [
+      {
+        "text": "{skill} {rank}. You've unlocked {perk}. The sponsors would like that on a lunchbox."
+      },
+      {
+        "text": "{skill} rank {rank}: {perk}. Somewhere, a producer just changed your camera angle."
+      },
+      {
+        "text": "Milestone. {skill} {rank} gets you {perk}. Use it on something that deserves it, which is everything."
+      }
+    ]
+  },
+  {
+    "key": "combat.decapitate",
+    "variants": [
+      {
+        "text": "Off with it. The {target}'s head rolls into a corner and keeps looking surprised."
+      },
+      {
+        "text": "That's a decapitation, folks. The {target} will not be needing a hat."
+      },
+      {
+        "text": "Clean through the neck. The replay team is going to loop that one for a week."
+      }
+    ]
+  },
+  {
+    "key": "combat.knockout",
+    "variants": [
+      {
+        "text": "Lights out for the {target}. It'll wake up dead."
+      },
+      {
+        "text": "The {target} goes down like a folding chair at a wedding. It isn't getting up."
+      },
+      {
+        "text": "One clean bonk and the {target} is somewhere else entirely. Permanently."
+      }
+    ]
   }
 ]

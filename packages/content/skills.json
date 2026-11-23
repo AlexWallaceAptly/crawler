@@ -2,76 +2,82 @@
   { "id": "blades", "name": "Blades", "category": "weapon", "stat": "DEX", "weaponType": "blades",
     "description": "Knives, swords, and anything you can stab with that wasn't designed for salad.",
     "perks": [
-      { "rank": 5, "text": "Blade crits also cause bleeding.", "modifiers": [{ "to": "perk:bladeBleed", "value": 1 }] },
-      { "rank": 10, "text": "Crit range with blades expands by 1.", "modifiers": [{ "to": "critRange:blades", "value": 1 }] },
-      { "rank": 15, "text": "+2 damage with blades.", "modifiers": [{ "to": "damage:blades", "value": 2 }] }
+      { "rank": 5, "name": "Decapitation", "text": "Every blade hit has a 5% chance to take a non-boss's head clean off.", "modifiers": [{ "to": "decapitate:blades", "value": 5 }] },
+      { "rank": 10, "name": "Quick Edge", "text": "Blade crits land on a natural 18-20.", "modifiers": [{ "to": "critRange:blades", "value": 1 }] },
+      { "rank": 15, "name": "Surgeon", "text": "+2 damage with blades.", "modifiers": [{ "to": "damage:blades", "value": 2 }] }
     ] },
   { "id": "blunt", "name": "Blunt Weapons", "category": "weapon", "stat": "STR", "weaponType": "blunt",
     "description": "Hammers, clubs, maces. The honest way to solve problems.",
     "perks": [
-      { "rank": 5, "text": "Blunt crits stun for 1 round.", "modifiers": [{ "to": "perk:bluntStun", "value": 1 }] },
-      { "rank": 10, "text": "+2 damage with blunt weapons.", "modifiers": [{ "to": "damage:blunt", "value": 2 }] },
-      { "rank": 15, "text": "Ignore 3 points of damage reduction.", "modifiers": [{ "to": "armorPierce:blunt", "value": 3 }] }
+      { "rank": 5, "name": "Lights Out", "text": "Every blunt hit has a 5% chance to knock a non-boss out cold. Counts as a kill.", "modifiers": [{ "to": "knockout:blunt", "value": 5 }] },
+      { "rank": 10, "name": "Heavy Hands", "text": "+2 damage with blunt weapons.", "modifiers": [{ "to": "damage:blunt", "value": 2 }] },
+      { "rank": 15, "name": "Can Opener", "text": "Blunt hits ignore 3 points of armor.", "modifiers": [{ "to": "armorPierce:blunt", "value": 3 }] }
     ] },
   { "id": "polearms", "name": "Polearms", "category": "weapon", "stat": "STR", "weaponType": "polearm",
     "description": "Long sticks with bad intentions on the end.",
     "perks": [
-      { "rank": 5, "text": "Polearms can hit enemies at near range.", "modifiers": [{ "to": "perk:polearmReach", "value": 1 }] },
-      { "rank": 10, "text": "+2 defense while wielding a polearm.", "modifiers": [{ "to": "defense:polearm", "value": 2 }] }
+      { "rank": 5, "name": "Reach", "text": "A polearm swings at near range, up to 3 tiles away. Let them come to you. They won't get there.", "modifiers": [{ "to": "reach:polearm", "value": 1 }] },
+      { "rank": 10, "name": "Keep Back", "text": "+2 guard while you're holding a polearm.", "modifiers": [{ "to": "defense:polearm", "value": 2 }] },
+      { "rank": 15, "name": "Skewer", "text": "+2 damage with polearms.", "modifiers": [{ "to": "damage:polearm", "value": 2 }] }
     ] },
   { "id": "bows", "name": "Bows", "category": "weapon", "stat": "DEX", "weaponType": "bow",
     "description": "Pointy sticks, delivered at a respectful distance.",
     "perks": [
-      { "rank": 5, "text": "+2 to hit at far range.", "modifiers": [{ "to": "attack:far", "value": 2 }] },
-      { "rank": 10, "text": "Crit range with bows expands by 1.", "modifiers": [{ "to": "critRange:bow", "value": 1 }] }
+      { "rank": 5, "name": "Pinned", "text": "A great bow hit (tier 3) slows the target for a round.", "modifiers": [{ "to": "tier3Status@bow:slowed", "value": 1 }] },
+      { "rank": 10, "name": "Dead Eye", "text": "Bow crits land on a natural 18-20.", "modifiers": [{ "to": "critRange:bow", "value": 1 }] },
+      { "rank": 15, "name": "Broadheads", "text": "+2 damage with bows.", "modifiers": [{ "to": "damage:bow", "value": 2 }] }
     ] },
   { "id": "thrown", "name": "Thrown Weapons", "category": "weapon", "stat": "DEX", "weaponType": "thrown",
     "description": "Darts, knives, bricks, and the occasional sandwich.",
     "perks": [
-      { "rank": 5, "text": "+2 damage with thrown weapons.", "modifiers": [{ "to": "damage:thrown", "value": 2 }] }
+      { "rank": 5, "name": "Bullseye", "text": "A crit with a thrown weapon stuns the target for a round.", "modifiers": [{ "to": "critStatus@thrown:stunned", "value": 1 }] },
+      { "rank": 10, "name": "Fastball", "text": "+2 damage with thrown weapons.", "modifiers": [{ "to": "damage:thrown", "value": 2 }] },
+      { "rank": 15, "name": "Trick Shot", "text": "Thrown-weapon crits land on a natural 18-20.", "modifiers": [{ "to": "critRange:thrown", "value": 1 }] }
     ] },
   { "id": "unarmed", "name": "Unarmed Combat", "category": "weapon", "stat": "STR", "weaponType": "unarmed",
     "description": "Fists, elbows, knees, and teeth if it comes to that.",
     "perks": [
-      { "rank": 5, "text": "Unarmed damage becomes 1d6.", "modifiers": [{ "to": "perk:unarmedD6", "value": 1 }] },
-      { "rank": 10, "text": "Unarmed damage becomes 1d8.", "modifiers": [{ "to": "perk:unarmedD8", "value": 1 }] }
+      { "rank": 5, "name": "Knuckles", "text": "Your fists hit 2/4/6.", "modifiers": [{ "to": "perk:unarmedD6", "value": 1 }] },
+      { "rank": 10, "name": "Iron Fists", "text": "Your fists hit 3/5/7.", "modifiers": [{ "to": "perk:unarmedD8", "value": 1 }] },
+      { "rank": 15, "name": "Haymaker", "text": "A great unarmed hit (tier 3) stuns the target for a round.", "modifiers": [{ "to": "tier3Status@unarmed:stunned", "value": 1 }] }
     ] },
   { "id": "improvised", "name": "Improvised Weapons", "category": "weapon", "stat": "STR", "weaponType": "improvised",
     "description": "Plungers, kettlebells, a microwave you found. If it's in your hand, it's a weapon.",
     "perks": [
-      { "rank": 5, "text": "+2 to hit with improvised weapons.", "modifiers": [{ "to": "attack:improvised", "value": 2 }] },
-      { "rank": 10, "text": "Improvised weapon crits deal triple dice.", "modifiers": [{ "to": "perk:improvisedTripleCrit", "value": 1 }] }
+      { "rank": 5, "name": "Anything Goes", "text": "+2 to the roll with improvised weapons.", "modifiers": [{ "to": "attack:improvised", "value": 2 }] },
+      { "rank": 10, "name": "Wrong Tool, Right Job", "text": "Great improvised hits (tier 3) do 50% more damage.", "modifiers": [{ "to": "tier3Mult:improvised", "value": 50 }] },
+      { "rank": 15, "name": "Junk Savant", "text": "Improvised-weapon crits land on a natural 18-20.", "modifiers": [{ "to": "critRange:improvised", "value": 1 }] }
     ] },
   { "id": "light_armor", "name": "Light Armor", "category": "defense", "stat": "DEX",
     "description": "Leather, padding, and hope.",
     "perks": [
-      { "rank": 5, "text": "+1 defense in light armor.", "modifiers": [{ "to": "defense:lightArmor", "value": 1 }] }
+      { "rank": 5, "name": "Light on Your Feet", "text": "+1 defense in light armor.", "modifiers": [{ "to": "defense:lightArmor", "value": 1 }] }
     ] },
   { "id": "heavy_armor", "name": "Heavy Armor", "category": "defense", "stat": "CON",
     "description": "Wearing a car door and calling it fashion.",
     "perks": [
-      { "rank": 5, "text": "Reduce all physical damage by 1.", "modifiers": [{ "to": "dr:physical", "value": 1 }] }
+      { "rank": 5, "name": "Thick Skin", "text": "Reduce all physical damage by 1.", "modifiers": [{ "to": "dr:physical", "value": 1 }] }
     ] },
   { "id": "shields", "name": "Shields", "category": "defense", "stat": "STR",
     "description": "Holding a big thing between you and the bad thing.",
     "perks": [
-      { "rank": 5, "text": "+1 defense with a shield.", "modifiers": [{ "to": "defense:shield", "value": 1 }] }
+      { "rank": 5, "name": "Wall", "text": "+1 defense with a shield.", "modifiers": [{ "to": "defense:shield", "value": 1 }] }
     ] },
   { "id": "dodge", "name": "Dodge", "category": "defense", "stat": "DEX",
     "description": "The ancient art of not being where the axe is.",
     "perks": [
-      { "rank": 5, "text": "+1 defense.", "modifiers": [{ "to": "defense", "value": 1 }] },
-      { "rank": 10, "text": "+2 to flee.", "modifiers": [{ "to": "flee", "value": 2 }] }
+      { "rank": 5, "name": "Slippery", "text": "+1 defense.", "modifiers": [{ "to": "defense", "value": 1 }] },
+      { "rank": 10, "name": "Exit Strategy", "text": "+2 to flee.", "modifiers": [{ "to": "flee", "value": 2 }] }
     ] },
   { "id": "stealth", "name": "Stealth", "category": "utility", "stat": "DEX",
     "description": "Being quiet. Being small. Being somewhere else.",
     "perks": [
-      { "rank": 5, "text": "First attack from stealth always crits.", "modifiers": [{ "to": "perk:ambushCrit", "value": 1 }] }
+      { "rank": 5, "name": "Ambush", "text": "First attack from stealth always crits.", "modifiers": [{ "to": "perk:ambushCrit", "value": 1 }] }
     ] },
   { "id": "perception", "name": "Perception", "category": "utility", "stat": "INT",
     "description": "Noticing the trap before the trap notices you.",
     "perks": [
-      { "rank": 5, "text": "Always see trap rooms on the map once adjacent.", "modifiers": [{ "to": "perk:trapSense", "value": 1 }] }
+      { "rank": 5, "name": "Trap Sense", "text": "Always see trap rooms on the map once adjacent.", "modifiers": [{ "to": "perk:trapSense", "value": 1 }] }
     ] },
   { "id": "lockpicking", "name": "Lockpicking", "category": "utility", "stat": "DEX",
     "description": "Opening things that other people closed for a reason.",
@@ -82,17 +88,17 @@
   { "id": "first_aid", "name": "First Aid", "category": "utility", "stat": "INT",
     "description": "Bandages, pressure, and saying 'you'll be fine' convincingly.",
     "perks": [
-      { "rank": 5, "text": "Healing items restore 25% more.", "modifiers": [{ "to": "healing:items", "value": 25 }] }
+      { "rank": 5, "name": "Field Medic", "text": "Healing items restore 25% more.", "modifiers": [{ "to": "healing:items", "value": 25 }] }
     ] },
   { "id": "cooking", "name": "Cooking", "category": "utility", "stat": "INT",
     "description": "Turning dungeon meat into dungeon cuisine.",
     "perks": [
-      { "rank": 5, "text": "Cooked food lasts 2 extra rooms.", "modifiers": [{ "to": "food:rooms", "value": 2 }] }
+      { "rank": 5, "name": "Leftovers", "text": "Cooked food lasts 2 extra rooms.", "modifiers": [{ "to": "food:rooms", "value": 2 }] }
     ] },
   { "id": "explosives_handling", "name": "Explosives Handling", "category": "utility", "stat": "DEX",
     "description": "Throwing things that go boom, ideally away from your face.",
     "perks": [
-      { "rank": 5, "text": "Explosives never fumble on a natural 1.", "modifiers": [{ "to": "perk:noFumble", "value": 1 }] }
+      { "rank": 5, "name": "Steady Hands", "text": "Explosives never fumble on a natural 1.", "modifiers": [{ "to": "perk:noFumble", "value": 1 }] }
     ] },
   { "id": "athletics", "name": "Athletics", "category": "utility", "stat": "STR",
     "description": "Climbing, swimming, shoving doors, carrying a dead friend.",
@@ -103,7 +109,7 @@
   { "id": "spellcasting", "name": "Spellcasting", "category": "utility", "stat": "INT",
     "description": "General talent for reading tomes without your eyes melting.",
     "perks": [
-      { "rank": 5, "text": "Spells cost 1 less MP (minimum 1).", "modifiers": [{ "to": "mpCost", "value": -1 }] }
+      { "rank": 5, "name": "Efficient", "text": "Spells cost 1 less MP (minimum 1).", "modifiers": [{ "to": "mpCost", "value": -1 }] }
     ] },
   { "id": "persuasion", "name": "Persuasion", "category": "social", "stat": "CHA",
     "description": "Getting people to do things with words instead of hammers.",
@@ -117,7 +123,11 @@
   { "id": "bartering", "name": "Bartering", "category": "social", "stat": "CHA",
     "description": "Paying less than the sticker price in a store run by a demon.",
     "perks": [
-      { "rank": 5, "text": "Shop prices are 10% lower.", "modifiers": [{ "to": "shop:discount", "value": 10 }] }
+      { "rank": 5, "name": "Haggler", "text": "Shop prices are 10% lower.", "modifiers": [{ "to": "shop:discount", "value": 10 }] }
     ] },
-  { "id": "tinkering", "name": "Tinkering", "category": "utility", "stat": "INT", "description": "Making useful things out of useless things. Rank adds to crafting checks at a workbench.", "perks": [{"rank": 5, "text": "Your crafting checks get +2.", "modifiers": [{"to": "skill:tinkering", "value": 2}]}] }
+  { "id": "tinkering", "name": "Tinkering", "category": "utility", "stat": "INT",
+    "description": "Making useful things out of useless things. Rank adds to crafting checks at a workbench.",
+    "perks": [
+      { "rank": 5, "name": "Tinkerer", "text": "Your crafting checks get +2.", "modifiers": [{ "to": "skill:tinkering", "value": 2 }] }
+    ] }
 ]

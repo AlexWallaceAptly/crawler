@@ -123,6 +123,9 @@ export function TabletShell({ view, log, battle, commands, submit, onLocal, arme
                 {TABS.map((t) => (
                   <button key={t.id} role="tab" aria-selected={tab === t.id} className={`${s.tab} ${tab === t.id ? s.tabOn : ""}`} onClick={() => setTab(t.id)}>
                     {t.label}
+                    {t.id === "character" && (view.character?.unspentStatPoints ?? 0) > 0 && (
+                      <span style={{ color: "var(--system)" }}> +{view.character!.unspentStatPoints}</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -130,7 +133,7 @@ export function TabletShell({ view, log, battle, commands, submit, onLocal, arme
           </header>
           {tabsShown && (
             <div className={s.cardBody}>
-              {tab === "character" && <CharacterSheet view={view} />}
+              {tab === "character" && <CharacterSheet view={view} submit={submit} />}
               {tab === "equipment" && <EquipmentList view={view} submit={submit} />}
               {tab === "inventory" && <InventoryList view={view} submit={submit} />}
               {tab === "crafting" && <RecipeBook view={view} submit={submit} />}

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { forceDice, resetRng, setRandomSource } from "../src/rng";
 import { itemFromRef } from "../src/gen/item";
 import { effectiveTags } from "../src/inventory";
-import { inputLabel, matchCombination, recipeParts, specificity, workbenchGroups } from "../src/craft";
+import { inputLabel, matchCombination, recipeParts, specificity, workbenchChips } from "../src/craft";
 import { stepDice } from "../src/rules/dice";
 import { arenaOf, content, engine, gridWorld, lines, of, testEnemy } from "./helpers";
 import type { ItemInstance, World } from "../src/state";
@@ -29,7 +29,7 @@ const has = (w: World, id: string) => w.game.crawler!.inventory.find((i) => i.ba
 const said = (events: { type: string; key?: string }[], key: string) => events.some((e) => e.type === "narration" && e.key === key);
 
 describe("combine", () => {
-  it("the workbench picker's form: full item names with bars between them", () => {
+  it("full item names with bars between them still work (typed or old clients)", () => {
     const world = atBench(["baseball_bat", "thumbtacks", "duct_tape"]);
     const names = world.game.crawler!.inventory
       .filter((i) => ["baseball_bat", "thumbtacks", "duct_tape"].includes(i.baseId))
@@ -163,23 +163,70 @@ describe("combine", () => {
   });
 });
 
-describe("the workbench groups", () => {
-  it("sorts the pack by property, counts units, and puts one item in every group it fits", () => {
-    const world = atBench(["baseball_bat", "thumbtacks", "duct_tape", "bungee_cord", "bathrobe"]);
+describe("the workbench chips", () => {
+  it("one chip per property you carry that a recipe uses, gear first, then exact items", () => {
+    const world = atBench(["baseball_bat", "thumbtacks", "duct_tape", "bungee_cord", "bathrobe", "box_of_nails"]);
     const c = world.game.crawler!;
     c.inventory.find((i) => i.baseId === "thumbtacks")!.qty = 3;
-    const groups = workbenchGroups(c, content);
-    const g = (id: string) => groups.find((x) => x.id === id);
-    const uid = (id: string) => c.inventory.find((i) => i.baseId === id)!.uid;
-    expect(g("weapon")!.items).toEqual([uid("baseball_bat")]);
-    expect(g("worn")!.items).toEqual([uid("bathrobe")]);
-    expect(g("sharp")!.count).toBe(3);
-    expect(g("bind")!.items).toEqual([uid("duct_tape"), uid("bungee_cord")]);
-    expect(g("elastic")!.items).toEqual([uid("bungee_cord")]);
-    expect(g("cord")!.items).toEqual([uid("bungee_cord")]);
-    expect(g("fuel")).toBeUndefined(); // nothing carried, no group
-    expect(g("other")).toBeUndefined(); // everything fit somewhere
-    expect(groups.find((x) => x.id === "blunt")).toBeUndefined(); // a name for recipes, not a group
+    c.equipment.chest = c.inventory.find((i) => i.baseId === "bathrobe")!.uid;
+    const chips = workbenchChips(c, content);
+    const chip = (pick: string) => chips.find((x) => x.pick === pick);
+    expect(chips.slice(0, 2).map((x) => x.label)).toEqual(["Weapon", "Chest gear"]);
+    expect(chip("#weapon")).toMatchObject({ kind: "gear", count: 1, detail: "Aluminum Baseball Bat (equipped)" });
+    expect(chip("#chest")).toMatchObject({ kind: "gear", detail: "Bathrobe (equipped)" });
+    expect(chip("#sharp")!.count).toBe(4); // 3 tacks + the box of nails
+    expect(chip("#bind")!.count).toBe(2);
+    expect(chip("#elastic")!.count).toBe(1);
+    expect(chip("#item:box_of_nails")).toMatchObject({ kind: "item", label: "Box of Nails", count: 1 });
+    expect(chip("#fuel")).toBeUndefined(); // nothing carried
+    expect(chip("#blunt")).toBeUndefined(); // a name for recipes; the Weapon chip covers it
+    expect(chip("#module_part")).toBeUndefined(); // no recipe uses Echo's parts
+    expect(chips.some((x) => x.label === "Other")).toBe(false);
+  });
+
+  it("Weapon + Sharp + Bind: the equipped bat gets the nails, the cheaper tape is used, and it says what it used", () => {
+    const world = atBench(["baseball_bat", "thumbtacks", "duct_tape", "friction_tape"]);
+    const { world: w, events } = engine.input(world, "combine #weapon | #sharp | #bind");
+    expect(w.game.crawler!.recipes).toEqual(["nail_bat"]);
+    expect(has(w, "baseball_bat")!.crafted).toEqual(["nail_bat"]);
+    expect(has(w, "friction_tape")).toBeUndefined(); // value 3 beats duct tape's 5
+    expect(has(w, "duct_tape")).toBeDefined();
+    expect(of(events, "narration").map((e) => e.text).join(" ")).toMatch(/Used Box of Thumbtacks and Roll of Friction Tape\./);
+  });
+
+  it("a Bind pick spends plain tape before the bungee cord, which is also your only Elastic", () => {
+    const world = atBench(["baseball_bat", "thumbtacks", "bungee_cord", "friction_tape"]);
+    const { world: w } = engine.input(world, "combine #weapon | #sharp | #bind");
+    expect(w.game.crawler!.recipes).toEqual(["nail_bat"]);
+    expect(has(w, "friction_tape")).toBeUndefined();
+    expect(has(w, "bungee_cord")).toBeDefined(); // cheaper, but it's a sling waiting to happen
+  });
+
+  it("the Weapon chip picks your equipped weapon over a cheaper one", () => {
+    const world = atBench(["crowbar", "baseball_bat", "duct_tape"]);
+    const c = world.game.crawler!;
+    const bat = c.inventory.find((i) => i.baseId === "baseball_bat")!;
+    c.equipment.mainHand = bat.uid;
+    const m = matchCombination(content, c.inventory, "#weapon | #bind", new Set([bat.uid]));
+    expect(m!.recipe.id).toBe("taped_grip");
+    expect(m!.assignment[0]!.items[0]!.uid).toBe(bat.uid);
+  });
+
+  it("a property pick never means an item's name, and a typed property beats a name it's only part of", () => {
+    const world = atBench(["accordion_file", "nylon_rope", "padlock", "padlock"]);
+    const c = world.game.crawler!;
+    // "cord" is inside "Accordion File", but you meant the rope
+    expect(matchCombination(content, c.inventory, "#cord | #weight")!.recipe.id).toBe("bola");
+    expect(matchCombination(content, c.inventory, "cord, weight")!.recipe.id).toBe("bola");
+  });
+
+  it("one tap fills a part needed twice from two separate items", () => {
+    const world = atBench(["nylon_rope", "padlock", "padlock"]);
+    const c = world.game.crawler!;
+    expect(c.inventory.filter((i) => i.baseId === "padlock")).toHaveLength(2);
+    const { world: w } = engine.input(world, "combine #cord | #weight");
+    expect(w.game.crawler!.recipes).toEqual(["bola"]);
+    expect(has(w, "padlock")).toBeUndefined();
   });
 
   it("counts what you have of each recipe part", () => {

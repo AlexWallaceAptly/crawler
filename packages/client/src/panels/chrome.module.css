@@ -34,6 +34,10 @@
 .meterEmpty {
   color: var(--faint);
 }
+.points {
+  color: var(--system);
+  white-space: nowrap;
+}
 
 .ticker {
   display: flex;

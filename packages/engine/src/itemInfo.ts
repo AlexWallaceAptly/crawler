@@ -6,6 +6,7 @@
 import type { Content } from "./content/load";
 import { AP_COST } from "./rules/ap";
 import { describeModifier } from "./rules/modifiers";
+import { skillLine } from "./progression";
 import { potencyFor } from "./gen/item";
 import { displaced, formatChanges, gearChanges, isEquipped, profileOf, swingNumbers, verdictOf, withEquipped } from "./gear";
 import type { Crawler, ItemInstance } from "./state";
@@ -29,7 +30,7 @@ export interface ItemInfo {
 
 /** A weapon's lines, worked out for `holding` (the crawler with this weapon in hand). */
 export function weaponLines(content: Content, it: ItemInstance, holding: Crawler): string[] {
-  const w = profileOf(content, it);
+  const w = profileOf(content, it, holding);
   const sw = swingNumbers(holding, content, w);
   const skill = w.skillId ? content.skills.byId[w.skillId] : undefined;
   const ap = w.unwieldy ? "2 AP, and a swing ends your turn" : `${w.apCost} AP a swing`;
@@ -45,7 +46,7 @@ export function weaponLines(content: Content, it: ItemInstance, holding: Crawler
     `Your damage: ${sw.damage.join("/")} (power ${signed(statFlat)} from ${w.stat}${gearFlat ? `, ${signed(gearFlat)} from gear` : ""}), minus the target's armor.`,
     `Odds: weak ${pct(sw.odds[0])} · solid ${pct(sw.odds[1])} · great ${pct(sw.odds[2])}${sw.critAt < 19 ? ` (crits on ${sw.critAt}+)` : ""}. Average hit ${sw.average}.`,
   ];
-  if (skill && sw.skillRank === 0) out.push(`No ${skill.name} training yet. Each rank adds +1 to the roll.`);
+  if (skill) out.push(`${skillLine(holding, content, skill.id, "swings")}. Every swing trains it; each rank is +1 to the roll.`);
   return out;
 }
 
@@ -91,7 +92,7 @@ export function itemInfo(c: Crawler, content: Content, it: ItemInstance): ItemIn
 
   let summary: string | undefined;
   if (it.power) {
-    const sw = swingNumbers(holding, content, profileOf(content, it));
+    const sw = swingNumbers(holding, content, profileOf(content, it, holding));
     summary = `${sw.damage.join("/")} dmg · ${it.stat ?? "STR"} · ${it.apCost ?? AP_COST.attack} AP`;
   } else if (gear) {
     const first = it.modifiers[0];

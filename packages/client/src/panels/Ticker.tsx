@@ -21,6 +21,10 @@ function text(e: GameEvent): string {
       return `ECHO MODULE — ${e.name}`;
     case "floorEntered":
       return `FLOOR ${e.floor} — ${e.name}`;
+    case "levelUp":
+      return `★ LEVEL ${e.level} — ${e.unspent} stat points to spend`;
+    case "skillUp":
+      return `▲ ${e.name} ${e.rank}${e.perkName ? ` — ${e.perkName}` : ""}`;
     case "narration":
     case "info":
     case "error":

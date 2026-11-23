@@ -154,6 +154,9 @@ export function bossDefeated(ctx: StepContext): void {
     for (let n = boss.drops.rolls; n > 0; n--) addToPile(room.items, rollLoot(table, ctx.content));
   }
   for (const id of boss.drops.items) addToPile(room.items, itemFromRef(ctx.content, id));
+  // Skills only come from use, or from one of these: every floor boss leaves one.
+  const training = ctx.content.lootTables.byId["training"];
+  if (training) addToPile(room.items, rollLoot(training, ctx.content));
   // One piece of generated gear, never worse than the floor's boss minimum.
   const gear = ctx.content.floors.get(floor.theme).loot.gear;
   const piece = generateItem(ctx.content, itemLevelFor(floor.floor) + 2, { floor: floor.floor, minRarity: gear.bossMinRarity, narrator: ctx.game.narrator });

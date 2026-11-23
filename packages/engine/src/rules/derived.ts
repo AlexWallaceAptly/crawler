@@ -58,12 +58,15 @@ export function derive(c: Crawler, content: Content): Derived {
   const mods = collectModifiers(c, content);
   const stats = effectiveStats(c, content, mods);
   const armor = equippedItems(c).reduce((sum, it) => sum + (it.armor ?? 0), 0);
+  // Guard from a weapon-skill perk counts only while that kind of weapon is in your hand (Polearms 10).
+  const held = c.inventory.find((it) => it.uid === c.equipment.mainHand && it.power);
+  const heldType = held?.weaponType ?? "unarmed";
   return {
     stats,
     maxHP: Math.max(1, 10 + 3 * stats.CON + 2 * c.level + modTotal(mods, "maxHP")),
     maxMP: Math.max(0, 5 + 2 * stats.INT + modTotal(mods, "maxMP")),
     armor: armor + modTotal(mods, "damageReduction", "dr"),
-    guard: modTotal(mods, "defense"),
+    guard: modTotal(mods, "defense", `defense:${heldType}`),
     hpRegen: Math.floor(stats.CON / 5) + modTotal(mods, "regen"),
     mpRegen: Math.floor(stats.INT / 5),
     carryLimit: 20 + 4 * stats.STR + modTotal(mods, "carry"),
@@ -72,6 +75,3 @@ export function derive(c: Crawler, content: Content): Derived {
   };
 }
 
-export function xpToNext(level: number): number {
-  return Math.round(100 * level ** 1.5);
-}

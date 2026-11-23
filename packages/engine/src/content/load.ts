@@ -372,6 +372,10 @@ function checkGenerator(c: Content, problems: string[], ref: RefCheck): void {
   const targets = (where: string, tos: string[]) => {
     for (const to of tos) if (!knownTarget(to, c)) problems.push(`${where}: nothing reads the modifier "${to}"`);
   };
+  // Weapon-skill perks are the milestones every 5 ranks: each must do what it says.
+  for (const s of c.skills.all.filter((x) => x.category === "weapon")) {
+    for (const p of s.perks) targets(`skills.json "${s.id}" rank ${p.rank}`, p.modifiers.map((m) => m.to));
+  }
   for (const a of c.items.affixes.all) {
     const where = `items/affixes.json "${a.id}"`;
     targets(where, a.modifiers.map((m) => m.to));

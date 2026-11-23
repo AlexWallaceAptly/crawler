@@ -63,7 +63,7 @@ function Line({ e }: { e: GameEvent }) {
             <div key={i} className={s.narrator}>{l}</div>
           ))}
           {e.items && e.items.length > 0 && <div className={s.loot}>On the floor: {e.items.join(", ")}.</div>}
-          {e.workbench && <div className={s.bench}>⚒ There's a workbench here: open the workbench (Inventory on desktop, the ⚒ button on a phone), tap things, hit Combine. Or type <i>combine bat tacks tape</i>.</div>}
+          {e.workbench && <div className={s.bench}>⚒ There's a workbench here: open the workbench (Inventory on desktop, the ⚒ button on a phone), tap the kinds of junk you want to put together, hit Combine. Or type <i>combine bat tacks tape</i>.</div>}
           <div className={s.exits}>Exits: {e.exits.length ? e.exits.join(", ") : "none"}.</div>
         </div>
       );
@@ -77,10 +77,40 @@ function Line({ e }: { e: GameEvent }) {
           {e.text}
         </div>
       );
-    case "combatEnded":
+    case "combatEnded": {
+      const toNext = e.xpNext !== undefined && e.xpNow !== undefined ? e.xpNext - e.xpNow : undefined;
       return (
         <div className={`${s.line} ${s.divider}`}>
-          ── {e.outcome === "victory" ? `VICTORY${e.xp ? ` (+${e.xp} XP)` : ""}` : e.outcome === "fled" ? "ESCAPED" : "TALKED DOWN"} ──
+          <div>
+            ── {e.outcome === "victory" ? "VICTORY" : e.outcome === "fled" ? "ESCAPED" : "TALKED DOWN"}
+            {e.xp ? <span className={s.xpNote}> +{e.xp} XP{toNext !== undefined ? ` · ${toNext} to level ${(e.level ?? 1) + 1}` : ""}</span> : null} ──
+          </div>
+          {e.skills && e.skills.length > 0 && (
+            <div className={s.skillNote}>
+              {e.skills.map((k) => `${k.name} +${k.gained} (${k.rank ? `rank ${k.rank}` : "untrained"}${k.next ? ` · ${k.xp}/${k.next}` : ""})`).join(" · ")}
+            </div>
+          )}
+        </div>
+      );
+    }
+    case "levelUp":
+      return (
+        <div className={`${s.line} ${s.levelUp}`}>
+          ★ LEVEL {e.level} ★ full heal · {e.unspent} stat point{e.unspent === 1 ? "" : "s"} to spend · {e.next} XP to level {e.level + 1}
+        </div>
+      );
+    case "skillUp":
+      return (
+        <div className={`${s.line} ${e.perk ? s.levelUp : s.skillUp}`}>
+          ▲ {e.name.toUpperCase()} {e.rank}
+          {e.perk ? ` · ${e.perkName}: ${e.perk}` : e.rank === 1 ? " · learned: +1 to the roll per rank" : " · +1 to the roll"}
+          {!e.perk && e.nextPerk ? <span className={s.skillNote}> (rank {e.nextPerk.rank}: {e.nextPerk.name})</span> : null}
+        </div>
+      );
+    case "skillXp":
+      return (
+        <div className={`${s.line} ${s.skillNote}`}>
+          {e.name} +{e.gained} ({e.rank ? `rank ${e.rank}` : "untrained"} · {e.xp}/{e.next})
         </div>
       );
     case "died":

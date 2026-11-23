@@ -195,6 +195,73 @@
   color: var(--dim);
   font-size: 11px;
 }
+.stat {
+  position: relative;
+}
+.statPlus {
+  display: block;
+  width: 100%;
+  min-height: 32px;
+  margin-top: 2px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--xp);
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+}
+.statPlus:hover,
+.statPlus:focus-visible {
+  background: rgba(197, 140, 255, 0.12);
+  outline: none;
+}
+.pointsNote {
+  color: var(--system);
+  font-size: 13px;
+  margin-top: 4px;
+}
+.progress {
+  height: 4px;
+  margin: 3px 0 2px;
+  background: var(--border);
+}
+.progress > span {
+  display: block;
+  height: 100%;
+  background: var(--xp);
+}
+.skillList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.skill {
+  padding: 4px 0 6px;
+  border-bottom: 1px solid var(--border);
+}
+.skillHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text);
+}
+.skillRank {
+  color: var(--xp);
+  white-space: nowrap;
+}
+.skillMeta {
+  color: var(--dim);
+  font-size: 12px;
+}
+.fightSkill {
+  color: var(--xp);
+  overflow-wrap: anywhere;
+}
+.skillPerks {
+  color: var(--system);
+  font-size: 12px;
+}
 .name {
   color: var(--text);
   font-weight: bold;
@@ -369,8 +436,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- workbench: tap parts, then combine ---- */
-.bench {
+/* ---- workbench: tap property chips, then combine ---- */
+.workbench {
   margin-bottom: 10px;
 }
 .benchHead {
@@ -382,100 +449,50 @@
   margin: 0 0 8px;
   color: var(--text);
 }
-.groups {
-  list-style: none;
-  margin: 0 0 8px;
-  padding: 0;
-  border-top: 1px solid var(--border);
-}
-.group {
-  border-bottom: 1px solid var(--border);
-}
-.groupHead {
+.chips {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  width: 100%;
-  min-height: 36px;
-  padding: 6px 2px;
-  font: inherit;
-  text-align: left;
-  background: none;
-  border: none;
-  cursor: pointer;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
 }
-.groupHead:hover .groupName,
-.groupHead:hover .groupGear {
-  color: var(--system);
-}
-.groupCaret {
-  width: 1ch;
-  color: var(--dim);
-}
-.groupName {
-  color: var(--text);
-}
-.groupGear {
-  color: var(--text);
-  font-style: italic;
-}
-.groupCount {
-  color: var(--dim);
-  font-variant-numeric: tabular-nums;
-}
-.groupCount::before {
-  content: "(";
-}
-.groupCount::after {
-  content: ")";
-}
-.groupPicked {
-  margin-left: auto;
-  color: var(--system);
-  font-size: 12px;
-}
-.groupBody {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 0 0 8px 3ch;
-}
-.groupHint {
-  color: var(--dim);
-  font-size: 12px;
-}
-.groupItem {
-  display: flex;
+.chip {
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0 6px;
-  min-height: 36px;
-  padding: 4px 10px;
+  max-width: 100%;
+  min-height: 40px;
+  padding: 6px 12px;
   font: inherit;
   text-align: left;
+  color: var(--text);
   background: none;
   border: 1px solid var(--border-hi);
   cursor: pointer;
 }
-.groupTick {
-  width: 1.5ch;
+.chip:hover {
+  border-color: var(--system);
+}
+.chipGear .chipLabel {
+  font-style: italic;
+}
+.chipOn {
   color: var(--system);
-}
-.groupQty {
-  color: var(--dim);
-}
-.partShort {
-  color: var(--faint);
-}
-.benchItemOn {
   border-color: var(--system);
   background: rgba(255, 176, 0, 0.1);
 }
-.benchRole {
+.chipCount {
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+.chipDetail {
   flex-basis: 100%;
-  padding-left: calc(1.5ch + 6px);
   color: var(--dim);
   font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.partShort {
+  color: var(--faint);
 }
 .benchBar {
   display: flex;
@@ -524,6 +541,25 @@
 .codexNote {
   color: var(--dim);
   font-size: 12px;
+}
+/* ---- progress: XP, levels, skills ---- */
+.xpNote {
+  color: var(--xp);
+}
+.skillNote {
+  color: var(--dim);
+  font-size: 12px;
+}
+.skillUp {
+  color: var(--xp);
+  font-size: 13px;
+}
+.levelUp {
+  color: var(--xp);
+  font-weight: bold;
+  border-top: 1px dashed var(--xp);
+  padding-top: 6px;
+  margin-top: 6px;
 }
 .temperNote {
   color: var(--faint);

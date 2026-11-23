@@ -283,6 +283,8 @@ export interface CombatState {
   boss?: { id: string; uid: string; declines: number; triggered: boolean };
   /** Once-a-fight module abilities already used (`shout`, `bind`). */
   used?: string[];
+  /** Skill XP earned this fight, by skill id, for the end-of-fight summary. */
+  skillGains?: Record<string, number>;
 }
 
 export interface FloorState {

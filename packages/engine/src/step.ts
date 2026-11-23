@@ -20,6 +20,7 @@ import { answerUrge, echoNarration, feedEcho, lapseUrge, pendingShard, pushTempe
 import { craftModule, moduleAction } from "./modules";
 import { noticeHints, playerDecline, useAgainstBoss } from "./boss";
 import { derive } from "./rules/derived";
+import { isStat, raiseStat, trainSkill } from "./progression";
 import { LOG_LIMIT, type Crawler, type FloorState, type Phase, type Room, type World } from "./state";
 
 export interface StepResult {
@@ -117,9 +118,10 @@ export const HELP_LINES = [
   "shove [name]         1 AP: push something a tile (into the caltrops, ideally) or a band",
   "throw <item> at <x>  1 AP: thrown junk; on the board, at a tile or enemy within 3",
   "dash c4 / defend     1 AP each: run twice as far (ends turn) / brace: everything hits you softer until your turn",
-  "combine a b c        at a workbench (safe rooms, workshops): put junk together",
+  "combine a b c        at a workbench (safe rooms, workshops): put junk together (names, or kinds: combine blunt sharp bind)",
   "craft <recipe>       make something from your recipe book; `recipes` shows it",
   "use <item>           drink or eat something from your pack",
+  "raise <stat>         spend a stat point from leveling up (raise str, raise dex 2); free, not mid-fight",
   "take <item> / take all   pick things up (weight limit applies); drop <item>",
   "equip <item> / unequip   wield or wear gear (mid-fight: 1 AP, or a tile of movement on the board)",
   "decline / no thanks  boss fights: politely refuse what you're offered (1 AP)",
@@ -324,6 +326,7 @@ const handlers: Handlers = {
         ctx.say("explore.searchFound");
       } else if (!stairs && !shard) ctx.say("explore.searchNothing");
       if (shard) revealRoomShard(ctx, room, shard);
+      if (found.length || stairs || shard) trainSkill(ctx, "perception", 1);
     },
   },
   rest: {
@@ -397,6 +400,13 @@ const handlers: Handlers = {
     run(ctx) {
       if (!ctx.game.crawler) return ctx.error("No crawler, no recipes.");
       showRecipes(ctx);
+    },
+  },
+  raise: {
+    phases: ["exploring", "combat"],
+    run(ctx, action) {
+      if (!isStat(action.stat)) return ctx.error("Raise which stat? STR, DEX, CON, INT or CHA.");
+      raiseStat(ctx, action.stat, action.times);
     },
   },
   shove: {

@@ -31,6 +31,8 @@ export type Action =
   /** At a workbench: make a recipe you already know. */
   | { type: "craft"; recipe: string }
   | { type: "recipes" }
+  /** Spend stat points from leveling: `raise STR`, `raise dex 2`. */
+  | { type: "raise"; stat: string; times: number }
   | { type: "drop"; item: string }
   | { type: "equip"; item: string }
   | { type: "unequip"; item: string }

@@ -10,13 +10,14 @@
  *      spaces — trying every way to group the words);
  *   2. each name resolves to candidate items (exact, whole words, substring), or,
  *      when it names a crafting property instead (`combine blunt sharp bind`),
- *      to everything with that property (craftParts.json);
+ *      to everything with that property (craftParts.json). The workbench chips
+ *      send `#sharp` (a property, never an item name) and `#item:box_of_nails`;
  *   3. search candidate choices × recipes × input slots: every named item must
  *      fill a slot, and every slot must be filled;
  *   4. the most specific recipe wins (id 4, a single tag 2, a list of tags 1,
  *      plus one per input, plus its priority); ties go to file order.
- * The workbench groups your pack by those properties (workbenchGroups), and the book
- * counts what you have of each part ("Sharp 3/1").
+ * The workbench shows those properties as chips (workbenchChips): tap a few and the
+ * game picks the items. The book counts what you have of each part ("Sharp 3/1").
  * Upgrades are baked into the item (name, power, on-hit) and recorded in
  * `item.crafted`, so an equipped bat stays equipped and each upgrade applies once.
  */
@@ -28,7 +29,8 @@ import { addToPile, effectiveTags, equippedSlot, findItems, unequipUid } from ".
 import { dcFor, describeCheck, resolveCheck, type DcTier } from "./rules/checks";
 import { rollDice } from "./rules/dice";
 import { addPower, stepPower } from "./rules/power";
-import { collectModifiers, derive, modTotal } from "./rules/derived";
+import { collectModifiers, derive } from "./rules/derived";
+import { skillRank, trainSkill } from "./progression";
 import { applyStatus } from "./rules/effects";
 import { pick } from "./rng";
 import { killCrawler, type StepContext } from "./step";
@@ -68,12 +70,39 @@ export type Assignment = { input: RecipeInput; items: ItemInstance[] }[];
 /**
  * Fit `items` (all of them) into the recipe's inputs. Each item fills one input;
  * an input's qty can come from one stack or several items.
+ * `more`: for an item picked by property, the other items with that property. A slot
+ * still short of its qty tops up from them (one tap on "Sharp" can fill "Sharp ×2").
  */
-export function assign(recipe: Recipe, items: ItemInstance[]): Assignment | null {
+export function assign(recipe: Recipe, items: ItemInstance[], more?: Map<ItemInstance, ItemInstance[]>): Assignment | null {
   const slots: Assignment = recipe.inputs.map((input) => ({ input, items: [] }));
   const have = (s: Assignment[number]) => s.items.reduce((n, it) => n + it.qty, 0);
+  const topUp = (): boolean => {
+    const used = new Set(slots.flatMap((s) => s.items));
+    const added: Assignment[number][] = [];
+    let ok = true;
+    for (const s of slots) {
+      let need = s.input.qty - have(s);
+      if (need <= 0) continue;
+      if (!s.input.base) {
+        for (const extra of s.items.flatMap((it) => more?.get(it) ?? [])) {
+          if (need <= 0) break;
+          if (used.has(extra) || !inputMatches(s.input, extra, recipe)) continue;
+          s.items.push(extra);
+          used.add(extra);
+          added.push(s);
+          need -= extra.qty;
+        }
+      }
+      if (need > 0) {
+        ok = false;
+        break;
+      }
+    }
+    if (!ok) for (const s of added.reverse()) s.items.pop();
+    return ok;
+  };
   const go = (i: number): boolean => {
-    if (i === items.length) return slots.every((s) => s.items.length > 0 && have(s) >= s.input.qty);
+    if (i === items.length) return slots.every((s) => s.items.length > 0) && topUp();
     const item = items[i]!;
     for (const s of slots) {
       if (!inputMatches(s.input, item, recipe)) continue;
@@ -122,7 +151,7 @@ function groupings(words: string[]): string[][] {
 /** Split `combine ...` text into item names. */
 export function splitNames(text: string): string[][] {
   const t = text.trim().toLowerCase();
-  // The workbench picker sends full names with a bar between them: no item name contains one.
+  // The workbench chips send `#part` names with a bar between them: no item name contains one.
   if (t.includes("|")) return [t.split(/\s*\|\s*/).filter(Boolean)];
   if (/[,+]| and | with | & /.test(t)) return [t.split(/\s*(?:,|\+|&| and | with )\s*/).filter(Boolean)];
   const words = t.split(/\s+/).filter(Boolean).filter((w) => w !== "the" && w !== "a");
@@ -150,27 +179,72 @@ export function inPart(part: CraftPart, item: ItemInstance): boolean {
 }
 
 /**
- * What a name in `combine` text could mean: items by name, or every item with that
- * property ("sharp" = anything sharp; cheapest first, so the good stuff is spared).
+ * Everything with a property, in the order the game should pick it. Gear (what gets
+ * upgraded) puts what you have equipped first. Junk spares what you have equipped, then
+ * what's good for more than this (a bungee cord is Bind, but also your only Elastic),
+ * then goes cheapest first, so the good tape is saved.
  */
-export function candidatesFor(content: Content, inventory: ItemInstance[], name: string): ItemInstance[] {
-  const byName = findItems(inventory, name);
-  if (byName.length) return byName;
-  const part = partNamed(content, name);
-  if (!part) return [];
-  return inventory.filter((it) => inPart(part, it)).sort((a, b) => a.value - b.value);
+export function partItems(content: Content, part: CraftPart, inventory: ItemInstance[], equipped: ReadonlySet<string> = new Set()): ItemInstance[] {
+  const on = (it: ItemInstance) => (equipped.has(it.uid) ? 1 : 0);
+  const uses = (it: ItemInstance) => content.craftParts.all.filter((p) => p.group && !p.gear && inPart(p, it)).length;
+  return inventory
+    .filter((it) => inPart(part, it))
+    .sort((a, b) => (part.gear ? on(b) - on(a) : on(a) - on(b) || uses(a) - uses(b)) || a.value - b.value);
 }
 
-/** The best recipe that uses exactly the named things, or null. */
-export function matchCombination(content: Content, inventory: ItemInstance[], text: string): Match | null {
+/** A `combine` name that picks by property or base id: `#sharp`, `#item:box_of_nails`. Never an item's name. */
+function pickedBy(content: Content, name: string): { part?: CraftPart; baseId?: string } | null {
+  const q = name.trim().toLowerCase();
+  if (!q.startsWith("#")) return null;
+  const id = q.slice(1);
+  if (id.startsWith("item:")) return { baseId: id.slice(5) };
+  const part = content.craftParts.byId[id];
+  return part ? { part } : {};
+}
+
+/**
+ * What a name in `combine` text could mean, and whether it named a property (so the
+ * pick can top up a qty from the property's other items).
+ * - `#part` and `#item:<id>`: the workbench chips. Exactly that, never an item name.
+ * - A property name ("sharp", "cord") beats items that only contain the word, so an
+ *   Accordion File doesn't hijack "cord". An item with exactly that name still wins.
+ * - Otherwise items by name: exact, whole words, then any substring.
+ */
+export function resolveName(content: Content, inventory: ItemInstance[], name: string, equipped: ReadonlySet<string> = new Set()): { items: ItemInstance[]; property: boolean } {
+  const picked = pickedBy(content, name);
+  if (picked) {
+    if (picked.part) return { items: partItems(content, picked.part, inventory, equipped), property: true };
+    if (picked.baseId) return { items: inventory.filter((it) => it.baseId === picked.baseId), property: true };
+    return { items: [], property: true };
+  }
+  const part = partNamed(content, name);
+  const q = name.trim().toLowerCase();
+  if (part && !inventory.some((it) => it.name.toLowerCase() === q)) {
+    const items = partItems(content, part, inventory, equipped);
+    if (items.length) return { items, property: true };
+  }
+  return { items: findItems(inventory, name), property: false };
+}
+
+export function candidatesFor(content: Content, inventory: ItemInstance[], name: string, equipped: ReadonlySet<string> = new Set()): ItemInstance[] {
+  return resolveName(content, inventory, name, equipped).items;
+}
+
+/** The best recipe that uses exactly the named things, or null. `equipped`: uids you have on. */
+export function matchCombination(content: Content, inventory: ItemInstance[], text: string, equipped: ReadonlySet<string> = new Set()): Match | null {
   const recipes = content.recipes.all.slice().sort((a, b) => specificity(b) - specificity(a));
   for (const names of splitNames(text)) {
     if (names.length < 2) continue;
-    const cands = names.map((n) => candidatesFor(content, inventory, n));
+    const resolved = names.map((n) => resolveName(content, inventory, n, equipped));
+    const cands = resolved.map((r) => r.items);
     if (cands.some((c) => c.length === 0)) continue;
     for (const recipe of recipes) {
       for (const items of choices(cands)) {
-        const assignment = assign(recipe, items);
+        const more = new Map<ItemInstance, ItemInstance[]>();
+        items.forEach((it, i) => {
+          if (resolved[i]!.property) more.set(it, cands[i]!.filter((x) => !items.includes(x)));
+        });
+        const assignment = assign(recipe, items, more);
         if (assignment) return { recipe, assignment };
       }
     }
@@ -263,39 +337,53 @@ export function recipeBook(c: Crawler, content: Content): RecipeBookView {
   };
 }
 
-/** A workbench group: everything in your pack with one property. */
-export interface WorkbenchGroup {
-  id: string;
+/** One chip at the workbench: a property (Sharp 3), your gear (Weapon), or an exact item a recipe wants (Box of Nails). */
+export interface WorkbenchChip {
+  /** What the chip sends to `combine`: `#sharp`, `#item:box_of_nails`. */
+  pick: string;
   label: string;
-  hint?: string;
+  kind: "gear" | "part" | "item";
   /** Units carried (a stack of 3 counts 3). */
   count: number;
-  /** Item uids, in pack order. One item can sit in several groups. */
-  items: string[];
-  gear: boolean;
+  hint?: string;
+  /** Gear chips: what the game would pick first ("Aluminum Baseball Bat"). */
+  detail?: string;
+}
+
+/** The uids the crawler has equipped. */
+export function equippedUids(c: Crawler): Set<string> {
+  return new Set(Object.values(c.equipment).filter((u): u is string => !!u));
 }
 
 /**
- * The workbench's grouped list: Weapons, Worn gear, then each junk property you're
- * carrying (Sharp (3), Bind (5)...), then Other. Empty groups are left out.
+ * The workbench chips: your gear (Weapon, Chest gear), then each junk property some
+ * recipe uses (Sharp 3, Bind 5...), then the exact items a recipe asks for by name
+ * (Box of Nails, Broken Glass). Only what you're carrying, and only what a recipe
+ * could use: no Echo's parts, no "Other". Tap a few and the game picks the items.
  */
-export function workbenchGroups(c: Crawler, content: Content): WorkbenchGroup[] {
-  const placed = new Set<string>();
-  const out: WorkbenchGroup[] = [];
-  for (const p of content.craftParts.all.filter((x) => x.group)) {
-    const items = c.inventory.filter((it) => inPart(p, it));
+export function workbenchChips(c: Crawler, content: Content): WorkbenchChip[] {
+  const inputs = content.recipes.all.flatMap((r) => r.inputs);
+  const used = (p: CraftPart) => inputs.some((i) => i.tags?.some((t) => p.tags.includes(t)));
+  const equipped = equippedUids(c);
+  const units = (items: ItemInstance[]) => items.reduce((n, it) => n + it.qty, 0);
+  const chips: WorkbenchChip[] = [];
+  const parts = content.craftParts.all.filter((p) => p.group && used(p));
+  for (const p of [...parts.filter((x) => x.gear), ...parts.filter((x) => !x.gear)]) {
+    const items = partItems(content, p, c.inventory, equipped);
     if (items.length === 0) continue;
-    for (const it of items) placed.add(it.uid);
-    out.push({
-      id: p.id, label: p.label, ...(p.hint ? { hint: p.hint } : {}), gear: p.gear,
-      count: items.reduce((n, it) => n + it.qty, 0), items: items.map((it) => it.uid),
+    chips.push({
+      pick: `#${p.id}`, label: p.label, kind: p.gear ? "gear" : "part", count: units(items),
+      ...(p.hint ? { hint: p.hint } : {}),
+      ...(p.gear ? { detail: items[0]!.name + (equipped.has(items[0]!.uid) ? " (equipped)" : "") } : {}),
     });
   }
-  const rest = c.inventory.filter((it) => !placed.has(it.uid));
-  if (rest.length) {
-    out.push({ id: "other", label: "Other", hint: "Not a part in any recipe anyone's found.", gear: false, count: rest.reduce((n, it) => n + it.qty, 0), items: rest.map((it) => it.uid) });
+  const ids = [...new Set(inputs.flatMap((i) => (i.id ? [i.id] : [])))];
+  for (const id of ids) {
+    const items = c.inventory.filter((it) => it.baseId === id);
+    if (items.length === 0) continue;
+    chips.push({ pick: `#item:${id}`, label: items[0]!.name, kind: "item", count: units(items) });
   }
-  return out;
+  return chips;
 }
 
 /** The junk properties an item counts as ("Bind", "Cord", "Elastic"); gear groups aren't listed. */
@@ -320,6 +408,24 @@ function removeUnits(c: Crawler, item: ItemInstance, n: number): void {
     unequipUid(c, item.uid);
     c.inventory.splice(c.inventory.indexOf(item), 1);
   }
+}
+
+/** " Used Thumbtacks and Duct Tape." — the game may have picked them, so it says which. Tools are "kept". */
+function usedText(a: Assignment): string {
+  const gone: string[] = [];
+  const kept: string[] = [];
+  for (const slot of a) {
+    if (slot.input.base) continue;
+    let need = slot.input.qty;
+    for (const it of slot.items) {
+      if (need <= 0) break;
+      const n = Math.min(need, it.qty);
+      need -= n;
+      (slot.input.consumed ? gone : kept).push(n > 1 ? `${it.name} ×${n}` : it.name);
+    }
+  }
+  const list = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}` : xs[0]!);
+  return (gone.length ? ` Used ${list(gone)}.` : "") + (kept.length ? ` Kept the ${list(kept)}.` : "");
 }
 
 /** Use up each consumed input's qty from the items assigned to it. */
@@ -361,7 +467,7 @@ function craftCheck(ctx: StepContext, recipe: Recipe): "success" | "failure" | "
   const c = ctx.crawler;
   const d = derive(c, ctx.content);
   const mods = collectModifiers(c, ctx.content);
-  const rank = check.skill ? (c.skills[check.skill]?.rank ?? 0) + modTotal(mods, `skill:${check.skill}`) : 0;
+  const rank = check.skill ? skillRank(c, check.skill, mods) : 0;
   const skillName = check.skill ? ctx.content.skills.byId[check.skill]?.name ?? check.skill : undefined;
   const r = resolveCheck({
     label: `${recipe.name} (${check.stat}${skillName ? ` + ${skillName}` : ""})`,
@@ -369,6 +475,7 @@ function craftCheck(ctx: StepContext, recipe: Recipe): "success" | "failure" | "
     dc: dcFor(check.tier as DcTier, ctx.game.floor?.floor ?? 1),
   });
   ctx.emit({ type: "check", result: r, text: describeCheck(r) });
+  if (r.success && check.skill && check.tier !== "trivial") trainSkill(ctx, check.skill, 1);
   return r.success ? "success" : r.outcome === "critFailure" ? "critFailure" : "failure";
 }
 
@@ -402,17 +509,18 @@ function make(ctx: StepContext, m: Match): void {
     return;
   }
 
+  const used = usedText(assignment);
   if (recipe.output.kind === "upgrade") {
     const base = assignment.find((s) => s.input.base)!.items[0]!;
     consumeParts(c, assignment);
     applyUpgrade(base, recipe);
-    ctx.describe(`${recipe.text} You now have the ${base.name}.`);
+    ctx.describe(`${recipe.text} You now have the ${base.name}.${used}`);
   } else {
     const out = recipe.output;
     consumeParts(c, assignment);
     const made = addToPile(c.inventory, itemFromRef(ctx.content, out.ref, out.qty));
     const slot = autoEquip(c, made);
-    ctx.describe(`${recipe.text} You made ${made.name}${slot ? ` (equipped)` : ""}.`);
+    ctx.describe(`${recipe.text} You made ${made.name}${slot ? ` (equipped)` : ""}.${used}`);
   }
   ctx.say("craft.success", { recipe: recipe.name });
   learn(ctx, recipe);
@@ -430,12 +538,13 @@ function requireBench(ctx: StepContext): boolean {
 export function combine(ctx: StepContext, text: string): void {
   if (!requireBench(ctx)) return;
   const inv = ctx.crawler.inventory;
-  const carrying = splitNames(text).some((g) => g.length >= 2 && g.every((n) => candidatesFor(ctx.content, inv, n).length > 0));
+  const equipped = equippedUids(ctx.crawler);
+  const carrying = splitNames(text).some((g) => g.length >= 2 && g.every((n) => candidatesFor(ctx.content, inv, n, equipped).length > 0));
   if (!carrying) {
     ctx.error("You aren't carrying all of that (and it takes at least two things). Check your pack.");
     return;
   }
-  const match = matchCombination(ctx.content, inv, text);
+  const match = matchCombination(ctx.content, inv, text, equipped);
   if (!match) {
     advanceTime(ctx, FIDDLE_MINUTES);
     if (ctx.game.phase === "dead") return;

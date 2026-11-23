@@ -6,6 +6,7 @@ import { commitEvents, step, type StepResult } from "./step";
 import { ACCOUNT_VERSION, SAVE_VERSION, newAccount, newGameState, newThreadCodex, type AccountState, type GameState, type World } from "./state";
 import { view, type ViewModel } from "./view";
 import { narrate } from "./narrate/narrator";
+import { catchUpLevels } from "./progression";
 
 export interface Engine {
   content: Content;
@@ -36,6 +37,7 @@ export function createEngine(content: Content): Engine {
       const g = game as GameState | null;
       const a = engine.restoreAccount(account);
       if (!g || typeof g !== "object" || g.version !== SAVE_VERSION || !a) return null;
+      if (g.crawler) catchUpLevels(g.crawler);
       return { game: g, account: a };
     },
     step: (world, action) => step(world, action, content),

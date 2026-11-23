@@ -18,6 +18,7 @@ export * from "./actions";
 export * from "./step";
 export * from "./parser";
 export * from "./view";
+export * from "./progression";
 export * from "./engine";
 export { loadDefaultContent } from "./content/default";
 export type { GridView, GridTileView, GridUnitView, FloorTileView } from "./grid/view";

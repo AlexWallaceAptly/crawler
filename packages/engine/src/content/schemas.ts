@@ -65,9 +65,11 @@ export const DamageTypeSchema = z.enum(DAMAGE_TYPES);
  * `cure` (removes `statusId`) is an addition to the spec's kinds; see the decision log in docs/DESIGN.md.
  */
 export const EffectSchema = z.strictObject({
-  kind: z.enum(["damage", "heal", "status", "cure", "stat", "xp", "loot", "flag", "mood", "move", "spawn"]),
+  kind: z.enum(["damage", "heal", "status", "cure", "stat", "xp", "skill", "loot", "flag", "mood", "move", "spawn"]),
   value: z.union([DiceSchema, z.number()]).optional(),
   statusId: IdSchema.optional(),
+  /** `skill` effects: which skill gains ranks. Left out: the skill of the weapon in your hand. */
+  skillId: IdSchema.optional(),
   stat: StatSchema.optional(),
   flag: z.string().optional(),
   duration: z.number().int().optional(),
@@ -109,6 +111,8 @@ export const SkillSchema = z.strictObject({
   description: z.string(),
   perks: z.array(z.strictObject({
     rank: z.number().int().min(1).max(15),
+    /** The milestone's name ("Decapitation"); the text says what it does. */
+    name: z.string().optional(),
     text: z.string(),
     modifiers: z.array(ModifierSchema).default([]),
   })).default([]),
@@ -801,17 +805,17 @@ export const UpgradeSchema = z.strictObject({
  */
 export const CraftPartSchema = z.strictObject({
   id: IdSchema,
-  /** The group heading at the workbench, and the part's name in recipes. */
+  /** The chip at the workbench, and the part's name in recipes. */
   label: z.string().min(1),
-  /** The name in a recipe's parts list, if it differs ("Any weapon" for the Weapons group). */
+  /** The name in a recipe's parts list, if it differs ("Any weapon" for the Weapon chip). */
   term: z.string().min(1).optional(),
-  /** An item with any of these (effective) tags belongs to the group. */
+  /** An item with any of these (effective) tags has the property. */
   tags: z.array(z.string().min(1)).min(1),
-  /** A short "what counts" line under the heading. */
+  /** A short "what counts" line for the chip. */
   hint: z.string().min(1).optional(),
-  /** False: only a name for recipe inputs (Blunt weapon), not its own workbench group. */
+  /** False: only a name for recipe inputs (Blunt weapon), not its own workbench chip. */
   group: z.boolean().default(true),
-  /** Gear groups (weapons, worn gear) list what you could upgrade, not junk parts. */
+  /** Gear (weapons, chest gear) is what gets upgraded: equipped items are picked first, not the cheapest junk. */
   gear: z.boolean().default(false),
 });
 export type CraftPart = z.infer<typeof CraftPartSchema>;

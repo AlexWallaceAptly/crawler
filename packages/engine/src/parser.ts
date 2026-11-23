@@ -46,6 +46,7 @@ const VERBS: Record<string, string> = {
   combine: "combine", tape: "combine", attach: "combine", mix: "combine", jury: "combine",
   craft: "craft", make: "craft", build: "craft",
   recipes: "recipes", recipe: "recipes", book: "recipes",
+  raise: "raise", increase: "raise", boost: "raise", spend: "raise", level: "raise",
   drop: "drop", discard: "drop", ditch: "drop",
   equip: "equip", wield: "equip", wear: "equip", hold: "equip", ready: "equip",
   unequip: "unequip", remove: "unequip", doff: "unequip", unwield: "unequip",
@@ -95,6 +96,11 @@ function parseTileRef(arg: string): Extract<Action, { type: "move" }>["to"] | nu
 export function normalize(input: string): string {
   return input.trim().toLowerCase().replace(/\s+/g, " ");
 }
+
+const STAT_WORDS: Record<string, string> = {
+  str: "STR", strength: "STR", dex: "DEX", dexterity: "DEX", con: "CON", constitution: "CON",
+  int: "INT", intelligence: "INT", cha: "CHA", charisma: "CHA",
+};
 
 export function parseCommand(input: string, world: World): ParseResult {
   const text = normalize(input);
@@ -190,6 +196,14 @@ export function parseCommand(input: string, world: World): ParseResult {
       return { ok: true, action: { type: "craft", recipe: arg } };
     case "recipes":
       return { ok: true, action: { type: "recipes" } };
+    case "raise": {
+      // "raise str", "raise strength 2", "level up dex", "spend 2 on con"
+      const words = arg.replace(/^(up|points?|a point|on|into|in) /g, "").split(" ").filter((w) => !["on", "into", "in", "point", "points"].includes(w));
+      const stat = words.map((w) => STAT_WORDS[w]).find(Boolean);
+      const n = Number(words.find((w) => /^\d+$/.test(w)) ?? 1);
+      if (!stat) return { ok: false, reason: "unknown", input: text };
+      return { ok: true, action: { type: "raise", stat, times: Math.max(1, n) } };
+    }
     case "take": {
       const what = arg.replace(/^up /, "").replace(/^the /, "");
       if (!what) return { ok: false, reason: "unknown", input: text };
