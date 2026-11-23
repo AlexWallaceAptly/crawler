@@ -439,7 +439,7 @@ Echo resets with the crawler: Wholeness, Temper, modules, vessel and the shards 
 
 ## Character creation
 
-A new crawler is generated from four random backstory parts. Each part pushes stats in a direction, so a former plumber and a former debate coach start with visibly different numbers. The player sees the result, can accept it, or spend one account reroll.
+A new crawler is generated from four random backstory parts. Each part pushes stats in a direction, so a former plumber and a former debate coach start with visibly different numbers. The player sees the result and can accept it or reroll. Every new crawler gets 3 free rerolls (`FREE_REROLLS` in `step.ts`), and account rerolls from unlocks are spent after those.
 
 ### The four parts
 
@@ -1900,4 +1900,10 @@ Built on the `items` branch. Before it started, every branch was merged into `ma
   - The burning check is the `burning` status by id.
 - **One slick, one fire:** the spread is instant, through every touching tile, not one tile a round. It's easier to read on the board.
 - **Guarded deaths:** fire you start can now kill you mid-action, so throwing and enemy hits stop there instead of killing the crawler twice.
+
+**Rerolls** (from playtesting: "it never lets me reroll a crawler")
+
+- Every account started with 0 rerolls, and the only way to earn one is an unlock (Milestone 8, not built). So `reroll` always said no, and its button never showed.
+- **Every new crawler now gets 3 free rerolls** (`game.freeRerolls`). They reset with each new crawler, and they're spent before the account's unlocked rerolls, which still stack on top.
+- The button shows the total left ("Reroll (3 left)"), and each reroll says how many remain. Old saves caught mid-creation get the full 3.
 

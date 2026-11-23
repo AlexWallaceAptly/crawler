@@ -1,7 +1,7 @@
 import type { Action } from "./actions";
 import type { Content } from "./content/load";
 import { AP_COST, apNow } from "./rules/ap";
-import { isAllowed } from "./step";
+import { isAllowed, rerollsLeft } from "./step";
 import { COMBAT_MODES, type CombatMode, type Dir, type World } from "./state";
 import { allTiles, coord, DIR8, dist, index, occupied, parseCoord, pathField, type Dir8 } from "./grid/geometry";
 import { isThrowable, throwTargets } from "./maneuvers";
@@ -253,7 +253,8 @@ export function availableCommands(world: World, content: Content): CommandOption
   const phase = world.game.phase;
   if (phase === "creation") {
     out.push({ label: "Accept crawler", input: "accept", primary: true });
-    if (world.account.rerolls > 0) out.push({ label: `Reroll (${world.account.rerolls} left)`, input: "reroll" });
+    const left = rerollsLeft(world);
+    if (left > 0) out.push({ label: `Reroll (${left} left)`, input: "reroll" });
   }
   if (phase === "dead") out.push({ label: "Next crawler", input: "new", primary: true });
   if ((phase === "exploring" || phase === "combat") && world.game.echo?.urge) {

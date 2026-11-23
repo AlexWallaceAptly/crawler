@@ -347,6 +347,11 @@ export interface GameState {
   combat: CombatState | null;
   log: GameEvent[];
   nextEventId: number;
+  /**
+   * Free rerolls left for the crawler being created: FREE_REROLLS for every new
+   * crawler, spent before the account's own rerolls (unlocks). Missing = all of them.
+   */
+  freeRerolls?: number;
   narrator: NarratorState;
   /** The thing in your pocket. Null before the run starts. */
   echo: EchoState | null;

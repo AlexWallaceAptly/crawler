@@ -133,6 +133,14 @@ export const HELP_LINES = [
   "new                  start the next crawler after death",
 ];
 
+/** Rerolls every new crawler gets for free, before the account's unlocked ones. */
+export const FREE_REROLLS = 3;
+
+/** Rerolls you could spend right now on the crawler being created. */
+export function rerollsLeft(world: World): number {
+  return (world.game.freeRerolls ?? FREE_REROLLS) + world.account.rerolls;
+}
+
 function startNewCrawler(ctx: StepContext): void {
   const crawler = generateCrawler(ctx.content);
   ctx.game.crawler = crawler;
@@ -152,19 +160,25 @@ const handlers: Handlers = {
     phases: ["dead"],
     run(ctx) {
       if (ctx.game.turn > 0 || ctx.account.runs > 0) ctx.say("run.newCrawler");
+      ctx.game.freeRerolls = FREE_REROLLS;
       startNewCrawler(ctx);
     },
   },
   reroll: {
     phases: ["creation"],
     run(ctx) {
-      if (ctx.account.rerolls <= 0) {
+      // The crawler's free rerolls go first; the account's unlocked ones after.
+      const free = ctx.game.freeRerolls ?? FREE_REROLLS;
+      if (free > 0) ctx.game.freeRerolls = free - 1;
+      else if (ctx.account.rerolls > 0) ctx.account.rerolls -= 1;
+      else {
         ctx.say("crawler.noRerolls");
         return;
       }
-      ctx.account.rerolls -= 1;
       ctx.say("crawler.reroll");
       startNewCrawler(ctx);
+      const left = rerollsLeft(ctx.world);
+      ctx.info(left > 0 ? `Rerolls left: ${left}.` : "That was your last reroll. This one's yours.");
     },
   },
   accept: {

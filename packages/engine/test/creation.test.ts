@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   STAT_MAX, STAT_MIN, STATS, createEngine, type FormativeEvent, derive, generateCrawler, generateStats, loadDefaultContent, newAccount,
 } from "../src";
+import { FREE_REROLLS } from "../src/step";
 
 const content = loadDefaultContent();
 const engine = createEngine(content);
@@ -83,18 +84,34 @@ describe("engine: creation flow", () => {
     expect(r.world.account.runs).toBe(1);
   });
 
-  it("reroll needs an account reroll", () => {
-    const { world } = engine.newWorld();
-    const first = world.game.crawler!;
+  it("every new crawler gets free rerolls, then the account's own, then none", () => {
+    let { world } = engine.newWorld({ ...newAccount(), rerolls: 1 });
+    expect(engine.commands(world).some((c) => c.label === `Reroll (${FREE_REROLLS + 1} left)`)).toBe(true);
+    for (let i = 0; i < FREE_REROLLS; i++) {
+      const before = world.game.crawler!;
+      world = engine.input(world, "reroll").world;
+      expect(world.game.crawler).not.toEqual(before);
+      expect(world.game.phase).toBe("creation");
+      expect(world.account.rerolls).toBe(1); // the free ones go first
+    }
+    world = engine.input(world, "reroll").world;
+    expect(world.account.rerolls).toBe(0);
+    const last = world.game.crawler!;
     const denied = engine.input(world, "reroll");
-    expect(denied.world.game.crawler).toEqual(first);
+    expect(denied.world.game.crawler).toEqual(last);
+    expect(denied.events.some((e) => e.type === "narration" && e.key === "crawler.noRerolls")).toBe(true);
+    expect(engine.commands(world).some((c) => c.input === "reroll")).toBe(false);
+  });
 
-    const rich = engine.newWorld({ ...newAccount(), rerolls: 1 }).world;
-    const before = rich.game.crawler!;
-    const r = engine.input(rich, "reroll");
-    expect(r.world.account.rerolls).toBe(0);
-    expect(r.world.game.crawler).not.toEqual(before);
-    expect(r.world.game.phase).toBe("creation");
+  it("the next crawler gets its free rerolls back", () => {
+    let { world } = engine.newWorld();
+    for (let i = 0; i < FREE_REROLLS; i++) world = engine.input(world, "reroll").world;
+    expect(world.game.freeRerolls).toBe(0);
+    world = engine.input(world, "accept").world;
+    world.game.phase = "dead";
+    world = engine.input(world, "new").world;
+    expect(world.game.phase).toBe("creation");
+    expect(world.game.freeRerolls).toBe(FREE_REROLLS);
   });
 
   it("never mutates the input world", () => {
