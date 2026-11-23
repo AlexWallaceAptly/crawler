@@ -1,0 +1,32 @@
+[
+  { "id": "rusty", "name": "Rusty", "kind": "metal", "mult": 0.8, "maxLevel": 9 },
+  { "id": "tin", "name": "Tin", "kind": "metal", "mult": 0.9, "maxLevel": 12 },
+  { "id": "iron", "name": "Iron", "kind": "metal", "mult": 1, "minLevel": 2, "weight": 2 },
+  { "id": "steel", "name": "Steel", "kind": "metal", "mult": 1.15, "minLevel": 7, "weight": 1.5 },
+  { "id": "bonesteel", "name": "Bonesteel", "kind": "metal", "mult": 1.3, "minLevel": 12 },
+  { "id": "dungeon_glass", "name": "Dungeon-Glass", "kind": "metal", "mult": 1.45, "minLevel": 18 },
+
+  { "id": "splintered", "name": "Splintered", "kind": "wood", "mult": 0.8, "maxLevel": 9 },
+  { "id": "pine", "name": "Pine", "kind": "wood", "mult": 0.9, "maxLevel": 12 },
+  { "id": "oak", "name": "Oak", "kind": "wood", "mult": 1, "minLevel": 2, "weight": 2 },
+  { "id": "ironwood", "name": "Ironwood", "kind": "wood", "mult": 1.2, "minLevel": 9 },
+  { "id": "petrified", "name": "Petrified", "kind": "wood", "mult": 1.35, "minLevel": 15 },
+
+  { "id": "threadbare", "name": "Threadbare", "kind": "cloth", "mult": 0.8, "maxLevel": 9 },
+  { "id": "polyester", "name": "Polyester", "kind": "cloth", "mult": 0.9, "maxLevel": 12 },
+  { "id": "denim", "name": "Denim", "kind": "cloth", "mult": 1, "minLevel": 2, "weight": 2 },
+  { "id": "kevlar_lined", "name": "Kevlar-Lined", "kind": "cloth", "mult": 1.25, "minLevel": 10 },
+  { "id": "spider_silk", "name": "Spider-Silk", "kind": "cloth", "mult": 1.4, "minLevel": 16 },
+
+  { "id": "cracked", "name": "Cracked", "kind": "leather", "mult": 0.8, "maxLevel": 9 },
+  { "id": "pleather", "name": "Pleather", "kind": "leather", "mult": 0.9, "maxLevel": 12 },
+  { "id": "leather", "name": "Leather", "kind": "leather", "mult": 1, "minLevel": 2, "weight": 2 },
+  { "id": "rat_hide", "name": "Rat-Hide", "kind": "leather", "mult": 1.15, "minLevel": 7 },
+  { "id": "mimic_hide", "name": "Mimic-Hide", "kind": "leather", "mult": 1.35, "minLevel": 14 },
+
+  { "id": "dollar_store", "name": "Dollar-Store", "kind": "plastic", "mult": 0.8, "maxLevel": 9 },
+  { "id": "vinyl", "name": "Vinyl", "kind": "plastic", "mult": 0.9, "maxLevel": 12 },
+  { "id": "hard_plastic", "name": "Hard-Plastic", "kind": "plastic", "mult": 1, "minLevel": 2, "weight": 2 },
+  { "id": "carbon_fiber", "name": "Carbon-Fiber", "kind": "plastic", "mult": 1.25, "minLevel": 10 },
+  { "id": "lab_grade", "name": "Lab-Grade", "kind": "plastic", "mult": 1.4, "minLevel": 16 }
+]

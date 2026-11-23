@@ -27,6 +27,11 @@ import temper from "./temper.json";
 import codex from "./codex.json";
 import bosses from "./bosses.json";
 import oddities from "./items/oddities.json";
+import materials from "./items/materials.json";
+import rarities from "./items/rarities.json";
+import rarityWeights from "./items/rarityWeights.json";
+import affixes from "./items/affixes.json";
+import legendaryPowers from "./items/legendaryPowers.json";
 import tilesets from "./tilesets.json";
 
 export const rawContent = {
@@ -54,5 +59,10 @@ export const rawContent = {
   "codex.json": codex,
   "bosses.json": bosses,
   "items/oddities.json": oddities,
+  "items/materials.json": materials,
+  "items/rarities.json": rarities,
+  "items/rarityWeights.json": rarityWeights,
+  "items/affixes.json": affixes,
+  "items/legendaryPowers.json": legendaryPowers,
   "tilesets.json": tilesets,
 } satisfies Record<string, unknown>;

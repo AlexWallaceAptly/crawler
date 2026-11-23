@@ -133,9 +133,9 @@ export function MobileShell({ view, log, battle, commands, submit, onLocal, arme
         </div>
       )}
       {current === "character" && <Sheet><CharacterSheet view={view} /></Sheet>}
-      {current === "equipment" && <Sheet><EquipmentList view={view} /></Sheet>}
+      {current === "equipment" && <Sheet><EquipmentList view={view} submit={submit} /></Sheet>}
       {current === "effects" && <Sheet><EffectsList view={view} /></Sheet>}
-      {current === "inventory" && <Sheet><InventoryList view={view} /></Sheet>}
+      {current === "inventory" && <Sheet><InventoryList view={view} submit={submit} /></Sheet>}
       {current === "echo" && <Sheet><EchoPanel view={view} /><div className={s.sheetSub}>Codex</div><CodexSheet view={view} /></Sheet>}
       {current === "recipes" && (
         <div className={s.logScreen}>

@@ -496,7 +496,24 @@
           ],
           "hiddenChance": 0.5
         }
-      ]
+      ],
+      "gear": {
+        "rooms": {
+          "treasure": 1,
+          "lair": 0.35,
+          "puzzle": 0.2,
+          "trap": 0.15,
+          "event": 0.12,
+          "chamber": 0.08,
+          "empty": 0.05
+        },
+        "hiddenChance": 0.4,
+        "drops": {
+          "minion": 0.03,
+          "mob": 0.08,
+          "elite": 0.35
+        }
+      }
     },
     "arena": {
       "tileset": "lobby",
@@ -1050,7 +1067,24 @@
           ],
           "hiddenChance": 0.5
         }
-      ]
+      ],
+      "gear": {
+        "rooms": {
+          "treasure": 1,
+          "lair": 0.35,
+          "puzzle": 0.2,
+          "trap": 0.15,
+          "event": 0.12,
+          "chamber": 0.08,
+          "empty": 0.05
+        },
+        "hiddenChance": 0.4,
+        "drops": {
+          "minion": 0.03,
+          "mob": 0.08,
+          "elite": 0.35
+        }
+      }
     },
     "arena": {
       "tileset": "warrens",
@@ -1576,7 +1610,24 @@
           ],
           "hiddenChance": 0.5
         }
-      ]
+      ],
+      "gear": {
+        "rooms": {
+          "treasure": 1,
+          "lair": 0.35,
+          "puzzle": 0.2,
+          "trap": 0.15,
+          "event": 0.12,
+          "chamber": 0.08,
+          "empty": 0.05
+        },
+        "hiddenChance": 0.4,
+        "drops": {
+          "minion": 0.03,
+          "mob": 0.08,
+          "elite": 0.35
+        }
+      }
     },
     "arena": {
       "tileset": "garage",

@@ -13,7 +13,7 @@ import type { FloorTheme, LootTable } from "../content/schemas";
 import { chance, int, pick, shuffle, weightedPick } from "../rng";
 import type { FloorState, ItemInstance, Room } from "../state";
 import { bfsDistances } from "./floor";
-import { itemFromRef } from "./item";
+import { generateItem, itemFromRef, itemLevelFor } from "./item";
 import { addToPile } from "../inventory";
 
 export function rollLoot(table: LootTable, content: Content): ItemInstance {
@@ -64,6 +64,24 @@ export function seedFloorLoot(floor: FloorState, theme: FloorTheme, content: Con
     }
   }
   scatterFloorLoot(floor, theme, content);
+  seedFloorGear(floor, theme, content);
+}
+
+/**
+ * Generated gear (Milestone 5): each room may hold one piece, by room type
+ * (floors.json → loot.gear.rooms). Treasure rooms show theirs; elsewhere it may be
+ * under something, found by `search`.
+ */
+export function seedFloorGear(floor: FloorState, theme: FloorTheme, content: Content): void {
+  const gear = theme.loot.gear;
+  for (const room of floor.rooms) {
+    if (room.id === floor.startRoom) continue;
+    const p = gear.rooms[room.type] ?? 0;
+    if (p <= 0 || !chance(p)) continue;
+    const item = generateItem(content, itemLevelFor(floor.floor), { floor: floor.floor });
+    const pile = room.type !== "treasure" && chance(gear.hiddenChance) ? (room.hidden ??= []) : (room.items ??= []);
+    addToPile(pile, item);
+  }
 }
 
 /**

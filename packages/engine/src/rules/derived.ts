@@ -64,9 +64,9 @@ export function derive(c: Crawler, content: Content): Derived {
     maxMP: Math.max(0, 5 + 2 * stats.INT + modTotal(mods, "maxMP")),
     armor: armor + modTotal(mods, "damageReduction", "dr"),
     guard: modTotal(mods, "defense"),
-    hpRegen: Math.floor(stats.CON / 5),
+    hpRegen: Math.floor(stats.CON / 5) + modTotal(mods, "regen"),
     mpRegen: Math.floor(stats.INT / 5),
-    carryLimit: 20 + 4 * stats.STR,
+    carryLimit: 20 + 4 * stats.STR + modTotal(mods, "carry"),
     carried: c.inventory.reduce((sum, it) => sum + it.weight * it.qty, 0),
     initiativeBonus: stats.DEX + modTotal(mods, "initiative"),
   };

@@ -53,6 +53,14 @@ export interface ItemInstance {
   onHit?: { id: string; chance: number; duration?: number };
   /** Recipe ids already applied to this item as upgrades (each applies once). */
   crafted?: string[];
+  /** Generated gear (Milestone 5): the item level it rolled at. */
+  itemLevel?: number;
+  /** Generated gear: materials.json id ("rusty"). */
+  material?: string;
+  /** Generated gear: its affixes, with what each rolled ("+2 STR"). Their effects are in `modifiers`/`onHit`. */
+  affixes?: { id: string; name: string; kind: "prefix" | "suffix"; text: string }[];
+  /** Legendary gear: its one unique power. */
+  legendary?: { id: string; name: string; text: string };
 }
 
 export interface SkillState {
@@ -195,6 +203,8 @@ export interface Enemy {
   range: RangeBand;
   statuses: StatusInstance[];
   regen: number;
+  /** The round it last hurt you (Spiteful weapons hit it harder the round after). */
+  hitYouRound?: number;
   fleeBelow: number;
   initiative: number;
   xp: number;

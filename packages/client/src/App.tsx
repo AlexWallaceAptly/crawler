@@ -146,7 +146,7 @@ export function App({ engine }: { engine: Engine }) {
             className={s.grow}
             extra={<button className={s.linkBtn} onClick={() => setInventoryOpen(false)}>close [esc]</button>}
           >
-            <InventoryList view={view} />
+            <InventoryList view={view} submit={submit} />
             <div className={s.subhead}>Recipe book</div>
             <RecipeBook view={view} submit={submit} />
           </Panel>
@@ -179,7 +179,7 @@ export function App({ engine }: { engine: Engine }) {
         </Panel>
       )}
       <Panel id="equipment" title="Equipment">
-        <EquipmentList view={view} />
+        <EquipmentList view={view} submit={submit} />
       </Panel>
       <Panel id="effects" title="Active effects">
         <EffectsList view={view} />

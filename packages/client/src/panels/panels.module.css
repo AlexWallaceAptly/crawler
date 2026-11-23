@@ -239,6 +239,58 @@
   padding: 0 0 4px 8ch;
   font-size: 12px;
 }
+.itemSummary {
+  color: var(--faint);
+  font-size: 12px;
+}
+.itemActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.itemBtn {
+  min-height: 32px;
+  padding: 2px 12px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--system);
+  background: none;
+  border: 1px solid var(--border-hi);
+  cursor: pointer;
+}
+.itemBtnGood {
+  border-color: var(--good);
+  color: var(--good);
+}
+.legend {
+  margin-bottom: 4px;
+  color: var(--faint);
+  font-size: 11px;
+}
+.verdict {
+  margin-left: 4px;
+  font-size: 11px;
+}
+.verdict_better { color: var(--good); }
+.verdict_worse { color: var(--danger); }
+.verdict_mixed { color: var(--system); }
+.verdict_same { color: var(--faint); }
+.fight {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fightKey {
+  display: inline-block;
+  width: 7ch;
+  color: var(--dim);
+}
+.fightFit {
+  margin-top: 4px;
+  color: var(--dim);
+  font-size: 12px;
+}
 .common { color: var(--rarity-common); }
 .uncommon { color: var(--rarity-uncommon); }
 .rare { color: var(--rarity-rare); }

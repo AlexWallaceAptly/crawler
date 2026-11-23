@@ -1402,5 +1402,55 @@
         "text": "Oh. Oh, we're stopping. That's all right. That's all right. I'll wait for the next one."
       }
     ]
+  },
+  {
+    "key": "item.flavor",
+    "variants": [
+      {
+        "when": {
+          "item.rarity": "rare"
+        },
+        "text": "System note: a rare drop. Somebody upstairs flagged it as 'too good for this crawler'. They were overruled."
+      },
+      {
+        "when": {
+          "item.rarity": "rare"
+        },
+        "text": "Rare. The sponsors are watching to see if you waste it."
+      },
+      {
+        "when": {
+          "item.rarity": "rare"
+        },
+        "text": "{pick:Rare quality.|A rare one.} Try not to die holding it. It makes the cleanup crew sad."
+      },
+      {
+        "when": {
+          "item.rarity": "epic"
+        },
+        "text": "Epic. The audience gasped. Then they remembered who found it."
+      },
+      {
+        "when": {
+          "item.rarity": "epic"
+        },
+        "text": "An epic drop, on you. Statistically this is the best day you will ever have."
+      },
+      {
+        "when": {
+          "item.rarity": "legendary"
+        },
+        "text": "LEGENDARY. I've rolled this exact item for eleven crawlers. All eleven are dead. Not because of the item. Probably."
+      },
+      {
+        "when": {
+          "item.rarity": "legendary"
+        },
+        "text": "A legendary piece. The producers are on the phone right now, asking how this happened."
+      },
+      {
+        "text": "Looks expensive. It isn't. Nothing here is."
+      }
+    ]
   }
 ]

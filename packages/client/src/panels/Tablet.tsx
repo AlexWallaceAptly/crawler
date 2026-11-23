@@ -131,8 +131,8 @@ export function TabletShell({ view, log, battle, commands, submit, onLocal, arme
           {tabsShown && (
             <div className={s.cardBody}>
               {tab === "character" && <CharacterSheet view={view} />}
-              {tab === "equipment" && <EquipmentList view={view} />}
-              {tab === "inventory" && <InventoryList view={view} />}
+              {tab === "equipment" && <EquipmentList view={view} submit={submit} />}
+              {tab === "inventory" && <InventoryList view={view} submit={submit} />}
               {tab === "crafting" && <RecipeBook view={view} submit={submit} />}
               {tab === "effects" && <EffectsList view={view} />}
               {tab === "echo" && (

@@ -22,6 +22,7 @@ import { collectModifiers, derive, modTotal } from "./rules/derived";
 import { applyStatus, decrementStatuses, hasFlag, tickStatuses } from "./rules/effects";
 import { AP_COST, turnAp } from "./rules/ap";
 import { describePower, guardShift, powerRoll, type PowerRoll } from "./rules/power";
+import { heldWeapon, profileOf, swingNumbers, type WeaponProfile } from "./gear";
 import { chance, d20, pick } from "./rng";
 import { killCrawler, type StepContext } from "./step";
 import {
@@ -34,6 +35,7 @@ import { approachCost, approachTarget, gridFlee, moveBudget } from "./grid/play"
 import { ageHazards, packBonus, standInHazard, syncBands } from "./grid/units";
 import { dropTurnStatuses } from "./maneuvers";
 import { rollLoot } from "./gen/loot";
+import { generateItem, itemLevelFor, potencyFor } from "./gen/item";
 import { addToPile } from "./inventory";
 import { int } from "./rng";
 import { bossDefeated, bossTaunt, startBossFight } from "./boss";
@@ -272,41 +274,10 @@ function fearBlocks(ctx: StepContext, line: string): boolean {
 
 // ---------------------------------------------------------------- player attacks
 
-export interface WeaponProfile {
-  name: string;
-  /** Damage by power-roll tier. */
-  power: Power;
-  /** AP per swing. */
-  apCost: number;
-  /** A swing ends the turn (and carries a 3-AP swing's weight). */
-  unwieldy?: boolean;
-  stat: "STR" | "DEX";
-  reach: RangeBand;
-  skillId?: string;
-  damageType?: string;
-  /** Crafted weapons: a status that can land on a hit. */
-  onHit?: { id: string; chance: number; duration?: number };
-}
+export type { WeaponProfile } from "./gear";
 
 export function playerWeapon(ctx: StepContext): WeaponProfile {
-  const c = ctx.crawler;
-  const uidMain = c.equipment.mainHand;
-  const weapon = uidMain ? c.inventory.find((i) => i.uid === uidMain) : undefined;
-  if (weapon?.power) {
-    const skill = ctx.content.skills.all.find((s) => s.weaponType && s.weaponType === weapon.weaponType);
-    return {
-      name: weapon.name,
-      power: weapon.power,
-      apCost: weapon.apCost ?? AP_COST.attack,
-      ...(weapon.unwieldy ? { unwieldy: true } : {}),
-      stat: weapon.stat ?? "STR",
-      reach: (weapon.range as RangeBand | undefined) ?? "close",
-      ...(skill ? { skillId: skill.id } : {}),
-      ...(weapon.damageType ? { damageType: weapon.damageType } : {}),
-      ...(weapon.onHit ? { onHit: weapon.onHit } : {}),
-    };
-  }
-  return { name: "bare hands", power: [1, 2, 2], apCost: 1, stat: "STR", reach: "close", skillId: "unarmed" };
+  return profileOf(ctx.content, heldWeapon(ctx.crawler));
 }
 
 /** Is the target inside this reach right now? Bands compare bands; the grid checks tiles and sight. */
@@ -409,18 +380,21 @@ export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfi
   const c = ctx.crawler;
   const mods = collectModifiers(c, ctx.content);
   const d = derive(c, ctx.content);
-  const skillRank = w.skillId ? (c.skills[w.skillId]?.rank ?? 0) : 0;
-  const bonus = Math.floor(d.stats[w.stat] / 2) + skillRank + modTotal(mods, "attack", "hit");
+  const sw = swingNumbers(c, ctx.content, w, d, mods);
   const shift = guardShift(enemyGuard(ctx, target));
-  const roll = powerRoll(bonus, shift.edges + (opts.edges ?? 0), shift.banes + (opts.banes ?? 0));
+  const roll = powerRoll(sw.rollBonus, shift.edges + (opts.edges ?? 0), shift.banes + (opts.banes ?? 0), sw.critAt);
   for (const name of consumeFlaggedStatuses(c.statuses, ctx, "breaksOnAttack")) {
     ctx.fight(`${name} ends when you attack.`, "status");
   }
 
-  // The stat's flat bonus scales with the swing's AP: quarter for a 1-AP poke, half at 2, three quarters at 3.
-  const flat = Math.floor((d.stats[w.stat] * (w.unwieldy ? 3 : w.apCost)) / 4) + modTotal(mods, "damage");
+  // Spiteful gear: extra damage against whatever hurt you this round or last.
+  const round = ctx.game.combat?.round ?? 0;
+  const spite = target.hitYouRound !== undefined && round - target.hitYouRound <= 1 ? modTotal(mods, "spite") : 0;
+  const flat = sw.flat + spite;
   const armor = enemyArmor(ctx, target);
-  const dmg = Math.max(1, w.power[roll.tier - 1]! + flat - armor);
+  let dmg = Math.max(1, w.power[roll.tier - 1]! + flat - armor);
+  const execute = modTotal(mods, "executioner");
+  if (execute > 0 && target.hp * 2 < target.maxHP) dmg = Math.round(dmg * (1 + execute / 100));
   target.hp -= dmg;
   ctx.fight(
     `You hit the ${target.name} with ${w.name}: ${describePower(roll)}. ${roll.crit ? "CRIT, tier 3" : `Tier ${roll.tier}`}: ${dmg} damage${armor > 0 ? ` (${armor} soaked)` : ""}${target.hp > 0 ? ` (${target.hp}/${target.maxHP})` : ""}.`,
@@ -436,13 +410,35 @@ export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfi
   } else if (chance(0.25)) {
     ctx.say(`combat.tier${roll.tier}`, { target: target.name });
   }
+  const leech = modTotal(mods, "leech");
+  if (leech > 0 && c.hp < d.maxHP) {
+    const healed = Math.min(d.maxHP - c.hp, Math.max(1, Math.floor((dmg * leech) / 100)));
+    c.hp += healed;
+    ctx.fight(`${w.name} drinks: +${healed} HP (${c.hp}/${d.maxHP}).`, "you");
+  }
   if (target.hp <= 0) {
     ctx.fight(`The ${target.name} drops.`, "you");
     ctx.say("combat.kill", { target: target.name });
-  } else if (w.onHit && riderLands(roll.tier, w.onHit.chance)) {
-    const def = ctx.content.statusEffects.get(w.onHit.id);
-    if (applyStatus(target.statuses, def, w.onHit.duration) !== "ignored") {
-      ctx.fight(`The ${target.name} is ${def.name.toLowerCase()}.`, "status");
+    const back = modTotal(mods, "killAp");
+    const combat = ctx.game.combat;
+    if (back > 0 && combat) {
+      combat.ap += back;
+      ctx.fight(`The kill hands you ${back} AP back.`, "you");
+    }
+  } else {
+    if (w.onHit && riderLands(roll.tier, w.onHit.chance)) {
+      const def = ctx.content.statusEffects.get(w.onHit.id);
+      if (applyStatus(target.statuses, def, w.onHit.duration) !== "ignored") {
+        ctx.fight(`The ${target.name} is ${def.name.toLowerCase()}.`, "status");
+      }
+    }
+    if (roll.crit) {
+      for (const m of mods.filter((x) => x.to.startsWith("critStatus:") && x.value > 0)) {
+        const def = ctx.content.statusEffects.byId[m.to.slice("critStatus:".length)];
+        if (def && applyStatus(target.statuses, def, m.value) !== "ignored") {
+          ctx.fight(`The crit leaves the ${target.name} ${def.name.toLowerCase()}.`, "status");
+        }
+      }
     }
   }
   coatedHit(ctx, target);
@@ -671,8 +667,10 @@ export function playerUseItem(ctx: StepContext, item: ItemInstance, targets?: Ef
 /** Apply a consumable's effects to whoever they're aimed at. Returns short log fragments. */
 export function applyItemEffects(ctx: StepContext, def: Consumable, t: EffectTargets): string[] {
   const applied: string[] = [];
+  const potency = def.scales ? potencyFor(ctx.game.floor?.floor ?? 1) : 1;
   for (const e of def.effects) {
-    const value = typeof e.value === "number" ? e.value : e.value ? rollDice(e.value).total : 0;
+    const rolled = typeof e.value === "number" ? e.value : e.value ? rollDice(e.value).total : 0;
+    const value = potency === 1 || e.kind === "status" || e.kind === "cure" ? rolled : Math.round(rolled * potency);
     const enemies = e.target === "target" ? (t.primary ? [t.primary] : [])
       : e.target === "all_enemies" ? t.area
       : null;
@@ -931,10 +929,14 @@ export function enemyStrike(ctx: StepContext, e: Enemy, attack: LiveAttack, opts
   const soak = d.armor + modTotal(mods, `resist:${attack.damageType}`);
   const dmg = Math.max(1, attack.power[roll.tier - 1]! + Math.floor(statMod / 4) + modTotal(enemyMods, "damage") - soak);
   c.hp -= dmg;
+  if (ctx.game.combat) e.hitYouRound = ctx.game.combat.round;
   ctx.fight(
     `${e.name} — ${attack.name}: ${describePower(roll)}${pack ? ` (${pack} ganging up)` : ""}. ${roll.crit ? "CRIT, tier 3" : `Tier ${roll.tier}`}: ${dmg} ${attack.damageType} damage${soak > 0 ? ` (${soak} soaked)` : ""}. You: ${Math.max(0, c.hp)}/${d.maxHP}.`,
     "enemy",
   );
+  if (c.hp > 0) secondWind(ctx, d.maxHP, mods);
+  const thorns = modTotal(mods, "thorns");
+  if (thorns > 0 && attack.range === "close" && e.hp > 0) damageEnemy(ctx, e, thorns, `Your gear bites back at the ${e.name}`);
   if (attack.status && c.hp > 0 && riderLands(roll.tier, attack.status.chance)) {
     const def = ctx.content.statusEffects.get(attack.status.id);
     const what = applyStatus(c.statuses, def, attack.status.duration);
@@ -942,6 +944,18 @@ export function enemyStrike(ctx: StepContext, e: Enemy, attack: LiveAttack, opts
   }
   if (c.hp <= 0) killInCombat(ctx, e.tier === "boss" ? `the ${e.name}` : `${/^[aeiou]/i.test(e.name) ? "an" : "a"} ${e.name}`);
   return roll;
+}
+
+/** Second Wind gear: once a fight, dropping under a quarter of max HP heals some back. */
+function secondWind(ctx: StepContext, maxHP: number, mods: readonly { to: string; value: number }[]): void {
+  const pct = modTotal(mods, "secondWind");
+  const combat = ctx.game.combat;
+  const c = ctx.crawler;
+  if (pct <= 0 || !combat || c.hp * 4 >= maxHP || combat.used?.includes("secondWind")) return;
+  (combat.used ??= []).push("secondWind");
+  const healed = Math.max(1, Math.round((maxHP * pct) / 100));
+  c.hp = Math.min(maxHP, c.hp + healed);
+  ctx.fight(`Second wind: +${healed} HP (${c.hp}/${maxHP}). Not today.`, "you");
 }
 
 /**
@@ -972,10 +986,38 @@ export function checkVictory(ctx: StepContext): void {
   // talked enemies already paid half in playerTalk; fled ones pay nothing
   ctx.crawler.xp += xp;
   if (combat.boss) bossDefeated(ctx);
+  const drops = rollDrops(ctx);
   endCombat(ctx);
   ctx.emit({ type: "combatEnded", outcome: "victory", xp });
   ctx.say("combat.victory", { xp });
+  placeDrops(ctx, drops);
   ctx.setPhase("exploring");
+}
+
+/** Killed (not talked down, not fled) enemies may drop a piece of generated gear: floors.json → loot.gear.drops. */
+function rollDrops(ctx: StepContext): { from: string; item: ItemInstance }[] {
+  const combat = ctx.game.combat!;
+  const floor = ctx.game.floor;
+  if (!floor) return [];
+  const chances = ctx.content.floors.get(floor.theme).loot.gear.drops;
+  const out: { from: string; item: ItemInstance }[] = [];
+  for (const e of combat.enemies) {
+    if (e.hp > 0 || e.fate || e.tier === "boss") continue;
+    if (!chance(chances[e.tier] ?? 0)) continue;
+    out.push({ from: e.name, item: generateItem(ctx.content, itemLevelFor(floor.floor) + (e.tier === "elite" ? 1 : 0), { floor: floor.floor, narrator: ctx.game.narrator }) });
+  }
+  return out;
+}
+
+function placeDrops(ctx: StepContext, drops: { from: string; item: ItemInstance }[]): void {
+  const floor = ctx.game.floor;
+  if (!floor || drops.length === 0) return;
+  const room = floor.rooms[floor.currentRoom]!;
+  room.items ??= [];
+  for (const d of drops) {
+    addToPile(room.items, d.item);
+    ctx.describe(`The ${d.from} dropped ${d.item.name}.`);
+  }
 }
 
 export function endCombat(ctx: StepContext): void {

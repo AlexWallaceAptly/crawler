@@ -1,8 +1,10 @@
 /**
- * The slice of Milestone 5 that junk and crafting need now: picking things up,
- * putting them down, a hard weight cap, stacking, and equipping. Item generation
- * (materials, rarity, affixes) is still Milestone 5.
+ * The pack: picking things up, putting them down, a hard weight cap, stacking,
+ * and equipping (which says what it changed: armor 2 → 3). Generated gear comes
+ * from gen/item.ts.
  */
+import { clone } from "./clone";
+import { formatChanges, gearChanges } from "./gear";
 import { afterAction, canAfford, inCombat, spendAp } from "./combat";
 import { payTiles } from "./grid/play";
 import { AP_COST } from "./rules/ap";
@@ -182,7 +184,9 @@ function payForSwap(ctx: StepContext): boolean {
 
 export function equipItem(ctx: StepContext, query: string): void {
   const c = ctx.crawler;
-  const item = findItems(c.inventory.filter((i) => i.kind === "gear" && i.slot), query)[0];
+  // Two of the same name: the one you aren't already using.
+  const matches = findItems(c.inventory.filter((i) => i.kind === "gear" && i.slot), query);
+  const item = matches.find((i) => !equippedSlot(c, i.uid)) ?? matches[0];
   if (!item) {
     ctx.error(`You don't have any gear like "${query}".`);
     return;
@@ -192,9 +196,11 @@ export function equipItem(ctx: StepContext, query: string): void {
     return;
   }
   if (!payForSwap(ctx)) return;
+  const before = clone(c);
   const res = equip(c, item)!;
   const swap = res.replaced.length ? ` (putting away ${res.replaced.map((r) => r.name).join(", ")})` : "";
-  const line = `You ${item.slot === "mainHand" ? "ready" : "put on"} ${item.name}${swap}.`;
+  const changes = gearChanges(before, c, ctx.content);
+  const line = `You ${item.slot === "mainHand" ? "ready" : "put on"} ${item.name}${swap}.${changes.length ? ` ${formatChanges(changes)}.` : ""}`;
   if (inCombat(ctx)) {
     ctx.fight(line, "you");
     afterAction(ctx);
@@ -209,6 +215,8 @@ export function unequipItem(ctx: StepContext, query: string): void {
     ctx.error(`You aren't using anything like "${query}".`);
     return;
   }
+  const before = clone(c);
   unequipUid(c, item.uid);
-  ctx.describe(`You take off ${item.name}.`);
+  const changes = gearChanges(before, c, ctx.content);
+  ctx.describe(`You take off ${item.name}.${changes.length ? ` ${formatChanges(changes)}.` : ""}`);
 }

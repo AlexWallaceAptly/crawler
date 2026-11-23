@@ -12,7 +12,7 @@ import type { Content } from "./content/load";
 import type { Boss } from "./content/schemas";
 import { generateEnemy } from "./gen/enemy";
 import { rollLoot } from "./gen/loot";
-import { itemFromRef } from "./gen/item";
+import { generateItem, itemFromRef, itemLevelFor } from "./gen/item";
 import { addToPile } from "./inventory";
 import { applyStatus } from "./rules/effects";
 import { AP_COST } from "./rules/ap";
@@ -154,6 +154,11 @@ export function bossDefeated(ctx: StepContext): void {
     for (let n = boss.drops.rolls; n > 0; n--) addToPile(room.items, rollLoot(table, ctx.content));
   }
   for (const id of boss.drops.items) addToPile(room.items, itemFromRef(ctx.content, id));
+  // One piece of generated gear, never worse than the floor's boss minimum.
+  const gear = ctx.content.floors.get(floor.theme).loot.gear;
+  const piece = generateItem(ctx.content, itemLevelFor(floor.floor) + 2, { floor: floor.floor, minRarity: gear.bossMinRarity, narrator: ctx.game.narrator });
+  addToPile(room.items, piece);
+  ctx.describe(`The ${boss.name} leaves ${piece.name} behind.`);
   ctx.say("boss.defeated", { boss: boss.name });
   recordWeakness(ctx, boss.id);
 }

@@ -37,14 +37,32 @@ export function tierOf(total: number): Tier {
   return total >= TIER_3 ? 3 : total >= TIER_2 ? 2 : 1;
 }
 
-export function powerRoll(bonus: number, edges = 0, banes = 0): PowerRoll {
+/** `critAt`: the natural total that crits (19 normally; some gear lowers it). */
+export function powerRoll(bonus: number, edges = 0, banes = 0, critAt = CRIT_NATURAL): PowerRoll {
   const a = d10();
   const b = d10();
   const natural = a + b;
   const net = Math.max(-MAX_EDGES, Math.min(MAX_EDGES, edges - banes));
   const total = natural + bonus + net * EDGE;
-  const crit = natural >= CRIT_NATURAL;
+  const crit = natural >= critAt;
   return { dice: [a, b], natural, bonus, net, total, tier: crit ? 3 : tierOf(total), crit };
+}
+
+/**
+ * Chance of each tier for a roll with this bonus (and net edges): [tier 1, tier 2, tier 3],
+ * crits counted as tier 3. 2d10 has 100 equally likely pairs.
+ */
+export function tierOdds(bonus: number, critAt = CRIT_NATURAL, net = 0): [number, number, number] {
+  const odds: [number, number, number] = [0, 0, 0];
+  const shift = Math.max(-MAX_EDGES, Math.min(MAX_EDGES, net)) * EDGE;
+  for (let a = 1; a <= 10; a++) {
+    for (let b = 1; b <= 10; b++) {
+      const natural = a + b;
+      const tier = natural >= critAt ? 3 : tierOf(natural + bonus + shift);
+      odds[tier - 1] = odds[tier - 1]! + 0.01;
+    }
+  }
+  return odds.map((p) => Math.round(p * 100) / 100) as [number, number, number];
 }
 
 /** "2d10(7+5)+4, edge = 18" */

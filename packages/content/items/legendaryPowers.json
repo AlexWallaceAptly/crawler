@@ -1,0 +1,13 @@
+[
+  { "id": "momentum", "name": "Momentum", "slots": ["weapon"], "text": "Every kill hands you 1 AP back.", "modifiers": [{ "to": "killAp", "value": 1 }] },
+  { "id": "executioner", "name": "Executioner", "slots": ["weapon"], "text": "Hits on anything under half its HP do half again as much damage.", "modifiers": [{ "to": "executioner", "value": 50 }] },
+  { "id": "bloodthirst", "name": "Bloodthirst", "slots": ["weapon"], "text": "Heals you for a third of the damage it does.", "modifiers": [{ "to": "leech", "value": 33 }] },
+  { "id": "loaded_dice", "name": "Loaded Dice", "slots": ["weapon", "trinket"], "text": "You crit on a natural 17 or better, not 19.", "modifiers": [{ "to": "critRange", "value": 2 }] },
+  { "id": "second_wind", "name": "Second Wind", "slots": ["armor", "trinket"], "text": "Once a fight, the first time you drop under a quarter of your HP, you get a quarter of it back.", "modifiers": [{ "to": "secondWind", "value": 25 }] },
+  { "id": "electric_personality", "name": "Electric Personality", "slots": ["armor"], "text": "Anything that hits you in melee takes 4 damage back.", "modifiers": [{ "to": "thorns", "value": 4 }] },
+  { "id": "ox_heart", "name": "Ox Heart", "slots": ["armor", "neck", "belt"], "text": "15 more max HP, and 1 more HP back per room walked.", "modifiers": [{ "to": "maxHP", "value": 15 }, { "to": "regen", "value": 1 }] },
+  { "id": "pack_mule", "name": "Pack Mule", "slots": ["back", "belt"], "text": "Carry 25 more, and +1 STR.", "modifiers": [{ "to": "carry", "value": 25 }, { "to": "stat:STR", "value": 1 }] },
+  { "id": "scene_stealer", "name": "Scene Stealer", "slots": ["trinket", "head"], "text": "+3 CHA and +3 initiative. The cameras find you first.", "modifiers": [{ "to": "stat:CHA", "value": 3 }, { "to": "initiative", "value": 3 }] },
+  { "id": "unkillable", "name": "Cockroach Constitution", "slots": ["armor", "trinket"], "text": "+2 CON, and poison barely touches you.", "modifiers": [{ "to": "stat:CON", "value": 2 }, { "to": "resist:poison", "value": 4 }] },
+  { "id": "venom_glands", "name": "Venom Glands", "slots": ["weapon"], "text": "Every solid hit poisons. Every great hit poisons for longer.", "onHit": { "id": "poisoned", "chance": 1, "duration": 3 } }
+]

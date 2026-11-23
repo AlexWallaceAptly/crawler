@@ -14,7 +14,7 @@ A browser text adventure (TypeScript monorepo). The source of truth is `docs/DES
 
 ## Layout
 
-- `packages/engine`: pure game logic with no DOM, React or `fetch`. All randomness goes through `src/rng.ts`. The reducer is `step()` in `src/step.ts`, and the UI projection is `src/view.ts`. The story layer is `src/echo.ts` (Echo, Temper, shards, Codex), `src/modules.ts` (Echo's modules) and `src/boss.ts` (floor bosses and their weaknesses). The board's floor art is `src/tiles/`: a Godot-style terrain autotiler (`tileset.ts`), the looks-only ground layout (`ground.ts`) and the `.tres` reader (`godot.ts`).
+- `packages/engine`: pure game logic with no DOM, React or `fetch`. All randomness goes through `src/rng.ts`. The reducer is `step()` in `src/step.ts`, and the UI projection is `src/view.ts`. The story layer is `src/echo.ts` (Echo, Temper, shards, Codex), `src/modules.ts` (Echo's modules) and `src/boss.ts` (floor bosses and their weaknesses). Items: `src/gen/item.ts` (the generator: base + material + rarity + affixes), `src/gear.ts` (the swing math and what equipping changes, shared by combat and the panels) and `src/itemInfo.ts` (item details). The board's floor art is `src/tiles/`: a Godot-style terrain autotiler (`tileset.ts`), the looks-only ground layout (`ground.ts`) and the `.tres` reader (`godot.ts`).
 - `packages/content`: the JSON tables. `index.ts` imports each file, and the engine's `CONTENT_FILES` maps each file to its Zod schema.
 - `packages/client`: Vite + React terminal UI. Panels render from `engine.view()` and routed events, never from raw state.
 - `packages/server`: Hono. It will proxy `/api/boss` to Claude in Milestone 10.

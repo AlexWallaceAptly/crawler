@@ -585,7 +585,7 @@ The System AI comments on each option as it's shown (one line each, template-dri
 
 Every weapon, armor piece and trinket is built as **base + material + rarity + affixes**, then named and described. Consumables come from fixed tables with scaled potency. A small hand-written set of "oddities" breaks the rules on purpose.
 
-Milestone 4b pulled a slice of this forward for junk and crafting: room contents from loot tables (`lootTables.json`), `take`/`drop`/`equip`/`unequip`, the carry limit as a hard cap, consumable stacking, and an item's `onHit` status and `crafted` upgrade list. The generator itself (materials, rarity, affixes) stays in Milestone 5. When it lands, crafted upgrade prefixes become an affix group.
+Milestone 4b pulled a slice of this forward for junk and crafting: room contents from loot tables (`lootTables.json`), `take`/`drop`/`equip`/`unequip`, the carry limit as a hard cap, consumable stacking, and an item's `onHit` status and `crafted` upgrade list. Milestone 5 added the generator (below). Crafted upgrades stay baked into the item, next to its affixes, and count against the two-upgrade limit on their own.
 
 ### Junk and crafting
 
@@ -635,6 +635,55 @@ generateItem(itemLevel, slot?, rarityOverride?):
 ```
 
 `itemLevel = floor * 5 + random(-2, 2)`, minimum 1.
+
+**As built (Milestone 5, `engine/src/gen/item.ts`):**
+
+- **A base's numbers are what a Floor 1 common of iron-grade material does** (item level 5). The generator scales from there:
+  - **Power** × material × rarity × level factor, where the level factor is `1 + 0.04 × (itemLevel − 5)` (Floor 3 is about 1.4). Each tier is rounded, at least 1, and never lower than the tier below it.
+  - **Armor** × material only, rounded, at least 1. Rarity adds affixes to armor, not more armor.
+  - **Value** is the design's formula.
+- **Materials** (`items/materials.json`) belong to a kind (metal, wood, cloth, leather, plastic), and a base names its kind. Junk grades (Rusty, Splintered) stop past item level 9-12, and good ones (Bonesteel, Spider-Silk) start at 12-16.
+- **Affixes:** up to two prefixes and one suffix, never two from one group. A slot list names slots or families: `weapon` (has power), `armor` (head, chest, legs, feet, hands, back, a shield), `trinket` (neck, ring, belt, eyes, an off-hand thing with no armor) or `any`.
+- **Affix numbers** roll in their range, then grow 5% per item level past 5. A penalty half ("-2 guard") is marked `scales: false`.
+- **The name** is `[prefixes] [material] base [of suffix]`: "Spiteful Serrated Iron Machete of the Ox".
+- **Flavor** is the base's line. Rare and better also get a System AI line (`item.flavor`).
+- **Legendary** adds one power from `legendaryPowers.json` that fits the slot.
+
+**What affixes and powers can do.** Everything is a modifier, and validation fails on a target nothing reads:
+
+- Stats, skills and resistances: `stat:X`, `skill:X`, `resist:X`.
+- Combat numbers: `attack`, `damage`, `damageReduction` (armor), `defense` (guard), `initiative`, `flee`, `shove`.
+- The body: `maxHP`, `maxMP`, `carry` (carry limit), `regen` (HP per room walked).
+- On a hit: an `onHit` status, `leech` (% of damage healed), `spite` (+damage against whatever hurt you this round or last), `executioner` (+% damage under half HP).
+- Crits and kills: `critStatus:X` (a crit applies X for N rounds), `critRange` (crit on a lower natural roll), `killAp` (AP back on a kill).
+- Defense: `thorns` (damage back to melee attackers), `secondWind` (once a fight, heal N% when you drop under a quarter).
+
+**Where generated gear turns up** (`floors.json` → `loot.gear`):
+
+- **Rooms:** a chance per room type of one piece. Treasure rooms always have one, in plain sight. Elsewhere it's often under something (`hiddenChance`), so `search` finds it.
+- **Kills:** a chance per enemy tier (minion 3%, mob 8%, elite 35%) of a drop into the room. Talked-down and fled enemies drop nothing.
+- **Floor bosses** always leave one piece, at least `bossMinRarity` (uncommon).
+- Shops and loot boxes come in Milestone 7.
+
+**Consumables marked `scales`** get a quarter stronger per floor past the first (×1.5 on Floor 3), by the floor you use them on. Status durations and cures don't scale.
+
+### Equipping, and what it tells you
+
+Every weapon or piece of gear says what it would do for this crawler, worked out by the same code combat rolls with (`engine/src/gear.ts`):
+
+- **A weapon's details:**
+  - Its type, which stat it swings with, its AP and reach.
+  - Your roll: "2d10 +5 (DEX 9: +4, Blades rank 1: +1)".
+  - Your damage per tier: its power plus the stat's flat bonus.
+  - The odds of a weak, solid or great hit, and the average hit.
+- **Armor** says what it takes off every hit.
+- **Anything you aren't using** says what equipping it would change ("If you equip it: Armor 1 → 2, Max HP 28 → 33 (replaces Bathrobe)").
+  - The list marks it ▲ better, ▼ worse or ⇅ a trade-off. Weapons are compared by average damage per AP, so a 1-AP poke and a 2-AP swing compare fairly.
+  - Opening an item gives Equip, Take off, Use and Drop buttons.
+- **The character sheet's Fighting block** shows:
+  - The weapon in hand, your roll and its odds, damage, armor and guard.
+  - Which weapon stat suits you: "Your DEX (9) beats your STR (5): weapons marked DEX hit harder for you."
+- **`equip` and `unequip` say what changed:** "You put on Padded Jacket. Armor 0 → 1."
 
 ### Affixes
 
@@ -976,7 +1025,8 @@ All content lives in `packages/content/*.json` and is validated by Zod schemas a
 | `skills.json` | Skills | 30 |
 | `spells.json` | Spells | 40 |
 | `items/bases.json`, `materials.json`, `affixes.json`, `legendaryPowers.json`, `oddities.json`, `consumables.json` | Item parts | 50 / 10 / 60 / 15 / 20 / 30 |
-| `rarityWeights.json`, `boxes.json` | Loot tuning | per floor / 6 tiers |
+| `items/rarities.json`, `items/rarityWeights.json`, `boxes.json` | Loot tuning: affixes and power per rarity, drop weights per floor, box tiers | 5 / per floor / 6 tiers |
+| `craftParts.json` | Crafting properties: the workbench's groups and the names of recipe parts | 20+ |
 | `enemies/families.json`, `mods.json`, `bossTitles.json`, `bossAbilities.json` | Enemies | 13 / 15 / 30 / 40 |
 | `floors.json` | Floor themes | 3 |
 | `achievements.json` | Achievements | 80 |
@@ -1013,11 +1063,14 @@ interface ItemBase {
   id: string; name: string; slot: Slot; twoHanded?: boolean;
   weaponType?: string; power?: Power; apCost?: number; unwieldy?: boolean; stat?: "STR" | "DEX";
   armor?: number; weight: number; value: number; tags: string[];
+  material?: "metal" | "wood" | "cloth" | "leather" | "plastic";   // generated gear only
 }
 
 interface Affix {
   id: string; name: string; kind: "prefix" | "suffix"; group: string;
-  slots: Slot[]; minLevel: number; effect: Effect; magnitude: [number, number];
+  slots: (Slot | "weapon" | "armor" | "trinket" | "any")[]; minLevel: number; weight: number;
+  modifiers: { to: string; value: [number, number]; scales: boolean }[];  // rolled, then scaled by item level
+  onHit?: { id: string; chance: [number, number]; duration?: number };
 }
 
 interface Race {
@@ -1766,3 +1819,64 @@ Asked for after Milestone T: a custom floor tiler that mirrors Godot's tiling, b
   - For both floors, grounds generated on all three board sizes went through `paintGround`, each square was cut from the packed atlas by `choiceArt`'s region, and every board joined up.
   - `npm run check` passes.
   - Not yet looked at in a browser. The client's drawing code is unchanged, and the old Lobby set already drew from an atlas sheet.
+
+### Milestone 5: Items (and three changes from playtesting)
+
+Built on the `items` branch. Before it started, every branch was merged into `main` (a fast-forward: they were one line of history) and deployed.
+
+**The generator**
+
+- **The level factor is `1 + 0.04 × (itemLevel − 5)`, not the design's `1 + 0.1 × itemLevel`.**
+  - Enemy HP on Floors 1-3 is held near Floor 1's until leveling arrives (Milestone 6, see Milestone T's tuning note).
+  - The design's factor would make every piece 1.5× stronger than its base on Floor 1 and 2.5× on Floor 3, before rarity.
+  - So a base's numbers are written as a Floor 1 iron common, and Floor 3 adds about 40%.
+- **Armor scales with material only.** It's flat damage off every hit, and enemy hits on Floors 1-3 do 2-7.
+  - Rarity on top (a 3-armor chest at epic would be 6) would make a crawler untouchable.
+  - Armor bases stay small: chest 1-3, head 1-2, shields 1-2, legs 0-1, everything else 0. Armor affixes (Padded, Reinforced, of the Tortoise) are +1 and share one group.
+- **Affix magnitudes grow 5% per item level past 5** and are never scaled down. Penalties don't scale.
+- **At most two prefixes and one suffix**, so names stay readable ("of X" once).
+- **Generated bases have their own names.** Fifteen ids (sledgehammer, fire axe, hard hat...) were already starting-kit items with their own numbers (the kit sledgehammer is 4/7/10). The generated ones are a Maul, a Woodsman's Axe, a Site Helmet and so on, so `equip sledgehammer` still means one thing.
+- **Flavor:** every generated base has its own line. Rare and better add a System AI line from `item.flavor`, so a common find isn't buried in commentary.
+- **Rarity weights:** Floor 2 sits between the design's Floor 1 and Floor 3 columns (52 / 30 / 13 / 4 / 0.5). Legendaries stay out of Floor 1 unless something asks for one.
+- **New modifier targets** for affixes and powers: `carry`, `regen`, `leech`, `thorns`, `spite`, `executioner`, `killAp`, `critRange`, `secondWind`, `critStatus:X`.
+  - `rules/modifiers.ts` lists every target the engine reads and how to say each one.
+  - Validation fails if an affix, a power or a generated base names anything else. Older hand-written content still has unread `perk:` modifiers, which wait for their systems.
+- **Spiteful** counts an enemy that hurt you this round or last. Enemies remember the round (`hitYouRound`).
+- **Thorns** only answers melee (close-range) attacks. A thorns kill ends the fight at the end of the round, like any other.
+- **Consumable potency** scales by the floor you use it on, not the floor it was found on. Potions found on different floors would otherwise need separate stacks.
+- **Identification is deferred.** The design names it for Milestone 5 but never says how it works. Hiding affixes until an INT check would also undo this branch's other goal of making gear clear. Lost Property Index and Salt Reader already "identify" in the sense of showing extra details.
+- **Shops stay in Milestone 7**, per the build-order table. The 4b note that listed them for Milestone 5 predates that table.
+- **Drops:** minion 3%, mob 8%, elite 35%, and the boss always (uncommon or better, two item levels up). Treasure rooms always hold one piece. Lairs 35%, puzzles 20%, traps 15%, events 12%, chambers 8%, empty rooms 5%, and 40% of those are hidden.
+
+**Equipping clarity** (from playtesting: "it's unclear what type of weapon you should be equipping, how your stats affect it, or what your armor is when you upgrade")
+
+- The design's rules didn't change. The game now shows them: see "Equipping, and what it tells you" under Item generation.
+- **`gear.ts` holds the swing math, and combat calls it**, so the numbers on the sheet are the ones rolled. Spite is the one exception, because it depends on the fight.
+- **The "better / worse" comparison** puts the item on a shallow copy of the crawler and compares derived values. The panels ask this for every item on every step, so it's about half a millisecond for a full pack.
+- **Equip buttons.** Gear could only be equipped by typing `equip <name>` before. Opening an item now offers Equip, Take off, Use and Drop. With two items of the same name, `equip` picks the one you aren't already using.
+
+**Workbench groups** (from playtesting: "simplify crafting to the base properties so the menu is less crazy")
+
+- The player picked the grouped list over tap-a-category: groups that open to show their items, so a specific roll of tape can still be chosen.
+- **Group names are content** (`craftParts.json`), so a new property is a JSON edit. `blunt` and `slot:chest` are names for recipe text only, not their own groups: blunt weapons are listed under Weapons.
+- **Gear that isn't a weapon now carries a `worn` tag** (in `effectiveTags`), so the Worn gear group has something to match.
+- **Typed `combine sharp bind` uses the cheapest match** for each property, so the good tape is spared. Item names still win over property names.
+
+**The shard voice** (from playtesting: "the first time I didn't even realize I'd found it")
+
+- The player picked "voice, then search": a popup on entry, then a second popup when a search finds the shard.
+- **The voice line isn't stored in the room description.** It's narrated on entry, and a shorter reminder plays on a revisit. Only the clue is cached, once found.
+- **A pending shard is `room.shard` minus `echo.shards`.** No new field was needed, and old saves (where every `room.shard` is already found) read correctly.
+- **Sources** for the 39 room shards were drafted by Claude in a new Source column of `content-csv/workbook/Shards.csv`. They need pasting into the workbook. Until the sheet has the column, the importer keeps the JSON's value.
+- **The popup only shows events that arrive while the page is open.** A reload doesn't replay old shards.
+- **The sim searches any room with a voice**, so its shard find rates stay comparable to the old ones.
+
+**Checked**
+
+- **`npm run sim -- 200 --floors 3 --craft`.** The sim now also wears anything the view marks ▲ better.
+  - Reached Floor 2 in 67% of runs (51% before this branch) and Floor 3 in 49% (24% before).
+  - Boss wins rose from 79% to 88% of fights. Shard finds are about the same (96% of runs find one).
+  - Floor 3 at 49% sits inside Milestone 13's target of 30-60%, so the numbers above weren't tuned further.
+- **Headless Chrome, desktop and phone:** the inventory's ▲/▼ marks and summaries, a generated weapon's details and Equip button, the Fighting block, the workbench groups opening, the recipe book counts, and both shard popups through to Echo's reaction.
+- **The voice popup fires on any first visit to a room with a waiting shard**, not only when the roll just happened. That's the same in play, and it let a prepared save show the popup.
+

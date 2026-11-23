@@ -6,7 +6,6 @@ import { STATS, type Stat } from "./content/schemas";
 import { formatTimer, mapGrid, renderMap, roomBadge, type MapGrid } from "./explore";
 import { derive, xpToNext } from "./rules/derived";
 import { AP_COST, apNow } from "./rules/ap";
-import { formatPower } from "./rules/power";
 import { combatModeOf, EQUIP_SLOTS, type CombatMode, type EquipSlot, type Phase, type World } from "./state";
 import { gridView, type GridView } from "./grid/view";
 import { coord } from "./grid/geometry";
@@ -14,6 +13,8 @@ import { partsOf, recipeBook, workbenchGroups, type RecipeBookView, type Workben
 import type { RangeBand } from "./content/schemas";
 import { codexView, sideOf, stageOn, vesselOf, wholenessOn, type CodexView, type Side } from "./echo";
 import { moduleItemDetails, moduleViews, type ModuleView } from "./modules";
+import { itemInfo } from "./itemInfo";
+import { heldWeapon, profileOf, swingNumbers, weaponFit } from "./gear";
 
 export interface Bar {
   current: number;
@@ -29,6 +30,11 @@ export interface ItemView {
   parts?: string[];
   equippedIn?: EquipSlot;
   qty: number;
+  kind: "gear" | "consumable";
+  /** Gear: one line for the list ("6/8/10 dmg · DEX · 2 AP", "armor 1"). */
+  summary?: string;
+  /** Gear you aren't using: would equipping it be better, worse, or a trade-off? */
+  verdict?: "better" | "worse" | "mixed" | "same";
 }
 
 export interface ViewModel {
@@ -57,6 +63,21 @@ export interface ViewModel {
     quirk: { name: string; text: string };
     unspentStatPoints: number;
     gold: number;
+    /** How you fight right now: the swing in your hand, armor, and which stat suits you. */
+    fighting: {
+      weapon: string;
+      stat: "STR" | "DEX";
+      skill: string | null;
+      roll: number;
+      damage: string;
+      odds: [number, number, number];
+      average: number;
+      apCost: number;
+      armor: number;
+      guard: number;
+      /** "Your DEX (9) beats your STR (5): weapons marked DEX hit harder for you." */
+      fit: string;
+    };
   };
   equipment: { slot: EquipSlot; label: string; item: ItemView | null }[];
   inventory: ItemView[];
@@ -132,13 +153,8 @@ export function view(world: World, content: Content): ViewModel {
   const itemView = (uid: string, from = c.inventory): ItemView | null => {
     const it = from.find((i) => i.uid === uid);
     if (!it) return null;
-    const detail: string[] = [];
-    if (it.power) detail.push(`${formatPower(it.power)}${it.damageType && it.damageType !== "physical" ? ` ${it.damageType}` : ""} damage, ${it.apCost ?? AP_COST.attack} AP (${it.stat ?? "STR"}${it.weaponType ? `, ${it.weaponType}` : ""})`);
-    if (it.unwieldy) detail.push("unwieldy: a swing ends your turn");
-    if (it.twoHanded) detail.push("two-handed");
-    if (it.armor) detail.push(`armor ${it.armor}`);
-    for (const m of it.modifiers) detail.push(`${m.value >= 0 ? "+" : ""}${m.value} ${m.to.replace(/^(skill|stat):/, "")}`);
-    if (it.onHit) detail.push(`on hit: ${Math.round(it.onHit.chance * 100)}% ${content.statusEffects.byId[it.onHit.id]?.name.toLowerCase() ?? it.onHit.id}`);
+    const info = itemInfo(c, content, it);
+    const detail = info.detail;
     const parts = partsOf(it, content);
     if (parts.length) detail.push(`crafting: ${parts.join(", ").toLowerCase()}`);
     if (it.tags.includes("module_part")) detail.push("one of Echo's module parts");
@@ -147,8 +163,9 @@ export function view(world: World, content: Content): ViewModel {
     if (it.flavor) detail.push(it.flavor);
     const slot = slotOf.get(it.uid);
     return {
-      uid: it.uid, name: it.name, rarity: it.rarity, detail, qty: it.qty,
+      uid: it.uid, name: it.name, rarity: it.rarity, detail, qty: it.qty, kind: it.kind,
       ...(parts.length ? { parts } : {}), ...(slot ? { equippedIn: slot } : {}),
+      ...(info.summary ? { summary: info.summary } : {}), ...(info.verdict ? { verdict: info.verdict } : {}),
     };
   };
 
@@ -191,6 +208,15 @@ export function view(world: World, content: Content): ViewModel {
       quirk: { name: quirk?.name ?? "", text: quirk?.text ?? "" },
       unspentStatPoints: c.unspentStatPoints,
       gold: c.gold,
+      fighting: (() => {
+        const w = profileOf(content, heldWeapon(c));
+        const sw = swingNumbers(c, content, w, d);
+        return {
+          weapon: w.name, stat: w.stat, skill: sw.skillName ? `${sw.skillName} ${sw.skillRank || "untrained"}` : null, roll: sw.rollBonus,
+          damage: sw.damage.join("/"), odds: sw.odds, average: sw.average, apCost: w.apCost,
+          armor: d.armor, guard: d.guard, fit: weaponFit(c, content, d).text,
+        };
+      })(),
     },
     equipment: EQUIP_SLOTS.map((slot) => ({
       slot,

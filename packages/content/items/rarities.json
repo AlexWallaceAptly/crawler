@@ -1,0 +1,7 @@
+[
+  { "id": "common", "affixes": 0, "mult": 1 },
+  { "id": "uncommon", "affixes": 1, "mult": 1.2 },
+  { "id": "rare", "affixes": 2, "mult": 1.5 },
+  { "id": "epic", "affixes": 3, "mult": 1.9 },
+  { "id": "legendary", "affixes": 3, "mult": 2.5, "legendaryPower": true }
+]

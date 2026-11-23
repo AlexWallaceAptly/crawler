@@ -169,6 +169,14 @@ function runOne(mode: CombatMode | "default"): Outcome {
     return combat.enemies.filter((e) => e.hp > 0).sort((a, b) => far(a) - far(b) || a.hp - b.hp)[0]?.name.toLowerCase();
   };
 
+  /** Put on anything the view calls better than what's on now (generated gear, Milestone 5). */
+  const wearBetter = () => {
+    for (let k = 0; k < 4; k++) {
+      const better = engine.view(world).inventory.find((it) => it.verdict === "better" && it.kind === "gear");
+      if (!better || !tryAct({ type: "equip", item: better.name.toLowerCase() })) return;
+    }
+  };
+
   for (let i = 0; i < 4000 * floorsArg; i++) {
     const phase = world.game.phase;
     if (phase === "dead") break;
@@ -213,7 +221,10 @@ function runOne(mode: CombatMode | "default"): Outcome {
       if (room.items?.length) {
         const n = world.game.crawler!.inventory.length;
         act({ type: "take", item: "all" });
-        if (world.game.crawler!.inventory.length !== n) continue;
+        if (world.game.crawler!.inventory.length !== n) {
+          wearBetter();
+          continue;
+        }
       }
       // A module that just became buildable is worth stopping at any bench for.
       if (atWorkbench(room) && moduleViews(world.game, content).some((v) => !v.installed && v.ready)) {
@@ -239,6 +250,7 @@ function runOne(mode: CombatMode | "default"): Outcome {
         }
         const best = bestWeapon(world);
         if (best) act({ type: "equip", item: best });
+        wearBetter();
         continue;
       }
     }

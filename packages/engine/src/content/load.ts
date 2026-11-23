@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { knownTarget } from "../rules/modifiers";
 import {
   ArenaFeatureSchema,
   LootTableSchema,
@@ -24,6 +25,11 @@ import {
   CodexEntrySchema,
   BossSchema,
   OdditySchema,
+  MaterialSchema,
+  RarityRuleSchema,
+  RarityWeightsSchema,
+  AffixSchema,
+  LegendaryPowerSchema,
   TilesetSchema,
   type ArenaFeature,
   type LootTable,
@@ -49,7 +55,13 @@ import {
   type CodexEntry,
   type Boss,
   type Oddity,
+  type Material,
+  type RarityRule,
+  type RarityWeights,
+  type Affix,
+  type LegendaryPower,
   type Tileset,
+  RARITIES,
 } from "./schemas";
 
 /** Every content file, keyed by its path under packages/content. */
@@ -78,6 +90,11 @@ export const CONTENT_FILES = {
   "codex.json": z.array(CodexEntrySchema),
   "bosses.json": z.array(BossSchema),
   "items/oddities.json": z.array(OdditySchema),
+  "items/materials.json": z.array(MaterialSchema),
+  "items/rarities.json": z.array(RarityRuleSchema),
+  "items/rarityWeights.json": RarityWeightsSchema,
+  "items/affixes.json": z.array(AffixSchema),
+  "items/legendaryPowers.json": z.array(LegendaryPowerSchema),
   "tilesets.json": z.array(TilesetSchema),
 } as const;
 
@@ -109,6 +126,12 @@ export interface Content {
   items: {
     bases: Table<ItemBase>;
     consumables: Table<Consumable>;
+    /** The generator (Milestone 5): what gear is made of, rarities, affixes, legendary powers. */
+    materials: Table<Material>;
+    rarities: Table<RarityRule>;
+    rarityWeights: RarityWeights;
+    affixes: Table<Affix>;
+    legendaryPowers: Table<LegendaryPower>;
   };
   arenaFeatures: Table<ArenaFeature>;
   lootTables: Table<LootTable>;
@@ -210,6 +233,11 @@ export function loadContent(raw: RawContent): Content {
     items: {
       bases: table("items/bases.json", bases, problems),
       consumables: table("items/consumables.json", consumables, problems),
+      materials: table("items/materials.json", p["items/materials.json"], problems),
+      rarities: table("items/rarities.json", p["items/rarities.json"], problems),
+      rarityWeights: p["items/rarityWeights.json"],
+      affixes: table("items/affixes.json", p["items/affixes.json"], problems),
+      legendaryPowers: table("items/legendaryPowers.json", p["items/legendaryPowers.json"], problems),
     },
     arenaFeatures: table("arenaFeatures.json", p["arenaFeatures.json"], problems),
     lootTables: table("lootTables.json", p["lootTables.json"], problems),
@@ -325,6 +353,32 @@ function checkReferences(c: Content, problems: string[]): void {
   }
   checkThread(c, problems, ref);
   checkTilesets(c, problems);
+  checkGenerator(c, problems, ref);
+}
+
+/** The item generator's tables: every rarity has a rule, every material kind a level-1 grade, every effect a reader. */
+function checkGenerator(c: Content, problems: string[], ref: RefCheck): void {
+  for (const r of RARITIES) if (!c.items.rarities.has(r)) problems.push(`items/rarities.json: no rule for "${r}"`);
+  for (const b of c.items.bases.all.filter((x) => x.generate && x.material)) {
+    if (!c.items.materials.all.some((m) => m.kind === b.material && m.minLevel <= b.minLevel)) {
+      problems.push(`items/bases.json "${b.id}": no ${b.material} material at level ${b.minLevel}`);
+    }
+  }
+  const targets = (where: string, tos: string[]) => {
+    for (const to of tos) if (!knownTarget(to, c)) problems.push(`${where}: nothing reads the modifier "${to}"`);
+  };
+  for (const a of c.items.affixes.all) {
+    const where = `items/affixes.json "${a.id}"`;
+    targets(where, a.modifiers.map((m) => m.to));
+    if (a.onHit) ref(`${where}.onHit`, "status", c.statusEffects.has(a.onHit.id), a.onHit.id);
+  }
+  for (const p of c.items.legendaryPowers.all) {
+    const where = `items/legendaryPowers.json "${p.id}"`;
+    targets(where, p.modifiers.map((m) => m.to));
+    if (p.onHit) ref(`${where}.onHit`, "status", c.statusEffects.has(p.onHit.id), p.onHit.id);
+  }
+  const gen = c.items.bases.all.filter((b) => b.generate);
+  targets("items/bases.json (generated bases)", gen.flatMap((b) => b.modifiers.map((m) => m.to)));
 }
 
 type RefCheck = (where: string, kind: string, ok: boolean, id: string) => void;

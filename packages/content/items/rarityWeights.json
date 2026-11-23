@@ -1,0 +1,5 @@
+[
+  { "floor": 1, "weights": { "common": 60, "uncommon": 28, "rare": 10, "epic": 2, "legendary": 0 } },
+  { "floor": 2, "weights": { "common": 52, "uncommon": 30, "rare": 13, "epic": 4, "legendary": 0.5 } },
+  { "floor": 3, "weights": { "common": 45, "uncommon": 32, "rare": 16, "epic": 6, "legendary": 1 } }
+]

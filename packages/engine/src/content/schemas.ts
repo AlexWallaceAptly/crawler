@@ -49,6 +49,10 @@ export type Rarity = z.infer<typeof RaritySchema>;
  */
 export const SLOTS = ["head", "eyes", "chest", "legs", "feet", "hands", "neck", "ring", "back", "belt", "mainHand", "offHand"] as const;
 export const SlotSchema = z.enum(SLOTS);
+
+/** What generated gear is made of; materials.json gives each kind its grades. */
+export const MATERIAL_KINDS = ["metal", "wood", "cloth", "leather", "plastic"] as const;
+export type MaterialKind = (typeof MATERIAL_KINDS)[number];
 export type Slot = z.infer<typeof SlotSchema>;
 
 export const DAMAGE_TYPES = [
@@ -213,6 +217,8 @@ export const ItemBaseSchema = z.strictObject({
   onHit: OnHitStatusSchema.optional(),
   tags: z.array(z.string()).default([]),
   flavor: z.string().optional(),
+  /** Generated gear: what it's made of, so the generator can pick a material ("Rusty", "Bonesteel"). */
+  material: z.enum(MATERIAL_KINDS).optional(),
 }).superRefine((b, ctx) => {
   if (b.slot === "mainHand" && b.weaponType && (!b.power || !b.stat)) {
     ctx.addIssue({ code: "custom", message: "weapons need power and stat" });
@@ -222,6 +228,85 @@ export const ItemBaseSchema = z.strictObject({
   }
 });
 export type ItemBase = z.infer<typeof ItemBaseSchema>;
+
+// ---------------------------------------------------------------- the item generator (Milestone 5)
+
+/** What a generated piece is made of. Scales its power and armor, and goes in its name. */
+export const MaterialSchema = z.strictObject({
+  id: IdSchema,
+  /** The word in the item's name: "Rusty", "Bonesteel". */
+  name: z.string().min(1),
+  kind: z.enum(MATERIAL_KINDS),
+  /** Multiplies the base's power and armor. Iron-grade is 1. */
+  mult: z.number().positive(),
+  minLevel: z.number().int().min(1).default(1),
+  /** Junk grades stop turning up past this item level. */
+  maxLevel: z.number().int().min(1).optional(),
+  weight: z.number().positive().default(1),
+});
+export type Material = z.infer<typeof MaterialSchema>;
+
+/** Per rarity: how many affixes, and how much the base's power is multiplied. */
+export const RarityRuleSchema = z.strictObject({
+  id: RaritySchema,
+  affixes: z.number().int().min(0).max(4),
+  mult: z.number().positive(),
+  /** Legendary: one power from legendaryPowers.json on top of the affixes. */
+  legendaryPower: z.boolean().default(false),
+});
+export type RarityRule = z.infer<typeof RarityRuleSchema>;
+
+/** Drop weights by floor. Floors past the last row use the last row. */
+export const RarityWeightsSchema = z.array(z.strictObject({
+  floor: z.number().int().min(1),
+  weights: z.partialRecord(RaritySchema, z.number().min(0)),
+})).min(1);
+export type RarityWeights = z.infer<typeof RarityWeightsSchema>;
+
+/** Where an affix or power can go: a slot, or a family of slots. */
+export const GEAR_FAMILIES = ["weapon", "armor", "trinket", "any"] as const;
+export const GearFamilySchema = z.enum([...GEAR_FAMILIES, ...SLOTS]);
+
+/** An affix's numbers: a range rolled per item, scaled up with item level unless `scales` is false. */
+export const AffixModifierSchema = z.strictObject({
+  to: z.string().min(1),
+  value: z.tuple([z.number(), z.number()]),
+  scales: z.boolean().default(true),
+});
+
+/**
+ * Prefix ("Spiteful Iron Machete") or suffix ("... of the Ox"). An item never gets
+ * two affixes from one group. Effects are modifiers (see "Affixes" in docs/DESIGN.md).
+ */
+export const AffixSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string().min(1),
+  kind: z.enum(["prefix", "suffix"]),
+  group: z.string().min(1),
+  slots: z.array(GearFamilySchema).min(1),
+  minLevel: z.number().int().min(1).default(1),
+  weight: z.number().positive().default(1),
+  modifiers: z.array(AffixModifierSchema).default([]),
+  /** Weapons: a status that can land on a hit; chance rolled in the range. */
+  onHit: z.strictObject({
+    id: IdSchema,
+    chance: z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)]),
+    duration: z.number().int().min(1).optional(),
+  }).optional(),
+}).refine((a) => a.modifiers.length > 0 || a.onHit !== undefined, { message: "an affix needs modifiers or an onHit" });
+export type Affix = z.infer<typeof AffixSchema>;
+
+/** A legendary item's one unique power. */
+export const LegendaryPowerSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string().min(1),
+  /** What it does, in a sentence. */
+  text: z.string().min(1),
+  slots: z.array(GearFamilySchema).min(1),
+  modifiers: z.array(ModifierSchema).default([]),
+  onHit: OnHitStatusSchema.optional(),
+});
+export type LegendaryPower = z.infer<typeof LegendaryPowerSchema>;
 
 export const ConsumableSchema = z.strictObject({
   id: IdSchema,
@@ -483,6 +568,21 @@ export const FloorThemeSchema = z.strictObject({
      * safe rooms): Echo's module parts, a boss's counter item, the odd hand-written oddity.
      * Each entry rolls `count` pickups from exactly one source.
      */
+    /**
+     * Generated gear (Milestone 5). `rooms`: chance per room type of one piece (some
+     * only found by searching). `drops`: chance per enemy tier of dropping one on a kill.
+     * Floor bosses always drop one, at least `bossMinRarity`.
+     */
+    gear: z.strictObject({
+      rooms: z.partialRecord(RoomTypeSchema, z.number().min(0).max(1)).default({}),
+      hiddenChance: z.number().min(0).max(1).default(0.5),
+      drops: z.strictObject({
+        minion: z.number().min(0).max(1).default(0),
+        mob: z.number().min(0).max(1).default(0),
+        elite: z.number().min(0).max(1).default(0),
+      }).prefault({}),
+      bossMinRarity: RaritySchema.default("uncommon"),
+    }).prefault({}),
     scatter: z.array(z.strictObject({
       table: IdSchema.optional(),
       item: IdSchema.optional(),

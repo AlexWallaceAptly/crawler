@@ -168,10 +168,9 @@ export function enterRoom(ctx: StepContext, roomId: number, kind: "first" | "rev
   for (const id of Object.values(room.exits)) floor.rooms[id]!.seen = true;
 
   const first = kind === "first";
-  let placed = null;
   if (!room.desc) {
     room.desc = describeRoom(theme, room);
-    if (first) placed = maybeRoomShard(ctx, room);
+    if (first) maybeRoomShard(ctx, room);
   }
   const items = itemLabels(room);
   ctx.emit({
@@ -184,7 +183,8 @@ export function enterRoom(ctx: StepContext, roomId: number, kind: "first" | "rev
     ...(items.length ? { items } : {}),
     ...(room.workbench ? { workbench: true } : {}),
   });
-  if (pendingShard(ctx.game, ctx.content, room)) shardVoice(ctx, room, !!placed);
+  // A waiting shard: the faint voice (a popup on the first visit, a reminder after).
+  if (pendingShard(ctx.game, ctx.content, room)) shardVoice(ctx, room, first);
   if (kind !== "look") modulesOnEnter(ctx, room, first);
   if (first) bossNearby(ctx, room);
   if (kind === "revisit" && chance(0.3)) ctx.say("explore.revisit");

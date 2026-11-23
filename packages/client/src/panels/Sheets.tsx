@@ -38,6 +38,7 @@ export function CharacterSheet({ view }: { view: ViewModel }) {
           </div>
         ))}
       </dl>
+      <Fighting view={view} />
       <div className={s.sectionLabel}>Skills</div>
       <ul className={s.list}>
         {c.skills.map((sk) => (
@@ -66,7 +67,56 @@ export function CharacterSheet({ view }: { view: ViewModel }) {
   );
 }
 
-export function EquipmentList({ view }: { view: ViewModel }) {
+/** How you fight right now: what your weapon and stats add up to, and which stat suits you. */
+function Fighting({ view }: { view: ViewModel }) {
+  const f = view.character?.fighting;
+  if (!f) return null;
+  const pct = (p: number) => `${Math.round(p * 100)}%`;
+  return (
+    <>
+      <div className={s.sectionLabel}>Fighting</div>
+      <div className={s.fight}>
+        <div><span className={s.fightKey}>Weapon</span> {f.weapon} <span className={s.sub}>({f.stat}{f.skill ? `, ${f.skill}` : ""}, {f.apCost} AP)</span></div>
+        <div><span className={s.fightKey}>Roll</span> 2d10 {f.roll >= 0 ? "+" : ""}{f.roll} <span className={s.sub}>weak {pct(f.odds[0])} · solid {pct(f.odds[1])} · great {pct(f.odds[2])}</span></div>
+        <div><span className={s.fightKey}>Damage</span> {f.damage} <span className={s.sub}>avg {f.average} a swing</span></div>
+        <div><span className={s.fightKey}>Armor</span> {f.armor} <span className={s.sub}>off every hit{f.guard ? ` · guard ${f.guard > 0 ? "+" : ""}${f.guard}` : ""}</span></div>
+        <div className={s.fightFit}>{f.fit}</div>
+      </div>
+    </>
+  );
+}
+
+const VERDICT: Record<string, { mark: string; label: string }> = {
+  better: { mark: "▲", label: "better than what you have on" },
+  worse: { mark: "▼", label: "worse than what you have on" },
+  mixed: { mark: "⇅", label: "a trade-off: open it to see" },
+  same: { mark: "=", label: "about the same" },
+};
+
+function Verdict({ v }: { v?: string }) {
+  if (!v) return null;
+  const x = VERDICT[v]!;
+  return <span className={`${s.verdict} ${s[`verdict_${v}`] ?? ""}`} title={x.label} aria-label={x.label}>{x.mark}</span>;
+}
+
+type Item = ViewModel["inventory"][number];
+
+/** Equip / take off / use / drop, under an opened item. */
+function ItemActions({ it, submit }: { it: Item; submit?: (t: string) => void }) {
+  if (!submit) return null;
+  const name = it.name.toLowerCase();
+  return (
+    <div className={s.itemActions}>
+      {it.kind === "gear" && (it.equippedIn
+        ? <button className={s.itemBtn} onClick={() => submit(`unequip ${name}`)}>take off</button>
+        : <button className={`${s.itemBtn} ${it.verdict === "better" ? s.itemBtnGood : ""}`} onClick={() => submit(`equip ${name}`)}>equip</button>)}
+      {it.kind === "consumable" && <button className={s.itemBtn} onClick={() => submit(`use ${name}`)}>use</button>}
+      {!it.equippedIn && <button className={s.itemBtn} onClick={() => submit(`drop ${name}`)}>drop</button>}
+    </div>
+  );
+}
+
+export function EquipmentList({ view, submit }: { view: ViewModel; submit?: (t: string) => void }) {
   const [open, setOpen] = useState<string | null>(null);
   if (!view.character) return <div className={s.muted}>Nothing to wear. Nobody to wear it.</div>;
   return (
@@ -80,13 +130,16 @@ export function EquipmentList({ view }: { view: ViewModel }) {
             aria-expanded={open === row.slot}
           >
             <span className={s.slotLabel}>{row.label}:</span>
-            {row.item ? <span className={rarityClass(row.item.rarity)}>{row.item.name}</span> : <span className={s.muted}>—</span>}
+            {row.item
+              ? <span><span className={rarityClass(row.item.rarity)}>{row.item.name}</span>{row.item.summary && <span className={s.itemSummary}> {row.item.summary}</span>}</span>
+              : <span className={s.muted}>—</span>}
           </button>
           {open === row.slot && row.item && (
             <div className={s.detail}>
               {row.item.detail.map((d, i) => (
                 <div key={i}>{d}</div>
               ))}
+              <ItemActions it={row.item} submit={submit} />
             </div>
           )}
         </li>
@@ -115,27 +168,35 @@ export function MiniMap({ view }: { view: ViewModel }) {
   return <pre className={s.mapPre}>{view.minimap.join("\n")}</pre>;
 }
 
-export function InventoryList({ view }: { view: ViewModel }) {
+export function InventoryList({ view, submit }: { view: ViewModel; submit?: (t: string) => void }) {
   const [open, setOpen] = useState<string | null>(null);
   if (view.inventory.length === 0) return <div className={s.muted}>Empty. Like your future.</div>;
+  const hasVerdicts = view.inventory.some((it) => it.verdict);
   return (
-    <ul className={s.list}>
-      {view.inventory.map((it) => (
-        <li key={it.uid}>
-          <button className={s.slotRow} onClick={() => setOpen(open === it.uid ? null : it.uid)} aria-expanded={open === it.uid}>
-            <span className={s.slotLabel}>{it.equippedIn ? "[E]" : it.qty > 1 ? `x${it.qty}` : ""}</span>
-            <span className={rarityClass(it.rarity)}>{it.name}</span>
-          </button>
-          {open === it.uid && (
-            <div className={s.detail}>
-              {it.detail.map((d, i) => (
-                <div key={i}>{d}</div>
-              ))}
-            </div>
-          )}
-        </li>
-      ))}
-    </ul>
+    <>
+      {hasVerdicts && <div className={s.legend}>▲ better than what you have on · ▼ worse · ⇅ a trade-off. Open one to see why.</div>}
+      <ul className={s.list}>
+        {view.inventory.map((it) => (
+          <li key={it.uid}>
+            <button className={s.slotRow} onClick={() => setOpen(open === it.uid ? null : it.uid)} aria-expanded={open === it.uid}>
+              <span className={s.slotLabel}>{it.equippedIn ? "[E]" : it.qty > 1 ? `x${it.qty}` : ""}<Verdict v={it.verdict} /></span>
+              <span>
+                <span className={rarityClass(it.rarity)}>{it.name}</span>
+                {it.summary && <span className={s.itemSummary}> {it.summary}</span>}
+              </span>
+            </button>
+            {open === it.uid && (
+              <div className={s.detail}>
+                {it.detail.map((d, i) => (
+                  <div key={i}>{d}</div>
+                ))}
+                <ItemActions it={it} submit={submit} />
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
