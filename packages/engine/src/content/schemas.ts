@@ -684,6 +684,27 @@ export const UpgradeSchema = z.strictObject({
   addTags: z.array(z.string()).default([]),
 });
 
+/**
+ * A crafting property: how the workbench groups your pack ("Sharp (3)") and what a
+ * recipe's tag inputs are called ("Sharp 3/1"). Matched against an item's effective tags.
+ */
+export const CraftPartSchema = z.strictObject({
+  id: IdSchema,
+  /** The group heading at the workbench, and the part's name in recipes. */
+  label: z.string().min(1),
+  /** The name in a recipe's parts list, if it differs ("Any weapon" for the Weapons group). */
+  term: z.string().min(1).optional(),
+  /** An item with any of these (effective) tags belongs to the group. */
+  tags: z.array(z.string().min(1)).min(1),
+  /** A short "what counts" line under the heading. */
+  hint: z.string().min(1).optional(),
+  /** False: only a name for recipe inputs (Blunt weapon), not its own workbench group. */
+  group: z.boolean().default(true),
+  /** Gear groups (weapons, worn gear) list what you could upgrade, not junk parts. */
+  gear: z.boolean().default(false),
+});
+export type CraftPart = z.infer<typeof CraftPartSchema>;
+
 export const RecipeSchema = z.strictObject({
   id: IdSchema,
   name: z.string(),

@@ -3,6 +3,7 @@ import {
   ArenaFeatureSchema,
   LootTableSchema,
   RecipeSchema,
+  CraftPartSchema,
   ConsumableSchema,
   EnemyFamilySchema,
   EnemyModSchema,
@@ -27,6 +28,7 @@ import {
   type ArenaFeature,
   type LootTable,
   type Recipe,
+  type CraftPart,
   type Consumable,
   type EnemyFamily,
   type EnemyMod,
@@ -68,6 +70,7 @@ export const CONTENT_FILES = {
   "arenaFeatures.json": z.array(ArenaFeatureSchema),
   "lootTables.json": z.array(LootTableSchema),
   "recipes.json": z.array(RecipeSchema),
+  "craftParts.json": z.array(CraftPartSchema),
   "thread.json": ThreadSchema,
   "shards.json": z.array(ShardSchema),
   "modules.json": z.array(ModuleSchema),
@@ -110,6 +113,8 @@ export interface Content {
   arenaFeatures: Table<ArenaFeature>;
   lootTables: Table<LootTable>;
   recipes: Table<Recipe>;
+  /** Crafting properties: workbench groups and the names of recipe parts. */
+  craftParts: Table<CraftPart>;
   /** The story layer (see "The thread" in docs/DESIGN.md). */
   thread: Thread;
   shards: Table<Shard>;
@@ -209,6 +214,7 @@ export function loadContent(raw: RawContent): Content {
     arenaFeatures: table("arenaFeatures.json", p["arenaFeatures.json"], problems),
     lootTables: table("lootTables.json", p["lootTables.json"], problems),
     recipes: table("recipes.json", p["recipes.json"], problems),
+    craftParts: table("craftParts.json", p["craftParts.json"], problems),
     thread: p["thread.json"],
     shards: table("shards.json", p["shards.json"], problems),
     modules: table("modules.json", p["modules.json"], problems),
@@ -301,6 +307,13 @@ function checkReferences(c: Content, problems: string[]): void {
     if (r.output.kind === "upgrade" && r.output.onHit) ref(`${where}.output.onHit`, "status", c.statusEffects.has(r.output.onHit.id), r.output.onHit.id);
     if (r.check?.skill) ref(`${where}.check.skill`, "skill", c.skills.has(r.check.skill), r.check.skill);
     if (r.check?.mishap?.statusId) ref(`${where}.check.mishap`, "status", c.statusEffects.has(r.check.mishap.statusId), r.check.mishap.statusId);
+  }
+  // Every tag a recipe asks for needs a name at the workbench.
+  const named = new Set(c.craftParts.all.flatMap((cp) => cp.tags));
+  for (const r of c.recipes.all) {
+    for (const i of r.inputs) {
+      for (const t of i.tags ?? []) if (!named.has(t)) problems.push(`recipes.json "${r.id}".inputs: tag "${t}" has no entry in craftParts.json`);
+    }
   }
   for (const b of c.items.bases.all) {
     if (b.onHit) ref(`items/bases.json "${b.id}".onHit`, "status", c.statusEffects.has(b.onHit.id), b.onHit.id);

@@ -10,7 +10,7 @@ import { formatPower } from "./rules/power";
 import { combatModeOf, EQUIP_SLOTS, type CombatMode, type EquipSlot, type Phase, type World } from "./state";
 import { gridView, type GridView } from "./grid/view";
 import { coord } from "./grid/geometry";
-import { recipeBook, type RecipeBookView } from "./craft";
+import { partsOf, recipeBook, workbenchGroups, type RecipeBookView, type WorkbenchGroup } from "./craft";
 import type { RangeBand } from "./content/schemas";
 import { codexView, sideOf, stageOn, vesselOf, wholenessOn, type CodexView, type Side } from "./echo";
 import { moduleItemDetails, moduleViews, type ModuleView } from "./modules";
@@ -25,7 +25,7 @@ export interface ItemView {
   name: string;
   rarity: string;
   detail: string[];
-  /** Crafting roles this can play ("bind", "sharp"), if any. */
+  /** Crafting properties this counts as ("Bind", "Sharp"), if any. */
   parts?: string[];
   equippedIn?: EquipSlot;
   qty: number;
@@ -74,6 +74,8 @@ export interface ViewModel {
   };
   /** Recipes you've discovered, and hints for ones your pack could make. */
   recipeBook: RecipeBookView | null;
+  /** Your pack grouped by crafting property, for the workbench. */
+  workbench: WorkbenchGroup[] | null;
   /** The thing in your pocket. */
   echo: null | {
     vessel: string;
@@ -102,12 +104,6 @@ export interface ViewModel {
   settings: { combatMode: CombatMode };
 }
 
-/** Item tags that mean "crafting part"; shown in item details. */
-const CRAFT_TAGS = new Set([
-  "bind", "sharp", "haft", "cord", "elastic", "pouch", "weight", "battery", "wire", "fuel", "wick", "bottle",
-  "spark", "padding", "plate", "hammer",
-]);
-
 const SLOT_LABELS: Record<EquipSlot, string> = {
   mainHand: "Main", offHand: "Off", head: "Head", eyes: "Eyes", chest: "Chest", hands: "Hands", legs: "Legs",
   feet: "Feet", back: "Back", belt: "Belt", neck: "Neck", ring1: "Ring", ring2: "Ring",
@@ -124,7 +120,7 @@ export function view(world: World, content: Content): ViewModel {
     return {
       phase: game.phase,
       status: { floor: null, district: null, timer: null, room: null, hp: null, mp: null, xp: null, level: null },
-      character: null, equipment: [], inventory: [], effects: [], combat: null, recipeBook: null, room: null, minimap: null, mapGrid: null, account: accountView,
+      character: null, equipment: [], inventory: [], effects: [], combat: null, recipeBook: null, workbench: null, room: null, minimap: null, mapGrid: null, account: accountView,
       settings: { combatMode: combatModeOf(account) },
       echo: null,
       codex: codexView(content, account),
@@ -143,8 +139,8 @@ export function view(world: World, content: Content): ViewModel {
     if (it.armor) detail.push(`armor ${it.armor}`);
     for (const m of it.modifiers) detail.push(`${m.value >= 0 ? "+" : ""}${m.value} ${m.to.replace(/^(skill|stat):/, "")}`);
     if (it.onHit) detail.push(`on hit: ${Math.round(it.onHit.chance * 100)}% ${content.statusEffects.byId[it.onHit.id]?.name.toLowerCase() ?? it.onHit.id}`);
-    const parts = it.tags.filter((t) => CRAFT_TAGS.has(t));
-    if (parts.length) detail.push(`parts: ${parts.join(", ")}`);
+    const parts = partsOf(it, content);
+    if (parts.length) detail.push(`crafting: ${parts.join(", ").toLowerCase()}`);
     if (it.tags.includes("module_part")) detail.push("one of Echo's module parts");
     detail.push(...moduleItemDetails(game, content, it));
     detail.push(`weight ${Math.round(it.weight * it.qty * 10) / 10}`);
@@ -233,6 +229,7 @@ export function view(world: World, content: Content): ViewModel {
         }
       : null,
     recipeBook: recipeBook(c, content),
+    workbench: workbenchGroups(c, content),
     room: room
       ? {
           items: (room.items ?? []).map((it) => itemView(it.uid, room.items)!).filter(Boolean),

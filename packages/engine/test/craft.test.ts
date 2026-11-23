@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { forceDice, resetRng, setRandomSource } from "../src/rng";
 import { itemFromRef } from "../src/gen/item";
 import { effectiveTags } from "../src/inventory";
-import { matchCombination, specificity } from "../src/craft";
+import { inputLabel, matchCombination, recipeParts, specificity, workbenchGroups } from "../src/craft";
 import { stepDice } from "../src/rules/dice";
 import { arenaOf, content, engine, gridWorld, lines, of, testEnemy } from "./helpers";
 import type { ItemInstance, World } from "../src/state";
@@ -36,7 +36,7 @@ describe("combine", () => {
       .map((i) => i.name.toLowerCase());
     const { world: w } = engine.input(world, `combine ${names.join(" | ")}`);
     expect(w.game.crawler!.recipes).toEqual(["nail_bat"]);
-    expect(engine.view(world).inventory.find((i) => i.name.toLowerCase() === names[1])!.parts).toContain("sharp");
+    expect(engine.view(world).inventory.find((i) => i.name.toLowerCase() === names[1])!.parts).toContain("Sharp");
   });
 
   it("bat + tacks + tape = a nail bat, upgraded in place and still in your hands", () => {
@@ -160,6 +160,48 @@ describe("combine", () => {
     const { world: w, events } = engine.input(world, "combine bat unicorn");
     expect(of(events, "error")).toHaveLength(1);
     expect(w.game.floor!.timeLeft).toBe(t);
+  });
+});
+
+describe("the workbench groups", () => {
+  it("sorts the pack by property, counts units, and puts one item in every group it fits", () => {
+    const world = atBench(["baseball_bat", "thumbtacks", "duct_tape", "bungee_cord", "bathrobe"]);
+    const c = world.game.crawler!;
+    c.inventory.find((i) => i.baseId === "thumbtacks")!.qty = 3;
+    const groups = workbenchGroups(c, content);
+    const g = (id: string) => groups.find((x) => x.id === id);
+    const uid = (id: string) => c.inventory.find((i) => i.baseId === id)!.uid;
+    expect(g("weapon")!.items).toEqual([uid("baseball_bat")]);
+    expect(g("worn")!.items).toEqual([uid("bathrobe")]);
+    expect(g("sharp")!.count).toBe(3);
+    expect(g("bind")!.items).toEqual([uid("duct_tape"), uid("bungee_cord")]);
+    expect(g("elastic")!.items).toEqual([uid("bungee_cord")]);
+    expect(g("cord")!.items).toEqual([uid("bungee_cord")]);
+    expect(g("fuel")).toBeUndefined(); // nothing carried, no group
+    expect(g("other")).toBeUndefined(); // everything fit somewhere
+    expect(groups.find((x) => x.id === "blunt")).toBeUndefined(); // a name for recipes, not a group
+  });
+
+  it("counts what you have of each recipe part", () => {
+    const world = atBench(["baseball_bat", "thumbtacks", "duct_tape", "friction_tape"]);
+    const parts = recipeParts(world.game.crawler!, content.recipes.get("nail_bat"), content);
+    expect(parts).toEqual([
+      { label: "Blunt weapon", have: 1, need: 1, upgraded: true },
+      { label: "Sharp", have: 1, need: 1 },
+      { label: "Bind", have: 2, need: 1 },
+    ]);
+    expect(inputLabel(content.recipes.get("duct_splint").inputs[1]!, content)).toBe("Wick or Padding");
+    expect(inputLabel(content.recipes.get("pipe_spear").inputs[1]!, content)).toBe("Blade");
+    expect(inputLabel(content.recipes.get("taped_grip").inputs[0]!, content)).toBe("Any weapon");
+  });
+
+  it("`combine blunt sharp bind` works by property, sparing the good stuff", () => {
+    const world = atBench(["baseball_bat", "thumbtacks", "duct_tape", "friction_tape"]);
+    const { world: w } = engine.input(world, "combine blunt sharp bind");
+    expect(w.game.crawler!.recipes).toEqual(["nail_bat"]);
+    const tapes = ["duct_tape", "friction_tape"].map((id) => content.items.consumables.get(id));
+    const cheaper = tapes.sort((a, b) => a.value - b.value)[0]!.id;
+    expect(has(w, cheaper)).toBeUndefined();
   });
 });
 

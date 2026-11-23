@@ -19,6 +19,7 @@ export function effectiveTags(item: ItemInstance): string[] {
   if (item.weaponType) tags.add(item.weaponType);
   if (item.kind === "gear" && item.power) tags.add("weapon");
   if (item.kind === "gear" && item.armor) tags.add("armor");
+  if (item.kind === "gear" && !item.power) tags.add("worn");
   if (item.slot) tags.add(`slot:${item.slot}`);
   return [...tags];
 }

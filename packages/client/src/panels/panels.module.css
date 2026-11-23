@@ -326,22 +326,78 @@
   color: var(--system);
   font-weight: bold;
 }
-.benchSteps {
-  margin: 0 0 4px;
-  padding-left: 2.4ch;
+.benchIntro {
+  margin: 0 0 8px;
   color: var(--text);
 }
-.benchItems {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 8px 0;
+.groups {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  border-top: 1px solid var(--border);
 }
-.benchItem {
+.group {
+  border-bottom: 1px solid var(--border);
+}
+.groupHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 2px;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.groupHead:hover .groupName,
+.groupHead:hover .groupGear {
+  color: var(--system);
+}
+.groupCaret {
+  width: 1ch;
+  color: var(--dim);
+}
+.groupName {
+  color: var(--text);
+}
+.groupGear {
+  color: var(--text);
+  font-style: italic;
+}
+.groupCount {
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+.groupCount::before {
+  content: "(";
+}
+.groupCount::after {
+  content: ")";
+}
+.groupPicked {
+  margin-left: auto;
+  color: var(--system);
+  font-size: 12px;
+}
+.groupBody {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  min-height: 40px;
+  gap: 4px;
+  padding: 0 0 8px 3ch;
+}
+.groupHint {
+  color: var(--dim);
+  font-size: 12px;
+}
+.groupItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 6px;
+  min-height: 36px;
   padding: 4px 10px;
   font: inherit;
   text-align: left;
@@ -349,11 +405,23 @@
   border: 1px solid var(--border-hi);
   cursor: pointer;
 }
+.groupTick {
+  width: 1.5ch;
+  color: var(--system);
+}
+.groupQty {
+  color: var(--dim);
+}
+.partShort {
+  color: var(--faint);
+}
 .benchItemOn {
   border-color: var(--system);
   background: rgba(255, 176, 0, 0.1);
 }
 .benchRole {
+  flex-basis: 100%;
+  padding-left: calc(1.5ch + 6px);
   color: var(--dim);
   font-size: 11px;
 }

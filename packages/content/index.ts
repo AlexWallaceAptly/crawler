@@ -19,6 +19,7 @@ import consumables from "./items/consumables.json";
 import arenaFeatures from "./arenaFeatures.json";
 import lootTables from "./lootTables.json";
 import recipes from "./recipes.json";
+import craftParts from "./craftParts.json";
 import thread from "./thread.json";
 import shards from "./shards.json";
 import modules from "./modules.json";
@@ -45,6 +46,7 @@ export const rawContent = {
   "arenaFeatures.json": arenaFeatures,
   "lootTables.json": lootTables,
   "recipes.json": recipes,
+  "craftParts.json": craftParts,
   "thread.json": thread,
   "shards.json": shards,
   "modules.json": modules,

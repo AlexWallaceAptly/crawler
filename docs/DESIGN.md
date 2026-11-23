@@ -593,6 +593,12 @@ Rooms are littered with junk (tape, glue, rope, tacks, nails, barbed wire, pipes
 
 - **Discovery, not a menu.** `combine bat tacks tape`. If some recipe in `recipes.json` uses exactly those things, it's made and added to the recipe book; if not, the System AI mocks you and five minutes pass. The book shows hints for unknown recipes whose parts you're carrying.
 - **Recipes are tag-based:** any blunt weapon + anything sharp + anything that binds.
+- **The workbench groups your pack by property** (`craftParts.json`): Weapons, Worn gear, then Sharp (3), Bind (5), Elastic (1) and so on, then Other.
+  - Each group opens to show its items, and you tap things from any groups, then Combine. An item can sit in several groups: a bungee cord is Bind, Cord and Elastic.
+  - Only groups you're carrying something in are shown. The count is units, so a stack of 3 tacks counts 3.
+  - The recipe book lists each part with what you have: "Blunt weapon (upgraded) 1/1 + Sharp 3/1 + Bind 0/1".
+  - Typing a property works too: `combine blunt sharp bind` uses the cheapest thing that fits each, and your equipped weapon for an upgrade.
+  - A part's name comes from `craftParts.json` (`label`, or `term` in recipes). Every tag a recipe asks for must have an entry, or validation fails.
   - **Outputs.** A recipe either upgrades an item in place (Nail-Studded, Barbed, Live-Wired: damage, on-hit statuses, damage type) or makes something new (pipe spear, caltrop pouch, molotov, magazine armor).
   - **Limits.** Each upgrade applies once per item, and an item takes at most two.
   - **Checks.** Some recipes roll one (Tinkering, Trap Engineering, Explosives Handling); failing ruins a part, but you learn the recipe anyway.

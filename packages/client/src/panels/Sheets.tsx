@@ -139,12 +139,19 @@ export function InventoryList({ view }: { view: ViewModel }) {
   );
 }
 
-/** Pick things from the pack and try them together: the tap version of `combine a b c`. */
+/**
+ * Your pack grouped by crafting property (Sharp (3), Bind (5)...). Open a group, tap
+ * things in any groups, hit Combine: the tap version of `combine a b c`.
+ */
 function Workbench({ view, submit }: { view: ViewModel; submit: (t: string) => void }) {
   const [picked, setPicked] = useState<string[]>([]);
+  const [open, setOpen] = useState<string[]>([]);
+  const groups = view.workbench ?? [];
+  const byUid = new Map(view.inventory.map((it) => [it.uid, it]));
   // things can vanish from the pack (used up, ruined) between tries
   const chosen = view.inventory.filter((it) => picked.includes(it.uid));
   const toggle = (uid: string) => setPicked((p) => (p.includes(uid) ? p.filter((u) => u !== uid) : [...p, uid]));
+  const flip = (id: string) => setOpen((o) => (o.includes(id) ? o.filter((x) => x !== id) : [...o, id]));
   const go = () => {
     submit(`combine ${chosen.map((it) => it.name.toLowerCase()).join(" | ")}`);
     setPicked([]);
@@ -152,26 +159,49 @@ function Workbench({ view, submit }: { view: ViewModel; submit: (t: string) => v
   return (
     <div className={s.bench}>
       <div className={s.benchHead}>⚒ Workbench</div>
-      <ol className={s.benchSteps}>
-        <li>Tap two or more things below.</li>
-        <li>Hit Combine.</li>
-        <li>If they go together you get something new, and the recipe is saved so you can remake it in one tap.</li>
-      </ol>
-      <div className={s.muted}>A wrong guess wastes 5 minutes. A fumbled build can ruin a part.</div>
-      {view.inventory.length === 0 ? (
+      <div className={s.benchIntro}>
+        Open a group, tap two or more things, hit Combine. If they go together you make something, and the recipe is saved.
+        <span className={s.muted}> A wrong guess wastes 5 minutes. A fumbled build can ruin a part.</span>
+      </div>
+      {groups.length === 0 ? (
         <div className={s.muted}>Your pack is empty. Go pick up some garbage.</div>
       ) : (
-        <div className={s.benchItems}>
-          {view.inventory.map((it) => {
-            const on = picked.includes(it.uid);
+        <ul className={s.groups}>
+          {groups.map((g) => {
+            const isOpen = open.includes(g.id);
+            const nPicked = g.items.filter((u) => picked.includes(u)).length;
             return (
-              <button key={it.uid} className={`${s.benchItem} ${on ? s.benchItemOn : ""}`} aria-pressed={on} onClick={() => toggle(it.uid)}>
-                <span className={rarityClass(it.rarity)}>{on ? "✓ " : ""}{it.name}{it.qty > 1 ? ` x${it.qty}` : ""}</span>
-                {it.parts && <span className={s.benchRole}>{it.parts.join(", ")}</span>}
-              </button>
+              <li key={g.id} className={s.group}>
+                <button className={s.groupHead} aria-expanded={isOpen} onClick={() => flip(g.id)}>
+                  <span className={s.groupCaret}>{isOpen ? "▾" : "▸"}</span>
+                  <span className={g.gear ? s.groupGear : s.groupName}>{g.label}</span>
+                  <span className={s.groupCount}>{g.count}</span>
+                  {nPicked > 0 && <span className={s.groupPicked}>{nPicked} picked</span>}
+                </button>
+                {isOpen && (
+                  <div className={s.groupBody}>
+                    {g.hint && <div className={s.groupHint}>{g.hint}</div>}
+                    {g.items.map((uid) => {
+                      const it = byUid.get(uid);
+                      if (!it) return null;
+                      const on = picked.includes(uid);
+                      const also = (it.parts ?? []).filter((p) => p !== g.label);
+                      return (
+                        <button key={uid} className={`${s.groupItem} ${on ? s.benchItemOn : ""}`} aria-pressed={on} onClick={() => toggle(uid)}>
+                          <span className={s.groupTick}>{on ? "✓" : "○"}</span>
+                          <span className={rarityClass(it.rarity)}>{it.name}</span>
+                          {it.qty > 1 && <span className={s.groupQty}> ×{it.qty}</span>}
+                          {it.equippedIn && <span className={s.groupQty}> [E]</span>}
+                          {also.length > 0 && <span className={s.benchRole}>also {also.join(", ").toLowerCase()}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
       <div className={s.benchBar}>
         <span className={s.benchPicked}>
@@ -183,6 +213,22 @@ function Workbench({ view, submit }: { view: ViewModel; submit: (t: string) => v
         </button>
       </div>
     </div>
+  );
+}
+
+/** "Blunt weapon 1/1 + Sharp 3/1 + Bind 0/1", short ones dimmed. */
+function Parts({ parts }: { parts: { label: string; have: number; need: number; kept?: boolean; upgraded?: boolean }[] }) {
+  return (
+    <span className={s.recipeParts}>
+      {parts.map((p, i) => (
+        <span key={i}>
+          {i > 0 && " + "}
+          <span className={p.have >= p.need ? undefined : s.partShort}>
+            {p.label}{p.upgraded ? " (upgraded)" : p.kept ? " (kept)" : ""} {p.have}/{p.need}
+          </span>
+        </span>
+      ))}
+    </span>
   );
 }
 
@@ -207,7 +253,9 @@ export function RecipeBook({ view, submit }: { view: ViewModel; submit?: (t: str
             {view.echo.modules.filter((m) => !m.installed).map((m) => (
               <li key={m.id} className={s.recipe}>
                 <span className={m.ready ? s.recipeReady : s.recipeName}>{m.ready ? "✓ " : "· "}{m.name}</span>
-                <span className={s.recipeParts}>{m.future ? "Echo can't run this one yet (later floors)" : m.parts.map((p) => `${p.name} ${p.have}/${p.need}`).join(" + ")}</span>
+                {m.future
+                  ? <span className={s.recipeParts}>Echo can't run this one yet (later floors)</span>
+                  : <Parts parts={m.parts.map((p) => ({ label: p.name, have: p.have, need: p.need }))} />}
                 {m.ready && bench && submit && (
                   <button className={s.recipeBtn} onClick={() => submit(`craft ${m.name.toLowerCase()}`)}>build</button>
                 )}
@@ -222,7 +270,7 @@ export function RecipeBook({ view, submit }: { view: ViewModel; submit?: (t: str
         {book.known.map((r) => (
           <li key={r.id} className={s.recipe}>
             <span className={r.ready ? s.recipeReady : s.recipeName}>{r.ready ? "✓ " : "· "}{r.name}</span>
-            <span className={s.recipeParts}>{r.parts.join(" + ")}</span>
+            <Parts parts={r.parts} />
             {r.ready && bench && submit && (
               <button className={s.recipeBtn} onClick={() => submit(`craft ${r.name.toLowerCase()}`)}>make</button>
             )}

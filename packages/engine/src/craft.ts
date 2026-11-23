@@ -8,15 +8,19 @@
  * so they're data in recipes.json. Matching:
  *   1. split what you typed into item names (commas, "+", "and", "with", or
  *      spaces — trying every way to group the words);
- *   2. each name resolves to candidate items (exact, whole words, substring);
+ *   2. each name resolves to candidate items (exact, whole words, substring), or,
+ *      when it names a crafting property instead (`combine blunt sharp bind`),
+ *      to everything with that property (craftParts.json);
  *   3. search candidate choices × recipes × input slots: every named item must
  *      fill a slot, and every slot must be filled;
  *   4. the most specific recipe wins (id 4, a single tag 2, a list of tags 1,
  *      plus one per input, plus its priority); ties go to file order.
+ * The workbench groups your pack by those properties (workbenchGroups), and the book
+ * counts what you have of each part ("Sharp 3/1").
  * Upgrades are baked into the item (name, power, on-hit) and recorded in
  * `item.crafted`, so an equipped bat stays equipped and each upgrade applies once.
  */
-import type { Recipe, RecipeInput } from "./content/schemas";
+import type { CraftPart, Recipe, RecipeInput } from "./content/schemas";
 import { advanceTime } from "./explore";
 import { autoEquip } from "./gen/backstory";
 import { itemFromRef } from "./gen/item";
@@ -130,12 +134,39 @@ export interface Match {
   assignment: Assignment;
 }
 
+/** A crafting property named in `combine` text ("sharp", "blunt weapon", "Echo's parts"), if any. */
+export function partNamed(content: Content, name: string): CraftPart | undefined {
+  const q = name.toLowerCase().trim();
+  const forms = (p: CraftPart) => [p.id, p.label, p.term ?? p.label].flatMap((n) => {
+    const l = n.toLowerCase().replace(/_/g, " ");
+    return [l, l.endsWith("s") ? l.slice(0, -1) : `${l}s`];
+  });
+  return content.craftParts.all.find((p) => forms(p).includes(q));
+}
+
+export function inPart(part: CraftPart, item: ItemInstance): boolean {
+  const tags = effectiveTags(item);
+  return part.tags.some((t) => tags.includes(t));
+}
+
+/**
+ * What a name in `combine` text could mean: items by name, or every item with that
+ * property ("sharp" = anything sharp; cheapest first, so the good stuff is spared).
+ */
+export function candidatesFor(content: Content, inventory: ItemInstance[], name: string): ItemInstance[] {
+  const byName = findItems(inventory, name);
+  if (byName.length) return byName;
+  const part = partNamed(content, name);
+  if (!part) return [];
+  return inventory.filter((it) => inPart(part, it)).sort((a, b) => a.value - b.value);
+}
+
 /** The best recipe that uses exactly the named things, or null. */
 export function matchCombination(content: Content, inventory: ItemInstance[], text: string): Match | null {
   const recipes = content.recipes.all.slice().sort((a, b) => specificity(b) - specificity(a));
   for (const names of splitNames(text)) {
     if (names.length < 2) continue;
-    const cands = names.map((n) => findItems(inventory, n));
+    const cands = names.map((n) => candidatesFor(content, inventory, n));
     if (cands.some((c) => c.length === 0)) continue;
     for (const recipe of recipes) {
       for (const items of choices(cands)) {
@@ -172,13 +203,51 @@ export function autoAssign(c: Crawler, recipe: Recipe): Assignment | null {
   return slots;
 }
 
-function describeInput(i: RecipeInput, content: Content): string {
-  const what = i.id ? (content.items.bases.byId[i.id]?.name ?? content.items.consumables.byId[i.id]?.name ?? i.id) : i.tags!.join(" or ");
-  return `${i.qty > 1 ? `${i.qty}× ` : ""}${what}${i.base ? " (upgraded)" : ""}${!i.consumed ? " (kept)" : ""}`;
+/** What a recipe input is called: an item's name, or its property ("Blunt weapon", "Wick or Padding"). */
+export function inputLabel(i: RecipeInput, content: Content): string {
+  if (i.id) return content.items.bases.byId[i.id]?.name ?? content.items.consumables.byId[i.id]?.name ?? i.id;
+  const tags = i.tags!;
+  const name = (p: CraftPart) => p.term ?? p.label;
+  const whole = content.craftParts.all.find((p) => tags.every((t) => p.tags.includes(t)));
+  if (whole) return name(whole);
+  return tags.map((t) => {
+    const p = content.craftParts.all.find((x) => x.tags.includes(t));
+    return p ? name(p) : t;
+  }).join(" or ");
+}
+
+/** One part of a recipe as the book shows it: "Sharp 3/1". */
+export interface RecipePart {
+  label: string;
+  /** Units in your pack that fit (upgrade bases count one each). */
+  have: number;
+  need: number;
+  /** A tool: not used up. */
+  kept?: boolean;
+  /** The item that gets upgraded. */
+  upgraded?: boolean;
+}
+
+export function recipeParts(c: Crawler, recipe: Recipe, content: Content): RecipePart[] {
+  return recipe.inputs.map((i) => {
+    const fits = c.inventory.filter((it) => inputMatches(i, it, recipe));
+    return {
+      label: inputLabel(i, content),
+      have: i.base ? fits.length : fits.reduce((n, it) => n + it.qty, 0),
+      need: i.qty,
+      ...(!i.consumed ? { kept: true } : {}),
+      ...(i.base ? { upgraded: true } : {}),
+    };
+  });
+}
+
+/** "Blunt weapon (upgraded) 1/1 + Sharp 3/1 + Bind 0/1" */
+export function formatParts(parts: RecipePart[]): string {
+  return parts.map((p) => `${p.label}${p.upgraded ? " (upgraded)" : ""}${p.kept ? " (kept)" : ""} ${p.have}/${p.need}`).join(" + ");
 }
 
 export interface RecipeBookView {
-  known: { id: string; name: string; parts: string[]; text: string; ready: boolean }[];
+  known: { id: string; name: string; parts: RecipePart[]; text: string; ready: boolean }[];
   hints: string[];
 }
 
@@ -187,11 +256,51 @@ export function recipeBook(c: Crawler, content: Content): RecipeBookView {
   const known = new Set(c.recipes ?? []);
   return {
     known: content.recipes.all.filter((r) => known.has(r.id)).map((r) => ({
-      id: r.id, name: r.name, parts: r.inputs.map((i) => describeInput(i, content)), text: r.text,
+      id: r.id, name: r.name, parts: recipeParts(c, r, content), text: r.text,
       ready: autoAssign(c, r) !== null,
     })),
     hints: content.recipes.all.filter((r) => !known.has(r.id) && autoAssign(c, r) !== null).slice(0, 3).map((r) => r.hint),
   };
+}
+
+/** A workbench group: everything in your pack with one property. */
+export interface WorkbenchGroup {
+  id: string;
+  label: string;
+  hint?: string;
+  /** Units carried (a stack of 3 counts 3). */
+  count: number;
+  /** Item uids, in pack order. One item can sit in several groups. */
+  items: string[];
+  gear: boolean;
+}
+
+/**
+ * The workbench's grouped list: Weapons, Worn gear, then each junk property you're
+ * carrying (Sharp (3), Bind (5)...), then Other. Empty groups are left out.
+ */
+export function workbenchGroups(c: Crawler, content: Content): WorkbenchGroup[] {
+  const placed = new Set<string>();
+  const out: WorkbenchGroup[] = [];
+  for (const p of content.craftParts.all.filter((x) => x.group)) {
+    const items = c.inventory.filter((it) => inPart(p, it));
+    if (items.length === 0) continue;
+    for (const it of items) placed.add(it.uid);
+    out.push({
+      id: p.id, label: p.label, ...(p.hint ? { hint: p.hint } : {}), gear: p.gear,
+      count: items.reduce((n, it) => n + it.qty, 0), items: items.map((it) => it.uid),
+    });
+  }
+  const rest = c.inventory.filter((it) => !placed.has(it.uid));
+  if (rest.length) {
+    out.push({ id: "other", label: "Other", hint: "Not a part in any recipe anyone's found.", gear: false, count: rest.reduce((n, it) => n + it.qty, 0), items: rest.map((it) => it.uid) });
+  }
+  return out;
+}
+
+/** The junk properties an item counts as ("Bind", "Cord", "Elastic"); gear groups aren't listed. */
+export function partsOf(item: ItemInstance, content: Content): string[] {
+  return content.craftParts.all.filter((p) => p.group && !p.gear && inPart(p, item)).map((p) => p.label);
 }
 
 // ---------------------------------------------------------------- doing it
@@ -321,7 +430,7 @@ function requireBench(ctx: StepContext): boolean {
 export function combine(ctx: StepContext, text: string): void {
   if (!requireBench(ctx)) return;
   const inv = ctx.crawler.inventory;
-  const carrying = splitNames(text).some((g) => g.length >= 2 && g.every((n) => findItems(inv, n).length > 0));
+  const carrying = splitNames(text).some((g) => g.length >= 2 && g.every((n) => candidatesFor(ctx.content, inv, n).length > 0));
   if (!carrying) {
     ctx.error("You aren't carrying all of that (and it takes at least two things). Check your pack.");
     return;
@@ -351,7 +460,7 @@ export function craftKnown(ctx: StepContext, name: string): void {
   if (!requireBench(ctx)) return;
   const assignment = autoAssign(c, recipe);
   if (!assignment) {
-    ctx.error(`You're missing parts for the ${recipe.name}: ${recipe.inputs.map((i) => describeInput(i, ctx.content)).join(" + ")}.`);
+    ctx.error(`You're missing parts for the ${recipe.name}: ${formatParts(recipeParts(c, recipe, ctx.content))}.`);
     return;
   }
   make(ctx, { recipe, assignment });
@@ -361,7 +470,7 @@ export function craftKnown(ctx: StepContext, name: string): void {
 export function showRecipes(ctx: StepContext): void {
   const book = recipeBook(ctx.crawler, ctx.content);
   const lines = [
-    ...book.known.map((r) => `${r.ready ? "✓" : "·"} ${r.name}: ${r.parts.join(" + ")}`),
+    ...book.known.map((r) => `${r.ready ? "✓" : "·"} ${r.name}: ${formatParts(r.parts)}`),
     ...(book.known.length ? [] : ["(empty: combine things at a workbench to find out what works)"]),
     ...(book.hints.length ? ["", "Ideas, based on what you're carrying:", ...book.hints.map((h) => `  ? ${h}`)] : []),
   ];
