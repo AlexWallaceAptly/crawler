@@ -1,4 +1,7 @@
 import { afterAction, assess, listen, searchPass } from "./roomwork";
+import { openBoxes, showAchievements, showBoxes } from "./rewardActions";
+import { buyItem, sellItem, showShop } from "./shop";
+import { settle } from "./achievements";
 import { eatMeal, seedGuide, showGuide } from "./guideActions";
 import { int } from "./rng";
 import { actionMinutes, sleepStage } from "./rules/sleep";
@@ -119,6 +122,9 @@ export const HELP_LINES = [
   "disarm               switch off this room's hazards (skill check)",
   "meal                 safe rooms: eat something for a small bonus until you sleep",
   "guide                the run's Game Guide (events, scout reports, rules)",
+  "boxes / open [n|all] loot boxes: list them; open one in a safe room (only there)",
+  "achievements         what you've earned, and what you haven't",
+  "shop / buy x / sell x   safe rooms: the shopkeeper's shelf; buy and sell (no time passes). `sell junk all`, `buy tape 2`",
   "rest                 catch your breath (30 min, heals a little)",
   "sleep                6-8 hours: full heal in a safe room, half as good anywhere else",
   "descend              take a stairwell down, ending the floor",
@@ -384,6 +390,42 @@ const handlers: Handlers = {
       eatMeal(ctx, here(ctx).room);
     },
   },
+  boxes: {
+    phases: ["exploring", "combat"],
+    run(ctx) {
+      showBoxes(ctx, ctx.game.floor!.rooms[ctx.game.floor!.currentRoom]!);
+    },
+  },
+  open: {
+    phases: ["exploring"],
+    run(ctx, action) {
+      openBoxes(ctx, here(ctx).room, action.which);
+    },
+  },
+  shop: {
+    phases: ["exploring"],
+    run(ctx) {
+      showShop(ctx, here(ctx).room);
+    },
+  },
+  buy: {
+    phases: ["exploring"],
+    run(ctx, action) {
+      buyItem(ctx, here(ctx).room, action.item, action.qty);
+    },
+  },
+  sell: {
+    phases: ["exploring"],
+    run(ctx, action) {
+      sellItem(ctx, here(ctx).room, action.item, action.qty);
+    },
+  },
+  achievements: {
+    phases: ["exploring", "combat"],
+    run(ctx) {
+      showAchievements(ctx);
+    },
+  },
   guide: {
     phases: "any",
     run(ctx, action) {
@@ -639,7 +681,7 @@ export function travel(ctx: StepContext, dest: number): void {
 }
 
 /** Actions that don't advance the turn counter (no game effect). */
-const FREE_ACTIONS = new Set<ActionType>(["help", "set", "recipes", "codex", "echo", "guide"]);
+const FREE_ACTIONS = new Set<ActionType>(["help", "set", "recipes", "codex", "echo", "guide", "boxes", "achievements", "shop", "buy", "sell"]);
 
 export function killCrawler(ctx: StepContext, cause: string, key = "died"): void {
   ctx.game.combat = null;
@@ -687,6 +729,7 @@ export function step(world: World, action: Action, content: Content, echo?: stri
     afterAction(ctx);
     if (!FREE_ACTIONS.has(action.type)) draft.game.turn += 1;
   }
+  settle(ctx);
   ctx.emit({ type: "stateChanged" });
   return { world: draft, events: commitEvents(draft, ctx.events) };
 }

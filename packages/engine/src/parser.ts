@@ -35,6 +35,8 @@ const VERBS: Record<string, string> = {
   assess: "assess", scout: "assess", survey: "assess", inspect: "assess",
   disarm: "disarm", defuse: "disarm",
   meal: "meal", dine: "meal", snack: "meal",
+  boxes: "boxes", box: "boxes", open: "open", achievements: "achievements", achievement: "achievements", ach: "achievements",
+  shop: "shop", store: "shop", buy: "buy", purchase: "buy", sell: "sell",
   guide: "guide", g: "guide", manual: "guide",
   rest: "rest", sleep: "sleep", nap: "sleep",
   descend: "descend", down: "descend", stairs: "descend",
@@ -163,6 +165,23 @@ export function parseCommand(input: string, world: World): ParseResult {
       return { ok: true, action: { type: "disarm" } };
     case "meal":
       return { ok: true, action: { type: "meal" } };
+    case "boxes":
+      return { ok: true, action: { type: "boxes" } };
+    case "open":
+      return { ok: true, action: arg ? { type: "open", which: arg } : { type: "open" } };
+    case "achievements":
+      return { ok: true, action: { type: "achievements" } };
+    case "shop":
+      return { ok: true, action: { type: "shop" } };
+    case "buy":
+    case "sell": {
+      if (!arg) return { ok: false, reason: "unknown", input: text };
+      // A trailing number or "all" is the quantity: `buy bandage 2`, `sell junk all`.
+      const m = /^(.*\S)\s+(\d+|all)$/.exec(arg);
+      const item = m ? m[1]! : arg;
+      const qty = m ? m[2]! : undefined;
+      return { ok: true, action: { type: verb as "buy" | "sell", item, ...(qty ? { qty } : {}) } };
+    }
     case "guide":
       return { ok: true, action: arg === "read" ? { type: "guide", quiet: true } : { type: "guide" } };
     case "rest":
@@ -427,6 +446,11 @@ export function availableCommands(world: World, content: Content): CommandOption
       out.push({ label: "Eat a meal", input: "meal" });
     }
     out.push({ label: "Rest", input: "rest" });
+    if (room.type === "safe" && room.shop) out.push({ label: "Shop", input: "shop" });
+    if (room.type === "safe" && world.game.boxes.length > 0) {
+      out.push({ label: `Open a box (${world.game.boxes.length})`, input: "open", primary: true });
+      if (world.game.boxes.length > 1) out.push({ niche: true, label: "Open all boxes", input: "open all" });
+    }
     out.push({ niche: true, label: "Map", input: "map" });
     if (world.game.echo) {
       const fx = effectsNow(world.game, content);
@@ -437,6 +461,7 @@ export function availableCommands(world: World, content: Content): CommandOption
   }
   if (world.game.crawler) out.push({ niche: true, label: "Codex", input: "codex" });
   if (world.game.crawler) out.push({ niche: true, label: "Guide", input: "guide" });
+  if (world.game.crawler) out.push({ niche: true, label: "Achievements", input: "achievements" });
   if (isAllowed(world, "look")) out.push({ niche: true, label: "Look", input: "look" });
   out.push({ niche: true, label: "Help", input: "help" });
   return out;

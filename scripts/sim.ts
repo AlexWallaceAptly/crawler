@@ -123,6 +123,13 @@ interface Outcome {
   fightDamage: number[];
   fled: number;
   crafted: number;
+  /** Milestone 7: achievements earned, boxes opened and left unopened, gold earned and spent, ids earned. */
+  achievements: string[];
+  boxesOpened: number;
+  boxesLeft: number;
+  goldEarned: number;
+  goldSpent: number;
+  mood: number;
   /** Died in one of the floor's opening (easy pool) fights. */
   earlyDeath: boolean;
   /** Deepest floor stood on. */
@@ -372,6 +379,7 @@ function runOne(mode: CombatMode | "default", bot: Bot): Outcome {
   const stuck = (cause: string, i: number): Outcome => ({
     pace,
     result: "stuck", cause, actions: i, roomsVisited: 0, xp: 0, fights, level: 1, fightRounds, fightDamage, fled, crafted, earlyDeath,
+    achievements: [], boxesOpened: 0, boxesLeft: 0, goldEarned: 0, goldSpent: 0, mood: 0,
     deepest, shardsByFloor, modules: 0, bossFights, bossWins, weakness, temper: 0, atFloorEnd, weaponXp, rankAtFight, floorXp, bossDownOn,
     ...magic(),
   });
@@ -558,6 +566,12 @@ function runOne(mode: CombatMode | "default", bot: Bot): Outcome {
       else if (dowse && mpPct >= 0.7 && !dowsed.has(floor.floor)) { dowsed.add(floor.floor); spell = dowse.sp; }
       if (spell && cast(spell)) continue;
     }
+    // Milestone 7: unopened boxes open in the first safe room (they are free), and spare gold buys healing.
+    if (here.type === "safe" && world.game.boxes.length > 0) { act({ type: "open", which: "all" }); continue; }
+    if (here.type === "safe" && here.shop && world.game.crawler!.gold >= 25) {
+      const shelf = here.shop.stock.find((i) => i.kind === "consumable" && /heal|bandage|potion/i.test(i.name));
+      if (shelf) { const before = world.game.crawler!.gold; act({ type: "buy", item: shelf.name.toLowerCase(), qty: "1" }); if (world.game.crawler!.gold < before) continue; }
+    }
     const awakeH = (world.game.crawler!.awakeMin ?? 0) / 60;
     const careful = bot !== "greedy";
     if (here.type === "safe" && (hpPct(world) < 0.85 || (careful && awakeH >= 20 && timeToSpare))) { act({ type: "sleep" }); continue; }
@@ -658,6 +672,12 @@ function runOne(mode: CombatMode | "default", bot: Bot): Outcome {
     fightDamage,
     fled,
     crafted,
+    achievements: [...c.achievements],
+    boxesOpened: c.counters["boxes.opened"] ?? 0,
+    boxesLeft: world.game.boxes.length,
+    goldEarned: c.counters["gold.earned"] ?? 0,
+    goldSpent: c.counters["gold.spent"] ?? 0,
+    mood: world.game.narrator.mood,
     earlyDeath,
     deepest,
     shardsByFloor,
@@ -691,6 +711,18 @@ const spread = (xs: number[]) => {
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 const pct = (n: number, d: number) => (d ? `${Math.round((100 * n) / d)}%` : "-");
+
+/** Milestone 7: achievements, boxes, gold and the System AI's mood. */
+function rewardsReport(outcomes: Outcome[]): void {
+  const n = outcomes.length;
+  const ids = new Map<string, number>();
+  for (const o of outcomes) for (const id of o.achievements) ids.set(id, (ids.get(id) ?? 0) + 1);
+  const never = content.achievements.all.filter((a) => !ids.has(a.id) && !a.secret).map((a) => a.id);
+  const top = [...ids.entries()].sort((a, b) => b[1] - a[1]);
+  console.log(`  rewards: ${avg(outcomes.map((o) => o.achievements.length)).toFixed(1)} achievements/run of ${content.achievements.all.length}; boxes opened ${avg(outcomes.map((o) => o.boxesOpened)).toFixed(1)}/run (${avg(outcomes.map((o) => o.boxesLeft)).toFixed(1)} left unopened); gold earned ${Math.round(avg(outcomes.map((o) => o.goldEarned)))}, spent ${Math.round(avg(outcomes.map((o) => o.goldSpent)))}; mood ${avg(outcomes.map((o) => o.mood)).toFixed(1)}`);
+  console.log(`    most common: ${top.slice(0, 5).map(([id, k]) => `${id} ${Math.round((100 * k) / n)}%`).join(", ")}`);
+  console.log(`    never earned (non-secret): ${never.length ? never.join(", ") : "none"}`);
+}
 
 /** The floor pacing report (Milestone 6c): where the clock went and whether the targets hold. */
 function pacingReport(outcomes: Outcome[], bot: Bot): void {
@@ -755,6 +787,7 @@ for (const [bot, mode] of bots.flatMap((b) => modes.map((m) => [b, m] as const))
   console.log(`  damage taken per fight: ${avg(early).toFixed(1)} in fights 1-3 (easy pool), ${avg(late).toFixed(1)} after`);
   console.log(`  died in the first 3 fights: ${outcomes.filter((o) => o.earlyDeath).length} (${Math.round((100 * outcomes.filter((o) => o.earlyDeath).length) / runs)}%)`);
   if (crafty) console.log(`  crafted per run: ${avg(outcomes.map((o) => o.crafted)).toFixed(1)}`);
+  rewardsReport(outcomes);
   if (floorsArg > 1) {
     const reached = (f: number) => outcomes.filter((o) => o.deepest >= f).length;
     console.log(`  reached: ${Array.from({ length: floorsArg }, (_, i) => `F${i + 1} ${Math.round((100 * reached(i + 1)) / runs)}%`).join("   ")}`);

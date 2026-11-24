@@ -5,7 +5,7 @@
  *
  * Export each sheet from the workbook page as CSV into that folder, named after the sheet
  * (Thread.csv, Floor Arc.csv, Shards.csv, Modules.csv, Temper.csv, Codex.csv, Items.csv,
- * Spells.csv, Spell Schools.csv).
+ * Spells.csv, Spell Schools.csv, and optionally Achievements.csv).
  *
  * Spells: the sheet owns each spell's words and simple numbers (AP, MP, cooldown, power,
  * per-level growth, floor); the JSON keeps what it does in structured form (rider, status,
@@ -361,6 +361,61 @@ function formatSkills(skills: Json[]): string {
   return `[\n${skills.map(one).join(",\n")}\n]\n`;
 }
 
+// ---------------------------------------------------------------- achievements
+
+const GROUPS = ["firstTime", "combat", "nearDeath", "exploration", "crafting", "magic", "social", "humiliation", "stupidity", "secret", "thread", "progress", "time", "show"];
+
+/** "box silver weapon" | "box bronze" | "xp 20" | "gold 25" -> the engine's reward object. */
+function parseReward(v: string, where: string): Json {
+  const [kind, a, b] = v.trim().toLowerCase().split(/\s+/);
+  if (kind === "box" && a) return { box: a, boxType: b ?? "adventurer" };
+  if ((kind === "xp" || kind === "gold") && a && Number.isInteger(Number(a))) return { [kind]: Number(a) };
+  throw new Error(`${where}: Reward "${v}" must look like "box silver weapon", "xp 20" or "gold 25"`);
+}
+
+const yes = (v: string) => /^(y|yes|true|1)$/i.test(v.trim());
+
+/**
+ * Achievements: the sheet owns everything (name, group, tags, hint, text, reward, repeatable,
+ * secret, mood and the trigger as a JSON cell, see "Loot boxes and achievements" in the design doc).
+ * Achievements that only exist in the JSON are kept. A missing sheet leaves the file alone.
+ */
+function importAchievements(): Json[] | undefined {
+  if (!existsSync(join(dir, "Achievements.csv"))) {
+    console.log("  (no Achievements.csv: achievements.json left alone)");
+    return undefined;
+  }
+  const fromSheet = sheet("Achievements").map((r) => {
+    const id = col(r, "ID") || slug(col(r, "Name"));
+    const where = `Achievements "${id}"`;
+    const group = col(r, "Group");
+    if (!GROUPS.includes(group)) throw new Error(`${where}: Group "${group}" must be one of ${GROUPS.join(", ")}`);
+    let trigger: unknown;
+    try {
+      trigger = JSON.parse(col(r, "Trigger"));
+    } catch {
+      throw new Error(`${where}: Trigger is not valid JSON`);
+    }
+    const mood = r["Mood"] === undefined || r["Mood"] === "" ? 1 : Number(r["Mood"]);
+    const hint = r["Hint"];
+    return {
+      id,
+      name: col(r, "Name"),
+      group,
+      tags: (r["Tags"] ?? "").split(",").map((t) => t.trim()).filter(Boolean),
+      trigger,
+      reward: parseReward(col(r, "Reward"), where),
+      repeatable: yes(r["Repeatable"] ?? ""),
+      secret: yes(r["Secret"] ?? ""),
+      mood,
+      text: col(r, "Text"),
+      ...(hint ? { hint } : {}),
+    } as Json;
+  });
+  type WithId = Json & { id: string };
+  return mergeById(fromSheet as WithId[], readJson<WithId[]>("achievements.json", []));
+}
+
 // ---------------------------------------------------------------- run
 
 console.log(`Importing the workbook from ${dir}`);
@@ -374,6 +429,8 @@ writeJson("temper.json", importTemper());
 writeJson("codex.json", importCodex(shards, bossIds));
 writeJson("items/oddities.json", importItems());
 writeJson("spells.json", importSpells());
+const achievements = importAchievements();
+if (achievements) writeJson("achievements.json", achievements);
 writeFileSync(join(contentDir, "skills.json"), formatSkills(importSchools()));
 console.log("  wrote packages/content/skills.json");
 console.log("Done. Run `npm run validate` to check the result.");

@@ -5,6 +5,7 @@
  * Everything here is data-driven: chances, caps and texts come from thread.json,
  * temper.json, shards.json and codex.json. All randomness goes through rng.ts.
  */
+import { recordKill } from "./combat";
 import type { Content } from "./content/load";
 import type { CodexEntry, Shard, TemperRules } from "./content/schemas";
 import { chance, pick } from "./rng";
@@ -404,6 +405,7 @@ function zap(ctx: StepContext): void {
   if (target.hp <= 0) {
     ctx.fight(`The ${target.name} drops.`, "you");
     ctx.say("combat.kill", { target: target.name });
+    recordKill(ctx, target, "echo");
   }
 }
 

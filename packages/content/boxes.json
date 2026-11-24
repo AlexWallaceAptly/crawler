@@ -1,0 +1,202 @@
+{
+  "tiers": [
+    {
+      "id": "bronze",
+      "name": "Bronze",
+      "rolls": [
+        1,
+        2
+      ],
+      "minRarity": "common",
+      "gold": [
+        10,
+        30
+      ],
+      "pools": {
+        "item": 3,
+        "gold": 4,
+        "consumable": 4
+      },
+      "tomeChance": 0,
+      "oddityChance": 0,
+      "guarantee": "none"
+    },
+    {
+      "id": "silver",
+      "name": "Silver",
+      "rolls": [
+        2,
+        3
+      ],
+      "minRarity": "uncommon",
+      "gold": [
+        25,
+        60
+      ],
+      "pools": {
+        "item": 4,
+        "gold": 3,
+        "consumable": 3
+      },
+      "tomeChance": 0.25,
+      "oddityChance": 0,
+      "guarantee": "none"
+    },
+    {
+      "id": "gold",
+      "name": "Gold",
+      "rolls": [
+        3,
+        3
+      ],
+      "minRarity": "rare",
+      "gold": [
+        50,
+        120
+      ],
+      "pools": {
+        "item": 5,
+        "gold": 2,
+        "consumable": 2,
+        "tome": 1
+      },
+      "tomeChance": 0.35,
+      "oddityChance": 0.25,
+      "guarantee": "none"
+    },
+    {
+      "id": "platinum",
+      "name": "Platinum",
+      "rolls": [
+        3,
+        4
+      ],
+      "minRarity": "epic",
+      "gold": [
+        100,
+        250
+      ],
+      "pools": {
+        "item": 6,
+        "gold": 1,
+        "consumable": 1,
+        "tome": 1
+      },
+      "tomeChance": 0.5,
+      "oddityChance": 0.5,
+      "guarantee": "tomeOrOddity"
+    },
+    {
+      "id": "legendary",
+      "name": "Legendary",
+      "rolls": [
+        4,
+        4
+      ],
+      "minRarity": "epic",
+      "gold": [
+        200,
+        500
+      ],
+      "pools": {
+        "item": 7,
+        "gold": 1,
+        "consumable": 1,
+        "tome": 1
+      },
+      "tomeChance": 0.5,
+      "oddityChance": 0.5,
+      "guarantee": "legendary"
+    }
+  ],
+  "types": [
+    {
+      "id": "adventurer",
+      "name": "Adventurer",
+      "text": "A general-purpose box. The System AI packed it without looking.",
+      "mult": {
+        "item": 1,
+        "gold": 1,
+        "consumable": 1,
+        "tome": 1,
+        "oddity": 1
+      }
+    },
+    {
+      "id": "boss",
+      "name": "Boss",
+      "text": "Still warm from whatever you killed.",
+      "mult": {
+        "item": 1.5,
+        "gold": 1,
+        "consumable": 0.5,
+        "tome": 1,
+        "oddity": 2
+      }
+    },
+    {
+      "id": "weapon",
+      "name": "Weapon",
+      "text": "It rattles. Something in there wants to hit something.",
+      "mult": {
+        "item": 2,
+        "gold": 0.5,
+        "consumable": 0.25,
+        "tome": 0,
+        "oddity": 0
+      },
+      "slots": [
+        "mainHand",
+        "offHand"
+      ]
+    },
+    {
+      "id": "armor",
+      "name": "Armor",
+      "text": "Smells like a locker room. A rich person's locker room.",
+      "mult": {
+        "item": 2,
+        "gold": 0.5,
+        "consumable": 0.25,
+        "tome": 0,
+        "oddity": 0
+      },
+      "slots": [
+        "head",
+        "eyes",
+        "chest",
+        "legs",
+        "feet",
+        "hands",
+        "neck",
+        "ring",
+        "back",
+        "belt"
+      ]
+    },
+    {
+      "id": "spell",
+      "name": "Spell",
+      "text": "It hums. Do not put your ear against it.",
+      "mult": {
+        "item": 0.25,
+        "gold": 0.5,
+        "consumable": 0.5,
+        "tome": 4,
+        "oddity": 0.5
+      }
+    },
+    {
+      "id": "consumable",
+      "name": "Consumable",
+      "text": "Snacks, mostly. Some of the snacks are explosive.",
+      "mult": {
+        "item": 0.25,
+        "gold": 0.5,
+        "consumable": 4,
+        "tome": 0,
+        "oddity": 0
+      }
+    }
+  ]
+}

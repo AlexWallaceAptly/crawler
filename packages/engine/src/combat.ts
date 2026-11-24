@@ -40,6 +40,9 @@ import { dropTurnStatuses } from "./maneuvers";
 import { rollLoot } from "./gen/loot";
 import { generateItem, itemLevelFor, potencyFor } from "./gen/item";
 import { addToPile } from "./inventory";
+import { addGold } from "./economy";
+import { emitDamageTaken } from "./counters";
+import { moveMood } from "./mood";
 import { announceLevels, fightSkillSummary, gainXp, SKILL_CAP, skillRank, trainSkill, xpToNext } from "./progression";
 import { int } from "./rng";
 import { bossDefeated, bossTaunt, startBossFight } from "./boss";
@@ -469,6 +472,7 @@ export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfi
       ctx.fight(`The ${target.name} drops.`, "you");
       ctx.say("combat.kill", { target: target.name });
     }
+    recordKill(ctx, target, w.spell ? "spell" : "swing");
     const back = modTotal(mods, "killAp");
     const combat = ctx.game.combat;
     if (back > 0 && combat) {
@@ -539,7 +543,13 @@ export function damageEnemy(ctx: StepContext, e: Enemy, dmg: number, how: string
   if (e.hp <= 0) {
     ctx.fight(`The ${e.name} drops.`, "you");
     ctx.say("combat.kill", { target: e.name });
+    recordKill(ctx, e, how.toLowerCase().includes("spell") ? "spell" : "item");
   }
+}
+
+/** A kill, for the counters and the achievement engine. Overkill is the damage past zero HP. */
+export function recordKill(ctx: StepContext, e: Enemy, how: string): void {
+  ctx.emit({ type: "kill", target: e.name, family: e.familyId, tier: e.tier, overkill: Math.max(0, -e.hp), how });
 }
 
 // ---------------------------------------------------------------- flee / talk / move
@@ -752,6 +762,7 @@ export function playerUseItem(ctx: StepContext, item: ItemInstance, targets?: Ef
     t = { area: foes, ...(foes[0] ? { primary: foes[0] } : {}) };
   }
   consumeOne(ctx, item);
+  ctx.emit({ type: "itemUsed", item: item.name, baseId: item.baseId, itemType: consumable.type, tags: consumable.tags, inCombat: fighting });
   const applied = applyItemEffects(ctx, consumable, t);
   const summary = applied.length ? ` (${applied.join(", ")})` : "";
   if (fighting) {
@@ -806,6 +817,7 @@ function applyEffectToCrawler(ctx: StepContext, e: Effect, value: number, applie
       const mods = collectModifiers(c, ctx.content);
       const dmg = Math.max(1, value - modTotal(mods, `resist:${e.damageType ?? "physical"}`));
       c.hp = Math.max(0, c.hp - dmg);
+      emitDamageTaken(ctx, dmg, "self", "your own item");
       applied.push(`-${dmg} HP to you`);
       return;
     }
@@ -854,12 +866,15 @@ function applyEffectToCrawler(ctx: StepContext, e: Effect, value: number, applie
       return;
     case "loot":
       if (e.flag === "gold") {
-        c.gold += value;
+        addGold(ctx, value, "item");
         applied.push(`+${value} gold`);
       }
       return;
+    case "mood":
+      moveMood(ctx, value, "an item");
+      return;
     default:
-      // stat buffs, mood, flags: their systems arrive in later milestones.
+      // stat buffs and flags: their systems arrive in later milestones.
       return;
   }
 }
@@ -873,6 +888,7 @@ function applyEffectToEnemy(ctx: StepContext, en: Enemy, e: Effect, value: numbe
       if (en.hp <= 0) {
         ctx.fight(`The ${en.name} drops.`, "you");
         ctx.say("combat.kill", { target: en.name });
+        recordKill(ctx, en, "item");
       }
       return;
     case "status":
@@ -946,6 +962,7 @@ function enemyTurnPreamble(ctx: StepContext, e: Enemy): boolean {
   if (e.hp <= 0) {
     ctx.fight(`The ${e.name} succumbs.`, "status");
     ctx.say("combat.kill", { target: e.name });
+    recordKill(ctx, e, "status");
     return false;
   }
   if (hasFlag(e.statuses, ctx.content, "skipTurn")) {
@@ -982,6 +999,7 @@ function lashOut(ctx: StepContext, e: Enemy): boolean {
   if (victim.hp <= 0) {
     ctx.fight(`The ${victim.name} drops. Friendly fire is still fire.`, "enemy");
     ctx.say("combat.kill", { target: victim.name });
+    recordKill(ctx, victim, "friendlyFire");
   }
   return true;
 }
@@ -1083,6 +1101,7 @@ export function enemyStrike(ctx: StepContext, e: Enemy, attack: LiveAttack, opts
   const soak = d.armor + modTotal(mods, `resist:${attack.damageType}`);
   const dmg = Math.max(1, attack.power[roll.tier - 1]! + Math.floor(statMod / 4) + modTotal(enemyMods, "damage") - soak);
   c.hp -= dmg;
+  emitDamageTaken(ctx, dmg, "enemy", e.name);
   if (ctx.game.combat) e.hitYouRound = ctx.game.combat.round;
   ctx.fight(
     `${e.name} — ${attack.name}: ${describePower(roll)}${pack ? ` (${pack} ganging up)` : ""}. ${roll.crit ? "CRIT, tier 3" : `Tier ${roll.tier}`}: ${dmg} ${attack.damageType} damage${soak > 0 ? ` (${soak} soaked)` : ""}. You: ${Math.max(0, c.hp)}/${d.maxHP}.`,
@@ -1123,6 +1142,7 @@ export function damageCrawler(ctx: StepContext, raw: number, damageType: string,
   const mods = collectModifiers(c, ctx.content);
   const dmg = Math.max(1, raw - modTotal(mods, "damageReduction", `resist:${damageType}`));
   c.hp -= dmg;
+  emitDamageTaken(ctx, dmg, "self", cause);
   if (c.hp <= 0) killInCombat(ctx, cause);
   return dmg;
 }
@@ -1144,6 +1164,7 @@ export function checkVictory(ctx: StepContext): void {
   if (combat.boss) bossDefeated(ctx);
   groupBeaten(ctx);
   const drops = rollDrops(ctx);
+  const loot = rollGold(ctx);
   const skills = fightSkillSummary(ctx);
   endCombat(ctx);
   const c = ctx.crawler;
@@ -1154,7 +1175,25 @@ export function checkVictory(ctx: StepContext): void {
   ctx.say("combat.victory", { xp });
   announceLevels(ctx, levels);
   placeDrops(ctx, drops);
+  if (loot > 0) {
+    addGold(ctx, loot, "loot");
+    ctx.describe(`You pick ${loot} gold out of the wreckage.`);
+  }
   ctx.setPhase("exploring");
+}
+
+/** Gold off the dead: by tier, scaled by floor (shops.json → drops). Talked-down and fled enemies pay nothing. */
+function rollGold(ctx: StepContext): number {
+  const combat = ctx.game.combat!;
+  const shops = ctx.content.shops;
+  const floor = ctx.game.floor?.floor ?? 1;
+  let total = 0;
+  for (const e of combat.enemies) {
+    if (e.hp > 0 || e.fate) continue;
+    const range = shops.drops[e.tier as keyof typeof shops.drops];
+    if (range) total += int(range[0], range[1]);
+  }
+  return Math.round(total * (1 + shops.floorScale * (floor - 1)));
 }
 
 /** Killed (not talked down, not fled) enemies may drop a piece of generated gear: floors.json → loot.gear.drops. */

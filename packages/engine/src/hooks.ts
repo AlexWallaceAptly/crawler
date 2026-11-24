@@ -6,32 +6,36 @@ import type { Room } from "./state";
 import type { StepContext } from "./step";
 
 /**
- * Echo's reaction to the crawler's sleep state changing. Milestone 7 adds the narration
- * templates (Echo's voice follows the act: worried when Tired, frantic when Delirious) and
- * calls `ctx.echoSay` here. `worse` is true going down a stage, false after a good sleep.
+ * Echo's reaction to the crawler's sleep state changing (Milestone 7): worried when Tired, frantic
+ * when Delirious, and its voice follows the act. `worse` is true going down a stage, false after a good sleep.
  */
-export function onSleepStageChange(_ctx: StepContext, _from: string, _to: string, _worse: boolean): void {
-  /* hook */
+export function onSleepStageChange(ctx: StepContext, from: string, to: string, worse: boolean): void {
+  // Echo only fusses when you're sliding into Tired or worse, or when sleep fixed it.
+  if (worse && to === "rested") return;
+  ctx.echoSay(worse ? "echo.sleep.worse" : "echo.sleep.better", { stage: to, from });
 }
 
-/** What a safe room offers. The first three work now; the rest are slots for milestone 7. */
+/** What a safe room offers. */
 export interface SafeService {
   id: "sleep" | "rest" | "meal" | "shop" | "lootBox" | "achievements";
   label: string;
   available: boolean;
-  /** Why it's not available yet, for the Guide. */
+  /** Why it's not available right now, for the Guide. */
   note?: string;
 }
 
-export function safeServices(room: Room): SafeService[] {
+export function safeServices(room: Room, boxes = 0): SafeService[] {
   if (room.type !== "safe") return [];
-  const later = "Arrives with Milestone 7.";
   return [
     { id: "sleep", label: "Sleep", available: true },
     { id: "rest", label: "Short rest", available: true },
     { id: "meal", label: "Meal", available: true },
-    { id: "shop", label: "Shop", available: false, note: later },
-    { id: "lootBox", label: "Open loot boxes", available: false, note: later },
-    { id: "achievements", label: "Achievements", available: false, note: later },
+    room.shop
+      ? { id: "shop", label: "Shop", available: true }
+      : { id: "shop", label: "Shop", available: false, note: "Nobody is minding the till." },
+    boxes > 0
+      ? { id: "lootBox", label: `Open loot boxes (${boxes})`, available: true }
+      : { id: "lootBox", label: "Open loot boxes", available: false, note: "You aren't carrying any. Go earn something." },
+    { id: "achievements", label: "Achievements", available: true },
   ];
 }

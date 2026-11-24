@@ -3,6 +3,9 @@
  * and the ASCII map. All time-consuming actions go through advanceTime() —
  * it is the single choke point where warnings fire and the floor collapses.
  */
+import { grantBox } from "./boxes";
+import { seedShops } from "./shop";
+import { emitDamageTaken } from "./counters";
 import type { FloorTheme } from "./content/schemas";
 import { chance, pick } from "./rng";
 import { dcFor, describeCheck, resolveCheck, type DcTier } from "./rules/checks";
@@ -159,6 +162,7 @@ export function clearFloor(ctx: StepContext): void {
   ctx.account.bestFloor = Math.max(ctx.account.bestFloor, floor.floor + 1);
   ctx.emit({ type: "floorCleared", floor: floor.floor });
   ctx.say("floor.cleared", { floor: floor.floor });
+  grantBox(ctx, "bronze", "adventurer", `floor ${floor.floor} cleared`);
   ctx.game.combat = null;
   const next = ctx.content.floors.all.find((t) => t.floor === floor.floor + 1);
   if (!next) {
@@ -179,6 +183,7 @@ export function enterFloor(ctx: StepContext, theme: FloorTheme): void {
   seedFloorLoot(ctx.game.floor, theme, ctx.content);
   ctx.game.floor.startClock = ctx.game.clock;
   seedRoomState(ctx.game.floor, theme, ctx.content);
+  seedShops(ctx.game.floor, ctx.content);
   scheduleEvents(ctx.game.floor, theme, ctx.content);
   ctx.setPhase("exploring");
   ctx.emit({ type: "floorEntered", floor: theme.floor, name: theme.name });
@@ -345,6 +350,7 @@ function hurtByHazard(ctx: StepContext, room: Room, h: HazardState, crit: boolea
   if (crit) dmg *= 2;
   dmg = Math.max(1, dmg - modTotal(mods, "damageReduction", `resist:${trap.damageType}`));
   c.hp -= dmg;
+  emitDamageTaken(ctx, dmg, "hazard", trap.name);
   room.trapSprung = true;
   h.ticks += 1;
   ctx.describe(trap.triggered);

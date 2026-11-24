@@ -21,6 +21,12 @@ function text(e: GameEvent): string {
       return `ECHO MODULE — ${e.name}`;
     case "floorEntered":
       return `FLOOR ${e.floor} — ${e.name}`;
+    case "achievementEarned":
+      return `🏆 ${e.name} — ${e.text}`;
+    case "boxEarned":
+      return `▣ ${e.tier.toUpperCase()} BOX — opens in a safe room`;
+    case "boxOpened":
+      return `▣ ${e.tier.toUpperCase()} BOX OPENED — ${e.contents.length} thing${e.contents.length === 1 ? "" : "s"}`;
     case "levelUp":
       return `★ LEVEL ${e.level} — ${e.unspent} stat points to spend`;
     case "skillUp":

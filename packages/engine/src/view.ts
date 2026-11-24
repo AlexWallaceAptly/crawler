@@ -21,6 +21,10 @@ import { moduleItemDetails, moduleViews, type ModuleView } from "./modules";
 import { itemInfo } from "./itemInfo";
 import { heldWeapon, profileOf, swingNumbers, weaponFit } from "./gear";
 import { spellViews, type SpellView } from "./spells";
+import { achievementList } from "./achievements";
+import { boxName } from "./boxes";
+import { moodWord } from "./mood";
+import { shopView, type ShopView } from "./shop";
 
 export interface Bar {
   current: number;
@@ -74,6 +78,18 @@ function guideView(game: World["game"]): GuideView {
     });
   }
   return { unseen: unseenGuide(game), sections };
+}
+
+export interface RewardsView {
+  boxes: { id: string; name: string; tier: string; boxType: string; source: string }[];
+  achievements: { id: string; name: string; group: string; earned: boolean; times: number; text: string; reward: string; progress?: { have: number; need: number } }[];
+  earned: number;
+  total: number;
+  mood: { value: number; word: string };
+  /** Only in a safe room with a shop. */
+  shop: ShopView | null;
+  /** Boxes can be opened right now (a safe room, not mid-fight). */
+  canOpen: boolean;
 }
 
 export interface ViewModel {
@@ -172,6 +188,8 @@ export interface ViewModel {
   guide: GuideView;
   /** What the account remembers across runs. */
   codex: CodexView;
+  /** Rewards (Milestone 7): unopened boxes, achievements, the System AI's mood, and the shop in this room. */
+  rewards: RewardsView;
   /** The room you're in: what's on the floor, and whether you can craft here. */
   room: null | { items: ItemView[]; workbench: boolean; /** Safe rooms: what they offer (slots for Milestone 7 are listed unavailable). */ services: SafeService[] };
   minimap: string[] | null;
@@ -202,6 +220,7 @@ export function view(world: World, content: Content): ViewModel {
       echo: null,
       codex: codexView(content, account),
     guide: guideView(game),
+      rewards: { boxes: [], achievements: [], earned: 0, total: content.achievements.all.length, mood: { value: 0, word: moodWord(0) }, shop: null, canOpen: false },
     };
   }
   const d = derive(c, content);
@@ -331,13 +350,22 @@ export function view(world: World, content: Content): ViewModel {
       ? {
           items: (room.items ?? []).map((it) => itemView(it.uid, room.items)!).filter(Boolean),
           workbench: room.type === "safe" || !!room.workbench,
-          services: safeServices(room),
+          services: safeServices(room, game.boxes.length),
         }
       : null,
     minimap: floor ? renderMap(floor) : null,
     mapGrid: floor ? mapGrid(floor) : null,
     account: accountView,
     settings: { combatMode: combatModeOf(account) },
+    rewards: {
+      boxes: game.boxes.map((b) => ({ id: b.id, name: boxName(content, b), tier: b.tier, boxType: b.boxType, source: b.source })),
+      achievements: achievementList({ content, game }),
+      earned: c.achievements.length,
+      total: content.achievements.all.length,
+      mood: { value: game.narrator.mood, word: moodWord(game.narrator.mood) },
+      shop: room && room.type === "safe" ? shopView(game, content, room) ?? null : null,
+      canOpen: !!room && room.type === "safe" && game.phase === "exploring" && game.boxes.length > 0,
+    },
     echo: game.echo
       ? {
           vessel: vesselOf(content, game.echo).short,

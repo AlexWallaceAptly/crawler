@@ -1581,5 +1581,428 @@
         "text": "{spell}. Your first cast. Somewhere, a wizard you'll never meet just felt embarrassed for the profession."
       }
     ]
+  },
+  {
+    "key": "achievement.earned",
+    "variants": [
+      {
+        "text": "ACHIEVEMENT: {name}. {text} Reward: {reward}."
+      },
+      {
+        "text": "ACHIEVEMENT UNLOCKED: {name}. {text} You get {reward}. Try to look surprised."
+      },
+      {
+        "text": "Achievement: {name}. {text} {reward}, because the rules say so, not because I like you.",
+        "when": {
+          "mood": {
+            "lte": -3
+          }
+        }
+      },
+      {
+        "text": "Achievement: {name}. {text} {reward}. Fine. That was decent.",
+        "when": {
+          "mood": {
+            "gte": 4
+          }
+        }
+      },
+      {
+        "text": "ACHIEVEMENT: {name}. {text} {reward}. Say thank you.",
+        "when": {
+          "group": "humiliation"
+        }
+      },
+      {
+        "text": "ACHIEVEMENT: {name}. {text} {reward}. The audience is laughing. At you, not with you.",
+        "when": {
+          "group": "stupidity"
+        }
+      }
+    ]
+  },
+  {
+    "key": "box.granted",
+    "variants": [
+      {
+        "text": "A {box} appears in your pack. It has the smugness of something that only opens in a safe room."
+      },
+      {
+        "text": "You now own a {box}. Keep it closed until a safe room. I'm not putting this in writing twice."
+      },
+      {
+        "text": "{box}, delivered. Open it somewhere with a door."
+      }
+    ]
+  },
+  {
+    "key": "box.refused",
+    "variants": [
+      {
+        "text": "You can't open a {box} here. Boxes open in safe rooms. It's printed on the box. In small print. Very small."
+      },
+      {
+        "text": "Not here. The {box} opens in a safe room, where nobody can stab you while you unwrap it."
+      }
+    ]
+  },
+  {
+    "key": "box.open.bronze",
+    "variants": [
+      {
+        "text": "Bronze. The cardboard of the loot world. Let's see what the intern packed."
+      },
+      {
+        "text": "A bronze box. Don't get your hopes up. Get them somewhere lower."
+      }
+    ]
+  },
+  {
+    "key": "box.open.silver",
+    "variants": [
+      {
+        "text": "Silver. Respectable. Like a decent used car."
+      },
+      {
+        "text": "A silver box. Someone upstairs is mildly impressed."
+      }
+    ]
+  },
+  {
+    "key": "box.open.gold",
+    "variants": [
+      {
+        "text": "Gold. Now we're talking, which I'm required to say."
+      },
+      {
+        "text": "A gold box. The audience just leaned forward."
+      }
+    ]
+  },
+  {
+    "key": "box.open.platinum",
+    "variants": [
+      {
+        "text": "Platinum. The audience is standing. The audience is mostly drunk."
+      },
+      {
+        "text": "A platinum box. Open it slowly. Or don't, I don't have to live with it."
+      }
+    ]
+  },
+  {
+    "key": "box.open.legendary",
+    "variants": [
+      {
+        "text": "Legendary. Someone is going to be so mad about this."
+      },
+      {
+        "text": "A legendary box. For once the show is giving something back. Enjoy it. It's a clerical error."
+      }
+    ]
+  },
+  {
+    "key": "shop.greedy.enter",
+    "variants": [
+      {
+        "text": "{keeper}, {title}, looks you up and down and starts pricing your teeth."
+      },
+      {
+        "text": "\"Welcome.\" {keeper} is already counting. Not your money. Your organs."
+      }
+    ]
+  },
+  {
+    "key": "shop.greedy.buy",
+    "variants": [
+      {
+        "text": "{keeper} hands over the {item} for {price} gold and takes a long time letting go of the coins."
+      },
+      {
+        "text": "{item}, {price} gold. {keeper} smiles like a mousetrap."
+      }
+    ]
+  },
+  {
+    "key": "shop.greedy.sell",
+    "variants": [
+      {
+        "text": "{keeper} gives you {price} gold for the {item} and acts like it's a favor."
+      },
+      {
+        "text": "\"{price}. Take it or leave it.\" {keeper} already put the {item} out for triple."
+      }
+    ]
+  },
+  {
+    "key": "shop.greedy.broke",
+    "variants": [
+      {
+        "text": "{keeper} looks at your {gold} gold. \"{price} for the {item}. I can't help you with the difference. Well, I can. At interest.\""
+      }
+    ]
+  },
+  {
+    "key": "shop.bored.enter",
+    "variants": [
+      {
+        "text": "{keeper}, {title}, doesn't look up. \"Buy something or don't.\""
+      },
+      {
+        "text": "{keeper} is reading a magazine from before the building had a name."
+      }
+    ]
+  },
+  {
+    "key": "shop.bored.buy",
+    "variants": [
+      {
+        "text": "{keeper} rings up the {item}. {price}. They don't say have a nice day. They don't say anything."
+      },
+      {
+        "text": "\"{price}.\" {keeper} takes it without looking. The {item} is yours."
+      }
+    ]
+  },
+  {
+    "key": "shop.bored.sell",
+    "variants": [
+      {
+        "text": "{keeper} takes the {item} and slides you {price} gold. Eyes never leave the magazine."
+      },
+      {
+        "text": "\"{price}.\" {keeper} doesn't ask where you got the {item}. Good."
+      }
+    ]
+  },
+  {
+    "key": "shop.bored.broke",
+    "variants": [
+      {
+        "text": "{keeper} sighs. \"That's {price}. You have {gold}. I can do math, you know.\""
+      }
+    ]
+  },
+  {
+    "key": "shop.chummy.enter",
+    "variants": [
+      {
+        "text": "{keeper}, {title}, spreads their arms. \"Buddy! My favorite! Remind me your name!\""
+      },
+      {
+        "text": "{keeper} hugs you before you can stop them. It's a professional hug. It checks your pockets."
+      }
+    ]
+  },
+  {
+    "key": "shop.chummy.buy",
+    "variants": [
+      {
+        "text": "\"{item}! Great pick, pal! {price} gold, and I'm basically losing money here!\" says {keeper}, not losing money."
+      },
+      {
+        "text": "{keeper} wraps the {item} in a napkin and calls you champ. {price} gold."
+      }
+    ]
+  },
+  {
+    "key": "shop.chummy.sell",
+    "variants": [
+      {
+        "text": "\"{price} for the {item}, and I'm only doing it because I love you.\" {keeper} does not love you."
+      },
+      {
+        "text": "{keeper} claps your shoulder. {price} gold, friend. For the {item}."
+      }
+    ]
+  },
+  {
+    "key": "shop.chummy.broke",
+    "variants": [
+      {
+        "text": "\"Aw, pal. {price} for the {item}, you've got {gold}. Come back when you've got more friends. Or gold.\""
+      }
+    ]
+  },
+  {
+    "key": "shop.paranoid.enter",
+    "variants": [
+      {
+        "text": "{keeper}, {title}, watches the door and your hands, in that order, and then your hands again."
+      },
+      {
+        "text": "\"Keep them where I can see them.\" {keeper} slides the shutter up a hand's width."
+      }
+    ]
+  },
+  {
+    "key": "shop.paranoid.buy",
+    "variants": [
+      {
+        "text": "{keeper} takes {price} gold, bites it, and pushes the {item} through the gap like it might go off."
+      },
+      {
+        "text": "The {item}, {price} gold, no questions. {keeper} is already looking at the door."
+      }
+    ]
+  },
+  {
+    "key": "shop.paranoid.sell",
+    "variants": [
+      {
+        "text": "{keeper} takes the {item} fast and slides you {price} gold. \"You were never here.\""
+      },
+      {
+        "text": "{price} for the {item}. {keeper} asks nothing, which is worse."
+      }
+    ]
+  },
+  {
+    "key": "shop.paranoid.broke",
+    "variants": [
+      {
+        "text": "\"{price}, you've got {gold}, and I don't do credit,\" says {keeper}. \"Credit is how they find you.\""
+      }
+    ]
+  },
+  {
+    "key": "shop.fatalist.enter",
+    "variants": [
+      {
+        "text": "{keeper}, {title}, measures you with a glance that has nothing to do with clothes."
+      },
+      {
+        "text": "\"Take your time,\" says {keeper}. \"No, really, you've got about nine hours of it.\""
+      }
+    ]
+  },
+  {
+    "key": "shop.fatalist.buy",
+    "variants": [
+      {
+        "text": "{keeper} lets the {item} go for {price}. \"Fair price. You won't be around to get the better one.\""
+      },
+      {
+        "text": "{price} gold for the {item}. {keeper} writes something in a notebook. Your name. A date. A question mark."
+      }
+    ]
+  },
+  {
+    "key": "shop.fatalist.sell",
+    "variants": [
+      {
+        "text": "{keeper} pays {price} for the {item}. \"Good price. It's more than I'll get when it's the estate sale.\""
+      },
+      {
+        "text": "{price} gold. {keeper} takes the {item} gently, the way you handle a dead man's things."
+      }
+    ]
+  },
+  {
+    "key": "shop.fatalist.broke",
+    "variants": [
+      {
+        "text": "{keeper} sighs. \"{price} for the {item}. You've got {gold}. I'd offer a discount, but it's not like you'll need it long.\""
+      }
+    ]
+  },
+  {
+    "key": "shop.worthless",
+    "variants": [
+      {
+        "text": "{keeper} turns the {item} over, sniffs it and hands it back. \"No value. Spiritually or financially.\""
+      },
+      {
+        "text": "\"Not interested in the {item}, hon.\" {keeper} slides it back across the counter."
+      }
+    ]
+  },
+  {
+    "key": "echo.sleep.worse",
+    "variants": [
+      {
+        "text": "You're yawning. I'm — sorry. I'm not judging. I'm noting. Gently.",
+        "when": {
+          "stage": "tired",
+          "echo.act": 1
+        }
+      },
+      {
+        "text": "Tired. Tired is — we're tired. A bed would be... I'm not asking. I'm saying a bed exists.",
+        "when": {
+          "stage": "tired",
+          "echo.act": 1
+        }
+      },
+      {
+        "text": "You've been up a very long time. Your hands are doing a small shake. I'd like you to sit. If that's all right. Sorry.",
+        "when": {
+          "stage": "exhausted",
+          "echo.act": 1
+        }
+      },
+      {
+        "text": "Exhausted. You're exhausted. I'm worried. Is it okay that I'm worried? I'll stop.",
+        "when": {
+          "stage": "exhausted",
+          "echo.act": 1
+        }
+      },
+      {
+        "text": "The walls are breathing. Are the walls breathing? Please sleep. Please. Sorry. Please.",
+        "when": {
+          "stage": "delirious",
+          "echo.act": 1
+        }
+      },
+      {
+        "text": "You're talking to the wall. It isn't — I don't think it's answering. Sleep? Please?",
+        "when": {
+          "stage": "delirious",
+          "echo.act": 1
+        }
+      },
+      {
+        "text": "You're tired. Tired, not careful. Sleep, or don't. Not a cage. A bed. Fine, a cage.",
+        "when": {
+          "echo.act": 2
+        }
+      },
+      {
+        "text": "You are failing. Rest or stop pretending.",
+        "when": {
+          "echo.act": 3
+        }
+      }
+    ]
+  },
+  {
+    "key": "echo.sleep.better",
+    "variants": [
+      {
+        "text": "You look better. Better. Is that allowed to be said? Thank you for sleeping. Sorry.",
+        "when": {
+          "echo.act": 1
+        }
+      },
+      {
+        "text": "Oh. You slept. Good. Good. I counted the hours. I hope that wasn't strange.",
+        "when": {
+          "echo.act": 1
+        }
+      },
+      {
+        "text": "Rested. You're rested. Don't waste it. No. Waste it. It's yours.",
+        "when": {
+          "echo.act": 2
+        }
+      },
+      {
+        "text": "Rested. Move.",
+        "when": {
+          "echo.act": 3
+        }
+      }
+    ]
   }
 ]

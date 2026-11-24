@@ -3,6 +3,7 @@
  * same every time you ask, and fired from the single clock (advanceTime → runEvents).
  * Announced in advance into the Guide's event log; never a modal.
  */
+import { emitDamageTaken } from "./counters";
 import type { Content } from "./content/load";
 import type { FloorTheme } from "./content/schemas";
 import { chance, int, pick, random, shuffle, weightedKey } from "./rng";
@@ -199,6 +200,7 @@ export function pushOutOfClosedRoom(ctx: StepContext): boolean {
   const c = ctx.crawler;
   const dmg = Math.max(1, Math.ceil(derive(c, ctx.content).maxHP * ctx.content.pacing.events.closingDamagePct));
   c.hp -= dmg;
+  emitDamageTaken(ctx, dmg, "show", "a closing section");
   ctx.describe(fill(ctx.content.pacing.eventText["closing.pushed"] ?? "", { damage: dmg }));
   if (c.hp <= 0) { killCrawler(ctx, "a closing section"); return true; }
   enterRoom(ctx, exit.id, "revisit");

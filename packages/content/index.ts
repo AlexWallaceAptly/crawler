@@ -6,6 +6,9 @@
 import skills from "./skills.json";
 import statusEffects from "./statusEffects.json";
 import narration from "./narration.json";
+import achievements from "./achievements.json";
+import boxes from "./boxes.json";
+import shops from "./shops.json";
 import floors from "./floors.json";
 import enemies from "./enemies.json";
 import enemyMods from "./enemyMods.json";
@@ -40,6 +43,9 @@ export const rawContent = {
   "skills.json": skills,
   "statusEffects.json": statusEffects,
   "narration.json": narration,
+  "achievements.json": achievements,
+  "boxes.json": boxes,
+  "shops.json": shops,
   "floors.json": floors,
   "enemies.json": enemies,
   "enemyMods.json": enemyMods,

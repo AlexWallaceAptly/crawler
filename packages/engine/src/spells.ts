@@ -266,6 +266,7 @@ export function castSpell(ctx: StepContext, spell: Spell, at?: string, scroll?: 
   else if (spell.target !== "self" && n.duration !== undefined) castStatus(ctx, spell, n, profile, plan);
   else castOnSelf(ctx, spell, n, profile, say, skillId);
 
+  ctx.emit({ type: "spellCast", spell: spell.name, school: spell.school, scroll: !!scroll, first, inCombat: fighting });
   if (!scroll && ctx.game.crawler && ctx.game.phase !== "dead") countCast(ctx, spell);
   if (first && ctx.game.phase !== "dead") ctx.say("spell.firstCast", { spell: spell.name });
   if (ctx.game.phase === "combat") afterAction(ctx);

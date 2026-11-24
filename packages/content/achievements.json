@@ -1,0 +1,1337 @@
+[
+  {
+    "id": "first_blood",
+    "name": "First Blood",
+    "group": "firstTime",
+    "tags": [
+      "combat"
+    ],
+    "trigger": {
+      "event": "kill"
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "You killed something. It's on the record now. The record is also on fire, but still.",
+    "hint": "Kill something."
+  },
+  {
+    "id": "first_spell",
+    "name": "Hocus, Pocus",
+    "group": "firstTime",
+    "tags": [
+      "magic"
+    ],
+    "trigger": {
+      "event": "spellCast"
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "spell"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Your first spell. I'd say it was beautiful, but I have to say that to everyone.",
+    "hint": "Cast a spell."
+  },
+  {
+    "id": "first_safe_room",
+    "name": "Four Walls and a Door",
+    "group": "firstTime",
+    "tags": [
+      "exploration"
+    ],
+    "trigger": {
+      "counter": "rooms.safe",
+      "gte": 1
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "A safe room. Try not to cry on the furniture.",
+    "hint": "Reach a safe room."
+  },
+  {
+    "id": "first_craft",
+    "name": "Duct Tape Engineer",
+    "group": "firstTime",
+    "tags": [
+      "crafting"
+    ],
+    "trigger": {
+      "event": "crafted"
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "weapon"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "You made a thing from other things. Ancient and noble. The tape did most of it.",
+    "hint": "Craft something."
+  },
+  {
+    "id": "first_level",
+    "name": "Level Two. Wow.",
+    "group": "firstTime",
+    "tags": [
+      "progress"
+    ],
+    "trigger": {
+      "counter": "levels",
+      "gte": 1
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "You leveled up. Everyone does. It's the dying that sets you apart.",
+    "hint": "Gain a level."
+  },
+  {
+    "id": "first_buy",
+    "name": "Customer Service",
+    "group": "firstTime",
+    "tags": [
+      "social"
+    ],
+    "trigger": {
+      "event": "shopBought"
+    },
+    "reward": {
+      "gold": 25
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "You bought something. The management thanks you for your money. The management is lying.",
+    "hint": "Buy something at a shop."
+  },
+  {
+    "id": "first_box",
+    "name": "Unwrapping Issues",
+    "group": "firstTime",
+    "tags": [
+      "reward"
+    ],
+    "trigger": {
+      "event": "boxOpened"
+    },
+    "reward": {
+      "xp": 25
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "You opened a box. Look at you, enjoying things.",
+    "hint": "Open a loot box."
+  },
+  {
+    "id": "rat_catcher_10",
+    "name": "Pest Control",
+    "group": "combat",
+    "tags": [
+      "combat"
+    ],
+    "trigger": {
+      "counter": "kills.sump_rat",
+      "gte": 10
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "weapon"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Ten sump rats. Each of them had a family. A big family. In the walls.",
+    "hint": "Kill ten sump rats."
+  },
+  {
+    "id": "kills_25",
+    "name": "Body Count",
+    "group": "combat",
+    "tags": [
+      "combat"
+    ],
+    "trigger": {
+      "counter": "kills.total",
+      "gte": 25
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Twenty-five kills. The audience has stopped counting and started betting.",
+    "hint": "Kill 25 things."
+  },
+  {
+    "id": "kills_100",
+    "name": "Mass Production",
+    "group": "combat",
+    "tags": [
+      "combat"
+    ],
+    "trigger": {
+      "counter": "kills.total",
+      "gte": 100
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "A hundred. You've stopped being a crawler and started being a weather event.",
+    "hint": "Kill 100 things."
+  },
+  {
+    "id": "overkill",
+    "name": "Unnecessary Roughness",
+    "group": "combat",
+    "tags": [
+      "combat",
+      "weird"
+    ],
+    "trigger": {
+      "event": "kill",
+      "where": {
+        "overkill": {
+          "gte": 15
+        }
+      }
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "weapon"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "{overkill} more damage than it had HP. It was already dead. You were just really, really sure.",
+    "hint": "Kill something with far more damage than it needed."
+  },
+  {
+    "id": "elite_slayer",
+    "name": "Above Your Pay Grade",
+    "group": "combat",
+    "tags": [
+      "combat"
+    ],
+    "trigger": {
+      "event": "kill",
+      "where": {
+        "tier": "elite"
+      }
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "An elite, down. Somebody's going to have to file paperwork on that.",
+    "hint": "Kill an elite."
+  },
+  {
+    "id": "crit_five",
+    "name": "Lucky Streak",
+    "group": "combat",
+    "tags": [
+      "luck"
+    ],
+    "trigger": {
+      "counter": "checks.crit",
+      "gte": 5
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Five natural twenties. The dice have noticed you. This is not a compliment.",
+    "hint": "Roll five natural 20s."
+  },
+  {
+    "id": "last_stand",
+    "name": "One Hit From Funeral",
+    "group": "nearDeath",
+    "tags": [
+      "combat",
+      "grit"
+    ],
+    "trigger": {
+      "all": [
+        {
+          "event": "combatEnded",
+          "where": {
+            "outcome": "victory"
+          }
+        },
+        {
+          "state": "hp",
+          "lte": 2
+        }
+      ]
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "You won a fight with {crawler.hp} HP left. That wasn't skill, that was spite.",
+    "hint": "Win a fight on the edge of death."
+  },
+  {
+    "id": "ten_percent",
+    "name": "Moral Victory",
+    "group": "nearDeath",
+    "tags": [
+      "grit"
+    ],
+    "trigger": {
+      "all": [
+        {
+          "event": "damageTaken"
+        },
+        {
+          "state": "hpPct",
+          "lte": 10
+        }
+      ]
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Under ten percent. You're a very expensive stain.",
+    "hint": "Drop under 10% HP and live."
+  },
+  {
+    "id": "ate_dirt",
+    "name": "Hurt Locker",
+    "group": "nearDeath",
+    "tags": [
+      "grit"
+    ],
+    "trigger": {
+      "counter": "damage.taken",
+      "gte": 200
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Two hundred damage taken, lifetime. The building has been doing most of it.",
+    "hint": "Take 200 damage in a run."
+  },
+  {
+    "id": "rooms_20",
+    "name": "Tourist",
+    "group": "exploration",
+    "tags": [
+      "exploration"
+    ],
+    "trigger": {
+      "counter": "rooms.entered",
+      "gte": 20
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Twenty rooms. You're basically a local, if the locals are dying.",
+    "hint": "Explore 20 rooms."
+  },
+  {
+    "id": "rooms_60",
+    "name": "Completionist",
+    "group": "exploration",
+    "tags": [
+      "exploration"
+    ],
+    "trigger": {
+      "counter": "rooms.entered",
+      "gte": 60
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Sixty rooms. Nobody asked you to look in all of them. And yet.",
+    "hint": "Explore 60 rooms."
+  },
+  {
+    "id": "floor_cleared",
+    "name": "Floor Manager",
+    "group": "exploration",
+    "tags": [
+      "exploration"
+    ],
+    "trigger": {
+      "event": "floorCleared"
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "A floor, cleared. Another thousand to go. I mean twelve. Fine, thirteen.",
+    "hint": "Clear a floor."
+  },
+  {
+    "id": "shard_hunter",
+    "name": "Voices in the Walls",
+    "group": "thread",
+    "tags": [
+      "thread"
+    ],
+    "trigger": {
+      "event": "shardFound"
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Found something that talks. Your pocket's going to want to hear about it.",
+    "hint": "Find a shard."
+  },
+  {
+    "id": "echo_module",
+    "name": "Hardware Upgrade",
+    "group": "thread",
+    "tags": [
+      "thread"
+    ],
+    "trigger": {
+      "event": "moduleBuilt"
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "You gave your pocket a new part. It said thank you. Twice. Don't get used to it.",
+    "hint": "Build a module for Echo."
+  },
+  {
+    "id": "crafts_5",
+    "name": "Handy Enough",
+    "group": "crafting",
+    "tags": [
+      "crafting"
+    ],
+    "trigger": {
+      "counter": "crafts",
+      "gte": 5
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "weapon"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Five crafts. Your inventory now smells of glue and hubris.",
+    "hint": "Craft five things."
+  },
+  {
+    "id": "spells_20",
+    "name": "Magic Is Just Math, Badly",
+    "group": "magic",
+    "tags": [
+      "magic"
+    ],
+    "trigger": {
+      "counter": "spells.cast",
+      "gte": 20
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "spell"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Twenty casts. Please stop pointing at things and saying words.",
+    "hint": "Cast 20 spells."
+  },
+  {
+    "id": "potion_junkie",
+    "name": "Pharmacy Regular",
+    "group": "stupidity",
+    "tags": [
+      "consumable"
+    ],
+    "trigger": {
+      "counter": "items.potion",
+      "gte": 10
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "consumable"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Ten potions. That's not a build, that's an addiction.",
+    "hint": "Drink ten potions."
+  },
+  {
+    "id": "hit_yourself",
+    "name": "Friendly Fire",
+    "group": "stupidity",
+    "tags": [
+      "weird",
+      "stupidity"
+    ],
+    "trigger": {
+      "event": "damageTaken",
+      "where": {
+        "source": "self"
+      }
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "You hurt yourself with your own item. That's the most reliable kill on the floor.",
+    "hint": "Hurt yourself with your own stuff."
+  },
+  {
+    "id": "trap_victim",
+    "name": "Read the Signs",
+    "group": "humiliation",
+    "tags": [
+      "humiliation"
+    ],
+    "trigger": {
+      "event": "damageTaken",
+      "where": {
+        "source": "hazard"
+      }
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "You walked into a trap. In a place that is, I remind you, nothing but traps.",
+    "hint": "Get hit by a trap."
+  },
+  {
+    "id": "fumble_three",
+    "name": "Butterfingers",
+    "group": "humiliation",
+    "tags": [
+      "humiliation"
+    ],
+    "trigger": {
+      "counter": "checks.fumble",
+      "gte": 3
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Three natural ones. You're not unlucky. You're just bad. We checked.",
+    "hint": "Roll three natural 1s."
+  },
+  {
+    "id": "broke",
+    "name": "Pocket Lint",
+    "group": "humiliation",
+    "tags": [
+      "social"
+    ],
+    "trigger": {
+      "all": [
+        {
+          "counter": "shop.bought",
+          "gte": 1
+        },
+        {
+          "state": "gold",
+          "lte": 0
+        }
+      ]
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Zero gold. Spent it all, I see. Capitalism, huh.",
+    "hint": "Spend every last coin."
+  },
+  {
+    "id": "big_spender",
+    "name": "Whale",
+    "group": "social",
+    "tags": [
+      "social"
+    ],
+    "trigger": {
+      "counter": "gold.spent",
+      "gte": 500
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Five hundred spent. The shopkeepers have started saying your name like a prayer.",
+    "hint": "Spend 500 gold."
+  },
+  {
+    "id": "seller",
+    "name": "Everything Must Go",
+    "group": "social",
+    "tags": [
+      "social"
+    ],
+    "trigger": {
+      "counter": "shop.sold",
+      "gte": 5
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "You sold five things. Most of it was other people's.",
+    "hint": "Sell five items."
+  },
+  {
+    "id": "safe_sleeper",
+    "name": "Sleeps Like the Dead",
+    "group": "secret",
+    "tags": [
+      "secret"
+    ],
+    "trigger": {
+      "all": [
+        {
+          "event": "sleepStageChanged",
+          "where": {
+            "worse": false
+          }
+        },
+        {
+          "counter": "rooms.safe",
+          "gte": 2
+        }
+      ]
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": true,
+    "mood": 1,
+    "text": "You slept well. Nobody sleeps well here. This is suspicious."
+  },
+  {
+    "id": "mood_up",
+    "name": "Teacher's Pet",
+    "group": "secret",
+    "tags": [
+      "secret"
+    ],
+    "trigger": {
+      "state": "mood",
+      "gte": 6
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": true,
+    "mood": 0,
+    "text": "I like you. This will pass."
+  },
+  {
+    "id": "boss_kill",
+    "name": "Floor Boss, Meet Floor",
+    "group": "combat",
+    "tags": [
+      "combat",
+      "boss"
+    ],
+    "trigger": {
+      "event": "kill",
+      "where": {
+        "tier": "boss"
+      }
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "A boss, down. Don't get cocky. They make a new one every floor.",
+    "hint": "Kill a floor boss."
+  },
+  {
+    "id": "elite_five",
+    "name": "Overpaid",
+    "group": "combat",
+    "tags": [
+      "combat"
+    ],
+    "trigger": {
+      "counter": "kills.elite",
+      "gte": 5
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "weapon"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Five elites. HR is calling it a pattern of behavior.",
+    "hint": "Kill five elites."
+  },
+  {
+    "id": "kills_500",
+    "name": "Rolling Blackout",
+    "group": "combat",
+    "tags": [
+      "combat"
+    ],
+    "trigger": {
+      "counter": "kills.total",
+      "gte": 500
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "weapon"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Five hundred. The dungeon is hiring replacements slower than you're firing them.",
+    "hint": "Kill 500 things."
+  },
+  {
+    "id": "crit_twenty",
+    "name": "The Dice Have Favorites",
+    "group": "combat",
+    "tags": [
+      "combat",
+      "luck"
+    ],
+    "trigger": {
+      "counter": "checks.crit",
+      "gte": 20
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Twenty natural twenties. The dice aren't watching you anymore. They work for you now.",
+    "hint": "Roll twenty natural 20s."
+  },
+  {
+    "id": "first_flee",
+    "name": "Strategic Retreat",
+    "group": "firstTime",
+    "tags": [
+      "combat"
+    ],
+    "trigger": {
+      "event": "combatEnded",
+      "where": {
+        "outcome": "fled"
+      }
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "You ran away. Tactically. With your back turned. Very tactically.",
+    "hint": "Flee from a fight."
+  },
+  {
+    "id": "one_hp",
+    "name": "One Hit Point Wonder",
+    "group": "nearDeath",
+    "tags": [
+      "grit"
+    ],
+    "trigger": {
+      "event": "damageTaken",
+      "where": {
+        "hp": {
+          "gte": 1,
+          "lte": 1
+        }
+      }
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "One HP. One. The audience loved that. The audience is made of vultures.",
+    "hint": "Survive a hit that leaves you at exactly 1 HP."
+  },
+  {
+    "id": "big_hit",
+    "name": "Ow. Just Ow.",
+    "group": "nearDeath",
+    "tags": [
+      "grit"
+    ],
+    "trigger": {
+      "event": "damageTaken",
+      "where": {
+        "amount": {
+          "gte": 20
+        },
+        "hp": {
+          "gte": 1
+        }
+      }
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Twenty damage in one hit and you're still standing. Barely. Aggressively.",
+    "hint": "Survive a single hit of 20 or more damage."
+  },
+  {
+    "id": "load_bearing",
+    "name": "Load-Bearing",
+    "group": "nearDeath",
+    "tags": [
+      "grit"
+    ],
+    "trigger": {
+      "counter": "damage.taken",
+      "gte": 1000
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "A thousand damage taken. You're less a crawler than a very motivated punching bag.",
+    "hint": "Take 1,000 damage."
+  },
+  {
+    "id": "rooms_100",
+    "name": "Frequent Flyer",
+    "group": "exploration",
+    "tags": [
+      "exploration"
+    ],
+    "trigger": {
+      "counter": "rooms.entered",
+      "gte": 100
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "A hundred rooms. You've got more miles than the airline.",
+    "hint": "Explore 100 rooms."
+  },
+  {
+    "id": "wide_awake",
+    "name": "Wide Awake Club",
+    "group": "time",
+    "tags": [
+      "sleep"
+    ],
+    "trigger": {
+      "event": "sleepStageChanged",
+      "where": {
+        "to": "exhausted",
+        "worse": true
+      }
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Exhausted. Your reflexes have filed for leave.",
+    "hint": "Reach Exhausted."
+  },
+  {
+    "id": "seeing_things",
+    "name": "Seeing Things",
+    "group": "time",
+    "tags": [
+      "sleep"
+    ],
+    "trigger": {
+      "event": "sleepStageChanged",
+      "where": {
+        "to": "delirious",
+        "worse": true
+      }
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Delirious. The scouting reports might be lying now. So might you.",
+    "hint": "Reach Delirious."
+  },
+  {
+    "id": "crafts_20",
+    "name": "Hardware Store Regular",
+    "group": "crafting",
+    "tags": [
+      "crafting"
+    ],
+    "trigger": {
+      "counter": "crafts",
+      "gte": 20
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "weapon"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Twenty crafts. Your inventory is sixty percent duct tape and forty percent regret.",
+    "hint": "Craft 20 things."
+  },
+  {
+    "id": "recipe_ten",
+    "name": "Cookbook Author",
+    "group": "crafting",
+    "tags": [
+      "crafting",
+      "codex"
+    ],
+    "trigger": {
+      "state": "recipes",
+      "gte": 10
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "weapon"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Ten recipes in the Codex. Somebody's going to find your notes and mistake them for wisdom.",
+    "hint": "Discover ten recipes."
+  },
+  {
+    "id": "spells_100",
+    "name": "Wizard, Allegedly",
+    "group": "magic",
+    "tags": [
+      "magic"
+    ],
+    "trigger": {
+      "counter": "spells.cast",
+      "gte": 100
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "spell"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "A hundred casts. You haven't earned the hat. The hat doesn't care.",
+    "hint": "Cast 100 spells."
+  },
+  {
+    "id": "learn_five",
+    "name": "Well-Read",
+    "group": "magic",
+    "tags": [
+      "magic"
+    ],
+    "trigger": {
+      "state": "spells",
+      "gte": 5
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "spell"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Five spells. A library of explosions and a vague sense of unease.",
+    "hint": "Learn five spells."
+  },
+  {
+    "id": "empty_tank",
+    "name": "Running on Fumes",
+    "group": "magic",
+    "tags": [
+      "magic"
+    ],
+    "trigger": {
+      "all": [
+        {
+          "event": "spellCast"
+        },
+        {
+          "state": "mp",
+          "lte": 0
+        }
+      ]
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "spell"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Zero mana. You squeezed out the last drop. Proud of you, in an alarming way.",
+    "hint": "Cast a spell that drains your MP to zero."
+  },
+  {
+    "id": "dragon_complex",
+    "name": "Dragon Complex",
+    "group": "social",
+    "tags": [
+      "social"
+    ],
+    "trigger": {
+      "state": "gold",
+      "gte": 1000
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "A thousand gold, just sitting there. It won't keep you warm. It might get you killed.",
+    "hint": "Hold 1,000 gold at once."
+  },
+  {
+    "id": "loyalty_program",
+    "name": "Loyalty Program",
+    "group": "social",
+    "tags": [
+      "social"
+    ],
+    "trigger": {
+      "counter": "shop.bought",
+      "gte": 20
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Twenty purchases. You've been enrolled in a points program. The points are fake.",
+    "hint": "Buy 20 things from shops."
+  },
+  {
+    "id": "gambling_problem",
+    "name": "Gambling Problem",
+    "group": "social",
+    "tags": [
+      "reward"
+    ],
+    "trigger": {
+      "counter": "boxes.opened",
+      "gte": 10
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Ten boxes. You're not collecting loot anymore. You're feeding something.",
+    "hint": "Open ten loot boxes."
+  },
+  {
+    "id": "jackpot",
+    "name": "Jackpot",
+    "group": "social",
+    "tags": [
+      "reward",
+      "luck"
+    ],
+    "trigger": {
+      "event": "boxOpened",
+      "where": {
+        "tier": "gold"
+      }
+    },
+    "reward": {
+      "gold": 50
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "A gold box. Don't spend it all in one place. Spend it all in one place.",
+    "hint": "Open a gold box."
+  },
+  {
+    "id": "overachiever",
+    "name": "Overachiever",
+    "group": "social",
+    "tags": [
+      "meta"
+    ],
+    "trigger": {
+      "state": "achievements",
+      "gte": 10
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Ten achievements. Nobody asked. Nobody's stopping you.",
+    "hint": "Unlock ten achievements."
+  },
+  {
+    "id": "trophy_case",
+    "name": "Trophy Case",
+    "group": "social",
+    "tags": [
+      "meta"
+    ],
+    "trigger": {
+      "state": "achievements",
+      "gte": 25
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Twenty-five achievements. You've got a shelf for this. Don't you.",
+    "hint": "Unlock 25 achievements."
+  },
+  {
+    "id": "fumble_ten",
+    "name": "Professional Fumbler",
+    "group": "humiliation",
+    "tags": [
+      "luck",
+      "humiliation"
+    ],
+    "trigger": {
+      "counter": "checks.fumble",
+      "gte": 10
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Ten natural ones. You turned failure into a skill. The wrong skill.",
+    "hint": "Roll ten natural 1s."
+  },
+  {
+    "id": "cardio_day",
+    "name": "Cardio Day",
+    "group": "humiliation",
+    "tags": [
+      "combat",
+      "humiliation"
+    ],
+    "trigger": {
+      "counter": "combats.fled",
+      "gte": 5
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Five retreats. The dungeon has a name for people like you. It's 'repeat customer.'",
+    "hint": "Flee five fights."
+  },
+  {
+    "id": "shards_5",
+    "name": "Eavesdropper",
+    "group": "thread",
+    "tags": [
+      "thread"
+    ],
+    "trigger": {
+      "counter": "shards",
+      "gte": 5
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Five shards. Your pocket is starting to string them into sentences. Don't encourage it.",
+    "hint": "Find five shards."
+  },
+  {
+    "id": "modules_3",
+    "name": "Overclocked",
+    "group": "thread",
+    "tags": [
+      "thread"
+    ],
+    "trigger": {
+      "counter": "modules",
+      "gte": 3
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Three upgrades. Your pocket is developing opinions and processing power. Bad combination.",
+    "hint": "Build three modules for Echo."
+  },
+  {
+    "id": "villain_monologue",
+    "name": "Villain Monologue",
+    "group": "thread",
+    "tags": [
+      "thread",
+      "boss"
+    ],
+    "trigger": {
+      "event": "shardFound",
+      "where": {
+        "delivery": "boss"
+      }
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "A boss said something it shouldn't have. They always do. It's the only thing they do for free.",
+    "hint": "Hear a clue in a boss's throwaway line."
+  },
+  {
+    "id": "rat_union",
+    "name": "Union Buster",
+    "group": "secret",
+    "tags": [
+      "secret",
+      "combat"
+    ],
+    "trigger": {
+      "counter": "kills.sump_rat",
+      "gte": 100
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "weapon"
+    },
+    "repeatable": false,
+    "secret": true,
+    "mood": 1,
+    "text": "A hundred sump rats. The rat union has filed a formal complaint. The union is also dead."
+  }
+]

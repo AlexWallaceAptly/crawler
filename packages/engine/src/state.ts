@@ -1,8 +1,8 @@
-import type { EnemyAttack, Power, RangeBand, Rarity, RoomShape, Slot, StatBlock, Modifier, ROOM_TYPES } from "./content/schemas";
+import type { BoxTierId, BoxTypeId, EnemyAttack, Power, RangeBand, Rarity, RoomShape, Slot, StatBlock, Modifier, ROOM_TYPES } from "./content/schemas";
 import type { GameEvent } from "./events";
 
 /** Bump when the save shape changes incompatibly; old saves are discarded (see the decision log in docs/DESIGN.md). */
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 /** Bump with a migration in engine.ts `restoreAccount`: accounts are upgraded, never discarded. */
 export const ACCOUNT_VERSION = 2;
 export const LOG_LIMIT = 300;
@@ -186,6 +186,16 @@ export interface Room {
   closed?: boolean;
   /** What the room remembers (Milestone 6c). */
   rs: RoomState;
+  /** Safe rooms: the shopkeeper and what's on the shelf (Milestone 7), fixed when the floor is generated. */
+  shop?: ShopState;
+}
+
+/** A safe room's shop. The stock is rolled once, so a reload shows the same shelf. */
+export interface ShopState {
+  personality: string;
+  /** The shopkeeper's first name. */
+  keeper: string;
+  stock: ItemInstance[];
 }
 
 export type DangerBand = "calm" | "uneasy" | "dangerous";
@@ -474,6 +484,22 @@ export interface GameState {
   echo: EchoState | null;
   /** The run's Game Guide entries (the Codex is the account's, and separate). */
   guide: GuideEntry[];
+  /** Unopened loot boxes (Milestone 7). They open only in a safe room. */
+  boxes: Box[];
+  nextBoxId: number;
+  /** Achievements earned this run, with how many times a repeatable one fired. */
+  achieved: Record<string, number>;
+}
+
+/** An unopened loot box: a promise the crawler carries until it reaches a safe room. */
+export interface Box {
+  id: string;
+  tier: BoxTierId;
+  boxType: BoxTypeId;
+  /** The floor it was earned on: item level is `floor * 5 + 2`. */
+  floor: number;
+  /** "achievement: First Blood", "boss: the Mimic"... for the list. */
+  source: string;
 }
 
 /** One finished run, for the account's history. */
@@ -563,5 +589,8 @@ export function newGameState(): GameState {
     narrator: { recent: [], mood: 0 },
     echo: null,
     guide: [],
+    boxes: [],
+    nextBoxId: 1,
+    achieved: {},
   };
 }

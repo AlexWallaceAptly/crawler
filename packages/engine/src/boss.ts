@@ -8,6 +8,7 @@
  * Each boss's weakness is a rule the engine applies, whatever the narration says. Until
  * Milestone 10 bosses run on the ordinary priority-list AI.
  */
+import { grantBox } from "./boxes";
 import type { Content } from "./content/load";
 import type { Boss } from "./content/schemas";
 import { generateEnemy } from "./gen/enemy";
@@ -163,6 +164,8 @@ export function bossDefeated(ctx: StepContext): void {
   addToPile(room.items, piece);
   ctx.describe(`The ${boss.name} leaves ${piece.name} behind.`);
   ctx.say("boss.defeated", { boss: boss.name });
+  // A boss leaves a box: gold for the optional ones, platinum for the one that holds the stairs.
+  grantBox(ctx, boss.kind === "mini" ? "gold" : "platinum", "boss", `boss: ${boss.name}`);
   recordWeakness(ctx, boss.id);
 }
 

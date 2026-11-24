@@ -1365,3 +1365,160 @@ export const PacingSchema = z.strictObject({
     p.sleepStages.every((s, i, a) => i === 0 || s.fromHours > a[i - 1]!.fromHours), "sleepStages must start at 0 and ascend");
 export type Pacing = z.infer<typeof PacingSchema>;
 export type SleepStage = Pacing["sleepStages"][number];
+
+// ---------------------------------------------------------------- achievements and loot boxes (Milestone 7)
+
+export const BOX_TIERS = ["bronze", "silver", "gold", "platinum", "legendary"] as const;
+export const BoxTierIdSchema = z.enum(BOX_TIERS);
+export type BoxTierId = z.infer<typeof BoxTierIdSchema>;
+export const BOX_TYPES = ["adventurer", "boss", "weapon", "armor", "spell", "consumable"] as const;
+export const BoxTypeIdSchema = z.enum(BOX_TYPES);
+export type BoxTypeId = z.infer<typeof BoxTypeIdSchema>;
+
+/** What the achievement engine can match with `{ event, where }`: the events that say something happened. */
+export const TRIGGER_EVENTS = [
+  "kill", "damageTaken", "itemUsed", "spellCast", "crafted", "goldChanged", "boxOpened", "shopBought", "shopSold",
+  "check", "roomEntered", "combatStarted", "combatEnded", "levelUp", "skillUp", "died", "recipeLearned", "shardFound",
+  "moduleBuilt", "floorEntered", "floorCleared", "sleepStageChanged", "temperChanged", "codexUpdated", "achievementEarned",
+] as const;
+
+/** What `{ state }` can read (see achievements.ts `stateView`). */
+export const TRIGGER_STATES = [
+  "hp", "hpPct", "mp", "gold", "level", "mood", "floor", "turn", "clockDays", "inCombat", "weightPct", "statuses", "spells", "recipes", "achievements",
+] as const;
+
+export type Condition =
+  | { event: string; where?: Where | undefined }
+  | { counter: string; gte: number }
+  | { state: string; lte?: number | undefined; gte?: number | undefined }
+  | { all: Condition[] }
+  | { any: Condition[] };
+
+export const ConditionSchema: z.ZodType<Condition> = z.lazy(() => z.union([
+  z.strictObject({ event: z.enum(TRIGGER_EVENTS), where: WhereSchema.optional() }),
+  z.strictObject({ counter: z.string().regex(/^[a-z0-9_.]+$/), gte: z.number() }),
+  z.strictObject({ state: z.enum(TRIGGER_STATES), lte: z.number().optional(), gte: z.number().optional() })
+    .refine((s) => s.lte !== undefined || s.gte !== undefined, { message: "a state trigger needs lte or gte" }),
+  z.strictObject({ all: z.array(ConditionSchema).min(1) }),
+  z.strictObject({ any: z.array(ConditionSchema).min(1) }),
+]));
+
+/** Does this condition contain an event clause? Repeatable achievements need one (they fire per matching event). */
+export function hasEventClause(c: Condition): boolean {
+  if ("event" in c) return true;
+  if ("all" in c) return c.all.some(hasEventClause);
+  if ("any" in c) return c.any.some(hasEventClause);
+  return false;
+}
+
+export const ACHIEVEMENT_GROUPS = [
+  "firstTime", "combat", "nearDeath", "exploration", "crafting", "magic", "social", "humiliation", "stupidity", "secret", "thread",
+  "progress", "time", "show",
+] as const;
+
+export const AchievementSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string().min(1),
+  group: z.enum(ACHIEVEMENT_GROUPS),
+  /** They feed the class offer (Milestone 11) and the absurd-race offer. */
+  tags: z.array(z.string()).default([]),
+  trigger: ConditionSchema,
+  reward: z.union([
+    z.strictObject({ box: BoxTierIdSchema, boxType: BoxTypeIdSchema.default("adventurer") }),
+    z.strictObject({ xp: z.number().int().positive() }),
+    z.strictObject({ gold: z.number().int().positive() }),
+  ]),
+  /** Repeatable ones fire for every matching event (not every step). */
+  repeatable: z.boolean().default(false),
+  /** Secret achievements show as ??? until earned. */
+  secret: z.boolean().default(false),
+  /** How much it moves the System AI's mood (-3..+3). */
+  mood: z.number().int().min(-3).max(3).default(1),
+  /** Said when it fires; 1-2 sentences. `{name}`, event fields and `{crawler.*}` fill in. */
+  text: z.string().min(1),
+  /** What the player sees before earning it (a hint, not the rule). Optional. */
+  hint: z.string().optional(),
+}).refine((a) => !a.repeatable || hasEventClause(a.trigger), { message: "repeatable achievements need an event trigger" });
+export type Achievement = z.infer<typeof AchievementSchema>;
+
+const PoolWeightsSchema = z.strictObject({
+  item: z.number().min(0).default(0),
+  gold: z.number().min(0).default(0),
+  consumable: z.number().min(0).default(0),
+  tome: z.number().min(0).default(0),
+  oddity: z.number().min(0).default(0),
+});
+export type PoolWeights = z.infer<typeof PoolWeightsSchema>;
+
+/** One box tier: how many rolls, the rarity floor, and what the rolls can turn up. */
+export const BoxTierSchema = z.strictObject({
+  id: BoxTierIdSchema,
+  name: z.string(),
+  rolls: z.tuple([z.number().int().min(1), z.number().int().min(1)]),
+  minRarity: RaritySchema,
+  /** Gold per gold roll, scaled by floor. */
+  gold: z.tuple([z.number().int().min(1), z.number().int().min(1)]),
+  pools: PoolWeightsSchema,
+  /** Extra rolls on top: one more tome with this chance, one oddity with this chance. */
+  tomeChance: z.number().min(0).max(1).default(0),
+  oddityChance: z.number().min(0).max(1).default(0),
+  /** "tomeOrOddity": platinum always holds one. "legendary": one item is Legendary. */
+  guarantee: z.enum(["none", "tomeOrOddity", "legendary"]).default("none"),
+});
+export type BoxTier = z.infer<typeof BoxTierSchema>;
+
+/** A box type multiplies the tier's pool weights and can pin the item slot family. */
+export const BoxTypeSchema = z.strictObject({
+  id: BoxTypeIdSchema,
+  name: z.string(),
+  text: z.string(),
+  mult: PoolWeightsSchema,
+  /** Item rolls are only for these slot families (weapon box: mainHand/offHand; armor box: everything else). */
+  slots: z.array(SlotSchema).optional(),
+});
+export type BoxType = z.infer<typeof BoxTypeSchema>;
+
+export const BoxesSchema = z.strictObject({
+  tiers: z.array(BoxTierSchema).min(1),
+  types: z.array(BoxTypeSchema).min(1),
+});
+export type BoxesTable = z.infer<typeof BoxesSchema>;
+
+// ---------------------------------------------------------------- gold and shops (Milestone 7)
+
+const GoldRangeSchema = z.tuple([z.number().int().min(0), z.number().int().min(0)]);
+
+/** A shopkeeper type. Prices are `item.value × markup` (buying) and `× sellRate` (selling), both nudged by CHA. */
+export const ShopPersonalitySchema = z.strictObject({
+  id: IdSchema,
+  /** "the Appraiser": the shopkeeper's role, said in lines. */
+  title: z.string().min(1),
+  /** A pool of first names; one is picked per shop. */
+  names: z.array(z.string().min(1)).min(1),
+  markup: z.number().min(0.5).max(3),
+  sellRate: z.number().min(0.05).max(1),
+  /** How many things are on the shelf. */
+  stock: GoldRangeSchema,
+  /** Share of the shelf that is gear; the rest is consumables and parts. */
+  gearShare: z.number().min(0).max(1),
+  /** A line for the Guide and the shop's first look. */
+  blurb: z.string().min(1),
+});
+export type ShopPersonality = z.infer<typeof ShopPersonalitySchema>;
+
+export const ShopsSchema = z.strictObject({
+  /** Gold from kills by enemy tier, scaled by (1 + floorScale × (floor - 1)). */
+  drops: z.strictObject({
+    minion: GoldRangeSchema, mob: GoldRangeSchema, elite: GoldRangeSchema, boss: GoldRangeSchema,
+  }),
+  floorScale: z.number().min(0),
+  /** CHA points above 10 take this share off buying prices (and add half of it to selling). Capped by `chaCap`. */
+  chaPerPoint: z.number().min(0),
+  chaCap: z.number().min(0).max(0.5),
+  /** The cheapest price anything gets. */
+  minPrice: z.number().int().min(1),
+  /** Junk and crafting parts on the shelf, as a share of the non-gear part. */
+  partsShare: z.number().min(0).max(1),
+  personalities: z.array(ShopPersonalitySchema).min(1),
+});
+export type ShopsTable = z.infer<typeof ShopsSchema>;

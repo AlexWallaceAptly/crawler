@@ -33,6 +33,11 @@ import {
   LegendaryPowerSchema,
   TilesetSchema,
   SpellSchema,
+  AchievementSchema,
+  BoxesSchema,
+  ShopsSchema,
+  BOX_TIERS,
+  BOX_TYPES,
   SPELL_SCHOOLS,
   type ArenaFeature,
   type LootTable,
@@ -66,6 +71,9 @@ import {
   type LegendaryPower,
   type Tileset,
   type Spell,
+  type Achievement,
+  type BoxesTable,
+  type ShopsTable,
   RARITIES,
 } from "./schemas";
 
@@ -103,6 +111,9 @@ export const CONTENT_FILES = {
   "items/legendaryPowers.json": z.array(LegendaryPowerSchema),
   "tilesets.json": z.array(TilesetSchema),
   "spells.json": z.array(SpellSchema),
+  "achievements.json": z.array(AchievementSchema),
+  "boxes.json": BoxesSchema,
+  "shops.json": ShopsSchema,
 } as const;
 
 export type ContentFileName = keyof typeof CONTENT_FILES;
@@ -159,6 +170,12 @@ export interface Content {
   tilesets: Table<Tileset>;
   /** Hand-written spells; tomes teach them, scrolls cast them (see "Spells" in docs/DESIGN.md). */
   spells: Table<Spell>;
+  /** Achievements (Milestone 7): a trigger, a reward and the System AI's line. */
+  achievements: Table<Achievement>;
+  /** Loot box tiers and types. */
+  boxes: BoxesTable;
+  /** Gold drops and the shopkeeper personalities. */
+  shops: ShopsTable;
 }
 
 export class ContentError extends Error {
@@ -263,6 +280,9 @@ export function loadContent(raw: RawContent): Content {
     oddities: table("items/oddities.json", oddities, problems),
     tilesets: table("tilesets.json", p["tilesets.json"], problems),
     spells: table("spells.json", p["spells.json"], problems),
+    achievements: table("achievements.json", p["achievements.json"], problems),
+    boxes: p["boxes.json"],
+    shops: p["shops.json"],
   };
 
   checkReferences(content, problems);
@@ -276,6 +296,9 @@ export function itemRefExists(c: Content, id: string): boolean {
 }
 
 function checkReferences(c: Content, problems: string[]): void {
+  for (const t of BOX_TIERS) if (!c.boxes.tiers.some((x) => x.id === t)) problems.push(`boxes.json: missing tier "${t}"`);
+  for (const t of BOX_TYPES) if (!c.boxes.types.some((x) => x.id === t)) problems.push(`boxes.json: missing type "${t}"`);
+  for (const t of c.boxes.tiers) if (t.rolls[0] > t.rolls[1] || t.gold[0] > t.gold[1]) problems.push(`boxes.json "${t.id}": ranges must be [low, high]`);
   const ref = (where: string, kind: string, ok: boolean, id: string) => {
     if (!ok) problems.push(`${where}: unknown ${kind} "${id}"`);
   };

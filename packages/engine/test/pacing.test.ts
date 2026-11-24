@@ -400,13 +400,15 @@ describe("safe rooms on the map and the Guide", () => {
     expect(guide.entries.find((e) => e.id === "map.floor")!.text).toContain("S");
   });
 
-  it("safe rooms list their services, with the milestone 7 slots marked unavailable", () => {
+  it("safe rooms list their services: the shop and achievements are open, loot boxes only once you carry one", () => {
     const w = freshRun();
     const floor = w.game.floor!;
     floor.currentRoom = floor.rooms.find((r) => r.type === "safe")!.id;
     const services = engine.view(w).room!.services;
-    expect(services.filter((s) => s.available).map((s) => s.id)).toEqual(["sleep", "rest", "meal"]);
-    expect(services.filter((s) => !s.available).map((s) => s.id)).toEqual(["shop", "lootBox", "achievements"]);
+    expect(services.filter((s) => s.available).map((s) => s.id)).toEqual(["sleep", "rest", "meal", "shop", "achievements"]);
+    expect(services.filter((s) => !s.available).map((s) => s.id)).toEqual(["lootBox"]);
+    w.game.boxes = [{ id: "box1", tier: "bronze", boxType: "adventurer", floor: 1, source: "test" }];
+    expect(engine.view(w).room!.services.find((s) => s.id === "lootBox")!.available).toBe(true);
   });
 });
 

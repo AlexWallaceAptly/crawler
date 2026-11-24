@@ -21,6 +21,7 @@
  * Upgrades are baked into the item (name, power, on-hit) and recorded in
  * `item.crafted`, so an equipped bat stays equipped and each upgrade applies once.
  */
+import { emitDamageTaken } from "./counters";
 import type { CraftPart, Recipe, RecipeInput } from "./content/schemas";
 import { advanceTime } from "./explore";
 import { autoEquip } from "./gen/backstory";
@@ -497,6 +498,7 @@ function make(ctx: StepContext, m: Match): void {
       if (mishap.dice) {
         const dmg = rollDice(mishap.dice).total;
         c.hp -= dmg;
+        emitDamageTaken(ctx, dmg, "craft", recipe.name);
         ctx.describe(`That cost you ${dmg} HP.`);
       }
       if (mishap.statusId) applyStatus(c.statuses, ctx.content.statusEffects.get(mishap.statusId));
@@ -523,6 +525,7 @@ function make(ctx: StepContext, m: Match): void {
     ctx.describe(`${recipe.text} You made ${made.name}${slot ? ` (equipped)` : ""}.${used}`);
   }
   ctx.say("craft.success", { recipe: recipe.name });
+  ctx.emit({ type: "crafted", recipe: recipe.name });
   learn(ctx, recipe);
 }
 

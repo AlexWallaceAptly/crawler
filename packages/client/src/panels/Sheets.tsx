@@ -26,6 +26,10 @@ export function CharacterSheet({ view, submit }: { view: ViewModel; submit?: (t:
         <dd>{c.charClass}</dd>
         <dt>Gold</dt>
         <dd>{c.gold}</dd>
+        <dt>Boxes</dt>
+        <dd>{view.rewards.boxes.length ? `${view.rewards.boxes.length} unopened` : "none"}</dd>
+        <dt>System AI</dt>
+        <dd>{view.rewards.mood.word} ({view.rewards.mood.value > 0 ? "+" : ""}{view.rewards.mood.value})</dd>
       </dl>
       {xp && <Progress current={xp.current} max={xp.max} />}
       {c.unspentStatPoints > 0 && (
@@ -503,6 +507,78 @@ export function GuideSheet({ view, submit }: { view: ViewModel; submit?: (t: str
           </ul>
         </div>
       ))}
+    </div>
+  );
+}
+
+/** Every achievement, earned first, with progress on the counter ones. */
+export function AchievementsSheet({ view }: { view: ViewModel }) {
+  const r = view.rewards;
+  const earned = r.achievements.filter((a) => a.earned);
+  const rest = r.achievements.filter((a) => !a.earned);
+  return (
+    <div>
+      <div className={s.sub}>{r.earned} of {r.total} earned. Each one pays a box, which opens in a safe room. The System AI is feeling: {r.mood.word}.</div>
+      {earned.length > 0 && <div className={s.sectionLabel}>Earned</div>}
+      <ul className={s.list}>
+        {earned.map((a) => (
+          <li key={a.id} className={s.codexEntry}>
+            <span className={s.codexName}>{a.name}{a.times > 1 ? ` ×${a.times}` : ""}</span>
+            <div className={s.codexText}>{a.text}</div>
+          </li>
+        ))}
+      </ul>
+      <div className={s.sectionLabel}>Not yet</div>
+      <ul className={s.list}>
+        {rest.map((a) => (
+          <li key={a.id} className={s.codexEntry}>
+            <span className={s.muted}>{a.name}{a.progress ? ` (${a.progress.have}/${a.progress.need})` : ""} · {a.reward}</span>
+            <div className={s.codexLine}>{a.text}</div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** The shopkeeper's shelf and your pack's resale values, with buy and sell buttons. Safe rooms only. */
+export function ShopSheet({ view, submit }: { view: ViewModel; submit: (t: string) => void }) {
+  const shop = view.rewards.shop;
+  if (!shop) return <div className={s.muted}>There's no shop here. They live in safe rooms.</div>;
+  const sell = shop.sell.filter((x) => x.price > 0);
+  const canOpen = view.rewards.canOpen;
+  return (
+    <div>
+      <div className={s.name}>{shop.keeper}, {shop.title}</div>
+      <div className={s.sub}>{shop.blurb} You have {shop.gold} gold.</div>
+      {view.rewards.boxes.length > 0 && (
+        <button className={s.itemBtn} disabled={!canOpen} onClick={() => submit("open all")}>
+          open all {view.rewards.boxes.length} box{view.rewards.boxes.length === 1 ? "" : "es"}
+        </button>
+      )}
+      <div className={s.sectionLabel}>For sale</div>
+      <ul className={s.list}>
+        {shop.stock.map((it, i) => (
+          <li key={`${it.name}${i}`} className={s.codexEntry}>
+            <span className={rarityClass(it.rarity)}>{it.name}{it.qty > 1 ? ` ×${it.qty}` : ""}</span>
+            <span className={s.sub}> · {it.price}g{it.slot ? ` · ${it.slot}` : ""}</span>{" "}
+            <button className={s.itemBtn} disabled={shop.gold < it.price} onClick={() => submit(`buy ${i + 1}`)}>buy</button>
+          </li>
+        ))}
+        {shop.stock.length === 0 && <li className={s.muted}>Sold out.</li>}
+      </ul>
+      <div className={s.sectionLabel}>They'll buy</div>
+      <ul className={s.list}>
+        {sell.map((it, i) => (
+          <li key={`${it.name}${i}`} className={s.codexEntry}>
+            <span className={rarityClass(it.rarity)}>{it.name}{it.qty > 1 ? ` ×${it.qty}` : ""}</span>
+            <span className={s.sub}> · {it.price}g each</span>{" "}
+            <button className={s.itemBtn} onClick={() => submit(`sell ${it.name.toLowerCase()}`)}>sell</button>
+            {it.qty > 1 && <button className={s.itemBtn} onClick={() => submit(`sell ${it.name.toLowerCase()} all`)}>sell all</button>}
+          </li>
+        ))}
+        {sell.length === 0 && <li className={s.muted}>Nothing in your pack is worth their time.</li>}
+      </ul>
     </div>
   );
 }

@@ -17,6 +17,14 @@ export type Action =
   | { type: "disarm" }
   /** A meal in a safe room: "Well fed" until the next sleep. */
   | { type: "meal" }
+  /** Loot boxes (Milestone 7): list them (free), open one or all (safe rooms only), and the achievements list (free). */
+  | { type: "boxes" }
+  | { type: "open"; which?: string }
+  | { type: "achievements" }
+  /** Shops (safe rooms only): the shelf is free to look at. Costs no time. */
+  | { type: "shop" }
+  | { type: "buy"; item: string; qty?: string }
+  | { type: "sell"; item: string; qty?: string }
   /** Free: the run's Game Guide. */
   | { type: "guide"; quiet?: boolean }
   | { type: "rest" }

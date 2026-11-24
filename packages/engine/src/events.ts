@@ -73,6 +73,26 @@ export type GameEventBody =
   | { type: "moduleBuilt"; name: string }
   /** You came down the stairs onto a new floor. */
   | { type: "floorEntered"; floor: number; name: string }
+  // ---- Milestone 7: facts the achievement engine and the counters read. Most print nothing.
+  /** An enemy died. `how` is a short tag: "swing", "spell", "item", "status", "friendlyFire", "echo". */
+  | { type: "kill"; target: string; family: string; tier: string; overkill: number; how: string }
+  /** The crawler lost HP. `source`: enemy, hazard, self (your own item), show (a show event), craft (a botch). */
+  | { type: "damageTaken"; amount: number; source: string; cause: string; hp: number; hpPct: number }
+  /** A consumable was used. `itemType` is its consumables.json type (potion, food, explosive...). */
+  | { type: "itemUsed"; item: string; baseId: string; itemType: string; tags: string[]; inCombat: boolean }
+  /** A spell went off. */
+  | { type: "spellCast"; spell: string; school: string; scroll: boolean; first: boolean; inCombat: boolean }
+  /** Something was crafted at a bench. */
+  | { type: "crafted"; recipe: string; item?: string }
+  | { type: "goldChanged"; delta: number; total: number; why: string }
+  /** An achievement paid out a box, or a boss or floor did. */
+  | { type: "boxEarned"; boxId: string; tier: string; boxType: string; source: string }
+  | { type: "boxOpened"; boxId: string; tier: string; boxType: string; contents: string[] }
+  /** Printed in the ticker: the achievement's name, the System AI's insult and what it paid. */
+  | { type: "achievementEarned"; achievementId: string; name: string; text: string; tags: string[]; reward: string }
+  | { type: "moodChanged"; mood: number; delta: number; why: string }
+  | { type: "shopBought"; item: string; price: number; shopkeeper: string }
+  | { type: "shopSold"; item: string; price: number; shopkeeper: string }
   | { type: "stateChanged" };
 
 export type GameEventType = GameEventBody["type"];

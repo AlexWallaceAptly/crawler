@@ -8,7 +8,7 @@ import { EnemyStrip, LogView } from "./panels/LogView";
 import { MobileShell } from "./panels/Mobile";
 import { TabletShell } from "./panels/Tablet";
 import { useLayout } from "./layout";
-import { CharacterSheet, CodexSheet, GuideSheet, EchoPanel, EffectsList, EquipmentList, InventoryList, MiniMap, RecipeBook } from "./panels/Sheets";
+import { AchievementsSheet, CharacterSheet, CodexSheet, GuideSheet, ShopSheet, EchoPanel, EffectsList, EquipmentList, InventoryList, MiniMap, RecipeBook } from "./panels/Sheets";
 import { StatusBar } from "./panels/StatusBar";
 import { Ticker } from "./panels/Ticker";
 import { InputBar } from "./panels/InputBar";
@@ -24,6 +24,8 @@ export function App({ engine }: { engine: Engine }) {
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [codexOpen, setCodexOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [achievementsOpen, setAchievementsOpen] = useState(false);
+  const [shopOpen, setShopOpen] = useState(false);
   const [split, setSplit] = useState<boolean>(() => readPref("combatSplit", false));
   /** A grid command waiting for the player to pick a tile. */
   const [armed, setArmed] = useState<CommandOption | null>(null);
@@ -56,6 +58,22 @@ export function App({ engine }: { engine: Engine }) {
         setCodexOpen(false);
         return true;
       }
+      if (layoutControl.layout === "desktop" && (t === "achievements sheet" || t === "achievements" || t === "ach")) {
+        setAchievementsOpen((o) => !o);
+        setShopOpen(false);
+        setInventoryOpen(false);
+        setCodexOpen(false);
+        setGuideOpen(false);
+        return true;
+      }
+      if (layoutControl.layout === "desktop" && (t === "shop sheet" || t === "shop")) {
+        setShopOpen((o) => !o);
+        setAchievementsOpen(false);
+        setInventoryOpen(false);
+        setCodexOpen(false);
+        setGuideOpen(false);
+        return true;
+      }
       if (t === "codex sheet") {
         setCodexOpen((o) => !o);
         setInventoryOpen(false);
@@ -76,6 +94,8 @@ export function App({ engine }: { engine: Engine }) {
         setInventoryOpen(false);
         setCodexOpen(false);
         setGuideOpen(false);
+        setAchievementsOpen(false);
+        setShopOpen(false);
         setArmed(null);
       }
       // One key from any main screen.
@@ -186,6 +206,32 @@ export function App({ engine }: { engine: Engine }) {
           </Panel>
         </div>
       )}
+      {achievementsOpen && (
+        <div className={s.overlay} role="dialog" aria-label="Achievements">
+          <Panel
+            id="achievements"
+            title="Achievements"
+            collapsible={false}
+            className={s.grow}
+            extra={<button className={s.linkBtn} onClick={() => setAchievementsOpen(false)}>close [esc]</button>}
+          >
+            <AchievementsSheet view={view} />
+          </Panel>
+        </div>
+      )}
+      {shopOpen && (
+        <div className={s.overlay} role="dialog" aria-label="Shop">
+          <Panel
+            id="shop"
+            title="Shop"
+            collapsible={false}
+            className={s.grow}
+            extra={<button className={s.linkBtn} onClick={() => setShopOpen(false)}>close [esc]</button>}
+          >
+            <ShopSheet view={view} submit={submit} />
+          </Panel>
+        </div>
+      )}
       {codexOpen && (
         <div className={s.overlay} role="dialog" aria-label="Codex">
           <Panel
@@ -232,7 +278,7 @@ export function App({ engine }: { engine: Engine }) {
       <Ticker events={ticker} />
       <InputBar
         // the desktop opens the Codex as an overlay instead of printing it
-        commands={commands.filter((c) => c.input !== "codex" && c.input !== "guide")}
+        commands={commands.filter((c) => !["codex", "guide", "achievements", "shop"].includes(c.input))}
         onSubmit={submit}
         onLocal={onLocal}
         onArm={setArmed}
@@ -241,6 +287,8 @@ export function App({ engine }: { engine: Engine }) {
           ? [
               { label: inventoryOpen ? "Close inventory" : "Inventory", input: "inventory" },
               { label: codexOpen ? "Close codex" : "Codex", input: "codex sheet" },
+              ...(view.rewards.shop ? [{ label: shopOpen ? "Close shop" : "Shop", input: "shop sheet" }] : []),
+              { label: achievementsOpen ? "Close achievements" : `Achievements (${view.rewards.earned}/${view.rewards.total})`, input: "achievements sheet" },
               { label: guideOpen ? "Close guide" : `Guide${view.guide.unseen ? ` (${view.guide.unseen} new)` : ""}`, input: "guide sheet" },
             ]
           : []}

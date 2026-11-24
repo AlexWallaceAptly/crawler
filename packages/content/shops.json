@@ -1,0 +1,117 @@
+{
+  "drops": {
+    "minion": [
+      0,
+      3
+    ],
+    "mob": [
+      2,
+      7
+    ],
+    "elite": [
+      10,
+      25
+    ],
+    "boss": [
+      40,
+      90
+    ]
+  },
+  "floorScale": 0.5,
+  "chaPerPoint": 0.02,
+  "chaCap": 0.3,
+  "minPrice": 2,
+  "partsShare": 0.3,
+  "personalities": [
+    {
+      "id": "greedy",
+      "title": "the Appraiser",
+      "names": [
+        "Marla",
+        "Dev",
+        "Bix",
+        "Orson"
+      ],
+      "markup": 1.6,
+      "sellRate": 0.35,
+      "stock": [
+        5,
+        8
+      ],
+      "gearShare": 0.6,
+      "blurb": "Looks at your pockets before your face. Everything has a price and none of them are friendly."
+    },
+    {
+      "id": "bored",
+      "title": "the Night Clerk",
+      "names": [
+        "Gus",
+        "Pell",
+        "Nadia",
+        "Roy"
+      ],
+      "markup": 1.25,
+      "sellRate": 0.5,
+      "stock": [
+        4,
+        7
+      ],
+      "gearShare": 0.5,
+      "blurb": "Has been on shift for nine hundred years. Will ring you up the moment you stop talking."
+    },
+    {
+      "id": "chummy",
+      "title": "the Best Friend",
+      "names": [
+        "Sunny",
+        "Chip",
+        "Dolly",
+        "Tuck"
+      ],
+      "markup": 1.0,
+      "sellRate": 0.4,
+      "stock": [
+        4,
+        6
+      ],
+      "gearShare": 0.4,
+      "blurb": "Calls you buddy. Remembers your name wrong on purpose. Prices are fair, which is the scary part."
+    },
+    {
+      "id": "paranoid",
+      "title": "the Lookout",
+      "names": [
+        "Vic",
+        "Hettie",
+        "Moe",
+        "Lorne"
+      ],
+      "markup": 1.4,
+      "sellRate": 0.3,
+      "stock": [
+        3,
+        5
+      ],
+      "gearShare": 0.3,
+      "blurb": "Keeps one eye on the door and the other on your hands. Sells mostly things that explode or heal."
+    },
+    {
+      "id": "fatalist",
+      "title": "the Undertaker's Cousin",
+      "names": [
+        "Barb",
+        "Wendell",
+        "Ines",
+        "Ox"
+      ],
+      "markup": 0.9,
+      "sellRate": 0.6,
+      "stock": [
+        5,
+        9
+      ],
+      "gearShare": 0.55,
+      "blurb": "Gives you a good price. You won't be needing the money, and they know it."
+    }
+  ]
+}
