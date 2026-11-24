@@ -2,7 +2,7 @@
 
 Nov 20, 2026 · @Alex Wallace
 
-This is the one design document for Crawler. It merges the old game spec (`docs/SPEC.md`), the decision log (`DECISIONS.md`) and the story design doc ("DCC Text Adventure: Design Doc for Claude Code"). The story content itself (shard text, Echo's reactions, module and Codex text, the hand-written items) lives in the workbook [DCC Text Adventure: Stray and the Mother Below](https://claude.ai/artifact/AN3MCWefESxiKNaoKLb5y8). That workbook is exported to `content-csv/workbook/*.csv` and imported into `packages/content/*.json` by `npm run import:workbook`.
+This is the one design document for Crawler. It merges the old game spec (`docs/SPEC.md`), the decision log (`DECISIONS.md`) and the story design doc ("DCC Text Adventure: Design Doc for Claude Code"). The story content itself (shard text, Echo's reactions, module and Codex text, the hand-written items), plus the spells and the school perks' names, lives in the workbook [DCC Text Adventure: Stray and the Mother Below](https://claude.ai/artifact/AN3MCWefESxiKNaoKLb5y8). That workbook is exported to `content-csv/workbook/*.csv` and imported into `packages/content/*.json` by `npm run import:workbook`.
 
 **How Claude Code should use this doc:** treat it as the source of truth. Build in the order given in the Build order section. Where the doc is silent, pick the simplest option that fits the pillars and record it in the [Decision log](#decision-log) at the bottom, instead of asking.
 
@@ -502,6 +502,7 @@ Skills have ranks 0-15. Rank 0 is untrained. Each rank adds +1 to related rolls,
 | Defense | Dodge | Avoiding a trap. Light armor, heavy armor and shields don't train yet: power rolls leave no roll for their ranks to add to |
 | Utility | Perception, athletics, first aid, tinkering, trap engineering, explosives handling | Perception: a search that finds something, a trap spotted. Athletics: a shove that lands. First aid: a healing item that heals. Crafting skills: a passed crafting check |
 | Social | Persuasion | Talking a fight down |
+| Magic | One per spell school: Fire Magic, Frost Magic, Lightning Magic, Necromancy, Light Magic, Protection Magic, Illusion, Transmutation, Utility Magic | Every cast of that school that does something: 1, or 2 on a crit (see Spells) |
 | Class / race | Granted only by a class or race, e.g. a rage skill | Use, plus guaranteed ranks on level up |
 
 ```
@@ -532,16 +533,52 @@ A kill from Decapitation or Lights Out pays XP like any other. Bosses are immune
 
 ### Spells
 
-Spells come from spell tomes (consumed on reading), from class grants, or from race. Each spell has its own level 1-15.
+Spells belong to the show. The System sells them, names them and mocks you for using them; they have no tie to the thread (Echo doesn't react to them). Rules are in `spells.ts`, the spells in `spells.json`, and their words and numbers in the workbook's Spells and Spell Schools sheets.
+
+**Where they come from**
+
+- **Tomes** (`spell_tome`) turn up in treasure rooms and in a floor boss's training drop. Each rolls its spell when it drops, from the spells whose `floor` is that floor or shallower. Reading one (`use`, out of fights only) teaches the spell at level 1; reading one you already know adds a level.
+- **Scrolls** (`spell_scroll`) turn up in treasure rooms. Reading one (`use`, or `cast` when you don't know the spell) casts it once, free, at the level of the floor it dropped on. It trains the school's skill but levels no spell.
+- **Starter spells.** About one crawler in eleven starts with a spell, from a job or a past that fits (retired magician, electrician, night nurse, spelling-bee winner...): `spell` on occupations and events. The job's spell wins over the past's.
+- Class and race grants arrive with Milestone 11.
+
+**Casting:** `cast <spell> [at <enemy or tile>]`, or `c` for short. Spell buttons show the MP cost (or "ready in N"), and on the board they arm a tile pick like a throw.
 
 ```
-spell.level up:     every 10 * level casts, or reading a duplicate tome (+1 instantly)
-spell.mpCost        = base + perLevel * (level - 1)
-spell.damage        = dice scaled by level + floor(INT / 2)
-save DC (if any)    = 10 + floor(INT / 2) + spell.level, target rolls d20 + relevant stat
+cost       = the spell's AP (1 or 2) and its MP; refused, at no cost, when MP is short, it's recharging or the AP isn't there. Fear blocks it
+powerRoll  = 2d10 + floor(INT/2) + the school's skill rank + gear attack bonuses, with edges and banes, tiers and crits as a swing
+damage     = power[tier] + floor(powerPerLevel × (level-1)) + floor(INT × AP / 4) + damage gear - armor   (min 1)
+riders     = never at tier 1, the rider's chance at tier 2, always at tier 3 (as weapons)
+status     = a status spell on enemies always lands: tier 1 lasts 1 round, tier 2 the spell's duration, tier 3 one more
+self buffs = no roll (nobody is resisting): the full duration
+heals      = power[tier] + level growth + floor(INT × AP / 4), no armor; refused at full HP
+mpCost     = mp + floor(mpPerLevel × (level-1)) - perks   (min 1)
+cooldown   = rounds, counted like an enemy special's (2 is every other round); cleared when the fight ends
+level up   = every 10 × level casts (10, 20, 30...), or +1 from a duplicate tome; max 15. Scrolls don't count
+school XP  = 1 per cast that does something, 2 on a crit (the skill curve above), once per cast however many it hits
 ```
 
-Schools: fire, frost, lightning, necrotic, light, illusion, protection, summoning, transmutation, utility. Spells are hand-written in `spells.json` (start with \~40), not generated, because they're the core of build identity. Tomes are generated items that point at a spell id.
+- **One target** rolls against that target's guard. **Area spells** roll once for everything they cover and ignore guard; each target's armor comes off separately. On the board an area covers its shape around the target tile (one tile, a plus of five, a 3×3 square), including you if you're standing in it. In bands mode it covers everyone in the target's band.
+- **Range.** Close is adjacent, near is 3 tiles with sight, far is anything you can see. A spell never walks you closer: out of range is refused.
+- **A spell hit is a hit.** Crawler-wide gear (attack, damage, leech, spite, executioner) applies; things on the weapon (a coating, the Bone China Mouth) don't. Fire spells light oil like any fire. A crit hands 1 AP back.
+- **Out of fights** you can cast heals, cures and utility spells (`when` is `explore` or `any`). Damage and enemy spells wait for a fight.
+- **Confused enemies** matter now: half the time a confused enemy hits another enemy next to it (its first attack, tier 2) instead of you.
+
+**Schools.** Nine, each with one magic skill (category `magic`) that its casts train. Summoning waits for allied units on the board (see Deferred).
+
+| School | Skill | Spells (first floor) | Rank 5 | Rank 10 | Rank 15 |
+| --- | --- | --- | --- | --- | --- |
+| Fire | Fire Magic | Hot Take (1), Grease Fire (1), Dumpster Fire (2) | **Accelerant**: burning lasts 1 round longer | **Third-Degree**: +2 damage | **Flashover**: crits on 18-20 |
+| Frost | Frost Magic | Cold Shoulder (1), Freezer Burn (1), Walk-In Cooler (3) | **Brain Freeze**: the slow lands on every solid hit | **Frostbite**: +2 damage | **Flash Freeze**: a great hit stuns |
+| Lightning | Lightning Magic | Doorknob Zap (1), Faulty Wiring (2), Power Surge (3) | **Ground Fault**: arcs to one more enemy | **Overcurrent**: crits on 18-20 | **High Voltage**: +2 damage |
+| Necrotic | Necromancy | Bad Blood (1), Overdraft (1), Death and Taxes (3) | **Compound Interest**: drain 25% more | **Hemorrhage**: a great hit bleeds | **Bone Deep**: ignores 3 armor |
+| Light | Light Magic | Flash Photography (1), Patch Notes (1), Stadium Lights (2) | **Bedside Manner**: heals 25% more | **Retina Burn**: the blinding lands on every solid hit | **Halogen**: +3 damage |
+| Protection | Protection Magic | Bubble Wrap (1), Hand Sanitizer (1), Restraining Order (2) | **Extended Warranty**: 1 round longer | **Bulk Discount**: 1 less MP | **Express Lane**: recharges 1 round sooner |
+| Illusion | Illusion | Bait and Switch (1), Jump Scare (2), Sponsored Content (3) | **Method Acting**: 1 round longer | **Cheap Tricks**: 1 less MP | **Mass Hysteria**: one target becomes a plus |
+| Transmutation | Transmutation | Espresso Shot (1), Molasses (1), Tenderize (2) | **Slow Release**: 1 round longer | **Quick Change**: recharges 1 round sooner | **Group Rate**: one target becomes a plus |
+| Utility | Utility Magic | Flashlight App (1), Bad Feeling (1), Dowsing Rod (2) | **Efficient**: 1 less MP | **Long Battery**: 3 rooms longer | **Wide Net**: sensing reaches 2 more rooms |
+
+School perks are modifiers, like weapon perks. The typed weapon kinds take a school as their type (`damage:fire`, `critRange:frost`, `armorPierce:necrotic`, `tier3Status@frost:stunned`), because a cast is a swing with the school as its weapon type. The school-only kinds are `mpCost`, `cooldown`, `duration`, `area`, `healPct`, `drain`, `chain`, `riderUp` and `radius`. Validation fails on a magic perk that nothing reads.
 
 ## Races and classes
 
@@ -732,8 +769,8 @@ Start with at least 60 affixes and 50 bases across all slots.
 | Type | Notes |
 | --- | --- |
 | Potions | Healing, mana, cure, buff (STR/DEX/etc.), plus weird ones; potency scales with floor |
-| Scrolls | One-shot spell casts from `spells.json` at a fixed level |
-| Tomes | Teach a spell or skill (see Leveling) |
+| Scrolls | One-shot casts of a spell from `spells.json`, free, at the level of the floor they dropped on (see Spells) |
+| Tomes | Teach a spell, or level up one you know (see Spells); the Correspondence Course teaches a skill rank |
 | Food | Out-of-combat buffs lasting N rooms; cooked food is better |
 | Explosives | Thrown, area damage, can open walls; risk of fumble |
 
@@ -1050,7 +1087,7 @@ All content lives in `packages/content/*.json` and is validated by Zod schemas a
 | `races.json` | Races | 10 |
 | `classes.json` | Classes incl. hidden | 16 + 5 |
 | `skills.json` | Skills | 30 |
-| `spells.json` | Spells | 40 |
+| `spells.json` | Spells (hand-written; words and numbers from the workbook's Spells sheet) | 27 now, 40 by Milestone 13 |
 | `items/bases.json`, `materials.json`, `affixes.json`, `legendaryPowers.json`, `oddities.json`, `consumables.json` | Item parts | 50 / 10 / 60 / 15 / 20 / 30 |
 | `items/rarities.json`, `items/rarityWeights.json`, `boxes.json` | Loot tuning: affixes and power per rarity, drop weights per floor, box tiers | 5 / per floor / 6 tiers |
 | `craftParts.json` | Crafting properties: the workbench's groups and the names of recipe parts | 20+ |
@@ -1116,10 +1153,16 @@ interface CharClass {
   grants: { classLevel: number; skills?: string[]; spells?: string[]; stats?: Partial<StatBlock>; perk?: string }[];
 }
 
-interface Spell {
-  id: string; name: string; school: string; target: "self" | "single" | "area" | "ally";
-  range: "close" | "near" | "far"; mpBase: number; mpPerLevel: number; cooldown: number;
-  effects: Effect[]; save?: Stat; scaling: string;   // e.g. "damage +1d6 per 3 levels"
+interface Spell {                // spells.json; SpellSchema in schemas.ts is the full version
+  id: string; name: string; school: SpellSchool; description: string; tomeText: string;
+  target: "enemy" | "area" | "self"; range: "close" | "near" | "far"; shape?: "single" | "plus" | "square";
+  when: "fight" | "explore" | "any"; ap: number; mp: number; mpPerLevel: number; cooldown: number;
+  power?: Power; powerPerLevel: number; damageType?: string;
+  rider?: { id: string; chance: number; duration?: number };   // rides on damage
+  status?: { id: string; duration: number };                   // status spells
+  cures?: string[]; drain?: number; chain?: number; bonus?: { tags: string[]; damage: number };
+  hazard?: { id: string; shape: string }; utility?: "reveal" | "senseStairs"; radius?: number;
+  floor: number;                                               // first floor its tomes and scrolls drop on
 }
 
 interface EnemyFamily {
@@ -1159,7 +1202,7 @@ Build in 13 milestones, each ending in something playable or testable. Milestone
 | 4c | Floor tiling: Godot-style tilesets (terrain autotiling in all three match modes, probability, flips and transposes), looks-only ground layouts per floor, a Godot `.tres` importer | A complete set fits every square exactly in each mode; looks never change an arena's layout or dice; an imported tileset matches its `.tres` |
 | T | Thread layer: Echo (Wholeness, Temper, urges, vessel), shard delivery, the thread Codex and run history, modules M01-M06, floor mini-bosses with enforced weaknesses (rule-based), gate-boss floor generation, the Floor 1-3 re-theme and descending into Floors 2-3 | Shards deliver and persist across runs; Temper thresholds pick module variants; each Floor 1-3 boss's weakness works in scripted fights; gate floors always leave a hidden stairwell reachable; the sim reports shard find rates |
 | 5 | Items: generator, rarity, affixes, equip slots, inventory, weight, consumables | 1,000 generated items all valid; equipping changes derived stats |
-| 6 | Progression: XP and levels, stat points, skills with use-XP, spells and tomes, MP. Split in two: 6a (levels, stat points, skills from use, milestone perks) is built; spells, tomes and MP are still to come | Skills rank up from use; a spell levels after N casts |
+| 6 | Progression: XP and levels, stat points, skills with use-XP, spells and tomes, MP. Built in two parts: 6a (levels, stat points, skills from use, milestone perks) and 6b (spells, school skills, tomes, scrolls, MP spending) | Skills rank up from use; a spell levels after N casts |
 | 7 | Rewards: achievements engine, counters, loot boxes, safe rooms, shops, narration templates, AI mood | 20 achievements fire correctly in tests; boxes only open in safe rooms |
 | 8 | Death and account: permadeath, legacy points, unlocks, codex, bequest | Die, start a new crawler, see unlocks and the bequest on Floor 1 |
 | 9 | Floors 2-3: districts and elites (the themes, descent and floor mini-bosses landed in Milestone T) | Full Floors 1-3 run is playable |
@@ -1185,6 +1228,7 @@ These are out of scope for the first build. The engine should leave room for the
 - **Echo's later stages**: the Angry stage's free action and refusals, Soothe, the Host's PA voice changing with Temper, quakes and the Mother's tremors, and modules M07-M14.
 - **Districts and elites on Floors 2-3** (Milestone 9): the themes are in, the districts are not.
 - **Pet sentience and pet classes.**
+- **More magic**: the summoning school (it needs allied units on the board), `ally` targets, enemy spellcasters and Echo's Quiet Field (M09) that silences them, and spells from class and race grants (Milestone 11).
 - **Advanced crafting**: basic junk crafting landed in Milestone 4b. The Junk Engineer class gets crafting perks (bench-free crafting, Tinkering ranks, gadget recipes) in Milestone 11.
 - **Other crawlers**: rival and party NPC crawlers who share the floor.
 - **Claude flavor beyond bosses**: optional live narration for event rooms, NPC conversations and shop haggling.
@@ -2046,3 +2090,74 @@ Built on the `crafting-and-leveling` branch, from two pieces of playtest feedbac
 
   - Runs that clear Floor 3 end at level 12 (median; 10th-90th 10-14). That's inside Milestone 13's 12-18 target.
   - Boss wins rose because a crawler who reaches a boss has leveled. "Their own wounds" (bleed and poison) is still the top cause of death.
+
+### Milestone 6b: spells, tomes and scrolls
+
+Built on the `magic-and-spells` branch: the rest of Milestone 6 (spells, school skills, tomes, scrolls, spending MP). The rules are under Spells; this records why they're that way.
+
+**Decisions made with the player**
+
+- **Spells land on power rolls, like weapons.** INT stands in for STR/DEX, statuses ride as weapon riders, and there are no saves. The old "dice scaled by level" and save DC are gone from the Spells section.
+- **Two layers of growth.** A spell's own level (from casting it, or a duplicate tome) grows its power and its MP cost. One skill per school trains on every cast, adds +1 per rank to the roll, and unlocks perks at 5, 10 and 15. The generic Spellcasting skill is retired; its Efficient perk (-1 MP) became Utility Magic's rank 5.
+- **First spell.** Tomes and scrolls in the loot, plus a starter spell for backstories that fit magic.
+- **Lore.** Spells are the show's system, narrated by the System AI. Nothing ties them to the thread, and Echo doesn't react to them.
+- **Schools.** Nine now. Summoning waits for allied units on the board.
+- **Enemy casters** wait, along with Echo's Quiet Field (M09).
+- **The words.** Claude drafted the 27 spells and the 27 school perks. The player owns them in the workbook's Spells and Spell Schools sheets.
+
+**Rules the doc left open**
+
+- **Status spells always land.** The tier sets the length: 1 round, the spell's duration, or one more. Self buffs don't roll at all (nobody is resisting), so Bad Feeling always lasts its 6 rooms.
+- **Heals add INT's flat bonus** (`floor(INT × AP / 4)`), as damage does. A heal at full HP and a cure with nothing to cure are refused before anything is paid, since you can see both yourself.
+- **Area spells** roll once for everything they cover and ignore guard; each target's armor comes off separately. Standing in your own area hurts, as with a thrown bomb. In bands mode an area covers the target's whole band.
+- **Spells never walk you closer.** An attack closes in by itself; a spell out of reach is refused. On the board its button stays, greyed out, as "(out of reach)", so you can still see you have it. Buttons got a `why` for the tooltip, because the input bar assumed a greyed-out button meant short of AP.
+- **A spell hit is a hit.** Crawler-wide gear (attack, damage, leech, spite, executioner) applies. Things on the weapon don't: a poison coating, the Bone China Mouth's Temper. Fire spells light oil through the same `igniteUnder` as a burning weapon.
+- **Cooldowns** count like an enemy special's (2 is every other round) and clear when the fight ends.
+- **Scrolls** cast at the level of the floor they dropped on, cost no MP, train the school and level no spell. `cast <spell>` falls back to a scroll of it when you don't know the spell; `use <scroll> at <x>` aims one.
+- **Tomes and scrolls are two generic bases** (`spell_tome`, `spell_scroll`, with `"spell": "random"`). The spell is picked when the item drops, uniformly from the spells whose `floor` is that floor or shallower, and goes on the item (`spellId`, and `spellLevel` for scrolls). Their rarity follows the spell's floor: common, uncommon, then rare. Stacks only merge for the same spell. `rollLoot` and `itemFromRef` take the floor for this.
+- **Where they drop.** Treasure rooms: Spell Tome 1.5 and Spell Scroll 2, out of about 34 of weight. Each floor boss's training drop: Spell Tome 2 out of 10.
+- **Starter spells.** 12 jobs and 6 pasts have one, so about 9% of crawlers start with a spell. When both do, the job's wins.
+- **Confused enemies** used to do nothing different (an enemy has no one else to target). Now half the time a confused enemy hits another enemy next to it (on the board) or in its band: its first attack's tier-2 power, less armor. That's what Bait and Switch is for.
+- **Bad Feeling** is a status (`trap_sense`, flag `spotTraps`), so it counts down per room out of fights and per round in them, like any status. A fight eats it.
+- **Flashlight App** turns up hidden items and concealed stairwells, never a shard's faint voice: that still takes a `search`.
+- **New statuses:** warded (+2 guard, 2 thorns), tenderized (-2 armor, -2 guard) and trap_sense.
+- **School perk kinds.** The typed weapon kinds take a school (`damage:fire`), plus `mpCost`, `cooldown`, `duration`, `area`, `healPct`, `drain`, `chain`, `riderUp` and `radius`. The plan called `drain` "leech"; renamed so it can't be mistaken for the gear `leech`. `chain`, `riderUp` and `radius` weren't in the plan: Ground Fault, Brain Freeze, Retina Burn and Wide Net needed them.
+- **Commands.** `cast` (also `c`, `conjure`), and `read` and `study` mean `use`.
+- **No `SAVE_VERSION` bump.** Every new field is optional, and old saves have no spells to migrate.
+
+**The workbook**
+
+- Two sheets were added to the workbook: **Spells** (27 rows) and **Spell Schools** (9 rows), with dropdowns for school, target and when.
+- The sheet owns each spell's words and simple numbers (AP, MP, cooldown, power, growth per level, floor). The JSON keeps what a spell does in structured form (rider, status, cures, drain, chain, bonus, hazard, utility), as with modules. Spell Schools owns the magic skills' names, descriptions and perk names and texts; `skills.json` keeps the perk modifiers.
+- Columns marked "(from the game)" (what a spell does at level 1, and which backstories start with it) are for reading and are never imported.
+- `spells.json` is importer-formatted now (2-space JSON, like the thread files). `skills.json` keeps its hand layout: the importer writes it back byte for byte.
+- The CSVs were seeded from the JSON once. The round trip was checked: an import changes no field, a second import is byte-identical, and a re-export gives the same CSVs.
+
+**Balance** (`npm run sim -- <n> --floors 3 --craft`; `--spell <id>` gives every crawler that spell at the start)
+
+| Run | Runs | Reach F2 | Reach F3 | Clear F3 | Damage per fight | Fights with a cast |
+| --- | --- | --- | --- | --- | --- | --- |
+| 6a, before magic | 400 | 64% | 45% | 42% | 6.4 | - |
+| **This branch** | 400 | 65% | 44% | 40% | 6.6 | 30% (of the runs that cast) |
+| Everyone knows Grease Fire | 200 | 61% | 40% | 37% | 6.2 | 47% |
+| Doorknob Zap | 200 | 75% | 48% | 45% | 5.4 | 45% |
+| Overdraft | 200 | 70% | 44% | 42% | 4.5 | 51% |
+| Patch Notes | 200 | 62% | 40% | 37% | 5.9 | 22% |
+| Bait and Switch | 200 | 62% | 46% | 44% | 7.1 | 35% |
+| Bubble Wrap | 200 | 72% | 47% | 45% | 6.4 | 78% |
+
+- **Magic is an option, not the best build.** With every crawler given the same spell, the Floor 3 clear rate lands between 37% and 45%. At 200 runs that's within noise (about ±3.5 points) of the branch's 40%. No spell was retuned.
+- **What spells change:** damage taken per fight drops (ranged hits and drain end fights before the melee does), and weapon skills train more slowly, because a cast replaces a swing. With a damage spell, a weapon skill reaches rank 5 in 30-39% of runs, against 49%.
+- **How often magic turns up:** 39% of runs know a spell at some point. 9% start with one, and the rest read 0.44 tomes a run. A run that casts does so 25 times (median), its best spell reaches level 2 (10th-90th 1-4), and its best school rank 2 (0-5).
+- **Starter-spell crawlers** cleared 33% (36 runs) against 41%. That's too few runs to read anything into (±8 points). "Ever knew a spell" (55% against 31%) is mostly survivorship: crawlers who live longer find more tomes.
+- **The sim's policy is crude.** It casts its best damage spell when that does at least 80% of its swing per AP, heals and cures with spells when low, opens on packs and elites with buffs and crowd control, and puts its weapon points into INT once its INT matches its weapon stat. Grease Fire and Patch Notes both came out at 37%; worth watching once players have spells.
+- **Leveling is unchanged:** level 4 leaving Floor 1 (median), level 12 when Floor 3 is cleared, and no stuck runs.
+
+**Browser check.** Checked in headless Chrome at 1440×900 and 390×844, with saves built by the engine:
+
+- reading a tome, and a heal cast out of a fight;
+- the sheet's Spells block, on desktop and through the phone's Character menu;
+- in a grid fight, Cast buttons that arm a tile pick and highlight only the enemies in reach and in sight, and casting by tapping one;
+- an out-of-reach spell shown greyed out.
+
+There was no horizontal scroll at either size, and the console was clean.

@@ -57,7 +57,8 @@ export function generateCrawler(content: Content): Crawler {
     hp: 1,
     mp: 0,
     skills: { [occ.skill]: { rank: 1, xp: 0 } },
-    spells: {},
+    // A magic-leaning job (or past) starts you with one spell; the job's wins.
+    spells: (occ.spell ?? ev.spell) ? { [(occ.spell ?? ev.spell)!]: { level: 1, casts: 0, cooldown: 0 } } : {},
     race: null,
     charClass: null,
     equipment: {},

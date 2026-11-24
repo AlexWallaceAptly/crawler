@@ -106,10 +106,68 @@
   { "id": "appraisal", "name": "Appraisal", "category": "utility", "stat": "INT",
     "description": "Knowing what something is and roughly what it's worth to a desperate person.",
     "perks": [] },
-  { "id": "spellcasting", "name": "Spellcasting", "category": "utility", "stat": "INT",
-    "description": "General talent for reading tomes without your eyes melting.",
+  { "id": "fire_magic", "name": "Fire Magic", "category": "magic", "stat": "INT", "school": "fire",
+    "description": "Setting things on fire on purpose, at range, with your mind. Arson with extra steps.",
     "perks": [
-      { "rank": 5, "name": "Efficient", "text": "Spells cost 1 less MP (minimum 1).", "modifiers": [{ "to": "mpCost", "value": -1 }] }
+      { "rank": 5, "name": "Accelerant", "text": "Burning from your fire spells lasts 1 round longer.", "modifiers": [{ "to": "duration:fire", "value": 1 }] },
+      { "rank": 10, "name": "Third-Degree", "text": "+2 damage with fire spells.", "modifiers": [{ "to": "damage:fire", "value": 2 }] },
+      { "rank": 15, "name": "Flashover", "text": "Fire spells crit on 18-20.", "modifiers": [{ "to": "critRange:fire", "value": 1 }] }
+    ] },
+  { "id": "frost_magic", "name": "Frost Magic", "category": "magic", "stat": "INT", "school": "frost",
+    "description": "Making things colder than they want to be. Mostly their blood.",
+    "perks": [
+      { "rank": 5, "name": "Brain Freeze", "text": "Your frost spells' slow lands on every solid hit (tier 2), not just great ones.", "modifiers": [{ "to": "riderUp:frost", "value": 1 }] },
+      { "rank": 10, "name": "Frostbite", "text": "+2 damage with frost spells.", "modifiers": [{ "to": "damage:frost", "value": 2 }] },
+      { "rank": 15, "name": "Flash Freeze", "text": "A great frost hit (tier 3) stuns the target for a round.", "modifiers": [{ "to": "tier3Status@frost:stunned", "value": 1 }] }
+    ] },
+  { "id": "lightning_magic", "name": "Lightning Magic", "category": "magic", "stat": "INT", "school": "lightning",
+    "description": "Being the thing the safety manual warned you about.",
+    "perks": [
+      { "rank": 5, "name": "Ground Fault", "text": "Lightning spells arc to one more enemy nearby, for half the damage.", "modifiers": [{ "to": "chain:lightning", "value": 1 }] },
+      { "rank": 10, "name": "Overcurrent", "text": "Lightning spells crit on 18-20.", "modifiers": [{ "to": "critRange:lightning", "value": 1 }] },
+      { "rank": 15, "name": "High Voltage", "text": "+2 damage with lightning spells.", "modifiers": [{ "to": "damage:lightning", "value": 2 }] }
+    ] },
+  { "id": "necromancy", "name": "Necromancy", "category": "magic", "stat": "INT", "school": "necrotic",
+    "description": "Borrowing from the dead and the nearly dead. Mostly the nearly.",
+    "perks": [
+      { "rank": 5, "name": "Compound Interest", "text": "Necrotic spells heal you for 25% more of the damage they do.", "modifiers": [{ "to": "drain:necrotic", "value": 25 }] },
+      { "rank": 10, "name": "Hemorrhage", "text": "A great necrotic hit (tier 3) leaves the target bleeding for 3 rounds.", "modifiers": [{ "to": "tier3Status@necrotic:bleeding", "value": 3 }] },
+      { "rank": 15, "name": "Bone Deep", "text": "Necrotic spells ignore 3 armor.", "modifiers": [{ "to": "armorPierce:necrotic", "value": 3 }] }
+    ] },
+  { "id": "light_magic", "name": "Light Magic", "category": "magic", "stat": "INT", "school": "light",
+    "description": "Shining things at people until they feel better or go blind. Sometimes both.",
+    "perks": [
+      { "rank": 5, "name": "Bedside Manner", "text": "Light heals do 25% more.", "modifiers": [{ "to": "healPct:light", "value": 25 }] },
+      { "rank": 10, "name": "Retina Burn", "text": "Your light spells' blinding lands on every solid hit (tier 2), not just great ones.", "modifiers": [{ "to": "riderUp:light", "value": 1 }] },
+      { "rank": 15, "name": "Halogen", "text": "+3 damage with light spells.", "modifiers": [{ "to": "damage:light", "value": 3 }] }
+    ] },
+  { "id": "protection_magic", "name": "Protection Magic", "category": "magic", "stat": "INT", "school": "protection",
+    "description": "Standing behind something invisible and hoping. It's more than most people get.",
+    "perks": [
+      { "rank": 5, "name": "Extended Warranty", "text": "Your protection spells last 1 round longer.", "modifiers": [{ "to": "duration:protection", "value": 1 }] },
+      { "rank": 10, "name": "Bulk Discount", "text": "Protection spells cost 1 less MP (minimum 1).", "modifiers": [{ "to": "mpCost:protection", "value": -1 }] },
+      { "rank": 15, "name": "Express Lane", "text": "Protection spells come back 1 round sooner.", "modifiers": [{ "to": "cooldown:protection", "value": -1 }] }
+    ] },
+  { "id": "illusion", "name": "Illusion", "category": "magic", "stat": "INT", "school": "illusion",
+    "description": "Lying, with lights. The audience loves it when it works, and loves it more when it doesn't.",
+    "perks": [
+      { "rank": 5, "name": "Method Acting", "text": "What your illusion spells inflict lasts 1 round longer.", "modifiers": [{ "to": "duration:illusion", "value": 1 }] },
+      { "rank": 10, "name": "Cheap Tricks", "text": "Illusion spells cost 1 less MP (minimum 1).", "modifiers": [{ "to": "mpCost:illusion", "value": -1 }] },
+      { "rank": 15, "name": "Mass Hysteria", "text": "Illusion spells cover a wider area: one target becomes a plus of five tiles.", "modifiers": [{ "to": "area:illusion", "value": 1 }] }
+    ] },
+  { "id": "transmutation", "name": "Transmutation", "category": "magic", "stat": "INT", "school": "transmutation",
+    "description": "Changing what things are made of, or at least how fast they're going.",
+    "perks": [
+      { "rank": 5, "name": "Slow Release", "text": "What your transmutation spells do lasts 1 round longer.", "modifiers": [{ "to": "duration:transmutation", "value": 1 }] },
+      { "rank": 10, "name": "Quick Change", "text": "Transmutation spells come back 1 round sooner.", "modifiers": [{ "to": "cooldown:transmutation", "value": -1 }] },
+      { "rank": 15, "name": "Group Rate", "text": "Transmutation spells cover a wider area: one target becomes a plus of five tiles.", "modifiers": [{ "to": "area:transmutation", "value": 1 }] }
+    ] },
+  { "id": "utility_magic", "name": "Utility Magic", "category": "magic", "stat": "INT", "school": "utility",
+    "description": "The spells nobody films. They'd be keeping you alive, if anybody noticed.",
+    "perks": [
+      { "rank": 5, "name": "Efficient", "text": "Utility spells cost 1 less MP (minimum 1).", "modifiers": [{ "to": "mpCost:utility", "value": -1 }] },
+      { "rank": 10, "name": "Long Battery", "text": "Bad Feeling and other utility effects last 3 more rooms.", "modifiers": [{ "to": "duration:utility", "value": 3 }] },
+      { "rank": 15, "name": "Wide Net", "text": "Sensing spells reach 2 more rooms.", "modifiers": [{ "to": "radius:utility", "value": 2 }] }
     ] },
   { "id": "persuasion", "name": "Persuasion", "category": "social", "stat": "CHA",
     "description": "Getting people to do things with words instead of hammers.",

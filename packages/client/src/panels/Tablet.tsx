@@ -60,6 +60,7 @@ export function TabletShell({ view, log, battle, commands, submit, onLocal, arme
       key={`${c.label}|${c.input}`}
       className={`${cls} ${(c.primary && !c.disabled) || armed?.label === c.label ? s.on : ""}`}
       disabled={c.disabled}
+      title={c.why}
       onClick={() => press(c)}
     >
       {c.label}{c.targets ? " ⌖" : ""}

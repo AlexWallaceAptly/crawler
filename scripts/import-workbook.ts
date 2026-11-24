@@ -4,7 +4,14 @@
  *   npm run import:workbook [-- <dir>]      (default dir: content-csv/workbook)
  *
  * Export each sheet from the workbook page as CSV into that folder, named after the sheet
- * (Thread.csv, Floor Arc.csv, Shards.csv, Modules.csv, Temper.csv, Codex.csv, Items.csv).
+ * (Thread.csv, Floor Arc.csv, Shards.csv, Modules.csv, Temper.csv, Codex.csv, Items.csv,
+ * Spells.csv, Spell Schools.csv).
+ *
+ * Spells: the sheet owns each spell's words and simple numbers (AP, MP, cooldown, power,
+ * per-level growth, floor); the JSON keeps what it does in structured form (rider, status,
+ * cures, drain, chain, bonus, hazard, utility). Spell Schools: the sheet owns each magic
+ * skill's name, description and perk names and texts; skills.json keeps the perk modifiers.
+ * Columns marked "(from the game)" are there to read and are never imported.
  *
  * The workbook owns the words. The JSON owns the engine fields (module parts and effects,
  * boss gates, Codex line lists, item stats, delivery chances...), so those are kept from
@@ -260,6 +267,100 @@ function importItems(): Json[] {
   });
 }
 
+// ---------------------------------------------------------------- spells
+
+/** "3/5/7" → [3, 5, 7]; blank → undefined. */
+function parsePower(v: string, where: string): number[] | undefined {
+  if (!v) return undefined;
+  const p = v.split("/").map((x) => Number(x.trim()));
+  if (p.length !== 3 || p.some((x) => !Number.isFinite(x))) throw new Error(`${where}: power "${v}" should look like 3/5/7`);
+  return p;
+}
+
+function num(row: Row, name: string, where: string, fallback?: number): number | undefined {
+  const v = col(row, name);
+  if (v === "") return fallback;
+  const n = Number(v);
+  if (!Number.isFinite(n)) throw new Error(`${where}: "${name}" should be a number, not "${v}"`);
+  return n;
+}
+
+/** Spells: sheet words and numbers over the JSON's structured fields, in the JSON's key order. */
+function importSpells(): Json[] {
+  const old = new Map(readJson<Json[]>("spells.json", []).map((x) => [x.id as string, x]));
+  return sheet("Spells").map((r) => {
+    const id = col(r, "ID");
+    const where = `Spells "${id}"`;
+    const was = old.get(id) ?? {};
+    const keep = (k: string) => (was[k] !== undefined ? { [k]: was[k] } : {});
+    const target = col(r, "Target");
+    const when = col(r, "When") || "fight";
+    const power = parsePower(col(r, "Power"), where);
+    const cooldown = num(r, "Cooldown", where, 0)!;
+    const mpPerLevel = num(r, "MP per level", where, 0)!;
+    const powerPerLevel = num(r, "Power per level", where, 0)!;
+    return {
+      id,
+      name: col(r, "Spell"),
+      school: col(r, "School").toLowerCase(),
+      description: col(r, "Description"),
+      tomeText: col(r, "Tome text"),
+      target,
+      ...(target !== "self" ? { range: col(r, "Range") || "near" } : {}),
+      ...(col(r, "Shape") ? { shape: col(r, "Shape") } : {}),
+      ...(when !== "fight" ? { when } : {}),
+      ap: num(r, "AP", where),
+      mp: num(r, "MP", where),
+      ...(mpPerLevel ? { mpPerLevel } : {}),
+      ...(cooldown ? { cooldown } : {}),
+      ...(power ? { power } : {}),
+      ...(power && powerPerLevel ? { powerPerLevel } : {}),
+      ...keep("damageType"), ...keep("rider"), ...keep("status"), ...keep("cures"), ...keep("drain"), ...keep("chain"),
+      ...keep("bonus"), ...keep("hazard"), ...keep("utility"), ...keep("radius"),
+      floor: num(r, "Floor", where),
+    };
+  });
+}
+
+/** skills.json, with the Spell Schools sheet's words on the magic skills. Everything else is untouched. */
+function importSchools(): Json[] {
+  const skills = readJson<Json[]>("skills.json", []);
+  for (const r of sheet("Spell Schools")) {
+    const id = col(r, "Skill ID");
+    const skill = skills.find((s) => s.id === id);
+    if (!skill) throw new Error(`Spell Schools: no skill "${id}" in skills.json (add it there first: its school and perk modifiers live in the JSON)`);
+    skill.name = col(r, "Skill");
+    skill.description = col(r, "Description");
+    for (const perk of skill.perks as Json[]) {
+      const name = col(r, `Rank ${perk.rank} perk`);
+      const text = col(r, `Rank ${perk.rank} does`);
+      if (name) perk.name = name;
+      if (text) perk.text = text;
+    }
+  }
+  return skills;
+}
+
+/** skills.json's hand layout: one line of keys, the description, then one line per perk. */
+function formatSkills(skills: Json[]): string {
+  const inline = (v: unknown): string => {
+    if (Array.isArray(v)) return `[${v.map(inline).join(", ")}]`;
+    if (v && typeof v === "object") {
+      const e = Object.entries(v as Json);
+      return e.length ? `{ ${e.map(([k, x]) => `${JSON.stringify(k)}: ${inline(x)}`).join(", ")} }` : "{}";
+    }
+    return JSON.stringify(v);
+  };
+  const one = (s: Json) => {
+    const { description, perks, ...head } = s;
+    const h = Object.entries(head).map(([k, x]) => `${JSON.stringify(k)}: ${inline(x)}`).join(", ");
+    const list = perks as unknown[];
+    const p = list.length ? `[\n${list.map((x) => `      ${inline(x)}`).join(",\n")}\n    ]` : "[]";
+    return `  { ${h},\n    "description": ${JSON.stringify(description)},\n    "perks": ${p} }`;
+  };
+  return `[\n${skills.map(one).join(",\n")}\n]\n`;
+}
+
 // ---------------------------------------------------------------- run
 
 console.log(`Importing the workbook from ${dir}`);
@@ -272,4 +373,7 @@ writeJson("thread.json", thread);
 writeJson("temper.json", importTemper());
 writeJson("codex.json", importCodex(shards, bossIds));
 writeJson("items/oddities.json", importItems());
+writeJson("spells.json", importSpells());
+writeFileSync(join(contentDir, "skills.json"), formatSkills(importSchools()));
+console.log("  wrote packages/content/skills.json");
 console.log("Done. Run `npm run validate` to check the result.");

@@ -33,6 +33,7 @@ import rarityWeights from "./items/rarityWeights.json";
 import affixes from "./items/affixes.json";
 import legendaryPowers from "./items/legendaryPowers.json";
 import tilesets from "./tilesets.json";
+import spells from "./spells.json";
 
 export const rawContent = {
   "skills.json": skills,
@@ -65,4 +66,5 @@ export const rawContent = {
   "items/affixes.json": affixes,
   "items/legendaryPowers.json": legendaryPowers,
   "tilesets.json": tilesets,
+  "spells.json": spells,
 } satisfies Record<string, unknown>;

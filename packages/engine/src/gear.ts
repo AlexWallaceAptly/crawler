@@ -22,13 +22,17 @@ export interface WeaponProfile {
   apCost: number;
   /** A swing ends the turn (and carries a 3-AP swing's weight). */
   unwieldy?: boolean;
-  stat: "STR" | "DEX";
+  /** Spells swing with INT. */
+  stat: "STR" | "DEX" | "INT";
   reach: RangeBand;
   skillId?: string;
+  /** For spells, the school: typed perks (`damage:fire`) read it like a weapon type. */
   weaponType?: string;
   damageType?: string;
-  /** Crafted weapons: a status that can land on a hit. */
+  /** Crafted weapons: a status that can land on a hit. Spells: their rider. */
   onHit?: { id: string; chance: number; duration?: number };
+  /** A spell, not a weapon: the log names it, and weapon coatings don't ride on it. */
+  spell?: true;
 }
 
 export const BARE_HANDS: WeaponProfile = { name: "bare hands", power: [1, 2, 2], apCost: 1, stat: "STR", reach: "close", skillId: "unarmed", weaponType: "unarmed" };
@@ -83,7 +87,7 @@ export function heldWeapon(c: Crawler): ItemInstance | undefined {
 
 /** The numbers behind one swing (before the target's guard, armor or a Spiteful grudge). */
 export interface SwingNumbers {
-  stat: "STR" | "DEX";
+  stat: "STR" | "DEX" | "INT";
   statValue: number;
   /** half the stat, on the power roll */
   statBonus: number;

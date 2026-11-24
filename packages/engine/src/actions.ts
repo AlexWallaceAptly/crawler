@@ -19,7 +19,10 @@ export type Action =
   | { type: "advance" }
   | { type: "retreat" }
   | { type: "talk" }
-  | { type: "use"; item: string }
+  /** Drink, eat or read something. Scrolls can take a target, like `cast`. */
+  | { type: "use"; item: string; at?: string }
+  /** Cast a spell you know (or read a scroll of it): `cast grease fire at d4`. */
+  | { type: "cast"; spell: string; at?: string }
   | { type: "wait" }
   | { type: "shove"; target?: string }
   | { type: "throw"; item: string; at?: string }

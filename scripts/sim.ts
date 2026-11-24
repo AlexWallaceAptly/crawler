@@ -9,6 +9,8 @@
  *   npm run sim -- 500 --craft       the crawler also picks up junk, crafts at
  *                                    benches (Echo's modules too), wields its best weapon and throws junk at packs
  *   npm run sim -- 500 --floors 3    keep going down to Floor 3 (default: stop after Floor 1)
+ *   npm run sim -- 300 --spell grease_fire
+ *                                    every crawler starts knowing this spell (on top of any starter): how strong is it?
  *   npm run sim -- 300 --offsets 0,-2,-3
  *                                    try other enemy levelOffsets per floor (floors.json → encounters)
  *
@@ -19,6 +21,13 @@
  * each level. The report shows the level and best weapon-skill rank at each floor's end,
  * the level after Floor 1's first hard fight, and the fight on which a weapon skill
  * first reaches each rank.
+ *
+ * Magic (Milestone 6b): tomes are read as soon as they're carried. In a fight the crawler
+ * heals and cures with spells when it needs to, opens on a pack (or an elite) with a buff
+ * or a crowd-control spell, and casts its best damage spell when that does about as much per
+ * AP as its swing. Out of one it uses Bad Feeling, Flashlight App and Dowsing Rod while MP is
+ * high. A crawler whose INT is at least its weapon stat and who knows a damage spell puts
+ * the 2 weapon points into INT. The report splits clear rates by starter spell.
  */
 import { createEngine, loadContent, bfsDistances, powerScore, type World, type Dir, type GameEvent, type CombatMode } from "../packages/engine/src/index";
 import { autoAssign, atWorkbench } from "../packages/engine/src/craft";
@@ -27,6 +36,9 @@ import { counterItems } from "../packages/engine/src/boss";
 import { openStairwell } from "../packages/engine/src/explore";
 import { pendingShard, sideOf } from "../packages/engine/src/echo";
 import { rawContent } from "../packages/content/index";
+import { spellNumbers, spellProfile } from "../packages/engine/src/spells";
+import { heldWeapon, profileOf, swingNumbers } from "../packages/engine/src/gear";
+import type { Spell } from "../packages/engine/src/content/schemas";
 
 const args = process.argv.slice(2);
 const flag = (name: string) => {
@@ -48,6 +60,9 @@ if (offsetsArg) {
 }
 const engine = createEngine(content);
 const crafty = args.includes("--craft");
+/** `--spell <id>`: every crawler starts knowing it. */
+const forcedSpell = flag("spell");
+if (forcedSpell && !content.spells.has(forcedSpell)) throw new Error(`--spell: no spell "${forcedSpell}" in spells.json`);
 /** Play down to (and including) this floor. */
 const floorsArg = Math.max(1, Number(flag("floors") ?? 1));
 /** A fight that drags past this many rounds counts as stuck (AI or rules deadlock). */
@@ -89,6 +104,15 @@ interface Outcome {
   rankAtFight: Record<number, number>;
   /** Hard fights won on Floor 1 between level 2 and level 3. */
   hardFightsTo3?: number;
+  /** Magic: started with a spell, ever knew one, casts, tomes read, fights with a cast. */
+  starter: boolean;
+  knewSpell: boolean;
+  casts: number;
+  tomes: number;
+  castFights: number;
+  /** Best spell level and school rank at the end. */
+  spellLevel: number;
+  schoolRank: number;
 }
 
 function hpPct(world: World): number {
@@ -136,6 +160,17 @@ function runOne(mode: CombatMode | "default"): Outcome {
   let { world } = engine.newWorld();
   if (mode !== "default") world.account.settings = { combatMode: mode };
   ({ world } = engine.step(world, { type: "accept" }));
+  const starter = Object.keys(world.game.crawler!.spells).length > 0;
+  if (forcedSpell) world.game.crawler!.spells[forcedSpell] ??= { level: 1, casts: 0, cooldown: 0 };
+  let casts = 0;
+  let tomes = 0;
+  let castFights = 0;
+  let castThisFight = false;
+  /** Opening spells used this fight (a buff or crowd control, once each). */
+  const opened = new Set<string>();
+  /** Rooms lit by Flashlight App; floors dowsed. */
+  const lit = new Set<string>();
+  const dowsed = new Set<number>();
   let fights = 0;
   let fled = 0;
   let earlyDeath = false;
@@ -194,7 +229,10 @@ function runOne(mode: CombatMode | "default"): Outcome {
       const c = world.game.crawler;
       if (!c || c.unspentStatPoints <= 0 || world.game.phase !== "exploring") break;
       const held = c.inventory.find((i) => i.uid === c.equipment.mainHand);
-      const stat = c.unspentStatPoints % 3 === 1 ? "CON" : (held?.stat ?? "STR");
+      const weaponStat = held?.stat ?? "STR";
+      const caster = Object.keys(c.spells).some((id) => content.spells.byId[id]?.power && content.spells.byId[id]?.target !== "self") &&
+        c.baseStats.INT >= c.baseStats[weaponStat];
+      const stat = c.unspentStatPoints % 3 === 1 ? "CON" : caster ? "INT" : weaponStat;
       const before = c.unspentStatPoints;
       world = engine.step(world, { type: "raise", stat, times: 1 }).world;
       if ((world.game.crawler?.unspentStatPoints ?? 0) >= before) break;
@@ -202,6 +240,9 @@ function runOne(mode: CombatMode | "default"): Outcome {
     for (const e of r.events) if (e.type === "shardFound") shardsByFloor[e.floor] = (shardsByFloor[e.floor] ?? 0) + 1;
     if (r.events.some((e) => e.type === "codexUpdated" && e.kind === "weakness") && (wasBoss || world.game.combat?.boss)) weakness++;
     if (r.events.some((e) => e.type === "combatStarted")) {
+      if (castThisFight) castFights++;
+      castThisFight = false;
+      opened.clear();
       fights++;
       fightStartHp = world.game.crawler!.hp;
       if (world.game.combat?.boss) bossFights++;
@@ -221,9 +262,19 @@ function runOne(mode: CombatMode | "default"): Outcome {
       if (world.game.combat) { fights++; fightStartHp = world.game.crawler!.hp; }
     }
   };
+  const magic = () => {
+    const c = world.game.crawler;
+    const levels = Object.values(c?.spells ?? {}).map((st) => st.level);
+    const ranks = Object.entries(c?.skills ?? {}).filter(([id]) => content.skills.byId[id]?.category === "magic").map(([, st]) => st.rank);
+    return {
+      starter, knewSpell: starter || tomes > 0 || levels.length > 0, casts, tomes, castFights: castFights + (castThisFight ? 1 : 0),
+      spellLevel: Math.max(0, ...levels), schoolRank: Math.max(0, ...ranks),
+    };
+  };
   const stuck = (cause: string, i: number): Outcome => ({
     result: "stuck", cause, actions: i, roomsVisited: 0, xp: 0, fights, level: 1, fightRounds, fightDamage, fled, crafted, earlyDeath,
     deepest, shardsByFloor, modules: 0, bossFights, bossWins, weakness, temper: 0, atFloorEnd, weaponXp, rankAtFight, floorXp, bossDownOn,
+    ...magic(),
   });
   /** Run a command; false if the engine refused it (not enough AP, out of reach...). */
   const tryAct = (a: Parameters<typeof engine.step>[1]) => {
@@ -238,6 +289,59 @@ function runOne(mode: CombatMode | "default"): Outcome {
     const far = (e: (typeof combat.enemies)[number]) =>
       at && e.pos ? Math.max(Math.abs(e.pos.x - at.x), Math.abs(e.pos.y - at.y)) : band[e.range];
     return combat.enemies.filter((e) => e.hp > 0).sort((a, b) => far(a) - far(b) || a.hp - b.hp)[0]?.name.toLowerCase();
+  };
+
+  /** Spells known right now, with their numbers at this crawler's level and perks. */
+  const known = () => {
+    const c = world.game.crawler!;
+    return Object.entries(c.spells).flatMap(([id, st]) => {
+      const sp = content.spells.byId[id];
+      return sp ? [{ sp, st, n: spellNumbers(c, content, sp, st.level) }] : [];
+    });
+  };
+  /** Cast it now: enough MP, off cooldown, and (in a fight) enough AP. */
+  const ready = (k: ReturnType<typeof known>[number], ap: number) =>
+    k.st.cooldown === 0 && world.game.crawler!.mp >= k.n.mp && (world.game.phase !== "combat" || ap >= k.n.ap) &&
+    (k.sp.when === "any" || k.sp.when === (world.game.phase === "combat" ? "fight" : "explore"));
+  const cast = (sp: Spell) => {
+    const ok = tryAct({ type: "cast", spell: sp.name.toLowerCase() });
+    if (ok) {
+      casts++;
+      if (world.game.phase === "combat") castThisFight = true;
+    }
+    return ok;
+  };
+  const CURABLE = ["poisoned", "bleeding", "burning"];
+  const needsCure = () => world.game.crawler!.statuses.some((st) => CURABLE.includes(st.id));
+  /**
+   * A spell worth casting this AP, or undefined (then swing as usual). Heal when low, cure,
+   * open on a pack with a buff or crowd control, else the best damage spell if it keeps up
+   * with the swing per AP.
+   */
+  const spellToCast = (ap: number, foes: number, big: boolean): Spell | undefined => {
+    const c = world.game.crawler!;
+    const ks = known().filter((k) => ready(k, ap));
+    if (!ks.length) return undefined;
+    const heal = ks.find((k) => k.sp.target === "self" && k.sp.power);
+    if (heal && hpPct(world) < 0.45) return heal.sp;
+    const cure = ks.find((k) => k.sp.cures);
+    if (cure && needsCure() && hpPct(world) < 0.7) return cure.sp;
+    const round = world.game.combat!.round;
+    if (round <= 2 && (foes >= 2 || big)) {
+      const opener = ks.find((k) => !opened.has(k.sp.id) && !k.sp.power && k.sp.status &&
+        (k.sp.target !== "self" || !c.statuses.some((st) => st.id === k.sp.status!.id)));
+      if (opener) {
+        opened.add(opener.sp.id);
+        return opener.sp;
+      }
+    }
+    const w = profileOf(content, heldWeapon(c), c);
+    const swingPerAp = swingNumbers(c, content, w).average / (w.unwieldy ? 2 : w.apCost);
+    const damage = ks.filter((k) => k.sp.power && k.sp.target !== "self").map((k) => {
+      const per = swingNumbers(c, content, spellProfile(content, k.sp, k.n)).average * (k.n.shape ? Math.min(foes, 2) : 1);
+      return { k, perAp: per / k.n.ap };
+    }).sort((a, b) => b.perAp - a.perAp)[0];
+    return damage && damage.perAp >= 0.8 * swingPerAp ? damage.k.sp : undefined;
   };
 
   /** Put on anything the view calls better than what's on now (generated gear, Milestone 5). */
@@ -277,6 +381,10 @@ function runOne(mode: CombatMode | "default"): Outcome {
         if (!tryAct({ type: "use", item: counter.name.toLowerCase() })) act({ type: "wait" });
       } else if ((fx.tether || fx.yank) && !combat.used?.includes("bind") && cv.ap.current >= 1 && tryAct({ type: "module", verb: "bind" })) { /* bound */ }
       else if (fx.shout && !combat.used?.includes("shout") && foes >= 2 && cv.ap.current >= 1 && tryAct({ type: "module", verb: "shout" })) { /* shouted */ }
+      else if ((() => {
+        const sp = spellToCast(cv.ap.current, foes, !!combat.boss || combat.enemies.some((e) => e.hp > 0 && e.tier === "elite"));
+        return sp ? cast(sp) : false;
+      })()) { /* cast */ }
       else if (hpPct(world) < 0.45 && heal) { if (!tryAct({ type: "use", item: heal })) act({ type: "wait" }); }
       else if (hpPct(world) < 0.3) { if (!tryAct({ type: "flee" })) act({ type: "wait" }); }
       else if (thrown && foes >= 2 && world.game.combat!.round <= 2 && tryAct({ type: "use", item: thrown })) { /* thrown */ }
@@ -330,6 +438,26 @@ function runOne(mode: CombatMode | "default"): Outcome {
     const floor = world.game.floor!;
     const here = floor.rooms[floor.currentRoom]!;
     const timeToSpare = floor.timeLeft > 24 * 60;
+    const tome = world.game.crawler!.inventory.find((it) => it.spellId && it.spellLevel === undefined);
+    if (tome && tryAct({ type: "use", item: tome.name.toLowerCase() })) { tomes++; continue; }
+    {
+      const ks = known().filter((k) => ready(k, 99));
+      const maxMp = engine.view(world).status.mp?.max ?? 1;
+      const mpPct = world.game.crawler!.mp / Math.max(1, maxMp);
+      const heal = ks.find((k) => k.sp.target === "self" && k.sp.power);
+      const cure = ks.find((k) => k.sp.cures);
+      const sense = ks.find((k) => k.sp.status?.id === "trap_sense");
+      const light = ks.find((k) => k.sp.utility === "reveal");
+      const dowse = ks.find((k) => k.sp.utility === "senseStairs");
+      const key = `${floor.floor}:${here.id}`;
+      let spell: Spell | undefined;
+      if (heal && hpPct(world) < 0.65) spell = heal.sp;
+      else if (cure && needsCure()) spell = cure.sp;
+      else if (sense && mpPct >= 0.6 && !world.game.crawler!.statuses.some((st) => st.id === "trap_sense")) spell = sense.sp;
+      else if (light && mpPct >= 0.7 && !lit.has(key)) { lit.add(key); spell = light.sp; }
+      else if (dowse && mpPct >= 0.7 && !dowsed.has(floor.floor)) { dowsed.add(floor.floor); spell = dowse.sp; }
+      if (spell && cast(spell)) continue;
+    }
     if (here.type === "safe" && hpPct(world) < 0.85) { act({ type: "sleep" }); continue; }
     if (hpPct(world) < 0.4 && healItem(world)) { act({ type: "use", item: healItem(world)! }); continue; }
     if (hpPct(world) < 0.65 && timeToSpare) { act({ type: "rest" }); continue; }
@@ -389,6 +517,7 @@ function runOne(mode: CombatMode | "default"): Outcome {
     rankAtFight,
     floorXp,
     bossDownOn,
+    ...magic(),
   };
 }
 
@@ -421,7 +550,7 @@ for (const mode of modes) {
   const fights = outcomes.reduce((s, o) => s + o.fights, 0);
   const fled = outcomes.reduce((s, o) => s + o.fled, 0);
 
-  console.log(`\n${floorsArg === 1 ? "Floor 1" : `Floors 1-${floorsArg}`} sim — ${runs} runs — combat: ${mode}${crafty ? " — crafting on" : ""}`);
+  console.log(`\n${floorsArg === 1 ? "Floor 1" : `Floors 1-${floorsArg}`} sim — ${runs} runs — combat: ${mode}${crafty ? " — crafting on" : ""}${forcedSpell ? ` — everyone knows ${forcedSpell}` : ""}`);
   console.log(`  cleared : ${cleared.length} (${Math.round((100 * cleared.length) / runs)}%)`);
   console.log(`  died    : ${died.length} (${Math.round((100 * died.length) / runs)}%)`);
   if (stuck.length) console.log(`  stuck   : ${stuck.length}  ← should be zero`);
@@ -465,6 +594,14 @@ for (const mode of modes) {
     return `r${r} fight ${xs.length ? median(xs) : "-"} (${Math.round((100 * xs.length) / runs)}% of runs)`;
   });
   console.log(`  weapon skill, median fight first reached: ${rankFights.join("   ")}`);
+  const knew = outcomes.filter((o) => o.knewSpell);
+  const starters = outcomes.filter((o) => o.starter);
+  const rest = outcomes.filter((o) => !o.starter);
+  const clearPct = (xs: Outcome[]) => (xs.length ? `${Math.round((100 * xs.filter((o) => o.result === "cleared").length) / xs.length)}%` : "-");
+  const casters = outcomes.filter((o) => o.casts > 0);
+  console.log(`  magic: knew a spell in ${Math.round((100 * knew.length) / runs)}% of runs (started with one ${Math.round((100 * starters.length) / runs)}%); tomes read per run ${avg(outcomes.map((o) => o.tomes)).toFixed(2)}`);
+  console.log(`      casters (${casters.length} runs): ${avg(casters.map((o) => o.casts)).toFixed(1)} casts a run, a cast in ${Math.round(100 * avg(casters.map((o) => (o.fights ? o.castFights / o.fights : 0))))}% of fights; best spell level ${spread(casters.map((o) => o.spellLevel))}; best school rank ${spread(casters.map((o) => o.schoolRank))}`);
+  console.log(`      cleared: started with a spell ${clearPct(starters)} (${starters.length}) · didn't ${clearPct(rest)} (${rest.length}) · ever knew one ${clearPct(knew)} (${knew.length}) · never ${clearPct(outcomes.filter((o) => !o.knewSpell))}`);
   console.log("  deaths by cause:");
   for (const [cause, n] of [...causes.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)) {
     console.log(`    ${String(n).padStart(4)}  ${cause}`);

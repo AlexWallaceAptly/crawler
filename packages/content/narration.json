@@ -1525,5 +1525,61 @@
         "text": "One clean bonk and the {target} is somewhere else entirely. Permanently."
       }
     ]
+  },
+  {
+    "key": "crawler.starterSpell",
+    "variants": [
+      {
+        "text": "Oh, and because {because}, the system has decided you know {spell}. Don't ask me how. Nobody reads the terms of service. Try `{command}`."
+      },
+      {
+        "text": "Fun fact: people who {because2} get a free spell. Yours is {spell}. It's not a reward, it's a statistical curiosity. `{command}` when you're ready to embarrass yourself."
+      },
+      {
+        "text": "Paperwork says you came preloaded with {spell}. The sponsors call this 'onboarding'. I call it giving a toddler a lighter. `{command}`."
+      }
+    ]
+  },
+  {
+    "key": "spell.learned",
+    "variants": [
+      {
+        "text": "{spell}. You read the whole thing, and only some of it read you back. Congratulations on your new liability."
+      },
+      {
+        "text": "New spell: {spell}. The audience loves a magic user. Mostly for the part where it goes wrong."
+      },
+      {
+        "text": "{spell}, learned. Your brain made room by deleting your childhood phone number and the name of your first dog."
+      }
+    ]
+  },
+  {
+    "key": "spell.levelUp",
+    "variants": [
+      {
+        "text": "{spell} is level {level}. Practice makes slightly less pathetic."
+      },
+      {
+        "text": "Level {level} {spell}. Somebody in accounting just raised its price. That somebody is me."
+      },
+      {
+        "text": "{spell} grows to level {level}. It's bigger now. So is the bill."
+      }
+    ]
+  },
+  {
+    "key": "spell.firstCast",
+    "variants": [
+      {
+        "text": "First spell! Look at you, doing magic in a hole in the ground for an audience of billions. Mom would be so confused."
+      },
+      {
+        "text": "And that's {spell}, folks. A magic user! The insurance people have been notified."
+      },
+      {
+        "text": "{spell}. Your first cast. Somewhere, a wizard you'll never meet just felt embarrassed for the profession."
+      }
+    ]
   }
 ]

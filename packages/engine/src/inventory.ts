@@ -26,10 +26,11 @@ export function effectiveTags(item: ItemInstance): string[] {
   return [...tags];
 }
 
-/** Items that can share a stack: same base, nothing baked in. */
+/** Items that can share a stack: same base, nothing baked in (a tome of the same spell, a scroll of the same level). */
 function stackable(a: ItemInstance, b: ItemInstance): boolean {
   return a.kind === "consumable" && b.kind === "consumable" && a.baseId === b.baseId &&
-    !a.crafted?.length && !b.crafted?.length && !a.onHit && !b.onHit;
+    !a.crafted?.length && !b.crafted?.length && !a.onHit && !b.onHit &&
+    a.spellId === b.spellId && a.spellLevel === b.spellLevel;
 }
 
 /** Put an item on a pile (room floor, pack), merging consumable stacks. Returns the entry it landed in. */

@@ -42,7 +42,7 @@ try {
     `${c.backstory.locations.all.length} locations`,
     `${c.skills.all.length} skills`,
     `${c.items.bases.all.length} item bases (${c.items.bases.all.filter((b) => b.generate).length} generated)`,
-    `${c.items.materials.all.length} materials, ${c.items.affixes.all.length} affixes, ${c.items.legendaryPowers.all.length} legendary powers`,
+    `${c.items.materials.all.length} materials, ${c.items.affixes.all.length} affixes, ${c.items.legendaryPowers.all.length} legendary powers, ${c.spells.all.length} spells`,
     `${c.items.consumables.all.length} consumables`,
     `${c.statusEffects.all.length} statuses`,
     `${Object.keys(c.narration).length} narration keys`,

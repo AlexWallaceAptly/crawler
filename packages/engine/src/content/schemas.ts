@@ -100,14 +100,23 @@ export type Modifier = z.infer<typeof ModifierSchema>;
 
 // ---------------------------------------------------------------- skills
 
+/** Spell schools (spells.json); each has one magic skill. Summoning waits for allied units. */
+export const SPELL_SCHOOLS = [
+  "fire", "frost", "lightning", "necrotic", "light", "protection", "illusion", "transmutation", "utility",
+] as const;
+export const SpellSchoolSchema = z.enum(SPELL_SCHOOLS);
+export type SpellSchool = z.infer<typeof SpellSchoolSchema>;
+
 export const SkillSchema = z.strictObject({
   id: IdSchema,
   name: z.string(),
-  category: z.enum(["weapon", "defense", "utility", "social", "class"]),
+  category: z.enum(["weapon", "defense", "utility", "social", "magic", "class"]),
   /** Stat that usually pairs with this skill on a check. */
   stat: StatSchema.optional(),
   /** For weapon skills: the weaponType that trains it. */
   weaponType: z.string().optional(),
+  /** For magic skills: the spell school that trains it (every cast of that school). */
+  school: SpellSchoolSchema.optional(),
   description: z.string(),
   perks: z.array(z.strictObject({
     rank: z.number().int().min(1).max(15),
@@ -149,6 +158,8 @@ export const OccupationSchema = z.strictObject({
   /** Starting item (item base or consumable id). */
   item: IdSchema,
   ageRange: z.tuple([z.number().int(), z.number().int()]).default([19, 64]),
+  /** A magic-leaning job: the crawler starts knowing this spell (spells.json id) at level 1. */
+  spell: IdSchema.optional(),
 });
 export type Occupation = z.infer<typeof OccupationSchema>;
 
@@ -159,6 +170,8 @@ export const FormativeEventSchema = z.strictObject({
   plus: StatSchema,
   minus: StatSchema,
   tags: z.array(z.string()).default([]),
+  /** The crawler starts knowing this spell, unless the occupation already gave one. */
+  spell: IdSchema.optional(),
 }).refine((e) => e.plus !== e.minus, { message: "plus and minus must be different stats" });
 export type FormativeEvent = z.infer<typeof FormativeEventSchema>;
 
@@ -333,8 +346,86 @@ export const ConsumableSchema = z.strictObject({
     /** single tile, a plus of five, or the 3x3 square. */
     shape: z.enum(["single", "plus", "square"]).default("single"),
   }).optional(),
+  /**
+   * Tomes teach this spell (or level it up); scrolls cast it once. "random" rolls a spell
+   * when the item drops, from those whose `floor` is the drop's floor or shallower.
+   */
+  spell: IdSchema.optional(),
 });
 export type Consumable = z.infer<typeof ConsumableSchema>;
+
+// ---------------------------------------------------------------- spells
+
+export const AREA_SHAPES = ["single", "plus", "square"] as const;
+export type AreaShape = (typeof AREA_SHAPES)[number];
+
+/**
+ * A spell (spells.json). Casting is a power roll like a swing: 2d10 + INT/2 + the school's
+ * skill rank. Damage spells land the tier's power; status spells always land, and the
+ * tier sets how long; heals heal the tier's power. See "Spells" in docs/DESIGN.md.
+ */
+export const SpellSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string().min(1),
+  school: SpellSchoolSchema,
+  /** What it is, in the System's voice. The numbers are shown next to it. */
+  description: z.string().min(1),
+  /** The tome's flavor line. */
+  tomeText: z.string().min(1),
+  /** enemy: one target; area: a tile and the shape around it; self: you. */
+  target: z.enum(["enemy", "area", "self"]),
+  /** How far it reaches (enemy and area spells). Close is adjacent; near is 3 tiles; far is the board. */
+  range: z.enum(["close", "near", "far"]).default("near"),
+  /** Area spells: the tiles it covers around the target tile. */
+  shape: z.enum(AREA_SHAPES).optional(),
+  /** When it can be cast: in a fight, out of one (exploring), or either. */
+  when: z.enum(["fight", "explore", "any"]).default("fight"),
+  ap: z.number().int().min(1).max(3),
+  /** MP at level 1. */
+  mp: z.number().int().min(1),
+  /** MP added per level after 1 (fractions accumulate: 0.25 is +1 every 4 levels). */
+  mpPerLevel: z.number().min(0).default(0),
+  /** Rounds before it can be cast again. */
+  cooldown: z.number().int().min(0).default(0),
+  /** Damage (enemy, area) or healing (self) by power-roll tier, at level 1. */
+  power: PowerSchema.optional(),
+  /** Added to every tier per level after 1 (fractions accumulate). */
+  powerPerLevel: z.number().min(0).default(0),
+  damageType: DamageTypeSchema.optional(),
+  /** A status that may ride on a damage hit: never on tier 1, its chance on tier 2, always on tier 3. */
+  rider: OnHitStatusSchema.optional(),
+  /** Status spells: always lands. Tier 1 lasts 1 round, tier 2 `duration`, tier 3 one more. */
+  status: z.strictObject({ id: IdSchema, duration: z.number().int().min(1) }).optional(),
+  /** Statuses it removes from you. */
+  cures: z.array(IdSchema).optional(),
+  /** Heals you this % of the damage it does. */
+  drain: z.number().int().min(1).max(100).optional(),
+  /** Arcs to this many more enemies near the target, for half the damage. */
+  chain: z.number().int().min(1).optional(),
+  /** Extra damage against enemies with any of these family tags (undead, lightSensitive). */
+  bonus: z.strictObject({ tags: z.array(z.string()).min(1), damage: z.number().int().min(1) }).optional(),
+  /** Leaves an arena hazard on the target tile (grid fights). */
+  hazard: z.strictObject({ id: IdSchema, shape: z.enum(AREA_SHAPES).default("single") }).optional(),
+  /** Out-of-combat effects: turn up what's hidden in this room, or sense stairwells within `radius` rooms. */
+  utility: z.enum(["reveal", "senseStairs"]).optional(),
+  radius: z.number().int().min(1).optional(),
+  /** The first floor its tomes and scrolls can drop on (and stronger spells start deeper). */
+  floor: z.number().int().min(1).max(13),
+}).superRefine((s, ctx) => {
+  const bad = (message: string) => ctx.addIssue({ code: "custom", message });
+  if (s.target !== "self" && s.when !== "fight") bad("enemy and area spells can only be cast in a fight");
+  if (s.target === "area" && !s.shape) bad("area spells need a shape");
+  if (s.target !== "area" && s.shape) bad("only area spells have a shape");
+  const does = [s.power, s.status, s.cures, s.utility].filter((x) => x !== undefined).length;
+  if (does === 0) bad("a spell needs power, a status, cures or a utility effect");
+  if (s.target === "self" && s.power && s.status) bad("a self spell heals or applies a status, not both");
+  if (s.target !== "self" && !s.power && !s.status) bad("enemy and area spells need power or a status");
+  if (s.rider && !s.power) bad("a rider rides on damage: give the spell power");
+  if (s.power && s.target !== "self" && !s.damageType) bad("damage spells need a damageType");
+  if (s.utility === "senseStairs" && !s.radius) bad("senseStairs needs a radius");
+  if ((s.drain || s.chain || s.bonus) && (!s.power || s.target === "self")) bad("drain, chain and bonus need a damage spell");
+});
+export type Spell = z.infer<typeof SpellSchema>;
 
 // ---------------------------------------------------------------- loot
 

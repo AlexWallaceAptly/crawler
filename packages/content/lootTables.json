@@ -31,11 +31,13 @@
     { "item": "liquid_nitrogen", "weight": 0.5 }, { "item": "road_flare", "weight": 1 }, { "item": "m80", "weight": 1 },
     { "item": "dart_set", "weight": 1 }, { "item": "nail_gun", "weight": 0.3 }, { "item": "harpoon_gun", "weight": 0.2 },
     { "item": "muscle_memory_shot", "weight": 0.4 }, { "item": "correspondence_course", "weight": 0.3 },
-    { "item": "bootleg_hgh", "weight": 0.2 }, { "item": "fish_oil", "weight": 0.2 }, { "item": "grandmas_stock", "weight": 0.2 }
+    { "item": "bootleg_hgh", "weight": 0.2 }, { "item": "fish_oil", "weight": 0.2 }, { "item": "grandmas_stock", "weight": 0.2 },
+    { "item": "spell_tome", "weight": 1.5 }, { "item": "spell_scroll", "weight": 2 }
   ] },
   { "id": "training", "entries": [
     { "item": "muscle_memory_shot", "weight": 3 }, { "item": "correspondence_course", "weight": 2 },
-    { "item": "bootleg_hgh", "weight": 1 }, { "item": "fish_oil", "weight": 1 }, { "item": "grandmas_stock", "weight": 1 }
+    { "item": "bootleg_hgh", "weight": 1 }, { "item": "fish_oil", "weight": 1 }, { "item": "grandmas_stock", "weight": 1 },
+    { "item": "spell_tome", "weight": 2 }
   ] },
   { "id": "safe_supplies", "entries": [
     { "item": "duct_tape", "weight": 3 }, { "item": "friction_tape", "weight": 2 }, { "item": "electrical_tape", "weight": 2 },

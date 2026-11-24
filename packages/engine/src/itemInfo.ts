@@ -4,6 +4,7 @@
  * would change for you. See gear.ts for the numbers.
  */
 import type { Content } from "./content/load";
+import { SPELL_LEVEL_CAP, schoolSkillId, spellEffectText, spellFlat, spellNumbers } from "./spells";
 import { AP_COST } from "./rules/ap";
 import { describeModifier } from "./rules/modifiers";
 import { skillLine } from "./progression";
@@ -79,6 +80,21 @@ export function itemInfo(c: Crawler, content: Content, it: ItemInstance): ItemIn
 
   if (it.kind === "consumable" && content.items.consumables.byId[it.baseId]?.scales) {
     detail.push(`Stronger on deeper floors: ×${potencyFor(1)} on Floor 1, ×${potencyFor(2)} on 2, ×${potencyFor(3)} on 3.`);
+  }
+
+  // Tomes and scrolls: the spell, and what it would do for you.
+  const spell = it.spellId ? content.spells.byId[it.spellId] : undefined;
+  if (spell) {
+    const known = c.spells[spell.id];
+    const scroll = it.spellLevel !== undefined;
+    const level = scroll ? it.spellLevel! : Math.min(SPELL_LEVEL_CAP, known ? known.level + 1 : 1);
+    const n = spellNumbers(c, content, spell, level);
+    const school = content.skills.byId[schoolSkillId(content, spell.school)]?.name ?? spell.school;
+    detail.push(`${spell.name} · ${school} · ${spell.description}`);
+    detail.push(`At level ${level}: ${spellEffectText(content, spell, n, spellFlat(c, content, spell, n))} · ${scroll ? "free" : `${n.mp} MP`}, ${n.ap} AP${n.cooldown ? `, then ${n.cooldown} rounds to recharge` : ""}.`);
+    detail.push(scroll ? "Reading it casts the spell once, no MP, whether you know it or not. It doesn't level your spell."
+      : known ? (known.level >= SPELL_LEVEL_CAP ? "You know it as well as it can be known." : `You know it (level ${known.level}). Reading this makes it level ${known.level + 1}.`)
+      : "Reading it teaches you the spell. Out of fights only.");
   }
 
   let verdict: ItemInfo["verdict"];

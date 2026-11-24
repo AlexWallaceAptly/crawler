@@ -134,7 +134,7 @@ export function startCombat(ctx: StepContext, enemies: Enemy[], opts: StartOptio
     delete room.items;
     if (theme.arena.scrap) {
       const table = ctx.content.lootTables.get(theme.arena.scrap);
-      for (let n = int(0, 2); n > 0; n--) items.push(rollLoot(table, ctx.content));
+      for (let n = int(0, 2); n > 0; n--) items.push(rollLoot(table, ctx.content, floor.floor));
     }
     ctx.game.combat.arena = buildArena({
       room,
@@ -224,6 +224,7 @@ function endOfRound(ctx: StepContext): void {
   for (const name of decrementStatuses(c.statuses, ctx.content)) {
     ctx.fight(`You are no longer ${name.toLowerCase()}.`, "status");
   }
+  for (const sp of Object.values(c.spells)) sp.cooldown = Math.max(0, sp.cooldown - 1);
   combat.ap = 0;
   combat.turnBegun = false;
   if (combat.arena) combat.arena.moveLeft = 0;
@@ -268,7 +269,7 @@ export function beginTurn(ctx: StepContext): boolean {
 }
 
 /** Fear: the only action left is running. Spends the turn if it bites. */
-function fearBlocks(ctx: StepContext, line: string): boolean {
+export function fearBlocks(ctx: StepContext, line: string): boolean {
   if (!hasFlag(ctx.crawler.statuses, ctx.content, "fleeOnly")) return false;
   ctx.fight(line, "status");
   finishRound(ctx);
@@ -375,17 +376,35 @@ function riderLands(tier: number, p: number): boolean {
   return tier >= 3 || (tier === 2 && chance(p));
 }
 
+/** Extras for a hit that isn't a plain swing (spells: shared rolls, arcs, drain). */
+export interface HitOptions {
+  edges?: number;
+  banes?: number;
+  /** Use this roll instead of rolling (an area spell rolls once for everyone it covers). */
+  roll?: PowerRoll;
+  /** Not the main target: a short log line, and no crit AP or skill XP (the main hit had those). */
+  secondary?: boolean;
+  /** Flat damage on top, before armor (a spell's bonus against some enemy tags). */
+  extraDamage?: number;
+  /** Heal this % of the damage dealt, on top of any gear leech. */
+  drain?: number;
+  /** Damage multiplier after armor (an arc does half). */
+  scale?: number;
+}
+
 /**
- * One weapon swing: the power roll, the tier's damage, on-hit statuses, the kill.
- * Always does at least 1 damage. A crit hands 1 AP back. Doesn't spend AP or end the turn.
+ * One weapon swing (or one spell hitting one target): the power roll, the tier's damage,
+ * on-hit statuses, the kill. Always does at least 1 damage. A crit hands 1 AP back.
+ * Doesn't spend AP or end the turn.
  */
-export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfile, opts: { edges?: number; banes?: number } = {}): PowerRoll {
+export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfile, opts: HitOptions = {}): PowerRoll {
   const c = ctx.crawler;
   const mods = collectModifiers(c, ctx.content);
   const d = derive(c, ctx.content);
   const sw = swingNumbers(c, ctx.content, w, d, mods);
   const shift = guardShift(enemyGuard(ctx, target));
-  const roll = powerRoll(sw.rollBonus, shift.edges + (opts.edges ?? 0), shift.banes + (opts.banes ?? 0), sw.critAt);
+  const roll = opts.roll ?? powerRoll(sw.rollBonus, shift.edges + (opts.edges ?? 0), shift.banes + (opts.banes ?? 0), sw.critAt);
+  const lead = !opts.secondary;
   for (const name of consumeFlaggedStatuses(c.statuses, ctx, "breaksOnAttack")) {
     ctx.fight(`${name} ends when you attack.`, "status");
   }
@@ -395,33 +414,39 @@ export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfi
   const spite = target.hitYouRound !== undefined && round - target.hitYouRound <= 1 ? modTotal(mods, "spite") : 0;
   const flat = sw.flat + spite;
   const armor = Math.max(0, enemyArmor(ctx, target) - sw.pierce);
-  let dmg = Math.max(1, w.power[roll.tier - 1]! + flat - armor);
+  let dmg = Math.max(1, w.power[roll.tier - 1]! + flat + (opts.extraDamage ?? 0) - armor);
   if (roll.tier === 3 && sw.tier3Bonus) dmg = Math.round(dmg * (1 + sw.tier3Bonus / 100));
   const execute = modTotal(mods, "executioner");
   if (execute > 0 && target.hp * 2 < target.maxHP) dmg = Math.round(dmg * (1 + execute / 100));
+  if (opts.scale !== undefined) dmg = Math.max(1, Math.floor(dmg * opts.scale));
   target.hp -= dmg;
+  const left = `${armor > 0 ? ` (${armor} soaked)` : ""}${target.hp > 0 ? ` (${target.hp}/${target.maxHP})` : ""}`;
+  const tierText = roll.crit ? "CRIT, tier 3" : `Tier ${roll.tier}`;
   ctx.fight(
-    `You hit the ${target.name} with ${w.name}: ${describePower(roll)}. ${roll.crit ? "CRIT, tier 3" : `Tier ${roll.tier}`}: ${dmg} damage${armor > 0 ? ` (${armor} soaked)` : ""}${target.hp > 0 ? ` (${target.hp}/${target.maxHP})` : ""}.`,
+    !lead ? `${w.name} catches the ${target.name} too: ${dmg} damage${left}.`
+      : w.spell ? `${w.name} hits the ${target.name}: ${describePower(roll)}. ${tierText}: ${dmg} damage${left}.`
+      : `You hit the ${target.name} with ${w.name}: ${describePower(roll)}. ${tierText}: ${dmg} damage${left}.`,
     "you",
   );
-  if (roll.crit) {
+  if (roll.crit && lead) {
     ctx.say("combat.crit");
     const combat = ctx.game.combat;
     if (combat) {
       combat.ap += 1;
       ctx.fight("The crit hands you 1 AP back.", "you");
     }
-  } else if (chance(0.25)) {
+  } else if (lead && chance(0.25)) {
     ctx.say(`combat.tier${roll.tier}`, { target: target.name });
   }
-  const leech = modTotal(mods, "leech");
+  const leech = modTotal(mods, "leech") + (opts.drain ?? 0);
   if (leech > 0 && c.hp < d.maxHP) {
     const healed = Math.min(d.maxHP - c.hp, Math.max(1, Math.floor((dmg * leech) / 100)));
     c.hp += healed;
     ctx.fight(`${w.name} drinks: +${healed} HP (${c.hp}/${d.maxHP}).`, "you");
   }
   // Every swing trains the weapon's skill: 1, or 2 on a crit. Nothing misses, so this is steady.
-  trainSkill(ctx, w.skillId, roll.crit ? 2 : 1);
+  // (A spell trains its school's skill the same way, once per cast.)
+  if (lead) trainSkill(ctx, w.skillId, roll.crit ? 2 : 1);
   const finisher = target.hp > 0 ? skillFinisher(ctx, target, w, mods) : undefined;
   if (target.hp <= 0) {
     if (!finisher) {
@@ -461,8 +486,9 @@ export function resolvePlayerHit(ctx: StepContext, target: Enemy, w: WeaponProfi
       }
     }
   }
-  coatedHit(ctx, target);
   igniteUnder(ctx, target, w.damageType === "fire"); // a fire hit, or a fresh burn, on oil
+  if (w.spell) return roll;
+  coatedHit(ctx, target);
   // Some oddities feed Echo every time they bite (the Bone China Mouth).
   const held = c.inventory.find((i) => i.uid === c.equipment.mainHand);
   const perHit = held ? ctx.content.oddities.byId[held.baseId]?.temperOnHit : undefined;
@@ -904,6 +930,29 @@ function enemyTurnPreamble(ctx: StepContext, e: Enemy): boolean {
     ctx.fight(`The ${e.name} can't bring itself to attack you. It just stands there, offering.`, "enemy");
     return false;
   }
+  if (hasFlag(e.statuses, ctx.content, "randomTarget") && lashOut(ctx, e)) return false;
+  return true;
+}
+
+/**
+ * Confused (Bait and Switch): half the time, a confused enemy swings at another enemy
+ * near it instead of you. Its first attack, a middling hit (tier 2), less armor. Returns
+ * true if it did (its turn is spent).
+ */
+function lashOut(ctx: StepContext, e: Enemy): boolean {
+  const near = aliveEnemies(ctx).filter((o) => o !== e &&
+    (e.pos && o.pos ? Math.max(Math.abs(e.pos.x - o.pos.x), Math.abs(e.pos.y - o.pos.y)) <= 1 : o.range === e.range));
+  if (near.length === 0 || !chance(0.5)) return false;
+  const victim = pick(near);
+  const attack = e.attacks[0];
+  if (!attack) return false;
+  const dmg = Math.max(1, attack.power[1] + Math.floor(e.stats[attack.stat] / 4) - enemyArmor(ctx, victim));
+  victim.hp -= dmg;
+  ctx.fight(`The ${e.name}, confused, turns its ${attack.name} on the ${victim.name}: ${dmg} damage${victim.hp > 0 ? ` (${victim.hp}/${victim.maxHP})` : ""}.`, "enemy");
+  if (victim.hp <= 0) {
+    ctx.fight(`The ${victim.name} drops. Friendly fire is still fire.`, "enemy");
+    ctx.say("combat.kill", { target: victim.name });
+  }
   return true;
 }
 
@@ -1113,6 +1162,8 @@ export function endCombat(ctx: StepContext): void {
     for (const it of arena.items) addToPile(room.items, it.item);
   }
   ctx.game.combat = null;
+  // Spell cooldowns are counted in rounds: out of a fight, everything is ready again.
+  for (const sp of Object.values(ctx.game.crawler?.spells ?? {})) sp.cooldown = 0;
   // A combat urge goes with the fight.
   if (ctx.game.echo?.urge?.where === "combat") delete ctx.game.echo.urge;
 }

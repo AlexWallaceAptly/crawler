@@ -21,6 +21,7 @@ import { craftModule, moduleAction } from "./modules";
 import { noticeHints, playerDecline, useAgainstBoss } from "./boss";
 import { derive } from "./rules/derived";
 import { isStat, raiseStat, trainSkill } from "./progression";
+import { castSpell, findKnownSpell, readTome, scrollsIn } from "./spells";
 import { LOG_LIMIT, type Crawler, type FloorState, type Phase, type Room, type World } from "./state";
 
 export interface StepResult {
@@ -120,7 +121,8 @@ export const HELP_LINES = [
   "dash c4 / defend     1 AP each: run twice as far (ends turn) / brace: everything hits you softer until your turn",
   "combine a b c        at a workbench (safe rooms, workshops): put junk together (names, or kinds: combine blunt sharp bind)",
   "craft <recipe>       make something from your recipe book; `recipes` shows it",
-  "use <item>           drink or eat something from your pack",
+  "use <item>           drink, eat or read something from your pack (tomes teach spells; scrolls cast once)",
+  "cast <spell> [at x]  cast a spell you know (MP and AP; most 2 AP). Aim at an enemy or a tile; `c` for short",
   "raise <stat>         spend a stat point from leveling up (raise str, raise dex 2); free, not mid-fight",
   "take <item> / take all   pick things up (weight limit applies); drop <item>",
   "equip <item> / unequip   wield or wear gear (mid-fight: 1 AP, or a tile of movement on the board)",
@@ -155,6 +157,16 @@ function startNewCrawler(ctx: StepContext): void {
   const intro = introContext(crawler, ctx.content);
   ctx.say("crawler.intro", intro);
   ctx.say("crawler.statJab", intro);
+  const starter = Object.keys(crawler.spells).map((id) => ctx.content.spells.byId[id]).find(Boolean);
+  if (starter) {
+    // The job's spell wins over the past's (gen/backstory.ts); say which one it came from.
+    const fromJob = ctx.content.backstory.occupations.byId[crawler.backstory.occupation]?.spell === starter.id;
+    ctx.say("crawler.starterSpell", {
+      ...intro, spell: starter.name, command: `cast ${starter.name.toLowerCase()}`,
+      because: fromJob ? `you're a ${intro.occupation}` : `you once ${intro.event}`,
+      because2: fromJob ? `work as a ${intro.occupation}` : `once ${intro.event}`,
+    });
+  }
 }
 
 const handlers: Handlers = {
@@ -281,6 +293,13 @@ const handlers: Handlers = {
         ctx.error(`You don't have anything like "${action.item}".`);
         return;
       }
+      // Tomes teach their spell; scrolls cast theirs.
+      const spell = item.spellId ? ctx.content.spells.byId[item.spellId] : undefined;
+      if (spell) {
+        if (item.spellLevel === undefined) readTome(ctx, item);
+        else castSpell(ctx, spell, action.at, item);
+        return;
+      }
       // A boss's counter (a stamped ticket, a tagged umbrella) does its job instead of anything else.
       if (ctx.game.phase === "combat" && useAgainstBoss(ctx, item)) return;
       // On the board, using something you'd throw means throwing it at the nearest target.
@@ -290,6 +309,22 @@ const handlers: Handlers = {
         return;
       }
       playerUseItem(ctx, item);
+    },
+  },
+  cast: {
+    phases: ["exploring", "combat"],
+    run(ctx, action) {
+      const c = ctx.crawler;
+      const spell = findKnownSpell(c, ctx.content, action.spell);
+      if (spell) return castSpell(ctx, spell, action.at);
+      // Not a spell you know: a scroll of it will do.
+      const scroll = findItems(scrollsIn(c), action.spell)[0];
+      const fromScroll = scroll?.spellId ? ctx.content.spells.byId[scroll.spellId] : undefined;
+      if (scroll && fromScroll) return castSpell(ctx, fromScroll, action.at, scroll);
+      const known = Object.keys(c.spells).map((id) => ctx.content.spells.byId[id]?.name).filter(Boolean);
+      ctx.error(known.length
+        ? `You don't know a spell called "${action.spell}". You know: ${known.join(", ")}.`
+        : "You don't know any spells. Tomes teach them; scrolls cast them once.");
     },
   },
   map: {

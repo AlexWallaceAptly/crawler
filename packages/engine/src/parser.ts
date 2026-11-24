@@ -11,6 +11,8 @@ import { breakableWalls, effectsNow, knownModuleVerb, moduleViews } from "./modu
 import { counterItems } from "./boss";
 import { pendingShard } from "./echo";
 import { openStairwell } from "./explore";
+import { scrollsIn, spellNumbers, spellTargetTiles } from "./spells";
+import { derive } from "./rules/derived";
 
 export type ParseResult = { ok: true; action: Action } | { ok: false; reason: "empty" | "unknown"; input: string };
 
@@ -36,7 +38,8 @@ const VERBS: Record<string, string> = {
   advance: "advance", approach: "advance", closer: "advance",
   retreat: "retreat", back: "retreat",
   talk: "talk", parley: "talk", negotiate: "talk",
-  use: "use", drink: "use", eat: "use", quaff: "use",
+  use: "use", drink: "use", eat: "use", quaff: "use", read: "use", study: "use",
+  cast: "cast", c: "cast", conjure: "cast", spell: "cast",
   wait: "wait", pass: "wait", end: "wait",
   take: "take", get: "take", grab: "take", pick: "take", pocket: "take",
   shove: "shove", push: "shove", barge: "shove", kick: "shove",
@@ -158,9 +161,18 @@ export function parseCommand(input: string, world: World): ParseResult {
       return { ok: true, action: { type: "retreat" } };
     case "talk":
       return { ok: true, action: { type: "talk" } };
-    case "use":
+    case "use": {
       if (!arg) return { ok: false, reason: "unknown", input: text };
-      return { ok: true, action: { type: "use", item: arg } };
+      // "read scroll of grease fire at d4": a scroll can be aimed.
+      const at = / at (.+)$/.exec(arg);
+      return { ok: true, action: at ? { type: "use", item: arg.slice(0, at.index), at: at[1]! } : { type: "use", item: arg } };
+    }
+    case "cast": {
+      const at = / (?:at|on) (.+)$/.exec(arg);
+      const spell = (at ? arg.slice(0, at.index) : arg).trim();
+      if (!spell) return { ok: false, reason: "unknown", input: text };
+      return { ok: true, action: at ? { type: "cast", spell, at: at[1]! } : { type: "cast", spell } };
+    }
     case "accept":
       return { ok: true, action: { type: "accept" } };
     case "reroll":
@@ -255,8 +267,10 @@ export interface CommandOption {
   targets?: string[];
   /** Combat: what this costs in action points. */
   ap?: number;
-  /** Combat: you can't pay for it this turn. */
+  /** Combat: you can't pay for it this turn (or `why` says what else is stopping it). */
   disabled?: boolean;
+  /** Why it's greyed out, when it isn't the AP ("out of MP", "nothing in reach"). */
+  why?: string;
   /** Rarely wanted: touch layouts tuck these behind a "More" menu. */
   niche?: true;
 }
@@ -327,6 +341,20 @@ export function availableCommands(world: World, content: Content): CommandOption
       if (first && first.range === "close") add({ niche: true, label: `Shove ${first.name}`, input: `shove ${first.name.toLowerCase()}` }, AP_COST.shove);
       for (const t of throwables.slice(0, 2)) add({ niche: true, label: `Throw ${t.name}`, input: `throw ${t.name.toLowerCase()}` }, AP_COST.throw);
     }
+    // Spells you know (MP, cooldown and AP on the button), then scrolls.
+    for (const b of spellButtons(world, content, "fight")) add(b.option, b.ap);
+    for (const sc of scrollsIn(crawler).slice(0, 2)) {
+      const spell = content.spells.byId[sc.spellId!];
+      if (!spell) continue;
+      const n = spellNumbers(crawler, content, spell, sc.spellLevel ?? 1);
+      const targets = grid && spell.target !== "self" ? spellTargetTiles(world.game, content, spell, n).map(coord) : undefined;
+      if (targets && targets.length === 0) {
+        add({ niche: true, label: `Read ${sc.name} (out of reach)`, input: `use ${sc.name.toLowerCase()}`, disabled: true, why: `Nothing ${spell.range === "close" ? "next to you" : "in reach"} for it to hit` }, n.ap);
+        continue;
+      }
+      const input = `use ${sc.name.toLowerCase()}${targets ? " at" : ""}`;
+      add({ niche: true, label: `Read ${sc.name}`, input, ...(targets ? { targets } : {}) }, n.ap);
+    }
     const bossId = combat.boss?.id;
     const boss = bossId ? content.bosses.byId[bossId] : undefined;
     if (boss?.weakness.trigger?.kind === "decline") add({ label: "Decline politely", input: "decline" }, AP_COST.item);
@@ -363,6 +391,11 @@ export function availableCommands(world: World, content: Content): CommandOption
       }
       out.push({ niche: true, label: "Recipes", input: "recipes" });
     }
+    for (const b of spellButtons(world, content, "explore")) out.push(b.option);
+    const c = world.game.crawler!;
+    for (const tome of c.inventory.filter((i) => i.spellId && i.spellLevel === undefined).slice(0, 2)) {
+      out.push({ label: `Read ${tome.name}`, input: `use ${tome.name.toLowerCase()}`, primary: !c.spells[tome.spellId!] });
+    }
     if (pendingShard(world.game, content, room)) out.push({ label: "Search for the voice", input: "search", primary: true });
     else if (!room.searched) out.push({ label: "Search", input: "search" });
     out.push({ label: "Rest", input: "rest" });
@@ -377,5 +410,44 @@ export function availableCommands(world: World, content: Content): CommandOption
   if (world.game.crawler) out.push({ niche: true, label: "Codex", input: "codex" });
   if (isAllowed(world, "look")) out.push({ niche: true, label: "Look", input: "look" });
   out.push({ niche: true, label: "Help", input: "help" });
+  return out;
+}
+
+/** Most spells worth a button: the ones a fight (or a quiet room) can use, up to six. */
+const SPELL_BUTTONS = 6;
+
+/**
+ * Buttons for the spells you know that work right now. In a fight: MP and cooldown in the
+ * label, greyed out when you can't pay, and grid spells arm a tile pick. Exploring: only
+ * spells that would do something (a heal when you're hurt, a cure when you need one).
+ */
+function spellButtons(world: World, content: Content, mode: "fight" | "explore"): { option: CommandOption; ap: number }[] {
+  const c = world.game.crawler;
+  if (!c) return [];
+  const d = derive(c, content);
+  const grid = mode === "fight" && world.game.combat?.mode === "grid" && !!world.game.combat.arena;
+  const out: { option: CommandOption; ap: number }[] = [];
+  for (const [id, st] of Object.entries(c.spells)) {
+    const spell = content.spells.byId[id];
+    if (!spell || (spell.when !== "any" && spell.when !== mode)) continue;
+    if (spell.target === "self" && spell.power && c.hp >= d.maxHP) continue;
+    if (spell.cures && !c.statuses.some((s) => spell.cures!.includes(s.id))) continue;
+    const n = spellNumbers(c, content, spell, st.level);
+    const cooling = mode === "fight" && st.cooldown > 0;
+    const short = c.mp < n.mp;
+    const targets = grid && spell.target !== "self" ? spellTargetTiles(world.game, content, spell, n).map(coord) : undefined;
+    // Out of reach on the board: greyed out, so you can see it's there (spells never walk you closer).
+    const away = !!targets && targets.length === 0;
+    const label = `Cast ${spell.name} (${cooling ? `ready in ${st.cooldown}` : away ? "out of reach" : `${n.mp} MP`})`;
+    const input = `cast ${spell.name.toLowerCase()}${targets && !away ? " at" : ""}`;
+    const why = cooling ? `Recharging: ready in ${st.cooldown} round${st.cooldown === 1 ? "" : "s"}`
+      : away ? `Nothing ${spell.range === "close" ? "next to you" : "in reach"} for it to hit. Spells don't walk you closer`
+      : short ? `Costs ${n.mp} MP; you have ${c.mp}` : undefined;
+    out.push({
+      option: { label, input, ...(targets && !away ? { targets } : {}), ...(why ? { disabled: true, why } : {}) },
+      ap: n.ap,
+    });
+    if (out.length >= SPELL_BUTTONS) break;
+  }
   return out;
 }

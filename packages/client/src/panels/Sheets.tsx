@@ -76,17 +76,29 @@ export function CharacterSheet({ view, submit }: { view: ViewModel; submit?: (t:
         ))}
       </ul>
       {c.skills.length === 0 && <div className={s.muted}>Nothing yet. Swing something.</div>}
-      {c.spells.length > 0 && (
-        <>
-          <div className={s.sectionLabel}>Spells</div>
-          <ul className={s.list}>
-            {c.spells.map((sp) => (
-              <li key={sp.name}>
-                {sp.name} <span className={s.sub}>L{sp.level}{sp.cooldown ? ` cd ${sp.cooldown}` : ""}</span>
-              </li>
-            ))}
-          </ul>
-        </>
+      <div className={s.sectionLabel}>Spells</div>
+      {c.spells.length > 0 ? (
+        <ul className={s.skillList}>
+          {c.spells.map((sp) => (
+            <li key={sp.id} className={s.skill}>
+              <div className={s.skillHead}>
+                <span>{sp.name} <span className={s.sub}>{sp.skill}</span></span>
+                <span className={s.skillRank}>level {sp.level}</span>
+              </div>
+              {sp.next > 0 && <Progress current={sp.casts} max={sp.next} />}
+              <div className={s.skillMeta}>
+                {sp.mp} MP · {sp.ap} AP{sp.cooldownMax ? ` · recharges ${sp.cooldownMax} rounds` : ""}
+                {sp.when === "explore" ? " · out of fights" : sp.when === "any" ? " · any time" : ""}
+                {sp.cooldown > 0 && ` · ready in ${sp.cooldown}`}
+                {sp.next > 0 ? ` · ${sp.next - sp.casts} casts to level ${sp.level + 1}` : " · maxed"}
+              </div>
+              <div className={s.skillMeta}>{sp.effect}</div>
+              <div className={s.sub}>{sp.description}</div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className={s.muted}>None. Tomes teach spells; scrolls cast one once.</div>
       )}
       <div className={s.sectionLabel}>Quirk</div>
       <div>

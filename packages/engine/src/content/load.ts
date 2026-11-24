@@ -31,6 +31,8 @@ import {
   AffixSchema,
   LegendaryPowerSchema,
   TilesetSchema,
+  SpellSchema,
+  SPELL_SCHOOLS,
   type ArenaFeature,
   type LootTable,
   type Recipe,
@@ -61,6 +63,7 @@ import {
   type Affix,
   type LegendaryPower,
   type Tileset,
+  type Spell,
   RARITIES,
 } from "./schemas";
 
@@ -96,6 +99,7 @@ export const CONTENT_FILES = {
   "items/affixes.json": z.array(AffixSchema),
   "items/legendaryPowers.json": z.array(LegendaryPowerSchema),
   "tilesets.json": z.array(TilesetSchema),
+  "spells.json": z.array(SpellSchema),
 } as const;
 
 export type ContentFileName = keyof typeof CONTENT_FILES;
@@ -149,6 +153,8 @@ export interface Content {
   oddities: Table<Oddity>;
   /** Floor tilesets for the battle board (Godot-style terrains; see "Floor tiling" in docs/DESIGN.md). */
   tilesets: Table<Tileset>;
+  /** Hand-written spells; tomes teach them, scrolls cast them (see "Spells" in docs/DESIGN.md). */
+  spells: Table<Spell>;
 }
 
 export class ContentError extends Error {
@@ -251,6 +257,7 @@ export function loadContent(raw: RawContent): Content {
     bosses: table("bosses.json", p["bosses.json"], problems),
     oddities: table("items/oddities.json", oddities, problems),
     tilesets: table("tilesets.json", p["tilesets.json"], problems),
+    spells: table("spells.json", p["spells.json"], problems),
   };
 
   checkReferences(content, problems);
@@ -359,6 +366,44 @@ function checkReferences(c: Content, problems: string[]): void {
   checkThread(c, problems, ref);
   checkTilesets(c, problems);
   checkGenerator(c, problems, ref);
+  checkSpells(c, problems, ref);
+}
+
+/** Spells, the school skills, and everything that points at a spell (backstories, tomes, scrolls). */
+function checkSpells(c: Content, problems: string[], ref: RefCheck): void {
+  for (const school of SPELL_SCHOOLS) {
+    const skills = c.skills.all.filter((s) => s.school === school);
+    if (skills.length !== 1) problems.push(`skills.json: the ${school} school needs exactly one magic skill (has ${skills.length})`);
+  }
+  for (const s of c.skills.all) {
+    if (s.category === "magic" && !s.school) problems.push(`skills.json "${s.id}": a magic skill needs a school`);
+    if (s.school && s.category !== "magic") problems.push(`skills.json "${s.id}": only magic skills have a school`);
+  }
+  for (const sp of c.spells.all) {
+    const where = `spells.json "${sp.id}"`;
+    if (sp.id === "random") problems.push(`${where}: "random" is reserved for tomes and scrolls that roll their spell`);
+    if (sp.rider) ref(`${where}.rider`, "status", c.statusEffects.has(sp.rider.id), sp.rider.id);
+    if (sp.status) ref(`${where}.status`, "status", c.statusEffects.has(sp.status.id), sp.status.id);
+    for (const id of sp.cures ?? []) ref(`${where}.cures`, "status", c.statusEffects.has(id), id);
+    if (sp.hazard) {
+      const f = c.arenaFeatures.byId[sp.hazard.id];
+      if (!f) problems.push(`${where}.hazard: unknown arena feature "${sp.hazard.id}"`);
+      else if (f.kind !== "hazard") problems.push(`${where}.hazard: "${f.id}" is a ${f.kind}, not a hazard`);
+    }
+    const tags = new Set(c.enemies.all.flatMap((e) => e.tags));
+    for (const t of sp.bonus?.tags ?? []) if (!tags.has(t)) problems.push(`${where}.bonus: no enemy family has the tag "${t}"`);
+  }
+  const spellRef = (where: string, id: string | undefined) => {
+    if (id !== undefined) ref(where, "spell", c.spells.has(id), id);
+  };
+  for (const o of c.backstory.occupations.all) spellRef(`backstory/occupations.json "${o.id}".spell`, o.spell);
+  for (const e of c.backstory.events.all) spellRef(`backstory/events.json "${e.id}".spell`, e.spell);
+  for (const cons of c.items.consumables.all) {
+    if (!cons.spell) continue;
+    const where = `items/consumables.json "${cons.id}".spell`;
+    if (cons.type !== "tome" && cons.type !== "scroll") problems.push(`${where}: only tomes and scrolls carry a spell`);
+    if (cons.spell !== "random") spellRef(where, cons.spell);
+  }
 }
 
 /** The item generator's tables: every rarity has a rule, every material kind a level-1 grade, every effect a reader. */
@@ -372,8 +417,8 @@ function checkGenerator(c: Content, problems: string[], ref: RefCheck): void {
   const targets = (where: string, tos: string[]) => {
     for (const to of tos) if (!knownTarget(to, c)) problems.push(`${where}: nothing reads the modifier "${to}"`);
   };
-  // Weapon-skill perks are the milestones every 5 ranks: each must do what it says.
-  for (const s of c.skills.all.filter((x) => x.category === "weapon")) {
+  // Weapon- and magic-skill perks are the milestones every 5 ranks: each must do what it says.
+  for (const s of c.skills.all.filter((x) => x.category === "weapon" || x.category === "magic")) {
     for (const p of s.perks) targets(`skills.json "${s.id}" rank ${p.rank}`, p.modifiers.map((m) => m.to));
   }
   for (const a of c.items.affixes.all) {

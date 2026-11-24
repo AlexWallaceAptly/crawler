@@ -53,6 +53,10 @@ export interface ItemInstance {
   onHit?: { id: string; chance: number; duration?: number };
   /** Recipe ids already applied to this item as upgrades (each applies once). */
   crafted?: string[];
+  /** Tomes and scrolls: the spell (spells.json id) rolled when it dropped. */
+  spellId?: string;
+  /** Scrolls: the level the spell casts at (the floor it dropped on). */
+  spellLevel?: number;
   /** Generated gear (Milestone 5): the item level it rolled at. */
   itemLevel?: number;
   /** Generated gear: materials.json id ("rusty"). */
@@ -69,8 +73,11 @@ export interface SkillState {
 }
 
 export interface SpellState {
+  /** 1-15. Casting levels it (every 10 × level casts); so does reading a duplicate tome. */
   level: number;
+  /** Casts toward the next level (resets on a level up). */
   casts: number;
+  /** Rounds until it can be cast again; cleared when a fight ends. */
   cooldown: number;
 }
 

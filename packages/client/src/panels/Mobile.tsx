@@ -282,6 +282,7 @@ function BattleView({ view, battle, commands, submit, armed, setArmed }: BattleP
               key={`${c.label}|${c.input}`}
               className={`${s.ctxBtn} ${c.primary && !c.disabled || armed?.label === c.label ? s.ctxPrimary : ""}`}
               disabled={c.disabled}
+              title={c.why}
               onClick={() => (c.targets ? setArmed(armed?.label === c.label ? null : c) : submit(c.input))}
             >
               {c.label}{c.targets ? " ⌖" : ""}

@@ -274,5 +274,52 @@
     "flags": [
       "skipTurn"
     ]
+  },
+  {
+    "id": "warded",
+    "name": "Warded",
+    "kind": "buff",
+    "description": "A legal-looking shimmer: +2 guard, and anything that hits you in melee takes 2 back.",
+    "defaultDuration": 3,
+    "modifiers": [
+      {
+        "to": "defense",
+        "value": 2
+      },
+      {
+        "to": "thorns",
+        "value": 2
+      }
+    ],
+    "stacking": "refresh"
+  },
+  {
+    "id": "tenderized",
+    "name": "Tenderized",
+    "kind": "debuff",
+    "description": "Softened up like a cheap steak: -2 armor and -2 guard, so everything lands cleaner.",
+    "defaultDuration": 3,
+    "modifiers": [
+      {
+        "to": "dr",
+        "value": -2
+      },
+      {
+        "to": "defense",
+        "value": -2
+      }
+    ],
+    "stacking": "refresh"
+  },
+  {
+    "id": "trap_sense",
+    "name": "Bad Feeling",
+    "kind": "buff",
+    "description": "The hair on your neck is on the job: traps are spotted as you walk in. Counts down per room.",
+    "defaultDuration": 6,
+    "stacking": "refresh",
+    "flags": [
+      "spotTraps"
+    ]
   }
 ]

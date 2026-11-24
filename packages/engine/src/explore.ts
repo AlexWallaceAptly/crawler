@@ -8,7 +8,7 @@ import { chance, pick } from "./rng";
 import { dcFor, describeCheck, resolveCheck, type DcTier } from "./rules/checks";
 import { rollDice } from "./rules/dice";
 import { collectModifiers, derive, modTotal } from "./rules/derived";
-import { applyStatus, decrementStatuses, tickStatuses } from "./rules/effects";
+import { applyStatus, decrementStatuses, hasFlag, tickStatuses } from "./rules/effects";
 import { killCrawler, type StepContext } from "./step";
 import { skillRank, trainSkill } from "./progression";
 import { generateFloor, MINUTES_PER_DAY } from "./gen/floor";
@@ -232,6 +232,11 @@ export function springTrap(ctx: StepContext, room: Room): void {
   if (trapAutoSpotted(ctx)) {
     ctx.echoSay("echo.glowTrap");
     ctx.describe(trap.spotted);
+    return;
+  }
+  // Bad Feeling (a utility spell): the hair on your neck spots it for you.
+  if (hasFlag(c.statuses, ctx.content, "spotTraps")) {
+    ctx.describe(`Your bad feeling stops you a step short. ${trap.spotted}`);
     return;
   }
   const spot = resolveCheck({

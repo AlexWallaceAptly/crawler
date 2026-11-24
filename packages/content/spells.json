@@ -1,0 +1,600 @@
+[
+  {
+    "id": "hot_take",
+    "name": "Hot Take",
+    "school": "fire",
+    "description": "A short, searing opinion, delivered directly to the face. Nobody asked. It burns anyway.",
+    "tomeText": "A pamphlet titled YOU'RE ALL WRONG. The pages are warm and slightly greasy.",
+    "target": "enemy",
+    "range": "close",
+    "ap": 1,
+    "mp": 2,
+    "mpPerLevel": 0.2,
+    "power": [
+      2,
+      3,
+      5
+    ],
+    "powerPerLevel": 0.34,
+    "damageType": "fire",
+    "rider": {
+      "id": "burning",
+      "chance": 0.3,
+      "duration": 2
+    },
+    "floor": 1
+  },
+  {
+    "id": "grease_fire",
+    "name": "Grease Fire",
+    "school": "fire",
+    "description": "Flings a ladle of burning fry oil across the room. Health inspectors hate this one weird trick.",
+    "tomeText": "A laminated restaurant safety poster, every DON'T crossed out and replaced with DO.",
+    "target": "enemy",
+    "range": "near",
+    "ap": 2,
+    "mp": 3,
+    "mpPerLevel": 0.25,
+    "power": [
+      3,
+      5,
+      7
+    ],
+    "powerPerLevel": 0.5,
+    "damageType": "fire",
+    "rider": {
+      "id": "burning",
+      "chance": 0.4,
+      "duration": 2
+    },
+    "floor": 1
+  },
+  {
+    "id": "dumpster_fire",
+    "name": "Dumpster Fire",
+    "school": "fire",
+    "description": "Summons the general vibe of a burning dumpster onto a patch of floor, and everyone standing on it. Leaves it burning.",
+    "tomeText": "A binder of quarterly reports. Every chart goes down and to the right, and the binder is on fire.",
+    "target": "area",
+    "range": "near",
+    "shape": "plus",
+    "ap": 2,
+    "mp": 6,
+    "mpPerLevel": 0.34,
+    "cooldown": 2,
+    "power": [
+      2,
+      3,
+      5
+    ],
+    "powerPerLevel": 0.34,
+    "damageType": "fire",
+    "rider": {
+      "id": "burning",
+      "chance": 0.5,
+      "duration": 2
+    },
+    "hazard": {
+      "id": "fire",
+      "shape": "single"
+    },
+    "floor": 2
+  },
+  {
+    "id": "cold_shoulder",
+    "name": "Cold Shoulder",
+    "school": "frost",
+    "description": "You ignore something so hard its joints frost over. Works best on people who need your approval.",
+    "tomeText": "A greeting card that just says 'k.' It's cold to the touch and leaves a ring on things.",
+    "target": "enemy",
+    "range": "close",
+    "ap": 1,
+    "mp": 2,
+    "mpPerLevel": 0.2,
+    "power": [
+      2,
+      3,
+      4
+    ],
+    "powerPerLevel": 0.34,
+    "damageType": "frost",
+    "rider": {
+      "id": "slowed",
+      "chance": 0.4,
+      "duration": 1
+    },
+    "floor": 1
+  },
+  {
+    "id": "freezer_burn",
+    "name": "Freezer Burn",
+    "school": "frost",
+    "description": "A blast of the air from the back of a gas station freezer, plus whatever's been living back there since 2009.",
+    "tomeText": "A frost-crusted instruction manual for a chest freezer. Chapter one: Who Is In Here With You.",
+    "target": "enemy",
+    "range": "near",
+    "ap": 2,
+    "mp": 3,
+    "mpPerLevel": 0.25,
+    "power": [
+      3,
+      4,
+      6
+    ],
+    "powerPerLevel": 0.5,
+    "damageType": "frost",
+    "rider": {
+      "id": "slowed",
+      "chance": 0.5,
+      "duration": 2
+    },
+    "floor": 1
+  },
+  {
+    "id": "walk_in_cooler",
+    "name": "Walk-In Cooler",
+    "school": "frost",
+    "description": "Turns a chunk of the room into the walk-in at closing time: dark, freezing, and nobody's coming to let you out.",
+    "tomeText": "A clipboard of temperature logs, all initialed by the same employee who quit in March.",
+    "target": "area",
+    "range": "near",
+    "shape": "square",
+    "ap": 2,
+    "mp": 7,
+    "mpPerLevel": 0.34,
+    "cooldown": 3,
+    "power": [
+      1,
+      3,
+      4
+    ],
+    "powerPerLevel": 0.34,
+    "damageType": "frost",
+    "rider": {
+      "id": "slowed",
+      "chance": 0.6,
+      "duration": 2
+    },
+    "floor": 3
+  },
+  {
+    "id": "doorknob_zap",
+    "name": "Doorknob Zap",
+    "school": "lightning",
+    "description": "The shock you get from a doorknob in January, scaled up for a hostile audience. Occasionally locks them up.",
+    "tomeText": "A wool sock wrapped around a 9-volt battery. The sock crackles when you open it.",
+    "target": "enemy",
+    "range": "near",
+    "ap": 2,
+    "mp": 3,
+    "mpPerLevel": 0.25,
+    "power": [
+      2,
+      5,
+      7
+    ],
+    "powerPerLevel": 0.5,
+    "damageType": "lightning",
+    "rider": {
+      "id": "stunned",
+      "chance": 0.15,
+      "duration": 1
+    },
+    "floor": 1
+  },
+  {
+    "id": "faulty_wiring",
+    "name": "Faulty Wiring",
+    "school": "lightning",
+    "description": "Something that was never up to code, now aimed. Arcs to the next idiot standing nearby.",
+    "tomeText": "A home inspection report with one finding, circled eleven times: EVERYTHING.",
+    "target": "enemy",
+    "range": "near",
+    "ap": 2,
+    "mp": 5,
+    "mpPerLevel": 0.34,
+    "cooldown": 2,
+    "power": [
+      2,
+      4,
+      6
+    ],
+    "powerPerLevel": 0.34,
+    "damageType": "lightning",
+    "chain": 1,
+    "floor": 2
+  },
+  {
+    "id": "power_surge",
+    "name": "Power Surge",
+    "school": "lightning",
+    "description": "The surge that fried your mom's computer in 1998, delivered across the whole room. Sometimes they stop moving for a bit.",
+    "tomeText": "A power strip with every outlet melted shut. The warranty card is still attached, unfilled.",
+    "target": "enemy",
+    "range": "far",
+    "ap": 2,
+    "mp": 6,
+    "mpPerLevel": 0.34,
+    "cooldown": 2,
+    "power": [
+      4,
+      6,
+      9
+    ],
+    "powerPerLevel": 0.5,
+    "damageType": "lightning",
+    "rider": {
+      "id": "stunned",
+      "chance": 0.25,
+      "duration": 1
+    },
+    "floor": 3
+  },
+  {
+    "id": "bad_blood",
+    "name": "Bad Blood",
+    "school": "necrotic",
+    "description": "You touch them and their blood decides it would rather be outside. Up close and personal.",
+    "tomeText": "A family Bible with every name in the front scratched out except yours. Yours is in pencil.",
+    "target": "enemy",
+    "range": "close",
+    "ap": 1,
+    "mp": 2,
+    "mpPerLevel": 0.2,
+    "power": [
+      1,
+      2,
+      4
+    ],
+    "powerPerLevel": 0.34,
+    "damageType": "necrotic",
+    "rider": {
+      "id": "bleeding",
+      "chance": 0.5,
+      "duration": 3
+    },
+    "floor": 1
+  },
+  {
+    "id": "overdraft",
+    "name": "Overdraft",
+    "school": "necrotic",
+    "description": "Withdraws health from somebody else's account and deposits half of it in yours. Fees apply. To them.",
+    "tomeText": "A stack of overdraft notices addressed to a dead man. The latest is dated tomorrow.",
+    "target": "enemy",
+    "range": "near",
+    "ap": 2,
+    "mp": 3,
+    "mpPerLevel": 0.25,
+    "power": [
+      2,
+      4,
+      6
+    ],
+    "powerPerLevel": 0.5,
+    "damageType": "necrotic",
+    "drain": 50,
+    "floor": 1
+  },
+  {
+    "id": "death_and_taxes",
+    "name": "Death and Taxes",
+    "school": "necrotic",
+    "description": "The two certainties, applied to a crowd. You collect a little of what it takes, and what's left goes septic.",
+    "tomeText": "A tax return for the whole dungeon. Under 'dependents' it lists every crawler. Under 'deductions', the same.",
+    "target": "area",
+    "range": "near",
+    "shape": "plus",
+    "ap": 2,
+    "mp": 6,
+    "mpPerLevel": 0.34,
+    "cooldown": 2,
+    "power": [
+      1,
+      3,
+      4
+    ],
+    "powerPerLevel": 0.34,
+    "damageType": "necrotic",
+    "rider": {
+      "id": "poisoned",
+      "chance": 0.4,
+      "duration": 3
+    },
+    "drain": 25,
+    "floor": 3
+  },
+  {
+    "id": "flash_photography",
+    "name": "Flash Photography",
+    "school": "light",
+    "description": "No flash photography, the sign said. You did it anyway, into their eyes. Things that hate light hate this more.",
+    "tomeText": "A disposable camera with one shot left. The counter says 0. It still clicks.",
+    "target": "enemy",
+    "range": "near",
+    "ap": 2,
+    "mp": 3,
+    "mpPerLevel": 0.25,
+    "power": [
+      2,
+      4,
+      6
+    ],
+    "powerPerLevel": 0.5,
+    "damageType": "light",
+    "rider": {
+      "id": "blinded",
+      "chance": 0.5,
+      "duration": 1
+    },
+    "bonus": {
+      "tags": [
+        "undead",
+        "lightSensitive"
+      ],
+      "damage": 2
+    },
+    "floor": 1
+  },
+  {
+    "id": "patch_notes",
+    "name": "Patch Notes",
+    "school": "light",
+    "description": "Applies a small fix to you. Known issues remain. The developers appreciate your patience.",
+    "tomeText": "A printed changelog for your own body. Version 1.0.1: 'fixed a bug where the player was alive.'",
+    "target": "self",
+    "when": "any",
+    "ap": 2,
+    "mp": 4,
+    "mpPerLevel": 0.34,
+    "cooldown": 2,
+    "power": [
+      3,
+      5,
+      8
+    ],
+    "powerPerLevel": 0.5,
+    "floor": 1
+  },
+  {
+    "id": "stadium_lights",
+    "name": "Stadium Lights",
+    "school": "light",
+    "description": "Every bank of lights at a high school football game, switched on in one corner of the room. The undead take it personally.",
+    "tomeText": "A booster club program with the halftime show crossed out and a sacrifice penciled in.",
+    "target": "area",
+    "range": "near",
+    "shape": "square",
+    "ap": 2,
+    "mp": 6,
+    "mpPerLevel": 0.34,
+    "cooldown": 3,
+    "power": [
+      1,
+      2,
+      3
+    ],
+    "powerPerLevel": 0.34,
+    "damageType": "light",
+    "rider": {
+      "id": "blinded",
+      "chance": 0.6,
+      "duration": 1
+    },
+    "bonus": {
+      "tags": [
+        "undead",
+        "lightSensitive"
+      ],
+      "damage": 3
+    },
+    "floor": 2
+  },
+  {
+    "id": "bubble_wrap",
+    "name": "Bubble Wrap",
+    "school": "protection",
+    "description": "Wraps you in a layer of invisible bubble wrap. Hits land softer. You will want to pop it. Don't.",
+    "tomeText": "A shipping manifest for one (1) crawler, FRAGILE, THIS SIDE UP, contents not insured.",
+    "target": "self",
+    "ap": 1,
+    "mp": 3,
+    "mpPerLevel": 0.2,
+    "cooldown": 3,
+    "status": {
+      "id": "shielded",
+      "duration": 2
+    },
+    "floor": 1
+  },
+  {
+    "id": "hand_sanitizer",
+    "name": "Hand Sanitizer",
+    "school": "protection",
+    "description": "Kills 99.9% of what's killing you: poison, bleeding, burning. The other 0.1% is your fault.",
+    "tomeText": "A pump bottle from a hospital lobby, chained to a pamphlet. You read the pamphlet. The bottle comes with it.",
+    "target": "self",
+    "when": "any",
+    "ap": 1,
+    "mp": 2,
+    "mpPerLevel": 0.2,
+    "cooldown": 1,
+    "cures": [
+      "poisoned",
+      "bleeding",
+      "burning"
+    ],
+    "floor": 1
+  },
+  {
+    "id": "restraining_order",
+    "name": "Restraining Order",
+    "school": "protection",
+    "description": "A legally binding shimmer. Things find you harder to hit, and anything that touches you anyway gets served.",
+    "tomeText": "A court document with your name on both sides. The judge's signature is a drawing of a little fist.",
+    "target": "self",
+    "ap": 1,
+    "mp": 4,
+    "mpPerLevel": 0.25,
+    "cooldown": 4,
+    "status": {
+      "id": "warded",
+      "duration": 3
+    },
+    "floor": 2
+  },
+  {
+    "id": "bait_and_switch",
+    "name": "Bait and Switch",
+    "school": "illusion",
+    "description": "Shows one monster something it wants, standing right where its friend is. Confused, it might swing at either.",
+    "tomeText": "A furniture store catalogue where every price is a lie, and the couch on the cover is a cardboard cutout.",
+    "target": "enemy",
+    "range": "near",
+    "ap": 2,
+    "mp": 3,
+    "mpPerLevel": 0.25,
+    "cooldown": 2,
+    "status": {
+      "id": "confused",
+      "duration": 2
+    },
+    "floor": 1
+  },
+  {
+    "id": "jump_scare",
+    "name": "Jump Scare",
+    "school": "illusion",
+    "description": "A cheap trick, a loud noise and a face in the dark. Cheap tricks work. Whatever sees it wants to be somewhere else.",
+    "tomeText": "A DVD case for a horror movie that never came out. The disc inside is just a recording of you, sleeping.",
+    "target": "area",
+    "range": "near",
+    "shape": "plus",
+    "ap": 2,
+    "mp": 5,
+    "mpPerLevel": 0.34,
+    "cooldown": 3,
+    "status": {
+      "id": "feared",
+      "duration": 2
+    },
+    "floor": 2
+  },
+  {
+    "id": "sponsored_content",
+    "name": "Sponsored Content",
+    "school": "illusion",
+    "description": "This attack is brought to you by you. For a couple of rounds, the target is a brand ambassador and won't hurt the brand.",
+    "tomeText": "A media kit for an influencer with zero followers. Under 'audience' it just says 'them'.",
+    "target": "enemy",
+    "range": "near",
+    "ap": 2,
+    "mp": 4,
+    "mpPerLevel": 0.34,
+    "cooldown": 3,
+    "status": {
+      "id": "charmed",
+      "duration": 2
+    },
+    "floor": 3
+  },
+  {
+    "id": "espresso_shot",
+    "name": "Espresso Shot",
+    "school": "transmutation",
+    "description": "Turns your blood into a quad-shot americano for a couple of rounds. You move faster. Your heart files a complaint.",
+    "tomeText": "A loyalty card with nine stamps. The tenth square says 'death'. It's already stamped.",
+    "target": "self",
+    "ap": 1,
+    "mp": 4,
+    "mpPerLevel": 0.25,
+    "cooldown": 4,
+    "status": {
+      "id": "hasted",
+      "duration": 2
+    },
+    "floor": 1
+  },
+  {
+    "id": "molasses",
+    "name": "Molasses",
+    "school": "transmutation",
+    "description": "Briefly converts the air around something into a heritage-brand breakfast syrup. It gets one less AP and an attitude.",
+    "tomeText": "A jar label for a molasses that went out of business in a flood. A real flood. Of molasses.",
+    "target": "enemy",
+    "range": "near",
+    "ap": 1,
+    "mp": 3,
+    "mpPerLevel": 0.25,
+    "cooldown": 2,
+    "status": {
+      "id": "slowed",
+      "duration": 2
+    },
+    "floor": 1
+  },
+  {
+    "id": "tenderize",
+    "name": "Tenderize",
+    "school": "transmutation",
+    "description": "Turns a monster's hide into something more like a cheap steak. Everything lands cleaner and digs deeper.",
+    "tomeText": "A butcher's apron with a recipe printed on it. The recipe's main ingredient is the reader.",
+    "target": "enemy",
+    "range": "near",
+    "ap": 1,
+    "mp": 3,
+    "mpPerLevel": 0.25,
+    "cooldown": 2,
+    "status": {
+      "id": "tenderized",
+      "duration": 3
+    },
+    "floor": 2
+  },
+  {
+    "id": "flashlight_app",
+    "name": "Flashlight App",
+    "school": "utility",
+    "description": "Your palm becomes a phone flashlight with 4% battery. Whatever's hidden in this room, you see it now. Takes no time.",
+    "tomeText": "A phone with a cracked screen and one app installed. It has three stars and four thousand reviews, all of them 'it works'.",
+    "target": "self",
+    "when": "explore",
+    "ap": 1,
+    "mp": 3,
+    "mpPerLevel": 0.2,
+    "utility": "reveal",
+    "floor": 1
+  },
+  {
+    "id": "bad_feeling",
+    "name": "Bad Feeling",
+    "school": "utility",
+    "description": "The hair on your neck starts doing your job for you. For the next few rooms, you spot traps as you walk in.",
+    "tomeText": "A fortune cookie slip that says DON'T. The other side says SERIOUSLY.",
+    "target": "self",
+    "when": "explore",
+    "ap": 1,
+    "mp": 3,
+    "mpPerLevel": 0.2,
+    "status": {
+      "id": "trap_sense",
+      "duration": 6
+    },
+    "floor": 1
+  },
+  {
+    "id": "dowsing_rod",
+    "name": "Dowsing Rod",
+    "school": "utility",
+    "description": "A coat hanger that twitches toward the way down. Hidden stairwells within a few rooms show up on your map.",
+    "tomeText": "A bent wire coat hanger with a price tag from a church rummage sale: 25 cents, or best offer.",
+    "target": "self",
+    "when": "explore",
+    "ap": 1,
+    "mp": 4,
+    "mpPerLevel": 0.25,
+    "utility": "senseStairs",
+    "radius": 3,
+    "floor": 2
+  }
+]

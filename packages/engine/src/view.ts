@@ -16,6 +16,7 @@ import { codexView, sideOf, stageOn, vesselOf, wholenessOn, type CodexView, type
 import { moduleItemDetails, moduleViews, type ModuleView } from "./modules";
 import { itemInfo } from "./itemInfo";
 import { heldWeapon, profileOf, swingNumbers, weaponFit } from "./gear";
+import { spellViews, type SpellView } from "./spells";
 
 export interface Bar {
   current: number;
@@ -69,14 +70,15 @@ export interface ViewModel {
       /** Perks already unlocked. */
       perks: { rank: number; name: string; text: string }[];
     }[];
-    spells: { name: string; level: number; cooldown: number }[];
+    /** Spells you know: level and progress, cost, cooldown, and what each does with your INT. */
+    spells: SpellView[];
     quirk: { name: string; text: string };
     unspentStatPoints: number;
     gold: number;
     /** How you fight right now: the swing in your hand, armor, and which stat suits you. */
     fighting: {
       weapon: string;
-      stat: "STR" | "DEX";
+      stat: "STR" | "DEX" | "INT";
       /** "Blades 2 · 4/10 to rank 3 · rank 5: Decapitation" */
       skill: string | null;
       roll: number;
@@ -227,7 +229,7 @@ export function view(world: World, content: Content): ViewModel {
           })
           .sort((a, b) => b.rank - a.rank || b.xp - a.xp || a.name.localeCompare(b.name));
       })(),
-      spells: Object.entries(c.spells).map(([id, s]) => ({ name: id, level: s.level, cooldown: s.cooldown })),
+      spells: spellViews(c, content),
       quirk: { name: quirk?.name ?? "", text: quirk?.text ?? "" },
       unspentStatPoints: c.unspentStatPoints,
       gold: c.gold,

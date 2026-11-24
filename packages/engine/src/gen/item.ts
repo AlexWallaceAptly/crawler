@@ -57,11 +57,27 @@ export function itemFromConsumable(c: Consumable, qty = 1): ItemInstance {
 /** Workbook rarities for the hand-written oddities. */
 const ODDITY_RARITY: Record<string, ItemInstance["rarity"]> = { Common: "common", Uncommon: "uncommon", Rare: "rare", Unique: "legendary" };
 
-/** Build an item from a base or consumable id. Oddities keep their workbook rarity. */
-export function itemFromRef(content: Content, id: string, qty = 1): ItemInstance {
+/**
+ * Build an item from a base or consumable id. Oddities keep their workbook rarity.
+ * Tomes and scrolls get their spell here: a fixed one, or (`"random"`) one rolled from
+ * the spells whose `floor` is this floor or shallower. Scrolls cast at the floor's level.
+ */
+export function itemFromRef(content: Content, id: string, qty = 1, floor = 1): ItemInstance {
   const item = content.items.bases.has(id) ? itemFromBase(content.items.bases.get(id)) : itemFromConsumable(content.items.consumables.get(id), qty);
   const odd = content.oddities.byId[id];
   if (odd) item.rarity = ODDITY_RARITY[odd.rarityText] ?? "common";
+  const def = content.items.consumables.byId[id];
+  if (def?.spell) {
+    const pool = content.spells.all.filter((s) => s.floor <= floor);
+    const spell = def.spell === "random" ? (pool.length ? pick(pool) : undefined) : content.spells.byId[def.spell];
+    if (spell) {
+      item.spellId = spell.id;
+      item.name = `${def.type === "scroll" ? "Scroll" : "Tome"} of ${spell.name}`;
+      if (def.type === "scroll") item.spellLevel = Math.max(1, floor);
+      if (def.type === "tome") item.flavor = spell.tomeText;
+      item.rarity = spell.floor >= 3 ? "rare" : spell.floor === 2 ? "uncommon" : "common";
+    }
+  }
   return item;
 }
 
