@@ -840,7 +840,7 @@ Each floor is a grid of connected rooms with a theme, several stairwells, scatte
 
 | Floor | Theme | Rooms | Districts | Timer (game time) | Purpose |
 | --- | --- | --- | --- | --- | --- |
-| 1 | The Welcome Lobby: an endless check-in hall, velvet ropes, a reception desk, carpet that breathes | 60 | 1 | 5 days | Tutorial, basic combat, first boxes, Echo wakes. Mini-boss: the Free Sample Mimic |
+| 1 | The Welcome Lobby: an endless check-in hall, velvet ropes, a reception desk, carpet that breathes | 100 | 1 | 5 days | Tutorial, basic combat, first boxes, Echo wakes. Mini-boss: the Free Sample Mimic |
 | 2 | The Lost-and-Found Warrens: shelving canyons of unclaimed things, claim-tag drifts, drains that aren't drains | 90 | 3 | 4 days | Elites, shops. Mini-boss: the Lost Property Golem |
 | 3 | The Flooded Parking Garage: drowned levels, ramps, pay stations, a valet stand nobody has tipped | 120 | 4 | 6 days | Race and class selection, the big quest. Mini-boss: the Valet Kraken |
 
@@ -889,9 +889,12 @@ Every room type also rolls junk from the floor theme's loot settings (`floors.js
 | --- | --- |
 | Move between rooms | 10 min |
 | One combat round | 1 min |
-| Search a room | 15 min |
-| Short rest | 1 hour |
-| Sleep (safe room only) | 8 hours |
+| One search pass | 35 min (Exhausted: +25%) |
+| Listen to a room next door / assess a room | 10 / 30 min (Perception shaves minutes) |
+| Short rest | 30 min |
+| Sleep (a safe room is best) | 6-8 hours |
+
+All of these are in `pacing.json`; see Milestone 6c in the Decision log.
 
 The System AI announces remaining time at 24 hours, 6 hours, 1 hour and 10 minutes. When the timer hits zero, every crawler not in a stairwell dies. Entering a stairwell lets the crawler descend whenever they choose; once they descend, the floor is gone.
 
@@ -2162,18 +2165,38 @@ Built on the `magic-and-spells` branch: the rest of Milestone 6 (spells, school 
 
 There was no horizontal scroll at either size, and the console was clean.
 
-### Milestone 6c: floor pacing pass (in progress, branch `floor-pacing-pass`)
+### Milestone 6c: floor pacing pass
 
-Source: `floor-pacing-pass.md`. Every number is in `packages/content/pacing.json` (schema `PacingSchema`), so the sim can sweep it.
+Source: `floor-pacing-pass.md`, built on the `floor-pacing-pass` branch. Every number is in `packages/content/pacing.json` (schema `PacingSchema`), so the sim can sweep it.
 
-**Built so far (phase 1):** the time model, sleep deprivation, safe-room placement.
+**Time and sleep**
+- **One clock.** `advanceTime(ctx, minutes, reason)` was already the single path. It now takes a reason, books `game.timeSpent[reason]`, ages `crawler.awakeMin` (unless sleeping), fires show events (`runEvents`) and rolls for wanderers (`wanderRoll`). Costs: move 10, search pass 35 (Exhausted +25%), listen 10 and assess 30 (Perception rank shaves a minute each, floor 5 and 15), rest 30 (heals 15%), sleep 6-8h rolled, combat round 1.
+- **Long haul.** The config has the surcharge but nothing uses it: there is no multi-room travel command, only one exit at a time.
+- **Per-floor budgets kept** at 5, 4 and 6 days; the doc says not to change the budget.
+- **Sleep stages** are data (Rested / Tired 16h / Exhausted 28h / Delirious 40h). The game rolls a d20, so "-5%" is -1 point: hit goes in as `hit`, dodge as `defense`, damage as `damage`. MP regen is scaled. Sleeping outside a safe room is allowed now (it used to be refused): half the restoring, `awakeMin` only drops to the Tired line, and the wandering check is +50%.
+- **Well fed.** `meal` in a safe room eats a food item (15 min): +10% XP until the next sleep (the `perk:xpBonus` modifier). It is never needed for anything.
 
-- **One clock.** `advanceTime(ctx, minutes, reason)` was already the single path; it now takes a reason and books `game.timeSpent[reason]`. Costs: move 10, search 20 (was 15), rest 30 (was 60, heals 15% instead of 25%), sleep 6-8h rolled (was a flat 8), combat round 1. The long-haul surcharge is in the config but unused: there is no multi-room travel command yet, only one exit at a time.
-- **Per-floor budgets kept.** The doc says 5 days; the floors are 5, 4 and 6 days. Kept (the doc says not to change the budget).
-- **Sleep stages.** `crawler.awakeMin` counts minutes awake. Stages are data (Rested / Tired 16h / Exhausted 28h / Delirious 40h). The game rolls a d20 with flat modifiers, so "−5%" is −1: the stage's hit goes in as `hit`, its dodge as `defense` (guard), its damage as `damage`. Exhausted and Delirious add 25% to search and scouting. MP regen is scaled by the stage. Exhausted and Delirious are not yet shown anywhere beyond the status bar.
-- **Sleeping rough** is allowed now (the old "refused outside a safe room" is gone): same time, half the restoring, and `awakeMin` drops to the Tired line only. The +50% wandering check waits for the wandering system.
-- **Safe rooms.** One within 2 hops of the entry (was 4-8 steps out), another at least 4 hops from it, at least 2 per floor, never next to a stairwell or each other. The hard rule: every room on the shortest route to each stairwell is within 3 hops of a safe room; the generator adds safe rooms until that holds, and rerolls the layout if it can't. This makes 5-6 safe rooms on Floor 1 where the old rule gave 4. Workshop rooms now sit 2+ rooms from a safe room (was 3), since the floor has less room left.
-- **Known conflict:** Floor 1's first safe room still holds the tutorial craft kit (a pipe, tacks, tape) in plain sight. Rule 4 says safe rooms have no hidden loot; the kit is visible and stays, because the first craft depends on it.
-- The status bar shows the day and time plus the sleep state when not Rested.
+**Safe rooms.** At least 2 per floor; one within 2 hops of the entry (the tutorial kit sits there: 4-8 steps out before); another 4+ hops from it; never next to a stairwell or each other; no hazard, fight or hidden loot. The hard rule: every room on the shortest route to each stairwell is within 3 hops of a safe room. The generator adds safe rooms until that holds and rerolls the layout if it can't. Floor 1 now gets 6-8. Workshop rooms may sit 2 rooms from a safe room (was 3). The tutorial kit stays visible in the first safe room (a quest-ish exception to "no loot in safe rooms": the first craft depends on it).
 
-**Still to build:** scouting (tiers 0-2), hidden-by-default loot and search passes, per-room state with persistent and escalating hazards, dense rooms, wandering monsters, show events, the Game Guide, the meal and "Well fed", and the sim bots and metrics.
+**Room memory** (`room.rs`, see `RoomState`). Saves moved to version 7.
+- Groups are set at generation (`gen/roomstate.ts`) instead of rolled on every entry: lairs always, chambers 20%, corridors 4%, event/NPC/puzzle 8%, treasure 6%, trap rooms from Floor 2 at 30%. A cleared room stays cleared. Fleeing keeps the wounded survivors in the room.
+- **Dense rooms**: 15-25% of the fight-capable rooms (not corridors or empties) get one more group and 3 more hidden-loot rolls, and scout as "dangerous".
+- **Round-one retreat**: leaving by the entry door costs 10 min and sets `alerted`; the room has one extra group on return. Configurable (`retreat`).
+- **Hazards** are the trap rooms' traps, kept as persistent `HazardState`. They bite on every entry and every search pass (spot, then avoid, then damage x intensity), grow by 0.5 per day away (x1.75 from day 4), cap at 3x, burn out after 4 bites, or `disarm` (20 min, INT/DEX + Perception check). No hazard blocks a way; the worst case is a bite per crossing. That is how "the only route to the stairs is never impassable" is met.
+- **Hidden loot**: everything seeded is hidden with a `searchDc` (3-14, +2 in dense rooms). Quest objects (named scatter items, oddities), the safe-room tutorial kit, shards, lore and drops from kills stay visible. A search pass finds what is at or under INT + Perception + 0-3 luck + 1 per earlier pass here. About half the rooms with something hidden say so in their description.
+- **Scouting**: `listen <dir>` (adjacent, tier 1: calm/uneasy/dangerous and hazard yes/no; Perception 3 also says whether anything is hidden), `assess` (tier 2: who is waiting, hazards and intensity, how many hidden items). **Change from the doc:** `assess <dir>` also works on a neighboring room, because with fights on entry, assessing the room you are standing in is too late to matter. Delirious listens are a band off 25% of the time. Reports are kept in the Guide.
+- **Wandering**: each stretch of non-combat time outside a safe room rolls 0.6%/hour + 0.6% per day, capped at 6%/hour, x1.75 from day 4, x2 during the surge. A hit is resolved after the action; fleeing it costs 10 min.
+- **Show events**: 2-4 per floor, scheduled at generation (a reward and a closing section or surge are guaranteed). Reward: a sponsor crate in a room for 8 hours (visible items, vanishes at the end). Closing: a section within 1 hop of a seed room seals (it is chosen so the rest of the floor stays connected and no safe room or stairwell is in it); anyone inside is thrown out for 20% of max HP. Surge: on the last day, 30% of ordinary rooms get another group. Announcement: a hint (marks a stairwell), a heal, or a 3-hour sleep debuff. Announcements go to the Guide, with one line in the log, no modal. The announcer's lines are in `pacing.json` for now; they belong in the workbook.
+
+**Game Guide.** `guide` (command, F1, or the Guide button/tab) shows the run's rules, event log, scout reports and the full text of any room description over two lines (the main screen shows two lines and a pointer; `look` still prints it all). New entries carry a marker. It is run-scoped (reset with each crawler) and separate from the Codex. Echo's notes section is only a hook. Not moved yet: item lore, the bestiary and spell details (they already live in the inventory and character panels).
+
+**Floor 1 grew** from 60 to 100 rooms (grid 15x10) so a full sweep costs more than the budget. Floor 1 was the sparse one: 12 rooms a day against 22 and 20 on floors 2 and 3. Search passes cost 35 min and gain only +1 per extra pass.
+
+**Sim results** (balanced bot, 100 runs, `--floors 3 --craft`; baseline is main before this pass):
+- Clear all 3 floors: 37% (was 48%). Reached F2 58% (63%), F3 41% (49%). A bit harder, inside the 30-60% band.
+- Balanced leaves Floor 1 on day 3.3 (days 2.8-3.6) and Floor 2 on day 2.5; none forced by the clock.
+- Greedy descender dies on day 1 in about 4% of runs.
+- Full sweeper (collapse timer stretched 4x): about 10% finish within the real budget (target 15% or fewer), but the cost of a completed sweep is 107% of the budget, below the 140-160% target; and 75% of sweepers die first, so the completed ones are the lucky ones. Not tuned further: more rooms or search cost would also punish the balanced player.
+- Spell numbers are not broken out; only aggregates.
+
+**Not done:** the long-haul travel command, Echo's reactions to sleep states and Echo notes in the Guide (milestone 7), moving item lore and the bestiary into the Guide, shops, loot boxes and achievements in safe rooms (hooks only).

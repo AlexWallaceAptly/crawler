@@ -62,6 +62,9 @@ describe("exploring floor 1", () => {
     const back = { north: "south", south: "north", east: "west", west: "east" }[dir] as typeof dir;
     // a lair or trap next door would start a fight or spring on entry; this test is about descriptions
     floor.rooms[start.exits[dir]!]!.type = "empty";
+    floor.rooms[start.exits[dir]!]!.rs.groups = [];
+    floor.rooms[start.exits[dir]!]!.rs.hazards = [];
+    setRandomSource(() => 0.99); // no wanderers either
 
     const out = engine.step(world, { type: "go", dir });
     const descAway = out.world.game.floor!.rooms[out.world.game.floor!.currentRoom]!.desc;

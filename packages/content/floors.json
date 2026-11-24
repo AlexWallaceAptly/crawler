@@ -3,9 +3,9 @@
     "id": "welcome_lobby",
     "name": "The Welcome Lobby",
     "floor": 1,
-    "rooms": 60,
-    "width": 12,
-    "height": 9,
+    "rooms": 100,
+    "width": 15,
+    "height": 10,
     "days": 5,
     "encounters": {
       "pack": [

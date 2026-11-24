@@ -28,6 +28,13 @@
  * AP as its swing. Out of one it uses Bad Feeling, Flashlight App and Dowsing Rod while MP is
  * high. A crawler whose INT is at least its weapon stat and who knows a damage spell puts
  * the 2 weapon points into INT. The report splits clear rates by starter spell.
+ *
+ * Floor pacing (Milestone 6c): `--bot sweeper|greedy|scout|balanced|all` picks how the crawler
+ * explores (balanced is the default). The sweeper clears and searches every room on a floor
+ * with its collapse timer stretched 4x, so the report can say how much of the real budget a full
+ * sweep costs. Every report adds per-floor pacing: rooms visited and searched, day of descent,
+ * forced descents, where the minutes went, sleep states, wanderers, hazards and events.
+ *   npm run sim -- 200 --floors 3 --craft --bot all
  */
 import { createEngine, loadContent, bfsDistances, powerScore, type World, type Dir, type GameEvent, type CombatMode } from "../packages/engine/src/index";
 import { autoAssign, atWorkbench } from "../packages/engine/src/craft";
@@ -36,6 +43,7 @@ import { counterItems } from "../packages/engine/src/boss";
 import { openStairwell } from "../packages/engine/src/explore";
 import { pendingShard, sideOf } from "../packages/engine/src/echo";
 import { rawContent } from "../packages/content/index";
+import { sleepStage } from "../packages/engine/src/rules/sleep";
 import { spellNumbers, spellProfile } from "../packages/engine/src/spells";
 import { heldWeapon, profileOf, swingNumbers } from "../packages/engine/src/gear";
 import type { Spell } from "../packages/engine/src/content/schemas";
@@ -45,6 +53,15 @@ const flag = (name: string) => {
   const i = args.indexOf(`--${name}`);
   return i >= 0 ? args[i + 1] : undefined;
 };
+type Bot = "balanced" | "sweeper" | "greedy" | "scout";
+const BOTS: Bot[] = ["balanced", "sweeper", "greedy", "scout"];
+const botArg = flag("bot") ?? "balanced";
+if (botArg !== "all" && !BOTS.includes(botArg as Bot)) throw new Error(`--bot: ${BOTS.join(" | ")} | all`);
+const bots: Bot[] = botArg === "all" ? BOTS : [botArg as Bot];
+/** The sweeper's collapse timer is stretched by this much, so a full sweep can be timed. */
+const SWEEP_STRETCH = 4;
+/** A descent with this many minutes or fewer left counts as forced by the clock. */
+const FORCED_WITHIN = 24 * 60;
 const runs = Number(args.find((a) => /^\d+$/.test(a)) ?? 200);
 const modeArg = flag("mode") ?? "default";
 const modes: (CombatMode | "default")[] = modeArg === "both" ? ["grid", "bands"] : [modeArg as CombatMode | "default"];
@@ -68,7 +85,33 @@ const floorsArg = Math.max(1, Number(flag("floors") ?? 1));
 /** A fight that drags past this many rounds counts as stuck (AI or rules deadlock). */
 const MAX_ROUNDS = 60;
 
+/** What a floor cost, as the pacing report needs it. */
+interface FloorPace {
+  floor: number;
+  rooms: number;
+  visited: number;
+  /** Ordinary (non-safe) rooms searched at least once, and how many there were. */
+  searched: number;
+  searchable: number;
+  /** Days into the floor when the crawler left it (or the run ended there). */
+  day: number;
+  left: boolean;
+  forced: boolean;
+  minutes: Record<string, number>;
+  stage: Record<string, number>;
+  wander: number;
+  hazardTicks: number;
+  eventsStarted: number;
+  rewardTaken: boolean;
+  /** Minutes into the floor when every room was visited and searched twice (the sweeper), and the real budget. */
+  sweepDone?: number;
+  budget: number;
+}
+
 interface Outcome {
+  pace: FloorPace[];
+  /** Day of the run on which the crawler died (if it did). */
+  deathDay?: number;
   result: "cleared" | "died" | "stuck";
   cause: string;
   actions: number;
@@ -145,9 +188,24 @@ function healItem(world: World): string | undefined {
 }
 
 /** One `go` step along the BFS path toward the target room. */
+/** Hop distances from a room, never walking through a closed (collapsed) section. */
+function openDistances(world: World, from: number): number[] {
+  const rooms = world.game.floor!.rooms;
+  const dist = rooms.map(() => -1);
+  dist[from] = 0;
+  const queue = [from];
+  while (queue.length) {
+    const id = queue.shift()!;
+    for (const next of Object.values(rooms[id]!.exits)) {
+      if (dist[next] === -1 && !rooms[next]!.closed) { dist[next] = dist[id]! + 1; queue.push(next); }
+    }
+  }
+  return dist;
+}
+
 function stepToward(world: World, target: number): Dir | undefined {
   const floor = world.game.floor!;
-  const dist = bfsDistances(floor.rooms, target);
+  const dist = openDistances(world, target);
   const here = floor.rooms[floor.currentRoom]!;
   let best: { dir: Dir; d: number } | undefined;
   for (const [dir, id] of Object.entries(here.exits) as [Dir, number][]) {
@@ -156,11 +214,12 @@ function stepToward(world: World, target: number): Dir | undefined {
   return best?.dir;
 }
 
-function runOne(mode: CombatMode | "default"): Outcome {
+function runOne(mode: CombatMode | "default", bot: Bot): Outcome {
   let { world } = engine.newWorld();
   if (mode !== "default") world.account.settings = { combatMode: mode };
   ({ world } = engine.step(world, { type: "accept" }));
   const starter = Object.keys(world.game.crawler!.spells).length > 0;
+  // (the first floor starts here; later floors start in act())
   if (forcedSpell) world.game.crawler!.spells[forcedSpell] ??= { level: 1, casts: 0, cooldown: 0 };
   let casts = 0;
   let tomes = 0;
@@ -198,7 +257,42 @@ function runOne(mode: CombatMode | "default"): Outcome {
   let hardFightsTo3: number | undefined;
   const weaponSkills = new Set(content.skills.all.filter((s) => s.category === "weapon").map((s) => s.id));
   const topRank = () => Math.max(0, ...Object.entries(world.game.crawler?.skills ?? {}).filter(([id]) => weaponSkills.has(id)).map(([, s]) => s.rank));
+  // --- pacing telemetry (Milestone 6c) ---
+  const pace: FloorPace[] = [];
+  type Cur = { floor: number; startClock: number; budget: number; spent: Record<string, number>; stage: Record<string, number>; wander: number; sweepDone?: number };
+  let cur = null as Cur | null;
+  const beginFloor = () => {
+    const f = world.game.floor;
+    if (!f || (cur && cur.floor === f.floor)) return;
+    const budget = f.timeLeft;
+    if (bot === "sweeper") f.timeLeft = budget * SWEEP_STRETCH;
+    cur = { floor: f.floor, startClock: f.startClock, budget, spent: { ...(world.game.timeSpent ?? {}) }, stage: {}, wander: 0 };
+  };
+  const finishFloor = (w: World, left: boolean) => {
+    const f = w.game.floor;
+    if (!f || !cur || cur.floor !== f.floor) return;
+    const rooms = f.rooms;
+    const ordinary = rooms.filter((r) => r.type !== "safe");
+    const spent: Record<string, number> = {};
+    for (const [k, v] of Object.entries(w.game.timeSpent ?? {})) spent[k] = v - (cur.spent[k] ?? 0);
+    const elapsed = w.game.clock - cur.startClock;
+    pace.push({
+      floor: f.floor, rooms: rooms.length, visited: rooms.filter((r) => r.visited).length,
+      searched: ordinary.filter((r) => r.rs.searchPasses > 0).length, searchable: ordinary.length,
+      day: elapsed / 1440, left, forced: left && cur.budget - elapsed <= FORCED_WITHIN,
+      minutes: spent, stage: cur.stage, wander: cur.wander,
+      hazardTicks: rooms.reduce((n, r) => n + r.rs.hazards.reduce((m, h) => m + h.ticks, 0), 0),
+      eventsStarted: f.events.filter((e) => e.started).length,
+      rewardTaken: !!w.game.crawler?.inventory.some((i) => i.sponsor),
+      ...(cur.sweepDone !== undefined ? { sweepDone: cur.sweepDone } : {}),
+      budget: cur.budget,
+    });
+    cur = null;
+  };
   const act = (a: Parameters<typeof engine.step>[1]) => {
+    const prev = world;
+    const clockBefore = world.game.clock;
+    const stageBefore = world.game.crawler ? sleepStage(world.game.crawler, content).id : "rested";
     const wasBoss = !!world.game.combat?.boss;
     const floorBefore = world.game.floor?.floor ?? 1;
     const levelBefore = world.game.crawler?.level ?? 1;
@@ -206,6 +300,10 @@ function runOne(mode: CombatMode | "default"): Outcome {
     const r = engine.step(world, a);
     world = r.world;
     lastEvents = r.events;
+    if (cur) cur.stage[stageBefore] = (cur.stage[stageBefore] ?? 0) + (world.game.clock - clockBefore);
+    if (r.events.some((e) => e.type === "floorEntered" && e.floor > floorBefore) || (!world.game.floor && r.events.some((e) => e.type === "floorCleared"))) finishFloor(prev, true);
+    beginFloor();
+    if (cur && world.game.combat?.wander && r.events.some((e) => e.type === "combatStarted")) cur.wander++;
     for (const e of r.events) {
       if (e.type === "combatEnded") {
         for (const k of e.skills ?? []) if (weaponSkills.has(k.id)) weaponXp[floorBefore] = (weaponXp[floorBefore] ?? 0) + k.gained;
@@ -272,6 +370,7 @@ function runOne(mode: CombatMode | "default"): Outcome {
     };
   };
   const stuck = (cause: string, i: number): Outcome => ({
+    pace,
     result: "stuck", cause, actions: i, roomsVisited: 0, xp: 0, fights, level: 1, fightRounds, fightDamage, fled, crafted, earlyDeath,
     deepest, shardsByFloor, modules: 0, bossFights, bossWins, weakness, temper: 0, atFloorEnd, weaponXp, rankAtFight, floorXp, bossDownOn,
     ...magic(),
@@ -352,7 +451,8 @@ function runOne(mode: CombatMode | "default"): Outcome {
     }
   };
 
-  for (let i = 0; i < 4000 * floorsArg; i++) {
+  beginFloor();
+  for (let i = 0; i < (bot === "sweeper" ? 9000 : 4000) * floorsArg; i++) {
     const phase = world.game.phase;
     if (phase === "dead") break;
     if (world.game.floor && world.game.floor.floor > floorsArg) break; // made it past the last floor we're testing
@@ -458,39 +558,95 @@ function runOne(mode: CombatMode | "default"): Outcome {
       else if (dowse && mpPct >= 0.7 && !dowsed.has(floor.floor)) { dowsed.add(floor.floor); spell = dowse.sp; }
       if (spell && cast(spell)) continue;
     }
-    if (here.type === "safe" && hpPct(world) < 0.85) { act({ type: "sleep" }); continue; }
+    const awakeH = (world.game.crawler!.awakeMin ?? 0) / 60;
+    const careful = bot !== "greedy";
+    if (here.type === "safe" && (hpPct(world) < 0.85 || (careful && awakeH >= 20 && timeToSpare))) { act({ type: "sleep" }); continue; }
+    // Not a greedy descender: pick up what searching turned up, and don't let sleep slip past the Exhausted line.
+    if (careful && !crafty && here.items?.length) {
+      const n = world.game.crawler!.inventory.length;
+      act({ type: "take", item: "all" });
+      if (world.game.crawler!.inventory.length !== n) { wearBetter(); continue; }
+    }
     if (hpPct(world) < 0.4 && healItem(world)) { act({ type: "use", item: healItem(world)! }); continue; }
-    if (hpPct(world) < 0.65 && timeToSpare) { act({ type: "rest" }); continue; }
+    if (hpPct(world) < 0.65 && timeToSpare && bot !== "sweeper") { act({ type: "rest" }); continue; }
     // A faint voice: search for what's talking (that's the only way to find a room shard).
     if (pendingShard(world.game, content, here)) { act({ type: "search" }); continue; }
 
-    const dist = bfsDistances(floor.rooms, floor.currentRoom);
-    const unvisited = floor.rooms.filter((r) => !r.visited && dist[r.id]! >= 0);
+    const dist = openDistances(world, floor.currentRoom);
+    const reach = (r: { id: number; closed?: boolean }) => dist[r.id]! >= 0 && !r.closed;
+    const unvisited = floor.rooms.filter((r) => !r.visited && reach(r));
     const visited = floor.rooms.filter((r) => r.visited).length;
-    // A sane crawler sees most of the floor, not all of it, then takes the stairs.
-    const headHome = floor.timeLeft < 36 * 60 || unvisited.length === 0 || visited / floor.rooms.length > 0.6;
+    const goTo = (id: number): boolean => {
+      const dir = stepToward(world, id);
+      if (!dir) return false;
+      act({ type: "go", dir });
+      return true;
+    };
+    const searchable = (r: (typeof floor.rooms)[number]) => r.type !== "safe" && r.type !== "stairwell" && r.visited && reach(r);
+    // The sweeper keeps searching until nothing is left hidden (it peeks at the state: a sim shortcut for assess), up to 6 passes.
+    const passesWanted = bot === "sweeper" ? 6 : 0;
+    const needSearch = floor.rooms.filter((r) => searchable(r) && r.rs.searchPasses < passesWanted && (r.hidden?.length ?? 0) > 0);
+    if (bot === "sweeper" && cur && cur.sweepDone === undefined && unvisited.length === 0 && needSearch.length === 0) {
+      cur.sweepDone = world.game.clock - cur.startClock;
+    }
+
+    // Sleep before it bites: Exhausted is 28h awake. A safe room within reach beats a bad night's sleep.
+    if (careful && awakeH >= 26 && here.type !== "safe" && floor.timeLeft > 12 * 60) {
+      const bed = floor.rooms.filter((r) => r.type === "safe" && reach(r)).sort((a, b) => dist[a.id]! - dist[b.id]!)[0];
+      if (bed && dist[bed.id]! <= 8 && goTo(bed.id)) continue;
+    }
+
+    // One pass (or two, for the sweeper) in each ordinary room, while there's time to spare.
+    if (careful && searchable(here) && (bot === "sweeper" ? needSearch.includes(here) : here.rs.searchPasses < (bot === "balanced" || bot === "scout" ? 1 : 0) && floor.timeLeft > 48 * 60)) {
+      if (bot !== "scout" || here.rs.danger !== "dangerous") { act({ type: "search" }); continue; }
+    }
+
+    // How much of the floor a sane crawler sees before it takes the stairs.
+    const unvisitedLeft = unvisited.length;
+    const done = bot === "sweeper" ? unvisitedLeft === 0 && needSearch.length === 0 : unvisitedLeft === 0;
+    const headHome = bot === "greedy" ? true
+      : bot === "sweeper" ? done || floor.timeLeft < 4 * 60
+      : floor.timeLeft < 36 * 60 || done || visited / floor.rooms.length > 0.6;
     if (headHome) {
       if (openStairwell(floor, here)) { act({ type: "descend" }); continue; }
-      const stairs = floor.rooms.filter((r) => openStairwell(floor, r))
+      const stairs = floor.rooms.filter((r) => openStairwell(floor, r) && reach(r))
         .sort((a, b) => dist[a.id]! - dist[b.id]!)[0];
       if (!stairs) return stuck("no stairwell", i);
-      const dir = stepToward(world, stairs.id);
-      if (!dir) return stuck("no path", i);
-      act({ type: "go", dir });
+      if (!goTo(stairs.id)) return stuck("no path", i);
       continue;
     }
-    const target = unvisited.sort((a, b) => dist[a.id]! - dist[b.id]!)[0]!;
+    if (bot === "sweeper" && unvisited.length === 0) {
+      const next = needSearch.sort((a, b) => dist[a.id]! - dist[b.id]!)[0]!;
+      if (next.id === here.id) { act({ type: "search" }); continue; }
+      if (!goTo(next.id)) return stuck("no path", i);
+      continue;
+    }
+    // The scout skips rooms it has heard are dangerous while it's hurt.
+    let pool = unvisited;
+    if (bot === "scout" && hpPct(world) < 0.8) {
+      const calm = unvisited.filter((r) => r.rs.danger !== "dangerous");
+      if (calm.length) pool = calm;
+    }
+    const target = pool.sort((a, b) => dist[a.id]! - dist[b.id]!)[0]!;
     const dir = stepToward(world, target.id);
     if (!dir) return stuck("no path", i);
+    // The scout listens at the door before every new room.
+    if (bot === "scout") {
+      const next = floor.rooms[here.exits[dir]!]!;
+      if (!next.visited && next.rs.scoutTier === 0 && timeToSpare) { act({ type: "listen", dir }); continue; }
+    }
     act({ type: "go", dir });
   }
 
+  finishFloor(world, false);
   const c = world.game.crawler!;
   const died = world.game.log.filter((e) => e.type === "died").pop();
   const cleared = world.account.bestFloor >= floorsArg + 1;
   const roomsVisited = roomsF1;
   void lastEvents;
   return {
+    pace,
+    ...(died ? { deathDay: world.game.clock / 1440 } : {}),
     result: cleared ? "cleared" : died ? "died" : "stuck",
     cause: cleared ? "descended" : died ? died.cause : `ran out of actions (${world.game.phase}; ${world.game.floor?.timeLeft ?? 0} min left; room ${world.game.floor?.currentRoom ?? "none"}; combat ${world.game.combat?.enemies.filter((e) => e.hp > 0).map((e) => `${e.name}:${e.hp}`).join(",") ?? "none"}; round ${world.game.combat?.round ?? "-"})\n      last: ${world.game.log.slice(-4).map((e) => ("text" in e ? e.text : e.type)).join(" | ").slice(0, 400)}`,
     actions: world.game.turn,
@@ -534,11 +690,48 @@ const spread = (xs: number[]) => {
 };
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+const pct = (n: number, d: number) => (d ? `${Math.round((100 * n) / d)}%` : "-");
+
+/** The floor pacing report (Milestone 6c): where the clock went and whether the targets hold. */
+function pacingReport(outcomes: Outcome[], bot: Bot): void {
+  const total = outcomes.length;
+  console.log(`  pacing (${bot}):`);
+  for (let f = 1; f <= floorsArg; f++) {
+    const ps = outcomes.flatMap((o) => o.pace.filter((p) => p.floor === f));
+    if (!ps.length) continue;
+    const left = ps.filter((p) => p.left);
+    const mins = new Map<string, number>();
+    let minsTotal = 0;
+    for (const p of ps) for (const [k, v] of Object.entries(p.minutes)) { mins.set(k, (mins.get(k) ?? 0) + v); minsTotal += v; }
+    const stage = new Map<string, number>();
+    let stageTotal = 0;
+    for (const p of ps) for (const [k, v] of Object.entries(p.stage)) { stage.set(k, (stage.get(k) ?? 0) + v); stageTotal += v; }
+    const share = (m: Map<string, number>, t: number) => [...m].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, v]) => `${k} ${pct(v, t)}`).join(", ");
+    console.log(`    F${f} (${ps.length} runs, ${left.length} descended): rooms visited ${pct(ps.reduce((n, p) => n + p.visited, 0), ps.reduce((n, p) => n + p.rooms, 0))}, searched ${pct(ps.reduce((n, p) => n + p.searched, 0), ps.reduce((n, p) => n + p.searchable, 0))}; day of leaving ${spread(left.map((p) => Math.round(p.day * 10) / 10))}; forced by the clock ${pct(left.filter((p) => p.forced).length, left.length)}`);
+    console.log(`        minutes: ${share(mins, minsTotal)}`);
+    console.log(`        sleep states: ${share(stage, stageTotal)}`);
+    console.log(`        per run: ${avg(ps.map((p) => p.wander)).toFixed(2)} wandering fights, ${avg(ps.map((p) => p.hazardTicks)).toFixed(2)} hazard bites, ${avg(ps.map((p) => p.eventsStarted)).toFixed(1)} events fired; sponsor reward taken in ${pct(ps.filter((p) => p.rewardTaken).length, ps.length)}`);
+    if (bot === "sweeper") {
+      const done = ps.filter((p) => p.sweepDone !== undefined);
+      const ratios = done.map((p) => Math.round((100 * p.sweepDone!) / p.budget));
+      const within = done.filter((p) => p.sweepDone! <= p.budget).length;
+      console.log(`        full sweep: completed in ${pct(done.length, ps.length)} of runs (the rest died first); cost ${spread(ratios)}% of the budget (target 140-160%); within the real budget in ${pct(within, ps.length)} (target 15% or fewer)`);
+    }
+  }
+  const days = outcomes.flatMap((o) => (o.deathDay !== undefined ? [o.deathDay] : []));
+  console.log(`    deaths on day 1: ${pct(days.filter((d) => d < 1).length, total)} of runs; later: ${pct(days.filter((d) => d >= 1).length, total)}`);
+  if (bot === "balanced") {
+    const f1 = outcomes.flatMap((o) => o.pace.filter((p) => p.floor === 1 && p.left));
+    const inWindow = f1.filter((p) => p.day >= 2 && p.day <= 5).length;
+    console.log(`    target: balanced descends on days 3-5 (counting from day 0: 2-5) in ${pct(inWindow, f1.length)} of Floor 1 descents`);
+  }
+}
+
 const summaries: { mode: string; clear: number; rounds: number; damage: number }[] = [];
 
-for (const mode of modes) {
+for (const [bot, mode] of bots.flatMap((b) => modes.map((m) => [b, m] as const))) {
   const outcomes: Outcome[] = [];
-  for (let i = 0; i < runs; i++) outcomes.push(runOne(mode));
+  for (let i = 0; i < runs; i++) outcomes.push(runOne(mode, bot));
 
   const cleared = outcomes.filter((o) => o.result === "cleared");
   const died = outcomes.filter((o) => o.result === "died");
@@ -550,7 +743,7 @@ for (const mode of modes) {
   const fights = outcomes.reduce((s, o) => s + o.fights, 0);
   const fled = outcomes.reduce((s, o) => s + o.fled, 0);
 
-  console.log(`\n${floorsArg === 1 ? "Floor 1" : `Floors 1-${floorsArg}`} sim — ${runs} runs — combat: ${mode}${crafty ? " — crafting on" : ""}${forcedSpell ? ` — everyone knows ${forcedSpell}` : ""}`);
+  console.log(`\n${floorsArg === 1 ? "Floor 1" : `Floors 1-${floorsArg}`} sim — ${runs} runs — bot: ${bot} — combat: ${mode}${crafty ? " — crafting on" : ""}${forcedSpell ? ` — everyone knows ${forcedSpell}` : ""}`);
   console.log(`  cleared : ${cleared.length} (${Math.round((100 * cleared.length) / runs)}%)`);
   console.log(`  died    : ${died.length} (${Math.round((100 * died.length) / runs)}%)`);
   if (stuck.length) console.log(`  stuck   : ${stuck.length}  ← should be zero`);
@@ -606,6 +799,7 @@ for (const mode of modes) {
   for (const [cause, n] of [...causes.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)) {
     console.log(`    ${String(n).padStart(4)}  ${cause}`);
   }
+  pacingReport(outcomes, bot);
   summaries.push({ mode, clear: (100 * cleared.length) / runs, rounds: avg(rounds), damage: avg(damage) });
 }
 

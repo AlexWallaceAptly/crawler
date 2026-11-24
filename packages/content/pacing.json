@@ -4,7 +4,7 @@
     "longHaulPerHop": 10,
     "longHaulAfterHops": 3,
     "longHaulSurcharge": 15,
-    "search": 20,
+    "search": 35,
     "rest": 30,
     "sleepMin": 360,
     "sleepMax": 480,
@@ -87,7 +87,7 @@
     "dcMin": 3,
     "dcMax": 14,
     "randomBonus": 3,
-    "passBonus": 2,
+    "passBonus": 1,
     "denseDcBonus": 2,
     "hints": [
       "Something glints under the clutter.",
@@ -100,16 +100,16 @@
     "minPct": 0.15,
     "maxPct": 0.25,
     "extraGroups": 1,
-    "extraRewardRolls": 2
+    "extraRewardRolls": 3
   },
   "groups": {
     "chance": {
-      "chamber": 0.35,
-      "corridor": 0.12,
-      "event": 0.15,
-      "npc": 0.15,
-      "puzzle": 0.15,
-      "treasure": 0.1,
+      "chamber": 0.2,
+      "corridor": 0.04,
+      "event": 0.08,
+      "npc": 0.08,
+      "puzzle": 0.08,
+      "treasure": 0.06,
       "trap": 0
     },
     "trapFightFromFloor": 2,
@@ -127,8 +127,8 @@
     "roundOneAlertExtraGroups": 1
   },
   "wander": {
-    "basePerHour": 0.012,
-    "perDay": 0.01,
+    "basePerHour": 0.006,
+    "perDay": 0.006,
     "cap": 0.06,
     "lateFromDay": 4,
     "lateMult": 1.75,
