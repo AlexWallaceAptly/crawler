@@ -255,6 +255,7 @@ function runOne(mode: CombatMode | "default", bot: Bot, account?: AccountState):
   const dowsed = new Set<number>();
   let fights = 0;
   let fled = 0;
+  let bequestTried = false;
   let earlyDeath = false;
   const fightRounds: number[] = [];
   const fightDamage: number[] = [];
@@ -617,10 +618,12 @@ function runOne(mode: CombatMode | "default", bot: Bot, account?: AccountState):
       act({ type: "go", dir });
       return true;
     };
-    // Chain mode: the last crawler's bequest is worth the walk.
+    // Chain mode: the last crawler's bequest is worth the walk, once (if it won't fit, or gets
+    // dropped again, walking back for it would loop).
     const left = floor.bequest;
-    if (chainLen && left && floor.rooms[left.room]!.items?.some((i) => i.heirloom) && reach(floor.rooms[left.room]!)) {
+    if (chainLen && left && !bequestTried && floor.rooms[left.room]!.items?.some((i) => i.heirloom) && reach(floor.rooms[left.room]!)) {
       if (floor.currentRoom === left.room) {
+        bequestTried = true;
         act({ type: "take", item: left.name.toLowerCase() });
         if (world.game.crawler!.inventory.some((i) => i.heirloom)) { wearBetter(); continue; }
       } else if (goTo(left.room)) continue;
@@ -687,6 +690,7 @@ function runOne(mode: CombatMode | "default", bot: Bot, account?: AccountState):
   // Judged on this run (the account's bestFloor carries over in a career), before the career bookkeeping below.
   const cleared = (world.game.floor?.floor ?? 0) > floorsArg || world.game.ended?.kind === "descended";
   const died = world.game.log.filter((e) => e.type === "died").pop();
+  const stuckCause = `ran out of actions (${world.game.phase}; ${world.game.floor?.timeLeft ?? 0} min left; room ${world.game.floor?.currentRoom ?? "none"}; combat ${world.game.combat?.enemies.filter((e) => e.hp > 0).map((e) => `${e.name}:${e.hp}`).join(",") ?? "none"}; round ${world.game.combat?.round ?? "-"})\n      last: ${world.game.log.slice(-4).map((e) => ("text" in e ? e.text : e.type)).join(" | ").slice(0, 400)}`;
   // The run is over (or stuck: close it so the account stays consistent). Bequeath and shop.
   if (chainLen) {
     if (world.game.phase !== "dead") world = engine.step(world, { type: "abandon", confirm: true }).world;
@@ -705,7 +709,7 @@ function runOne(mode: CombatMode | "default", bot: Bot, account?: AccountState):
     pace,
     ...(died ? { deathDay: world.game.clock / 1440 } : {}),
     result: cleared ? "cleared" : died ? "died" : "stuck",
-    cause: cleared ? "descended" : died ? died.cause : `ran out of actions (${world.game.phase}; ${world.game.floor?.timeLeft ?? 0} min left; room ${world.game.floor?.currentRoom ?? "none"}; combat ${world.game.combat?.enemies.filter((e) => e.hp > 0).map((e) => `${e.name}:${e.hp}`).join(",") ?? "none"}; round ${world.game.combat?.round ?? "-"})\n      last: ${world.game.log.slice(-4).map((e) => ("text" in e ? e.text : e.type)).join(" | ").slice(0, 400)}`,
+    cause: cleared ? "descended" : died ? died.cause : stuckCause,
     actions: world.game.turn,
     roomsVisited,
     xp: c.xp,
