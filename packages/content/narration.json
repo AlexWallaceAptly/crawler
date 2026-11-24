@@ -2004,5 +2004,307 @@
         }
       }
     ]
+  },
+  {
+    "key": "run.legacy",
+    "variants": [
+      {
+        "text": "Legacy points: {total}. That's what your entire life came to, {crawler.name}, in the only currency that matters down here. The account says thanks. The account doesn't mean it."
+      },
+      {
+        "text": "{total} legacy points, banked. Your body stays on the floor; your numbers go upstairs. That's the deal. It was always the deal."
+      },
+      {
+        "text": "{total} legacy points. Nothing for the floors: we don't pay quitters by the mile. The account has noted your exit, and your face.",
+        "when": {
+          "kind": "quit"
+        }
+      },
+      {
+        "text": "{total} legacy points. You walked off the bottom of the built dungeon alive, which nobody in accounting budgeted for. They're furious. I'm thrilled. Don't tell them.",
+        "when": {
+          "kind": "descended"
+        }
+      },
+      {
+        "text": "{total} legacy points. I've seen better returns from a vending machine that ate my dollar.",
+        "when": {
+          "total": {
+            "lte": 15
+          }
+        }
+      },
+      {
+        "text": "{total} legacy points. Honestly? A decent corpse. The kind we put on the poster.",
+        "when": {
+          "total": {
+            "gte": 100
+          }
+        }
+      }
+    ]
+  },
+  {
+    "key": "bequest.prompt",
+    "variants": [
+      {
+        "text": "Before we hose you off the floor: pick one thing for the next idiot. They'll find it in a safe room on Floor 1. Nothing legendary. We're generous, not insane."
+      },
+      {
+        "text": "Last will and testament time. One item, not legendary, for whoever we pour down the chute next. Choose like it matters. It barely does."
+      }
+    ]
+  },
+  {
+    "key": "bequest.set",
+    "variants": [
+      {
+        "text": "{item}, bequeathed. The next crawler finds it on Floor 1. They'll never thank you. They won't even know your name. Touching."
+      },
+      {
+        "text": "Fine. The {item} goes to whoever's next. Change your mind any time before `new`. You're dead; you have nothing but time."
+      }
+    ]
+  },
+  {
+    "key": "bequest.cleared",
+    "variants": [
+      {
+        "text": "Nothing, then. The next crawler starts as empty-handed as you did. Tradition."
+      },
+      {
+        "text": "No bequest. Keep it all. Take it with you. Oh, wait."
+      }
+    ]
+  },
+  {
+    "key": "bequest.legendary",
+    "variants": [
+      {
+        "text": "Not the {item}. Legendaries go back to the house. The house always gets the legendaries."
+      },
+      {
+        "text": "The {item} is legendary, and legendary things don't get handed down here. They get repossessed. Pick something sadder."
+      }
+    ]
+  },
+  {
+    "key": "bequest.waiting",
+    "variants": [
+      {
+        "text": "Somebody left you something. {from} didn't make it, but their {item} did. It's in a safe room {hops} rooms in. Not the first one. I'm not a concierge."
+      },
+      {
+        "text": "A bequest, from the late {from}: one {item}, waiting in a safe room {hops} rooms from here. Pick it up before you leave the floor, or it goes in the compactor with everything else."
+      },
+      {
+        "text": "{from} quit, and on the way out the door left you a {item}. It's in a safe room {hops} rooms in. Quitters: still more generous than me.",
+        "when": {
+          "cause": "quit"
+        }
+      }
+    ]
+  },
+  {
+    "key": "bequest.found",
+    "variants": [
+      {
+        "text": "Someone has left a {item} here on purpose, set down square in the middle of the floor. The tag on it just says: from {from}. Good luck."
+      },
+      {
+        "text": "A {item} sits waiting by the door, the way you'd leave something for a stranger. A note in a dead hand: {from} wants you to have it."
+      }
+    ]
+  },
+  {
+    "key": "unlock.bought",
+    "variants": [
+      {
+        "text": "Sold: {name}, for {cost} legacy points. {points} left. Your next crawler won't know who to thank. That's how I like it."
+      },
+      {
+        "text": "{name}. Bought with the life savings of the dead. {points} points left."
+      },
+      {
+        "text": "One {name}, paid for by your previous corpses. {points} points left. Don't spend it all in one grave.",
+        "when": {
+          "kind": "reroll"
+        }
+      }
+    ]
+  },
+  {
+    "key": "unlock.broke",
+    "variants": [
+      {
+        "text": "{name} costs {cost}. You have {points}. You're {short} short. Die a little harder next time."
+      },
+      {
+        "text": "You can't afford {name}. You need {short} more legacy points, and the only way to get them is the hard way. You know the way."
+      }
+    ]
+  },
+  {
+    "key": "unlock.owned",
+    "variants": [
+      {
+        "text": "You already own {name}. I'm not selling it to you twice. Well. I would. The rules say no."
+      }
+    ]
+  },
+  {
+    "key": "kit.chosen",
+    "variants": [
+      {
+        "text": "Starting kit: {kit}. Noted. Your next crawler gets exactly what you picked for them, and nothing they'd have picked themselves."
+      },
+      {
+        "text": "No starting kit. Raw-dogging the apocalypse. Bold.",
+        "when": {
+          "kit": "nothing"
+        }
+      }
+    ]
+  },
+  {
+    "key": "kit.granted",
+    "variants": [
+      {
+        "text": "And from the account, a little something: {items}. That's the {kit}, paid for by everyone who died before you."
+      },
+      {
+        "text": "The {kit} arrives: {items}. A gift from your dead predecessors. They'd want you to have it. They don't want anything. They're dead."
+      }
+    ]
+  },
+  {
+    "key": "codex.enemy",
+    "variants": [
+      {
+        "text": "Met {met}, killed {killed}. Standard dungeon furniture."
+      },
+      {
+        "text": "{killed} down. They don't hold grudges. They don't hold anything. They're dead."
+      },
+      {
+        "text": "Met {met}, killed none. You just looked at each other. Romantic.",
+        "when": {
+          "killed": 0
+        }
+      },
+      {
+        "text": "It has killed {killedYou} of you. You've killed {killed} of them. It's keeping score too.",
+        "when": {
+          "killedYou": {
+            "gte": 1
+          }
+        }
+      },
+      {
+        "text": "{killedYou} crawlers and counting. At this point it should be on the account's payroll.",
+        "when": {
+          "killedYou": {
+            "gte": 3
+          }
+        }
+      },
+      {
+        "text": "{killed} dead and they keep coming. Neither side is learning anything.",
+        "when": {
+          "killed": {
+            "gte": 50
+          }
+        }
+      },
+      {
+        "text": "A floor boss. You've met it {met} times and killed it {killed}. It has a contract. You don't.",
+        "when": {
+          "boss": true
+        }
+      }
+    ]
+  },
+  {
+    "key": "codex.items",
+    "variants": [
+      {
+        "text": "Nothing yet. Pick something up. Anything. Please.",
+        "when": {
+          "found": 0
+        }
+      },
+      {
+        "text": "Mostly things you'd find in a garage, because that's what this is. A very deep garage.",
+        "when": {
+          "group": "weapons",
+          "found": {
+            "gte": 1
+          }
+        }
+      },
+      {
+        "text": "Fashion is dead. You helped.",
+        "when": {
+          "group": "gear",
+          "found": {
+            "gte": 1
+          }
+        }
+      },
+      {
+        "text": "Half of it is expired. The other half is worse.",
+        "when": {
+          "group": "potions",
+          "found": {
+            "gte": 1
+          }
+        }
+      },
+      {
+        "text": "Every single one of these was eaten off a floor at some point. By you.",
+        "when": {
+          "group": "food",
+          "found": {
+            "gte": 1
+          }
+        }
+      },
+      {
+        "text": "I'd say be careful, but the ratings say don't.",
+        "when": {
+          "group": "explosives",
+          "found": {
+            "gte": 1
+          }
+        }
+      },
+      {
+        "text": "Treasure, to a sufficiently desperate person. Hi.",
+        "when": {
+          "group": "junk",
+          "found": {
+            "gte": 1
+          }
+        }
+      },
+      {
+        "text": "Reading is the most dangerous thing you'll do down here. Statistically, no. Spiritually, yes.",
+        "when": {
+          "group": "books",
+          "found": {
+            "gte": 1
+          }
+        }
+      },
+      {
+        "text": "The things nobody can explain. Including me, and I'm the one who put them there.",
+        "when": {
+          "group": "oddities",
+          "found": {
+            "gte": 1
+          }
+        }
+      }
+    ]
   }
 ]

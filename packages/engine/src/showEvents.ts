@@ -202,7 +202,7 @@ export function pushOutOfClosedRoom(ctx: StepContext): boolean {
   c.hp -= dmg;
   emitDamageTaken(ctx, dmg, "show", "a closing section");
   ctx.describe(fill(ctx.content.pacing.eventText["closing.pushed"] ?? "", { damage: dmg }));
-  if (c.hp <= 0) { killCrawler(ctx, "a closing section"); return true; }
+  if (c.hp <= 0) { killCrawler(ctx, "a closing section", { source: "show" }); return true; }
   enterRoom(ctx, exit.id, "revisit");
   return true;
 }

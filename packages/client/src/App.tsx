@@ -15,6 +15,7 @@ import { InputBar } from "./panels/InputBar";
 import { BattleGrid } from "./panels/BattleGrid";
 import { ShardPopup } from "./panels/ShardPopup";
 import { LevelUpPopup } from "./panels/LevelUpPopup";
+import { RunEndSheet, UnlocksSheet } from "./panels/Legacy";
 import s from "./App.module.css";
 
 export function App({ engine }: { engine: Engine }) {
@@ -26,6 +27,12 @@ export function App({ engine }: { engine: Engine }) {
   const [guideOpen, setGuideOpen] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
+  const [unlocksOpen, setUnlocksOpen] = useState(false);
+  /** The end-of-run screen opens by itself when a run ends; closing it leaves the log (and a button to reopen it). */
+  const [runEndOpen, setRunEndOpen] = useState(true);
+  const runEndKey = view.runEnd ? `${view.runEnd.crawler}|${view.account.runs}|${view.account.deaths}` : "";
+  useEffect(() => setRunEndOpen(true), [runEndKey]);
+  useEffect(() => { if (view.phase === "exploring" || view.phase === "combat") setUnlocksOpen(false); }, [view.phase]);
   const [split, setSplit] = useState<boolean>(() => readPref("combatSplit", false));
   /** A grid command waiting for the player to pick a tile. */
   const [armed, setArmed] = useState<CommandOption | null>(null);
@@ -74,6 +81,17 @@ export function App({ engine }: { engine: Engine }) {
         setGuideOpen(false);
         return true;
       }
+      if (layoutControl.layout === "desktop" && (t === "unlocks sheet" || t === "unlocks" || t === "legacy")) {
+        setUnlocksOpen((o) => !o);
+        setRunEndOpen(false);
+        setCodexOpen(false);
+        return true;
+      }
+      if (t === "run sheet") {
+        setRunEndOpen((o) => !o);
+        setUnlocksOpen(false);
+        return true;
+      }
       if (t === "codex sheet") {
         setCodexOpen((o) => !o);
         setInventoryOpen(false);
@@ -96,6 +114,8 @@ export function App({ engine }: { engine: Engine }) {
         setGuideOpen(false);
         setAchievementsOpen(false);
         setShopOpen(false);
+        setUnlocksOpen(false);
+        setRunEndOpen(false);
         setArmed(null);
       }
       // One key from any main screen.
@@ -232,6 +252,32 @@ export function App({ engine }: { engine: Engine }) {
           </Panel>
         </div>
       )}
+      {view.runEnd && runEndOpen && !codexOpen && !unlocksOpen && (
+        <div className={s.overlay} role="dialog" aria-label="Run over">
+          <Panel
+            id="runEnd"
+            title="Run over"
+            collapsible={false}
+            className={s.grow}
+            extra={<button className={s.linkBtn} onClick={() => setRunEndOpen(false)}>close [esc]</button>}
+          >
+            <RunEndSheet view={view} submit={submit} />
+          </Panel>
+        </div>
+      )}
+      {unlocksOpen && (
+        <div className={s.overlay} role="dialog" aria-label="Unlocks">
+          <Panel
+            id="unlocks"
+            title="Unlocks"
+            collapsible={false}
+            className={s.grow}
+            extra={<button className={s.linkBtn} onClick={() => setUnlocksOpen(false)}>close [esc]</button>}
+          >
+            <UnlocksSheet view={view} submit={submit} />
+          </Panel>
+        </div>
+      )}
       {codexOpen && (
         <div className={s.overlay} role="dialog" aria-label="Codex">
           <Panel
@@ -278,13 +324,21 @@ export function App({ engine }: { engine: Engine }) {
       <Ticker events={ticker} />
       <InputBar
         // the desktop opens the Codex as an overlay instead of printing it
-        commands={commands.filter((c) => !["codex", "guide", "achievements", "shop"].includes(c.input))}
+        commands={commands.filter((c) => !["codex", "guide", "achievements", "shop", "unlocks"].includes(c.input) &&
+          // the Unlocks overlay has the buy buttons
+          !c.input.startsWith("unlock ") &&
+          // the end-of-run screen has the bequest buttons
+          !(view.runEnd && runEndOpen && c.input.startsWith("bequeath")))}
         onSubmit={submit}
         onLocal={onLocal}
         onArm={setArmed}
         armed={armed}
         extraButtons={view.character
           ? [
+              ...(view.runEnd ? [{ label: runEndOpen ? "Close run summary" : "Run summary", input: "run sheet" }] : []),
+              ...(view.phase === "dead" || view.phase === "creation"
+                ? [{ label: unlocksOpen ? "Close unlocks" : `Unlocks (${view.account.legacyPoints} pts)`, input: "unlocks sheet" }]
+                : []),
               { label: inventoryOpen ? "Close inventory" : "Inventory", input: "inventory" },
               { label: codexOpen ? "Close codex" : "Codex", input: "codex sheet" },
               ...(view.rewards.shop ? [{ label: shopOpen ? "Close shop" : "Shop", input: "shop sheet" }] : []),

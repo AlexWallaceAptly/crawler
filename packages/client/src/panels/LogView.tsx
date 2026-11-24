@@ -147,6 +147,12 @@ function Line({ e }: { e: GameEvent }) {
       return <div className={`${s.line} ${s.skillNote}`}>{e.delta > 0 ? "+" : ""}{e.delta} gold ({e.total})</div>;
     case "floorEntered":
       return <div className={`${s.line} ${s.divider}`}>── FLOOR {e.floor}: {e.name.toUpperCase()} ──</div>;
+    case "runEnded":
+      return <div className={`${s.line} ${s.divider}`}>── RUN OVER · +{e.legacy} LEGACY ({e.points} ON THE ACCOUNT) ──</div>;
+    case "legacyEarned":
+      return e.why === "the run" ? null : <div className={`${s.line} ${s.skillNote}`}>+{e.amount} legacy ({e.why})</div>;
+    case "unlockBought":
+      return <div className={`${s.line} ${s.divider}`}>── UNLOCKED: {e.name.toUpperCase()} ──</div>;
     default:
       return null;
   }

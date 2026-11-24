@@ -4,7 +4,7 @@ import type { GameEvent } from "./events";
 /** Bump when the save shape changes incompatibly; old saves are discarded (see the decision log in docs/DESIGN.md). */
 export const SAVE_VERSION = 8;
 /** Bump with a migration in engine.ts `restoreAccount`: accounts are upgraded, never discarded. */
-export const ACCOUNT_VERSION = 2;
+export const ACCOUNT_VERSION = 3;
 export const LOG_LIMIT = 300;
 
 export type Phase = "creation" | "exploring" | "combat" | "dead";
@@ -65,6 +65,8 @@ export interface ItemInstance {
   spellLevel?: number;
   /** Generated gear (Milestone 5): the item level it rolled at. */
   itemLevel?: number;
+  /** Left by an earlier crawler (Milestone 8's bequest): who, which run, and how they died. */
+  heirloom?: { from: string; run: number; cause: string };
   /** Generated gear: materials.json id ("rusty"). */
   material?: string;
   /** Generated gear: its affixes, with what each rolled ("+2 STR"). Their effects are in `modifiers`/`onHit`. */
@@ -396,6 +398,8 @@ export interface FloorState {
   wanderDue?: boolean;
   /** The last-day surge is on: more wanderers. */
   surge?: boolean;
+  /** Floor 1: where the last crawler's bequest was left. */
+  bequest?: { room: number; name: string; from: string };
 }
 
 export type ShowEventType = "reward" | "closing" | "surge" | "announcement";
@@ -489,6 +493,37 @@ export interface GameState {
   nextBoxId: number;
   /** Achievements earned this run, with how many times a repeatable one fired. */
   achieved: Record<string, number>;
+  /** Legacy points achievements paid this run (already on the account; kept for the run's tally). */
+  legacyBonus?: number;
+  /** Set when the run ends (death, quitting, or descending past the last floor): the tally screen. */
+  ended?: RunEnd;
+}
+
+/** How a run ended, and what it paid the account (Milestone 8). */
+export interface RunEnd {
+  kind: "died" | "quit" | "descended";
+  /** "a Sump Rat", "floor collapse", "quit", "descended past Floor 3". */
+  cause: string;
+  /** The floor the crawler was on. */
+  floor: number;
+  /** Filled in at the end of the step, once the death's own achievements have fired. */
+  legacy?: LegacyTally;
+  /** The item left for the next crawler, if one was picked. */
+  bequeathed?: string;
+}
+
+/** Legacy points for one run: `10 × deepest floor + 2 × achievements + 5 × bosses killed`, plus what achievements paid. */
+export interface LegacyTally {
+  /** Floors reached: the floor you died on, or one past the floor you descended from. Quitting pays nothing for floors. */
+  deepest: number;
+  floors: number;
+  achievements: number;
+  achievementCount: number;
+  bosses: number;
+  bossKills: number;
+  /** Paid by achievements with a legacy reward (already on the account when they fired). */
+  bonus: number;
+  total: number;
 }
 
 /** An unopened loot box: a promise the crawler carries until it reaches a safe room. */
@@ -513,6 +548,8 @@ export interface RunRecord {
   shards: number;
   temper: number;
   vessel: string;
+  /** Legacy points the run paid (Milestone 8). */
+  legacy?: number;
 }
 
 /** The thread Codex: what the account remembers across runs. */
@@ -526,6 +563,8 @@ export interface AccountThread {
   endings: string[];
   /** The last 50 runs, newest last. */
   history: RunRecord[];
+  /** Vessels Echo has woken in, across runs (thread.json vessel ids). */
+  vessels: string[];
 }
 
 export const HISTORY_LIMIT = 50;
@@ -534,18 +573,44 @@ export interface AccountSettings {
   combatMode: CombatMode;
 }
 
+/** What the account's bestiary remembers about one enemy family (or floor boss). */
+export interface EnemyTally {
+  met: number;
+  killed: number;
+  /** Crawlers it finished off. */
+  killedYou: number;
+}
+
+/** The item a dead crawler left for the next one (placed in a Floor 1 safe room, then gone). */
+export interface Bequest {
+  item: ItemInstance;
+  from: string;
+  run: number;
+  cause: string;
+}
+
 export interface AccountState {
   version: number;
   /** Player preferences that outlive a crawler. Optional so older accounts still load. */
   settings?: AccountSettings;
+  /** Legacy points to spend on unlocks. */
   legacyPoints: number;
+  /** Every legacy point ever earned (spent ones included). */
+  legacyEarned: number;
+  /** Backstory rerolls bought with legacy points, spent after the crawler's free ones. */
   rerolls: number;
+  /** Unlocks bought (unlocks.json ids; repeatable ones appear once). */
   unlocks: string[];
+  /** The starting-kit unlock the next crawler takes (`kit <name>`); "none" for nothing. */
+  kit?: string;
   bestFloor: number;
   runs: number;
   deaths: number;
-  codex: { enemies: string[]; items: string[]; achievements: string[] };
+  /** The old codex: enemies, items (base ids) and achievements ever found, plus the bestiary's tallies. */
+  codex: { enemies: string[]; items: string[]; achievements: string[]; tallies: Record<string, EnemyTally> };
   thread: AccountThread;
+  /** Waiting for the next crawler's Floor 1. */
+  bequest: Bequest | null;
 }
 
 export interface World {
@@ -557,18 +622,20 @@ export function newAccount(): AccountState {
   return {
     version: ACCOUNT_VERSION,
     legacyPoints: 0,
+    legacyEarned: 0,
     rerolls: 0,
     unlocks: [],
     bestFloor: 0,
     runs: 0,
     deaths: 0,
-    codex: { enemies: [], items: [], achievements: [] },
+    codex: { enemies: [], items: [], achievements: [], tallies: {} },
     thread: newThreadCodex(),
+    bequest: null,
   };
 }
 
 export function newThreadCodex(): AccountThread {
-  return { shards: [], recipes: [], weaknesses: [], endings: [], history: [] };
+  return { shards: [], recipes: [], weaknesses: [], endings: [], history: [], vessels: [] };
 }
 
 export function combatModeOf(account: AccountState): CombatMode {

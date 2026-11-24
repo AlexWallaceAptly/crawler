@@ -21,6 +21,10 @@ const kill = (over: Partial<Extract<GameEventBody, { type: "kill" }>> = {}): Gam
   ({ type: "kill", target: "Test Rat", family: "sump_rat", tier: "mob", overkill: 0, how: "swing", ...over });
 const hurt = (source: string, hpPct = 80): GameEventBody =>
   ({ type: "damageTaken", amount: 3, source, cause: "test", hp: 8, hpPct });
+const died = (over: Partial<Extract<GameEventBody, { type: "died" }>> = {}): GameEventBody =>
+  ({ type: "died", cause: "a test", source: "enemy", floor: 1, gold: 0, asleep: false, rounds: 3, killer: "scrap_goblin", tier: "mob", ...over });
+/** The first n shards that fill a lore line in the Codex. */
+const loreShards = (n: number) => content.codex.all.filter((e) => e.type === "lore").flatMap((e) => e.lines).slice(0, n);
 
 /** Run the achievement engine on a world with some events, as the end of a step would. */
 function settleWith(world: World, events: GameEventBody[], setup: (c: Crawler, w: World) => void = () => {}) {
@@ -95,6 +99,17 @@ const CASES: { id: string; events?: GameEventBody[]; setup?: (c: Crawler, w: Wor
   { id: "modules_3", events: [noop], setup: (c) => { c.counters.modules = 3; } },
   { id: "villain_monologue", events: [{ type: "shardFound", id: "s", strand: "x", floor: 1, first: true, delivery: "boss", clue: "", reaction: "" }] },
   { id: "rat_union", events: [noop], setup: (c) => { c.counters["kills.sump_rat"] = 100; } },
+  // Milestone 8: deaths (they pay legacy points) and the account-level ones.
+  { id: "first_death", events: [died()] },
+  { id: "rodent_rights", events: [died({ killer: "sump_rat" })] },
+  { id: "death_by_furniture", events: [died({ source: "hazard", killer: undefined, tier: undefined })] },
+  { id: "tutorial_boss", events: [died({ floor: 1 })] },
+  { id: "cant_take_it", events: [died({ gold: 140 })] },
+  { id: "rest_in_pieces", events: [died({ asleep: true })] },
+  { id: "boss_briefly", events: [died({ tier: "boss", killer: "free_sample_mimic", rounds: 1 })] },
+  { id: "recurring_customer", events: [noop], setup: (_c, w) => { w.account.deaths = 10; } },
+  { id: "codex_lines_20", events: [noop], setup: (_c, w) => { w.account.thread.shards = loreShards(20); } },
+  { id: "wardrobe_change", events: [noop], setup: (_c, w) => { w.account.thread.vessels = content.thread.vessels.map((v) => v.id); } },
 ];
 
 describe("achievements fire", () => {

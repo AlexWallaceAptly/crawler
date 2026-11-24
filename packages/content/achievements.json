@@ -1333,5 +1333,244 @@
     "secret": true,
     "mood": 1,
     "text": "A hundred sump rats. The rat union has filed a formal complaint. The union is also dead."
+  },
+  {
+    "id": "codex_lines_20",
+    "name": "Archivist",
+    "group": "thread",
+    "tags": [
+      "thread",
+      "codex"
+    ],
+    "trigger": {
+      "state": "codexLines",
+      "gte": 20
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Twenty lines in the Codex. Someone is going to read that someday. Probably someone worse than you.",
+    "hint": "Fill 20 Codex lines."
+  },
+  {
+    "id": "wardrobe_change",
+    "name": "Wardrobe Change",
+    "group": "thread",
+    "tags": [
+      "thread",
+      "echo",
+      "codex"
+    ],
+    "trigger": {
+      "state": "vesselsSeen",
+      "gte": 4
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Handheld, music box, ticket stub, snow globe. Same voice, different outfit.",
+    "hint": "See every vessel Echo can start a run in."
+  },
+  {
+    "id": "first_death",
+    "name": "Pilot Episode",
+    "group": "firstTime",
+    "tags": [
+      "death"
+    ],
+    "trigger": {
+      "event": "died",
+      "where": {
+        "source": {
+          "ne": "quit"
+        }
+      }
+    },
+    "reward": {
+      "legacy": 5
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "You died. Don't take it personally. The audience didn't.",
+    "hint": "Die."
+  },
+  {
+    "id": "rodent_rights",
+    "name": "Rodent Rights",
+    "group": "humiliation",
+    "tags": [
+      "death",
+      "humiliation"
+    ],
+    "trigger": {
+      "event": "died",
+      "where": {
+        "killer": "sump_rat"
+      }
+    },
+    "reward": {
+      "legacy": 10
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Killed by a sump rat. The rat has been promoted.",
+    "hint": "Be killed by a sump rat."
+  },
+  {
+    "id": "death_by_furniture",
+    "name": "Death by Furniture",
+    "group": "humiliation",
+    "tags": [
+      "death",
+      "hazard"
+    ],
+    "trigger": {
+      "event": "died",
+      "where": {
+        "source": "hazard"
+      }
+    },
+    "reward": {
+      "legacy": 10
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Killed by the room. Not an enemy. The room. The room has no sense of fair play.",
+    "hint": "Die to a hazard."
+  },
+  {
+    "id": "tutorial_boss",
+    "name": "Tutorial Boss",
+    "group": "humiliation",
+    "tags": [
+      "death"
+    ],
+    "trigger": {
+      "event": "died",
+      "where": {
+        "floor": {
+          "lte": 1
+        },
+        "source": {
+          "ne": "quit"
+        }
+      }
+    },
+    "reward": {
+      "legacy": 5
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Floor one. The floor that exists specifically to not kill you. Impressive.",
+    "hint": "Die on the first floor."
+  },
+  {
+    "id": "cant_take_it",
+    "name": "You Can't Take It With You",
+    "group": "humiliation",
+    "tags": [
+      "death",
+      "social"
+    ],
+    "trigger": {
+      "event": "died",
+      "where": {
+        "gold": {
+          "gte": 100
+        },
+        "source": {
+          "ne": "quit"
+        }
+      }
+    },
+    "reward": {
+      "legacy": 5
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Died with gold in your pocket. Whoever finds it says thank you.",
+    "hint": "Die holding 100 gold or more."
+  },
+  {
+    "id": "rest_in_pieces",
+    "name": "Rest in Pieces",
+    "group": "humiliation",
+    "tags": [
+      "death",
+      "sleep"
+    ],
+    "trigger": {
+      "event": "died",
+      "where": {
+        "asleep": true
+      }
+    },
+    "reward": {
+      "legacy": 10
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Died in your sleep. At least you were well rested. For a while.",
+    "hint": "Die in your sleep."
+  },
+  {
+    "id": "boss_briefly",
+    "name": "Boss, Briefly",
+    "group": "humiliation",
+    "tags": [
+      "death",
+      "boss"
+    ],
+    "trigger": {
+      "event": "died",
+      "where": {
+        "tier": "boss",
+        "rounds": {
+          "lte": 1
+        }
+      }
+    },
+    "reward": {
+      "legacy": 10
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Round one. The boss barely looked up. You were a formality.",
+    "hint": "Die to a floor boss in the first round."
+  },
+  {
+    "id": "recurring_customer",
+    "name": "Recurring Customer",
+    "group": "humiliation",
+    "tags": [
+      "death"
+    ],
+    "trigger": {
+      "state": "accountDeaths",
+      "gte": 10
+    },
+    "reward": {
+      "legacy": 15
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Ten deaths. The paperwork has your name pre-printed.",
+    "hint": "Die ten times."
   }
 ]

@@ -216,7 +216,7 @@ function afterSelfHarm(ctx: StepContext, cause: string): void {
   if (ctx.game.phase !== "combat") return; // already over (the fire you started got you)
   if (ctx.crawler.hp <= 0) {
     endCombat(ctx);
-    killCrawler(ctx, `their own ${cause.toLowerCase()}`);
+    killCrawler(ctx, `their own ${cause.toLowerCase()}`, { source: "self" });
     return;
   }
   afterAction(ctx);

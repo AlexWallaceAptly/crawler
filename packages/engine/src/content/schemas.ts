@@ -160,6 +160,8 @@ export const OccupationSchema = z.strictObject({
   ageRange: z.tuple([z.number().int(), z.number().int()]).default([19, 64]),
   /** A magic-leaning job: the crawler starts knowing this spell (spells.json id) at level 1. */
   spell: IdSchema.optional(),
+  /** A backstory pool (Milestone 8): only rolled once the account has bought that pool's unlock. */
+  pool: IdSchema.optional(),
 });
 export type Occupation = z.infer<typeof OccupationSchema>;
 
@@ -172,6 +174,8 @@ export const FormativeEventSchema = z.strictObject({
   tags: z.array(z.string()).default([]),
   /** The crawler starts knowing this spell, unless the occupation already gave one. */
   spell: IdSchema.optional(),
+  /** A backstory pool (Milestone 8): only rolled once the account has bought that pool's unlock. */
+  pool: IdSchema.optional(),
 }).refine((e) => e.plus !== e.minus, { message: "plus and minus must be different stats" });
 export type FormativeEvent = z.infer<typeof FormativeEventSchema>;
 
@@ -186,6 +190,8 @@ export const QuirkSchema = z.strictObject({
   statMods: PartialStatBlockSchema.default({}),
   modifiers: z.array(ModifierSchema).default([]),
   tags: z.array(z.string()).default([]),
+  /** A backstory pool (Milestone 8): only rolled once the account has bought that pool's unlock. */
+  pool: IdSchema.optional(),
 });
 export type Quirk = z.infer<typeof QuirkSchema>;
 
@@ -195,6 +201,8 @@ export const LocationSchema = z.strictObject({
   phrase: z.string(),
   clothing: z.array(IdSchema).min(1),
   item: IdSchema,
+  /** A backstory pool (Milestone 8): only rolled once the account has bought that pool's unlock. */
+  pool: IdSchema.optional(),
 });
 export type Location = z.infer<typeof LocationSchema>;
 
@@ -1385,7 +1393,13 @@ export const TRIGGER_EVENTS = [
 /** What `{ state }` can read (see achievements.ts `stateView`). */
 export const TRIGGER_STATES = [
   "hp", "hpPct", "mp", "gold", "level", "mood", "floor", "turn", "clockDays", "inCombat", "weightPct", "statuses", "spells", "recipes", "achievements",
+  // Account-level (Milestone 8). An achievement that reads only these fires once per account, not once per crawler.
+  "accountDeaths", "codexLines", "vesselsSeen",
 ] as const;
+
+/** The trigger states that live on the account, not the crawler. */
+export const ACCOUNT_TRIGGER_STATES: readonly TriggerState[] = ["accountDeaths", "codexLines", "vesselsSeen"];
+export type TriggerState = (typeof TRIGGER_STATES)[number];
 
 export type Condition =
   | { event: string; where?: Where | undefined }
@@ -1427,6 +1441,8 @@ export const AchievementSchema = z.strictObject({
     z.strictObject({ box: BoxTierIdSchema, boxType: BoxTypeIdSchema.default("adventurer") }),
     z.strictObject({ xp: z.number().int().positive() }),
     z.strictObject({ gold: z.number().int().positive() }),
+    /** Legacy points go straight to the account (Milestone 8): the only reward a dead crawler can use. */
+    z.strictObject({ legacy: z.number().int().positive() }),
   ]),
   /** Repeatable ones fire for every matching event (not every step). */
   repeatable: z.boolean().default(false),
@@ -1522,3 +1538,30 @@ export const ShopsSchema = z.strictObject({
   personalities: z.array(ShopPersonalitySchema).min(1),
 });
 export type ShopsTable = z.infer<typeof ShopsSchema>;
+
+// ---------------------------------------------------------------- unlocks (Milestone 8)
+
+export const UNLOCK_KINDS = ["reroll", "pool", "kit"] as const;
+
+/**
+ * An account unlock, bought with legacy points between runs. `reroll` adds one backstory reroll
+ * (repeatable, spent when used). `pool` lets the backstory generator roll the entries tagged with
+ * that pool. `kit` is a starting-kit choice: its items join the crawler's pack when it's accepted.
+ */
+export const UnlockSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string().min(1),
+  kind: z.enum(UNLOCK_KINDS),
+  cost: z.number().int().min(1),
+  /** The System AI's pitch, shown in the unlock list. */
+  text: z.string().min(1),
+  /** Bought again and again (rerolls). Everything else is bought once. */
+  repeatable: z.boolean().default(false),
+  /** `pool`: the backstory pool it opens (backstory entries with this `pool`). */
+  pool: IdSchema.optional(),
+  /** `kit`: what the crawler starts with on top of the usual kit. */
+  items: z.array(z.strictObject({ item: IdSchema, qty: z.number().int().min(1).default(1) })).default([]),
+}).refine((u) => (u.kind === "pool") === (u.pool !== undefined), { message: "a pool unlock needs `pool` (and only a pool unlock has one)" })
+  .refine((u) => (u.kind === "kit") === (u.items.length > 0), { message: "a kit unlock needs `items` (and only a kit unlock has them)" })
+  .refine((u) => u.kind === "reroll" || !u.repeatable, { message: "only reroll unlocks can be repeatable" });
+export type Unlock = z.infer<typeof UnlockSchema>;

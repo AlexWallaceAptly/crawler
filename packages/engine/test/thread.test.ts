@@ -311,9 +311,11 @@ describe("shards and the Codex", () => {
   it("migrates a version-1 account without losing legacy points", () => {
     const old = { version: 1, legacyPoints: 42, rerolls: 1, unlocks: ["x"], bestFloor: 2, runs: 3, deaths: 2, codex: { enemies: [], items: [], achievements: [] } };
     const a = migrateAccount(old)!;
-    expect(a.version).toBe(2);
+    expect(a.version).toBe(3); // straight through version 2 to the current shape
     expect(a.legacyPoints).toBe(42);
     expect(a.thread.shards).toEqual([]);
+    expect(a.bequest).toBeNull();
+    expect(a.codex.tallies).toEqual({});
     expect(migrateAccount({ version: 99 })).toBeNull();
   });
 });

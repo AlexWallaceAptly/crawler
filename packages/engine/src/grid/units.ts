@@ -98,7 +98,7 @@ export function triggerHazard(ctx: StepContext, who: Mover, h: ArenaHazard, when
   if (who === "crawler") {
     const dmg = eff.dice ? rollDice(eff.dice).total : 0;
     if (dmg > 0) {
-      const taken = damageCrawler(ctx, dmg, eff.damageType, `a ${def.name.toLowerCase()}`);
+      const taken = damageCrawler(ctx, dmg, eff.damageType, `a ${def.name.toLowerCase()}`, "hazard");
       if (ctx.game.phase !== "combat") return;
       ctx.fight(`You ${when === "enter" ? "step into" : "are standing in"} the ${def.name.toLowerCase()}: ${taken} ${eff.damageType} damage. You: ${ctx.crawler.hp} HP.`, "status");
     } else {

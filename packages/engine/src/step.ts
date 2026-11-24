@@ -2,13 +2,15 @@ import { afterAction, assess, listen, searchPass } from "./roomwork";
 import { openBoxes, showAchievements, showBoxes } from "./rewardActions";
 import { buyItem, sellItem, showShop } from "./shop";
 import { settle } from "./achievements";
+import { recordDiscoveries } from "./accountCodex";
+import { bequeath, buyUnlock, chooseKit, endRun, finishRun, grantKit, showUnlocks, unlockedPools } from "./legacy";
 import { eatMeal, seedGuide, showGuide } from "./guideActions";
 import { int } from "./rng";
 import { actionMinutes, sleepStage } from "./rules/sleep";
 import { clone } from "./clone";
 import type { Action, ActionType } from "./actions";
 import type { Content } from "./content/load";
-import type { GameEvent, GameEventBody } from "./events";
+import type { DeathSource, GameEvent, GameEventBody } from "./events";
 import { generateCrawler, introContext } from "./gen/backstory";
 import {
   clearFloor, enterFloor, enterRoom, formatTimer, openStairwell, renderMap, tickTravelStatuses, timePassed, timeCosts, noteSleepStage, activeHazards, tickHazards, disarmHazards,
@@ -23,7 +25,7 @@ import { gridDash, isThrowable, playerDefend, playerShove, playerThrow, takeInAr
 import { combine, craftKnown, nudge, showRecipes } from "./craft";
 import { renderArena } from "./grid/view";
 import { narrate } from "./narrate/narrator";
-import { answerUrge, echoNarration, feedEcho, lapseUrge, pendingShard, pushTemper, recordRun, revealRoomShard, showCodex, showEcho, wakeEcho } from "./echo";
+import { answerUrge, echoNarration, feedEcho, lapseUrge, pendingShard, pushTemper, revealRoomShard, showCodex, showEcho, wakeEcho } from "./echo";
 import { craftModule, moduleAction } from "./modules";
 import { noticeHints, playerDecline, useAgainstBoss } from "./boss";
 import { derive } from "./rules/derived";
@@ -39,6 +41,10 @@ export interface StepResult {
 /** Mutable working context for one step. Handlers mutate `world` (a private clone). */
 export class StepContext {
   readonly events: GameEventBody[] = [];
+  /** This step is a sleep or a rest: a death during it was "in your sleep". */
+  resting = false;
+  /** The round the last fight ended on, for a death that comes right after `endCombat`. */
+  endedRound?: number;
   constructor(public world: World, public readonly content: Content) {}
 
   get game() {
@@ -147,6 +153,9 @@ export const HELP_LINES = [
   "echo / codex         how Echo is doing / what the account remembers (free)",
   "shout / bind <x> / coat / break <dir>   Echo's modules, once built (`craft glow` at a bench)",
   "accept / reroll      during crawler creation",
+  "unlocks / unlock x   what legacy points buy; buy one between runs (dead, or making a crawler)",
+  "kit <name> / kit none  which starting-kit unlock the next crawler takes",
+  "bequeath <item>      after death: leave one non-legendary item for the next crawler's Floor 1",
   "abandon              end this crawler's run (asks to confirm)",
   "set combat grid|bands  how the next fight plays (tactical grid or range bands)",
   "new                  start the next crawler after death",
@@ -161,7 +170,7 @@ export function rerollsLeft(world: World): number {
 }
 
 function startNewCrawler(ctx: StepContext): void {
-  const crawler = generateCrawler(ctx.content);
+  const crawler = generateCrawler(ctx.content, unlockedPools(ctx.content, ctx.account));
   ctx.game.crawler = crawler;
   ctx.game.floor = null;
   ctx.game.echo = null;
@@ -192,6 +201,13 @@ const handlers: Handlers = {
     run(ctx) {
       if (ctx.game.turn > 0 || ctx.account.runs > 0) ctx.say("run.newCrawler");
       ctx.game.freeRerolls = FREE_REROLLS;
+      // Everything run-scoped starts over: boxes, achievement counts, the tally, the System AI's mood.
+      const g = ctx.game;
+      g.boxes = [];
+      g.achieved = {};
+      delete g.legacyBonus;
+      delete g.ended;
+      g.narrator.mood = 0;
       startNewCrawler(ctx);
     },
   },
@@ -220,6 +236,7 @@ const handlers: Handlers = {
       const theme = ctx.content.floors.all.find((t) => t.floor === 1);
       if (!theme) throw new Error("no floor 1 theme in floors.json");
       wakeEcho(ctx);
+      grantKit(ctx);
       enterFloor(ctx, theme);
     },
   },
@@ -435,6 +452,7 @@ const handlers: Handlers = {
   rest: {
     phases: ["exploring"],
     run(ctx) {
+      ctx.resting = true;
       if (!timePassed(ctx, timeCosts(ctx).rest, "rest")) return;
       const c = ctx.crawler;
       const d = derive(c, ctx.content);
@@ -451,6 +469,7 @@ const handlers: Handlers = {
   sleep: {
     phases: ["exploring"],
     run(ctx) {
+      ctx.resting = true;
       const { room } = here(ctx);
       const { sleepMin, sleepMax } = timeCosts(ctx);
       const rules = ctx.content.pacing.sleep;
@@ -645,7 +664,31 @@ const handlers: Handlers = {
         ctx.say("abandon.confirm");
         return;
       }
-      killCrawler(ctx, "quit");
+      killCrawler(ctx, "quit", { source: "quit" });
+    },
+  },
+  unlocks: {
+    phases: "any",
+    run(ctx) {
+      showUnlocks(ctx);
+    },
+  },
+  unlock: {
+    phases: ["dead", "creation"],
+    run(ctx, action) {
+      buyUnlock(ctx, action.what);
+    },
+  },
+  kit: {
+    phases: ["dead", "creation"],
+    run(ctx, action) {
+      chooseKit(ctx, action.what);
+    },
+  },
+  bequeath: {
+    phases: ["dead"],
+    run(ctx, action) {
+      bequeath(ctx, action.item);
     },
   },
 };
@@ -673,6 +716,8 @@ export function travel(ctx: StepContext, dest: number): void {
     return;
   }
   enterRoom(ctx, dest, firstVisit ? "first" : "revisit");
+  const left = floor.bequest;
+  if (firstVisit && left?.room === dest && target.items?.some((i) => i.heirloom)) ctx.describeKey("bequest.found", { item: left.name, from: left.from });
   if (activeHazards(target).length > 0) {
     tickHazards(ctx, target, "enter");
     if (ctx.dead()) return;
@@ -681,15 +726,34 @@ export function travel(ctx: StepContext, dest: number): void {
 }
 
 /** Actions that don't advance the turn counter (no game effect). */
-const FREE_ACTIONS = new Set<ActionType>(["help", "set", "recipes", "codex", "echo", "guide", "boxes", "achievements", "shop", "buy", "sell"]);
+const FREE_ACTIONS = new Set<ActionType>([
+  "help", "set", "recipes", "codex", "echo", "guide", "boxes", "achievements", "shop", "buy", "sell", "unlocks", "unlock", "kit", "bequeath",
+]);
 
-export function killCrawler(ctx: StepContext, cause: string, key = "died"): void {
-  ctx.game.combat = null;
+/** How a crawler died, for the `died` event (and the death achievements that read it). */
+export interface DeathHow {
+  source: DeathSource;
+  /** The enemy family (or boss) id that landed the blow. */
+  killer?: string;
+  tier?: string;
+}
+
+/**
+ * The crawler is dead (or quit). Says so, tells the achievement engine everything about it, and
+ * ends the run; the legacy points are paid at the end of the step (`finishRun`).
+ */
+export function killCrawler(ctx: StepContext, cause: string, how: DeathHow, key = "died"): void {
+  const g = ctx.game;
+  const rounds = g.combat?.round ?? ctx.endedRound ?? 0;
+  g.combat = null;
   ctx.account.deaths += 1;
   ctx.say(key, { cause });
-  ctx.echoSay(cause === "quit" ? "echo.quit" : "echo.died");
-  ctx.emit({ type: "died", cause });
-  recordRun(ctx, cause === "quit" ? "quit" : `died: ${cause}`);
+  ctx.echoSay(how.source === "quit" ? "echo.quit" : "echo.died");
+  ctx.emit({
+    type: "died", cause, source: how.source, floor: g.floor?.floor ?? 0, gold: g.crawler?.gold ?? 0, asleep: ctx.resting, rounds,
+    ...(how.killer ? { killer: how.killer } : {}), ...(how.tier ? { tier: how.tier } : {}),
+  });
+  endRun(ctx, how.source === "quit" ? "quit" : "died", cause, g.floor?.floor ?? 0);
   ctx.setPhase("dead");
 }
 
@@ -730,6 +794,8 @@ export function step(world: World, action: Action, content: Content, echo?: stri
     if (!FREE_ACTIONS.has(action.type)) draft.game.turn += 1;
   }
   settle(ctx);
+  recordDiscoveries(ctx, ctx.events);
+  finishRun(ctx);
   ctx.emit({ type: "stateChanged" });
   return { world: draft, events: commitEvents(draft, ctx.events) };
 }

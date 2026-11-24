@@ -25,7 +25,7 @@ import { AP_COST, turnAp } from "./rules/ap";
 import { describePower, guardShift, powerRoll, type PowerRoll } from "./rules/power";
 import { heldWeapon, profileOf, swingNumbers, type WeaponProfile } from "./gear";
 import { chance, d20, pick } from "./rng";
-import { killCrawler, type StepContext } from "./step";
+import { killCrawler, type DeathHow, type StepContext } from "./step";
 import type { GameEventBody } from "./events";
 import {
   combatModeOf, type CombatMode, type CombatState, type Enemy, type ItemInstance, type Room, type StatusInstance,
@@ -166,7 +166,7 @@ export function startCombat(ctx: StepContext, enemies: Enemy[], opts: StartOptio
     syncBands(ctx);
   }
   ctx.setPhase("combat");
-  ctx.emit({ type: "combatStarted", names: enemies.map((e) => e.name) });
+  ctx.emit({ type: "combatStarted", names: enemies.map((e) => e.name), families: enemies.map((e) => e.familyId) });
   ctx.say("combat.start");
   for (const e of enemies) {
     const at = e.pos ? `at ${coord(e.pos)}` : `${e.range} range`;
@@ -270,7 +270,7 @@ export function beginTurn(ctx: StepContext): boolean {
   }
   if (c.hp <= 0) {
     endCombat(ctx);
-    killCrawler(ctx, "their own wounds");
+    killCrawler(ctx, "their own wounds", { source: "status" });
     return false;
   }
   combat.apMax = combat.ap = turnAp(c.statuses, ctx.content);
@@ -769,13 +769,13 @@ export function playerUseItem(ctx: StepContext, item: ItemInstance, targets?: Ef
     ctx.fight(`You use ${item.name}${summary}.`, "you");
     if (ctx.crawler.hp <= 0) {
       endCombat(ctx);
-      killCrawler(ctx, item.name);
+      killCrawler(ctx, item.name, { source: "self" });
       return;
     }
     afterAction(ctx);
   } else {
     ctx.describe(`You use ${item.name}${summary}.`);
-    if (ctx.crawler.hp <= 0) killCrawler(ctx, item.name);
+    if (ctx.crawler.hp <= 0) killCrawler(ctx, item.name, { source: "self" });
   }
 }
 
@@ -1117,7 +1117,7 @@ export function enemyStrike(ctx: StepContext, e: Enemy, attack: LiveAttack, opts
   }
   if (c.hp > 0) igniteUnder(ctx, "crawler", attack.damageType === "fire"); // fire, or a fresh burn, on oil
   if (ctx.game.phase !== "combat") return roll; // the fire got you
-  if (c.hp <= 0) killInCombat(ctx, e.tier === "boss" ? `the ${e.name}` : `${/^[aeiou]/i.test(e.name) ? "an" : "a"} ${e.name}`);
+  if (c.hp <= 0) killInCombat(ctx, e.tier === "boss" ? `the ${e.name}` : `${/^[aeiou]/i.test(e.name) ? "an" : "a"} ${e.name}`, { source: "enemy", killer: e.familyId, tier: e.tier });
   return roll;
 }
 
@@ -1137,19 +1137,19 @@ function secondWind(ctx: StepContext, maxHP: number, mods: readonly { to: string
  * Hurt the crawler from anything that isn't an enemy swing (hazards, your own
  * molotov). Applies damage-type resistance. Kills end the fight.
  */
-export function damageCrawler(ctx: StepContext, raw: number, damageType: string, cause: string): number {
+export function damageCrawler(ctx: StepContext, raw: number, damageType: string, cause: string, source: "self" | "hazard" = "self"): number {
   const c = ctx.crawler;
   const mods = collectModifiers(c, ctx.content);
   const dmg = Math.max(1, raw - modTotal(mods, "damageReduction", `resist:${damageType}`));
   c.hp -= dmg;
-  emitDamageTaken(ctx, dmg, "self", cause);
-  if (c.hp <= 0) killInCombat(ctx, cause);
+  emitDamageTaken(ctx, dmg, source, cause);
+  if (c.hp <= 0) killInCombat(ctx, cause, { source });
   return dmg;
 }
 
-function killInCombat(ctx: StepContext, cause: string): void {
+function killInCombat(ctx: StepContext, cause: string, how: DeathHow): void {
   endCombat(ctx);
-  killCrawler(ctx, cause);
+  killCrawler(ctx, cause, how);
 }
 
 // ---------------------------------------------------------------- endings
@@ -1231,6 +1231,7 @@ export function endCombat(ctx: StepContext): void {
     room.items ??= [];
     for (const it of arena.items) addToPile(room.items, it.item);
   }
+  if (ctx.game.combat) ctx.endedRound = ctx.game.combat.round;
   ctx.game.combat = null;
   // Spell cooldowns are counted in rounds: out of a fight, everything is ready again.
   for (const sp of Object.values(ctx.game.crawler?.spells ?? {})) sp.cooldown = 0;

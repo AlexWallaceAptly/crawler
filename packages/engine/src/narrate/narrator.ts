@@ -119,6 +119,22 @@ export function chooseVariant(
   return { index: chosen.index, text: chosen.v.text };
 }
 
+/**
+ * A template's line picked without randomness or memory, for views (which must be pure and
+ * shouldn't flicker between renders): the matching variants, chosen by a hash of `seed`.
+ */
+export function narrateStable(content: Content, key: string, ctx: unknown, seed: string): string {
+  const tpl = content.narration[key];
+  if (!tpl) return `[System AI is speechless: no template "${key}"]`;
+  const indexed = tpl.variants.map((v, index) => ({ v, index }));
+  const conditional = indexed.filter((x) => x.v.when && matchWhere(x.v.when, ctx));
+  let pool = conditional.length > 0 ? conditional : indexed.filter((x) => !x.v.when);
+  if (pool.length === 0) pool = indexed;
+  let h = 0;
+  for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return render(pool[h % pool.length]!.v.text, ctx);
+}
+
 export function narrate(content: Content, memory: NarratorMemory, key: string, ctx: unknown): string {
   const tpl = content.narration[key];
   if (!tpl) {

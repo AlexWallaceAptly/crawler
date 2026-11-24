@@ -365,12 +365,25 @@ function formatSkills(skills: Json[]): string {
 
 const GROUPS = ["firstTime", "combat", "nearDeath", "exploration", "crafting", "magic", "social", "humiliation", "stupidity", "secret", "thread", "progress", "time", "show"];
 
-/** "box silver weapon" | "box bronze" | "xp 20" | "gold 25" -> the engine's reward object. */
+/** "box silver weapon" | "box bronze" | "xp 20" | "gold 25" | "legacy 10" -> the engine's reward object. */
 function parseReward(v: string, where: string): Json {
   const [kind, a, b] = v.trim().toLowerCase().split(/\s+/);
   if (kind === "box" && a) return { box: a, boxType: b ?? "adventurer" };
-  if ((kind === "xp" || kind === "gold") && a && Number.isInteger(Number(a))) return { [kind]: Number(a) };
-  throw new Error(`${where}: Reward "${v}" must look like "box silver weapon", "xp 20" or "gold 25"`);
+  if ((kind === "xp" || kind === "gold" || kind === "legacy") && a && Number.isInteger(Number(a))) return { [kind]: Number(a) };
+  throw new Error(`${where}: Reward "${v}" must look like "box silver weapon", "xp 20", "gold 25" or "legacy 10"`);
+}
+
+/** The sheet's event names that the engine spells differently. */
+const EVENT_ALIASES: Record<string, string> = { crawlerDied: "died" };
+
+/** Rename aliased events anywhere in a trigger (`all` and `any` nest). */
+function renameEvents(t: unknown): unknown {
+  if (Array.isArray(t)) return t.map(renameEvents);
+  if (!t || typeof t !== "object") return t;
+  const o = { ...(t as Record<string, unknown>) };
+  if (typeof o.event === "string") o.event = EVENT_ALIASES[o.event] ?? o.event;
+  for (const k of ["all", "any"]) if (k in o) o[k] = renameEvents(o[k]);
+  return o;
 }
 
 const yes = (v: string) => /^(y|yes|true|1)$/i.test(v.trim());
@@ -392,7 +405,7 @@ function importAchievements(): Json[] | undefined {
     if (!GROUPS.includes(group)) throw new Error(`${where}: Group "${group}" must be one of ${GROUPS.join(", ")}`);
     let trigger: unknown;
     try {
-      trigger = JSON.parse(col(r, "Trigger"));
+      trigger = renameEvents(JSON.parse(col(r, "Trigger")));
     } catch {
       throw new Error(`${where}: Trigger is not valid JSON`);
     }

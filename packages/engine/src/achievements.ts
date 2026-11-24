@@ -4,13 +4,19 @@
  *
  *   1. fold the step's events into the counters (`countEvents`),
  *   2. check every achievement not yet earned against those events, the counters and the state,
- *   3. pay out (a box, XP or gold), say the System AI's line, move its mood,
+ *   3. pay out (a box, XP, gold or legacy points), say the System AI's line, move its mood,
  *
  * and repeats on whatever the payouts themselves emitted (a box earned can trip a counter),
  * up to a few passes. Event clauses only look at the events of the batch being checked, so a
  * kill fires "kill" achievements once; counter and state clauses read the current numbers.
+ *
+ * Achievements are earned per crawler, except the ones whose trigger reads only account-level
+ * states (`accountDeaths`, `codexLines`, `vesselsSeen`): those fire once per account, ever.
+ * Once a run has been tallied (`game.ended.legacy`), nothing more is earned.
  */
-import type { Achievement, Condition } from "./content/schemas";
+import { ACCOUNT_TRIGGER_STATES, type Achievement, type Condition } from "./content/schemas";
+import type { Content } from "./content/load";
+import { addLegacy } from "./legacy";
 import { countEvents } from "./counters";
 import { addGold } from "./economy";
 import type { GameEventBody } from "./events";
@@ -21,7 +27,7 @@ import { matchWhere } from "./rules/conditions";
 import { derive } from "./rules/derived";
 import { gainXp } from "./progression";
 import { carried } from "./inventory";
-import type { Crawler } from "./state";
+import type { AccountState, Crawler, GameState } from "./state";
 import type { StepContext } from "./step";
 
 const MAX_PASSES = 4;
@@ -45,7 +51,26 @@ export function stateView(ctx: StepContext, c: Crawler): Record<string, number> 
     spells: Object.keys(c.spells).length,
     recipes: c.recipes?.length ?? 0,
     achievements: c.achievements.length,
+    accountDeaths: ctx.account.deaths,
+    codexLines: codexLines(ctx.content, ctx.account),
+    vesselsSeen: ctx.account.thread.vessels?.length ?? 0,
   };
+}
+
+/** Lore lines recorded in the thread Codex: each found shard that one of the lore entries lists. */
+export function codexLines(content: Content, account: AccountState): number {
+  const found = new Set(account.thread.shards);
+  let n = 0;
+  for (const e of content.codex.all) if (e.type === "lore") n += e.lines.filter((s) => found.has(s)).length;
+  return n;
+}
+
+/** Does this trigger read only the account (so it's earned once per account, not per crawler)? */
+export function accountScoped(cond: Condition): boolean {
+  if ("state" in cond) return (ACCOUNT_TRIGGER_STATES as readonly string[]).includes(cond.state);
+  if ("all" in cond) return cond.all.every(accountScoped);
+  if ("any" in cond) return cond.any.every(accountScoped);
+  return false;
 }
 
 interface Eval {
@@ -86,8 +111,15 @@ export function rewardText(a: Achievement, ctx: StepContext): string {
     const type = ctx.content.boxes.types.find((t) => t.id === (a.reward as { boxType: string }).boxType)?.name ?? "";
     return `a ${tier} ${type} box`.replace("  ", " ");
   }
-  if ("xp" in a.reward) return `${a.reward.xp} XP`;
-  return `${a.reward.gold} gold`;
+  return rewardLabel(a);
+}
+
+function rewardLabel(a: Achievement): string {
+  const r = a.reward;
+  if ("box" in r) return `${r.box} ${r.boxType} box`;
+  if ("xp" in r) return `${r.xp} XP`;
+  if ("legacy" in r) return `${r.legacy} legacy points`;
+  return `${r.gold} gold`;
 }
 
 /** Award one achievement: record it, say the line, move the mood, pay out. */
@@ -105,9 +137,14 @@ export function award(ctx: StepContext, a: Achievement, hit?: GameEventBody): vo
   ctx.say("achievement.earned", { name: a.name, text, reward, group: a.group, tags: a.tags });
   if (a.mood !== 0) moveMood(ctx, a.mood, `achievement: ${a.name}`);
 
-  if ("box" in a.reward) grantBox(ctx, a.reward.box, a.reward.boxType, `achievement: ${a.name}`);
-  else if ("xp" in a.reward) gainXp(ctx, a.reward.xp);
-  else addGold(ctx, a.reward.gold, `achievement: ${a.name}`);
+  const r = a.reward;
+  if ("box" in r) grantBox(ctx, r.box, r.boxType, `achievement: ${a.name}`);
+  else if ("xp" in r) gainXp(ctx, r.xp);
+  else if ("legacy" in r) {
+    // Straight to the account (a dead crawler can't open a box); counted in the run's tally too.
+    addLegacy(ctx, r.legacy, `achievement: ${a.name}`);
+    ctx.game.legacyBonus = (ctx.game.legacyBonus ?? 0) + r.legacy;
+  } else addGold(ctx, r.gold, `achievement: ${a.name}`);
 }
 
 /** Check every achievement against a batch of events. Returns how many fired. */
@@ -118,6 +155,7 @@ export function evaluate(ctx: StepContext, events: readonly GameEventBody[]): nu
   const state = stateView(ctx, c);
   for (const a of ctx.content.achievements.all) {
     if (!a.repeatable && c.achievements.includes(a.id)) continue;
+    if (accountScoped(a.trigger) && ctx.account.codex.achievements.includes(a.id)) continue;
     const ev: Eval = { ctx, c, events, state };
     if (!holds(a.trigger, ev)) continue;
     award(ctx, a, ev.hit);
@@ -129,7 +167,7 @@ export function evaluate(ctx: StepContext, events: readonly GameEventBody[]): nu
 
 /** End of a step: counters, then achievements, again on whatever the payouts emitted. */
 export function settle(ctx: StepContext): void {
-  if (!ctx.game.crawler) return;
+  if (!ctx.game.crawler || ctx.game.ended?.legacy) return;
   let from = 0;
   for (let pass = 0; pass < MAX_PASSES; pass++) {
     const batch = ctx.events.slice(from);
@@ -141,12 +179,12 @@ export function settle(ctx: StepContext): void {
 }
 
 /** The Achievements panel: every achievement, with progress for the counter ones. */
-export function achievementList(ctx: { content: StepContext["content"]; game: StepContext["game"] }): {
+export function achievementList(ctx: { content: Content; game: GameState; account?: AccountState }): {
   id: string; name: string; group: string; earned: boolean; times: number; text: string; reward: string; progress?: { have: number; need: number };
 }[] {
   const c = ctx.game.crawler;
   return ctx.content.achievements.all.map((a) => {
-    const earned = !!c && c.achievements.includes(a.id);
+    const earned = (!!c && c.achievements.includes(a.id)) || (!!ctx.account && accountScoped(a.trigger) && ctx.account.codex.achievements.includes(a.id));
     const hide = a.secret && !earned;
     const t = a.trigger;
     const progress = c && "counter" in t && !earned ? { have: Math.min(c.counters[t.counter] ?? 0, t.gte), need: t.gte } : undefined;
@@ -157,7 +195,7 @@ export function achievementList(ctx: { content: StepContext["content"]; game: St
       earned,
       times: ctx.game.achieved[a.id] ?? 0,
       text: hide ? "Secret. Figure it out." : earned ? render(a.text, { crawler: c, name: a.name }) : a.hint ?? "",
-      reward: hide ? "?" : "box" in a.reward ? `${a.reward.box} ${a.reward.boxType} box` : "xp" in a.reward ? `${a.reward.xp} XP` : `${a.reward.gold} gold`,
+      reward: hide ? "?" : rewardLabel(a),
       ...(progress ? { progress } : {}),
     };
   });

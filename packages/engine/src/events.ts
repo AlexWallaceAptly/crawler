@@ -1,6 +1,8 @@
 import type { CheckResult } from "./rules/checks";
 import type { Dir, Phase } from "./state";
 
+export type DeathSource = "enemy" | "hazard" | "collapse" | "self" | "status" | "show" | "craft" | "quit";
+
 /**
  * Everything the UI prints comes from these. The client routes each type to panels;
  * panels never read raw engine internals.
@@ -27,7 +29,8 @@ export type GameEventBody =
   /** Collapse countdown crossing a threshold (the spoken line arrives as narration). */
   | { type: "timerWarning"; label: string; minutesLeft: number }
   | { type: "floorCleared"; floor: number }
-  | { type: "combatStarted"; names: string[] }
+  /** `families`: each enemy's family (or boss) id, for the account's bestiary. */
+  | { type: "combatStarted"; names: string[]; families: string[] }
   /** One line of fight play-by-play; routed to the battle log only. */
   | { type: "combatLine"; text: string; actor: "you" | "enemy" | "status" }
   | {
@@ -47,7 +50,24 @@ export type GameEventBody =
   /** Skill XP out of a fight (a search, a crafting check): "Perception +1 (2/6)". */
   | { type: "skillXp"; skillId: string; name: string; gained: number; rank: number; xp: number; next: number }
   | { type: "phaseChanged"; from: Phase; to: Phase }
-  | { type: "died"; cause: string }
+  /**
+   * The crawler died (or quit). `source`: enemy, hazard, collapse, self (your own item or spell),
+   * status (bleeding out), show (a show event), craft (a botch), quit. `killer` is the enemy
+   * family (or boss) id and `tier` its tier, when an enemy did it. `asleep`: during a sleep or rest.
+   * `rounds`: the fight's round, or 0 out of a fight. `gold` is what was in your pockets.
+   */
+  | {
+    type: "died"; cause: string; source: DeathSource; floor: number; gold: number; asleep: boolean; rounds: number;
+    killer?: string; tier?: string;
+  }
+  // ---- Milestone 8: the end of a run and the account.
+  /** A run is over and paid out (after the death's own achievements). `legacy` is the run's total. */
+  | { type: "runEnded"; kind: "died" | "quit" | "descended"; cause: string; floor: number; legacy: number; points: number }
+  /** Legacy points reached the account: from an achievement, or the run's tally. */
+  | { type: "legacyEarned"; amount: number; points: number; why: string }
+  /** The dead crawler picked something to leave the next one. */
+  | { type: "bequeathed"; item: string }
+  | { type: "unlockBought"; unlockId: string; name: string; cost: number; points: number }
   /** A new recipe went into the book (first time a combination worked, or nearly did). */
   | { type: "recipeLearned"; name: string }
   /** A room has a shard in it: a faint voice. A search finds what's talking. */

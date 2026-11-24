@@ -22,6 +22,8 @@ import { itemInfo } from "./itemInfo";
 import { heldWeapon, profileOf, swingNumbers, weaponFit } from "./gear";
 import { spellViews, type SpellView } from "./spells";
 import { achievementList } from "./achievements";
+import { accountCodexView, type AccountCodexView } from "./accountCodex";
+import { kitFor, ownedKits, runEndView, unlockViews, type RunEndView, type UnlockView } from "./legacy";
 import { boxName } from "./boxes";
 import { moodWord } from "./mood";
 import { shopView, type ShopView } from "./shop";
@@ -186,8 +188,10 @@ export interface ViewModel {
   };
   /** The run's Game Guide: reference text kept off the main screens. */
   guide: GuideView;
-  /** What the account remembers across runs. */
-  codex: CodexView;
+  /** What the account remembers across runs: the thread Codex, and (`records`) the enemies, items and achievements ever found. */
+  codex: CodexView & { records: AccountCodexView };
+  /** The end-of-run screen (Milestone 8): the legacy tally, the bequest pick. Null unless a run just ended. */
+  runEnd: RunEndView | null;
   /** Rewards (Milestone 7): unopened boxes, achievements, the System AI's mood, and the shop in this room. */
   rewards: RewardsView;
   /** The room you're in: what's on the floor, and whether you can craft here. */
@@ -195,7 +199,15 @@ export interface ViewModel {
   minimap: string[] | null;
   /** Structured map for the tile minimap; `minimap` stays as the text/fallback form. */
   mapGrid: MapGrid | null;
-  account: { legacyPoints: number; rerolls: number; runs: number; deaths: number; bestFloor: number };
+  account: {
+    legacyPoints: number; legacyEarned: number; rerolls: number; runs: number; deaths: number; bestFloor: number;
+    /** Everything legacy points buy, with what's owned and affordable. */
+    unlocks: UnlockView[];
+    /** The starting-kit unlock the next crawler takes, and the ones owned. */
+    kit: { current: string | null; owned: { id: string; name: string }[] };
+    /** A bequest waiting for the next crawler's Floor 1. */
+    bequest: { name: string; from: string } | null;
+  };
   settings: { combatMode: CombatMode };
 }
 
@@ -207,10 +219,15 @@ const SLOT_LABELS: Record<EquipSlot, string> = {
 export function view(world: World, content: Content): ViewModel {
   const { game, account } = world;
   const c = game.crawler;
-  const accountView = {
-    legacyPoints: account.legacyPoints, rerolls: account.rerolls, runs: account.runs,
+  const kit = kitFor(content, account);
+  const accountView: ViewModel["account"] = {
+    legacyPoints: account.legacyPoints, legacyEarned: account.legacyEarned ?? 0, rerolls: account.rerolls, runs: account.runs,
     deaths: account.deaths, bestFloor: account.bestFloor,
+    unlocks: unlockViews(content, account),
+    kit: { current: kit?.name ?? null, owned: ownedKits(content, account).map((k) => ({ id: k.id, name: k.name })) },
+    bequest: account.bequest ? { name: account.bequest.item.name, from: account.bequest.from } : null,
   };
+  const codex = { ...codexView(content, account), records: accountCodexView(content, account) };
   if (!c) {
     return {
       phase: game.phase,
@@ -218,12 +235,14 @@ export function view(world: World, content: Content): ViewModel {
       character: null, equipment: [], inventory: [], effects: [], combat: null, recipeBook: null, workbench: null, room: null, minimap: null, mapGrid: null, account: accountView,
       settings: { combatMode: combatModeOf(account) },
       echo: null,
-      codex: codexView(content, account),
+      codex,
+      runEnd: null,
     guide: guideView(game),
       rewards: { boxes: [], achievements: [], earned: 0, total: content.achievements.all.length, mood: { value: 0, word: moodWord(0) }, shop: null, canOpen: false },
     };
   }
   const d = derive(c, content);
+  const achievements = achievementList({ content, game, account });
   const slotOf = new Map(Object.entries(c.equipment).map(([slot, uid]) => [uid, slot as EquipSlot]));
 
   const itemView = (uid: string, from = c.inventory): ItemView | null => {
@@ -359,8 +378,8 @@ export function view(world: World, content: Content): ViewModel {
     settings: { combatMode: combatModeOf(account) },
     rewards: {
       boxes: game.boxes.map((b) => ({ id: b.id, name: boxName(content, b), tier: b.tier, boxType: b.boxType, source: b.source })),
-      achievements: achievementList({ content, game }),
-      earned: c.achievements.length,
+      achievements: achievements,
+      earned: achievements.filter((a) => a.earned).length,
       total: content.achievements.all.length,
       mood: { value: game.narrator.mood, word: moodWord(game.narrator.mood) },
       shop: room && room.type === "safe" ? shopView(game, content, room) ?? null : null,
@@ -381,7 +400,8 @@ export function view(world: World, content: Content): ViewModel {
           urge: game.echo.urge ? URGE_TEXT[game.echo.urge.kind] ?? null : null,
         }
       : null,
-    codex: codexView(content, account),
+    codex,
+    runEnd: runEndView(world),
     guide: guideView(game),
   };
 }

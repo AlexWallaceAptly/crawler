@@ -45,6 +45,11 @@ const ROUTES: Record<GameEventType, LogPanel[]> = {
   shopSold: ["log"],
   phaseChanged: [],
   stateChanged: [],
+  // Milestone 8: the System AI's lines carry the story; these add a divider, a ticker note and a quiet line.
+  runEnded: ["log", "ticker"],
+  legacyEarned: ["log"],
+  bequeathed: [],
+  unlockBought: ["log", "ticker"],
 };
 
 export function routeEvent(e: GameEvent): LogPanel[] {

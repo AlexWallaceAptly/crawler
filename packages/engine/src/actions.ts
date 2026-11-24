@@ -72,6 +72,11 @@ export type Action =
   | { type: "codex" }
   | { type: "echo" }
   /** Echo's module abilities: shout, bind <enemy>, coat, break <dir>. */
-  | { type: "module"; verb: ModuleVerb; arg?: string };
+  | { type: "module"; verb: ModuleVerb; arg?: string }
+  /** Milestone 8: what legacy points buy (free, any time), buying one, the starting kit, and the bequest. */
+  | { type: "unlocks" }
+  | { type: "unlock"; what: string }
+  | { type: "kit"; what: string }
+  | { type: "bequeath"; item: string };
 
 export type ActionType = Action["type"];

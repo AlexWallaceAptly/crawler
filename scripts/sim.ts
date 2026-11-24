@@ -35,8 +35,15 @@
  * sweep costs. Every report adds per-floor pacing: rooms visited and searched, day of descent,
  * forced descents, where the minutes went, sleep states, wanderers, hazards and events.
  *   npm run sim -- 200 --floors 3 --craft --bot all
+ *
+ * Death and the account (Milestone 8): `--chain 10` plays the runs as careers of 10 crawlers that
+ * share one account. Between runs the bot leaves its most valuable item as the bequest (and walks
+ * to it on the next Floor 1), and buys the cheapest unlock it can afford until it can't. The report
+ * adds legacy points per run, unlocks owned by each run of the career, and the clear rate by run.
+ * Use it with `--floors 3`: a run stopped early is closed by quitting, which pays nothing for floors.
+ *   npm run sim -- 200 --floors 3 --craft --chain 10
  */
-import { createEngine, loadContent, bfsDistances, powerScore, type World, type Dir, type GameEvent, type CombatMode } from "../packages/engine/src/index";
+import { createEngine, loadContent, bfsDistances, powerScore, type World, type Dir, type GameEvent, type CombatMode, type AccountState } from "../packages/engine/src/index";
 import { autoAssign, atWorkbench } from "../packages/engine/src/craft";
 import { effectsNow, moduleViews } from "../packages/engine/src/modules";
 import { counterItems } from "../packages/engine/src/boss";
@@ -82,6 +89,8 @@ const forcedSpell = flag("spell");
 if (forcedSpell && !content.spells.has(forcedSpell)) throw new Error(`--spell: no spell "${forcedSpell}" in spells.json`);
 /** Play down to (and including) this floor. */
 const floorsArg = Math.max(1, Number(flag("floors") ?? 1));
+/** `--chain N`: careers of N runs on one account (Milestone 8). */
+const chainLen = Math.max(0, Number(flag("chain") ?? 0));
 /** A fight that drags past this many rounds counts as stuck (AI or rules deadlock). */
 const MAX_ROUNDS = 60;
 
@@ -163,6 +172,13 @@ interface Outcome {
   /** Best spell level and school rank at the end. */
   spellLevel: number;
   schoolRank: number;
+  /** Milestone 8: legacy points the run paid, unlocks owned after it, and whether the bequest was picked up. */
+  legacy: number;
+  unlocksOwned: number;
+  heirloom: boolean;
+  /** Position in its career (chain mode), from 0. */
+  chainIndex: number;
+  account: AccountState;
 }
 
 function hpPct(world: World): number {
@@ -221,8 +237,8 @@ function stepToward(world: World, target: number): Dir | undefined {
   return best?.dir;
 }
 
-function runOne(mode: CombatMode | "default", bot: Bot): Outcome {
-  let { world } = engine.newWorld();
+function runOne(mode: CombatMode | "default", bot: Bot, account?: AccountState): Outcome {
+  let { world } = engine.newWorld(account);
   if (mode !== "default") world.account.settings = { combatMode: mode };
   ({ world } = engine.step(world, { type: "accept" }));
   const starter = Object.keys(world.game.crawler!.spells).length > 0;
@@ -376,13 +392,18 @@ function runOne(mode: CombatMode | "default", bot: Bot): Outcome {
       spellLevel: Math.max(0, ...levels), schoolRank: Math.max(0, ...ranks),
     };
   };
-  const stuck = (cause: string, i: number): Outcome => ({
-    pace,
-    result: "stuck", cause, actions: i, roomsVisited: 0, xp: 0, fights, level: 1, fightRounds, fightDamage, fled, crafted, earlyDeath,
-    achievements: [], boxesOpened: 0, boxesLeft: 0, goldEarned: 0, goldSpent: 0, mood: 0,
-    deepest, shardsByFloor, modules: 0, bossFights, bossWins, weakness, temper: 0, atFloorEnd, weaponXp, rankAtFight, floorXp, bossDownOn,
-    ...magic(),
-  });
+  const stuck = (cause: string, i: number): Outcome => {
+    // A career has to go on: close the stuck run so the account is in a sane state.
+    if (chainLen && world.game.phase !== "dead") world = engine.step(world, { type: "abandon", confirm: true }).world;
+    return {
+      pace,
+      result: "stuck", cause, actions: i, roomsVisited: 0, xp: 0, fights, level: 1, fightRounds, fightDamage, fled, crafted, earlyDeath,
+      achievements: [], boxesOpened: 0, boxesLeft: 0, goldEarned: 0, goldSpent: 0, mood: 0,
+      deepest, shardsByFloor, modules: 0, bossFights, bossWins, weakness, temper: 0, atFloorEnd, weaponXp, rankAtFight, floorXp, bossDownOn,
+      ...magic(),
+      legacy: world.game.ended?.legacy?.total ?? 0, unlocksOwned: world.account.unlocks.length, heirloom: false, chainIndex: 0, account: world.account,
+    };
+  };
   /** Run a command; false if the engine refused it (not enough AP, out of reach...). */
   const tryAct = (a: Parameters<typeof engine.step>[1]) => {
     act(a);
@@ -596,6 +617,14 @@ function runOne(mode: CombatMode | "default", bot: Bot): Outcome {
       act({ type: "go", dir });
       return true;
     };
+    // Chain mode: the last crawler's bequest is worth the walk.
+    const left = floor.bequest;
+    if (chainLen && left && floor.rooms[left.room]!.items?.some((i) => i.heirloom) && reach(floor.rooms[left.room]!)) {
+      if (floor.currentRoom === left.room) {
+        act({ type: "take", item: left.name.toLowerCase() });
+        if (world.game.crawler!.inventory.some((i) => i.heirloom)) { wearBetter(); continue; }
+      } else if (goTo(left.room)) continue;
+    }
     const searchable = (r: (typeof floor.rooms)[number]) => r.type !== "safe" && r.type !== "stairwell" && r.visited && reach(r);
     // The sweeper keeps searching until nothing is left hidden (it peeks at the state: a sim shortcut for assess), up to 6 passes.
     const passesWanted = bot === "sweeper" ? 6 : 0;
@@ -654,8 +683,22 @@ function runOne(mode: CombatMode | "default", bot: Bot): Outcome {
 
   finishFloor(world, false);
   const c = world.game.crawler!;
+  const heirloom = c.inventory.some((i) => i.heirloom);
+  // Judged on this run (the account's bestFloor carries over in a career), before the career bookkeeping below.
+  const cleared = (world.game.floor?.floor ?? 0) > floorsArg || world.game.ended?.kind === "descended";
   const died = world.game.log.filter((e) => e.type === "died").pop();
-  const cleared = world.account.bestFloor >= floorsArg + 1;
+  // The run is over (or stuck: close it so the account stays consistent). Bequeath and shop.
+  if (chainLen) {
+    if (world.game.phase !== "dead") world = engine.step(world, { type: "abandon", confirm: true }).world;
+    const end = engine.view(world).runEnd;
+    if (end?.candidates.length) world = engine.input(world, end.candidates[0]!.input).world;
+    for (let guard = 0; guard < 20; guard++) {
+      const buy = engine.view(world).account.unlocks.filter((u) => u.canBuy && !u.repeatable).sort((a, b) => a.cost - b.cost)[0];
+      if (!buy) break;
+      world = engine.input(world, `unlock ${buy.id}`).world;
+    }
+  }
+
   const roomsVisited = roomsF1;
   void lastEvents;
   return {
@@ -694,6 +737,11 @@ function runOne(mode: CombatMode | "default", bot: Bot): Outcome {
     floorXp,
     bossDownOn,
     ...magic(),
+    legacy: world.game.ended?.legacy?.total ?? 0,
+    unlocksOwned: world.account.unlocks.length,
+    heirloom,
+    chainIndex: 0,
+    account: world.account,
   };
 }
 
@@ -722,6 +770,25 @@ function rewardsReport(outcomes: Outcome[]): void {
   console.log(`  rewards: ${avg(outcomes.map((o) => o.achievements.length)).toFixed(1)} achievements/run of ${content.achievements.all.length}; boxes opened ${avg(outcomes.map((o) => o.boxesOpened)).toFixed(1)}/run (${avg(outcomes.map((o) => o.boxesLeft)).toFixed(1)} left unopened); gold earned ${Math.round(avg(outcomes.map((o) => o.goldEarned)))}, spent ${Math.round(avg(outcomes.map((o) => o.goldSpent)))}; mood ${avg(outcomes.map((o) => o.mood)).toFixed(1)}`);
   console.log(`    most common: ${top.slice(0, 5).map(([id, k]) => `${id} ${Math.round((100 * k) / n)}%`).join(", ")}`);
   console.log(`    never earned (non-secret): ${never.length ? never.join(", ") : "none"}`);
+}
+
+/** Milestone 8: what runs pay the account, and how fast a career buys its unlocks. */
+function legacyReport(outcomes: Outcome[]): void {
+  const pays = outcomes.map((o) => o.legacy);
+  const byResult = (r: Outcome["result"]) => outcomes.filter((o) => o.result === r).map((o) => o.legacy);
+  console.log(`  legacy: ${spread(pays)} points a run (died ${spread(byResult("died"))}; cleared ${spread(byResult("cleared"))}); all unlocks cost ${content.unlocks.all.filter((u) => !u.repeatable).reduce((n, u) => n + u.cost, 0)}`);
+  if (!chainLen) return;
+  const owned = content.unlocks.all.filter((u) => !u.repeatable).length;
+  const rows: string[] = [];
+  for (let k = 0; k < chainLen; k++) {
+    const at = outcomes.filter((o) => o.chainIndex === k);
+    if (!at.length) continue;
+    const clear = Math.round((100 * at.filter((o) => o.result === "cleared").length) / at.length);
+    const heir = k > 0 ? ` heirloom ${Math.round((100 * at.filter((o) => o.heirloom).length) / at.length)}%` : "";
+    rows.push(`run ${k + 1}: ${avg(at.map((o) => o.unlocksOwned)).toFixed(1)}/${owned} unlocks, clear ${clear}%${heir}`);
+  }
+  console.log(`  career (${chainLen} runs, one account):`);
+  for (let i = 0; i < rows.length; i += 3) console.log(`    ${rows.slice(i, i + 3).join("   ")}`);
 }
 
 /** The floor pacing report (Milestone 6c): where the clock went and whether the targets hold. */
@@ -763,7 +830,14 @@ const summaries: { mode: string; clear: number; rounds: number; damage: number }
 
 for (const [bot, mode] of bots.flatMap((b) => modes.map((m) => [b, m] as const))) {
   const outcomes: Outcome[] = [];
-  for (let i = 0; i < runs; i++) outcomes.push(runOne(mode, bot));
+  let account: AccountState | undefined;
+  for (let i = 0; i < runs; i++) {
+    if (!chainLen || i % chainLen === 0) account = undefined; // a new career
+    const o = runOne(mode, bot, chainLen ? account : undefined);
+    o.chainIndex = chainLen ? i % chainLen : 0;
+    account = o.account;
+    outcomes.push(o);
+  }
 
   const cleared = outcomes.filter((o) => o.result === "cleared");
   const died = outcomes.filter((o) => o.result === "died");
@@ -775,7 +849,7 @@ for (const [bot, mode] of bots.flatMap((b) => modes.map((m) => [b, m] as const))
   const fights = outcomes.reduce((s, o) => s + o.fights, 0);
   const fled = outcomes.reduce((s, o) => s + o.fled, 0);
 
-  console.log(`\n${floorsArg === 1 ? "Floor 1" : `Floors 1-${floorsArg}`} sim — ${runs} runs — bot: ${bot} — combat: ${mode}${crafty ? " — crafting on" : ""}${forcedSpell ? ` — everyone knows ${forcedSpell}` : ""}`);
+  console.log(`\n${floorsArg === 1 ? "Floor 1" : `Floors 1-${floorsArg}`} sim — ${runs} runs — bot: ${bot} — combat: ${mode}${crafty ? " — crafting on" : ""}${forcedSpell ? ` — everyone knows ${forcedSpell}` : ""}${chainLen ? ` — careers of ${chainLen}` : ""}`);
   console.log(`  cleared : ${cleared.length} (${Math.round((100 * cleared.length) / runs)}%)`);
   console.log(`  died    : ${died.length} (${Math.round((100 * died.length) / runs)}%)`);
   if (stuck.length) console.log(`  stuck   : ${stuck.length}  ← should be zero`);
@@ -788,6 +862,7 @@ for (const [bot, mode] of bots.flatMap((b) => modes.map((m) => [b, m] as const))
   console.log(`  died in the first 3 fights: ${outcomes.filter((o) => o.earlyDeath).length} (${Math.round((100 * outcomes.filter((o) => o.earlyDeath).length) / runs)}%)`);
   if (crafty) console.log(`  crafted per run: ${avg(outcomes.map((o) => o.crafted)).toFixed(1)}`);
   rewardsReport(outcomes);
+  legacyReport(outcomes);
   if (floorsArg > 1) {
     const reached = (f: number) => outcomes.filter((o) => o.deepest >= f).length;
     console.log(`  reached: ${Array.from({ length: floorsArg }, (_, i) => `F${i + 1} ${Math.round((100 * reached(i + 1)) / runs)}%`).join("   ")}`);

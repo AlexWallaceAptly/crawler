@@ -1,0 +1,90 @@
+[
+  {
+    "id": "second_opinion",
+    "name": "Second Opinion",
+    "kind": "reroll",
+    "cost": 30,
+    "repeatable": true,
+    "text": "One more backstory reroll, kept on the account until you spend it. Buy as many as you like. Nobody's life gets better on the fourth try, but it's fun to watch you hope."
+  },
+  {
+    "id": "pool_odd_jobs",
+    "name": "Odd Jobs",
+    "kind": "pool",
+    "pool": "odd_jobs",
+    "cost": 80,
+    "text": "Opens the stranger end of the job market: clowns, beekeepers, gondoliers, people who stuff dead animals for money. Forty careers the planet won't miss."
+  },
+  {
+    "id": "pool_strange_pasts",
+    "name": "Strange Pasts",
+    "kind": "pool",
+    "pool": "strange_pasts",
+    "cost": 80,
+    "text": "Backstories the focus groups flagged as 'too much'. Abductions, cults, a moose. You'll be rolling formative events that would make a therapist retire."
+  },
+  {
+    "id": "pool_worst_moments",
+    "name": "Worst Possible Moment",
+    "kind": "pool",
+    "pool": "worst_moments",
+    "cost": 60,
+    "text": "More places to have been when the world ended. Mostly in costume. Mostly mid-party. The kit that comes with them is exactly as useful as a banana suit."
+  },
+  {
+    "id": "pool_conditions",
+    "name": "Pre-existing Conditions",
+    "kind": "pool",
+    "pool": "conditions",
+    "cost": 120,
+    "text": "Quirks we keep in the back. Some are gifts. Some are diagnoses. A few are both, which is how we like it."
+  },
+  {
+    "id": "kit_first_aid",
+    "name": "Break Room First Aid",
+    "kind": "kit",
+    "cost": 60,
+    "items": [{ "item": "bandage_roll", "qty": 2 }, { "item": "healing_potion" }],
+    "text": "A starting-kit choice: two bandage rolls and a healing potion, liberated from a wall box with a sign that says DO NOT REMOVE."
+  },
+  {
+    "id": "kit_snacks",
+    "name": "Vending Machine Haul",
+    "kind": "kit",
+    "cost": 50,
+    "items": [{ "item": "beef_jerky", "qty": 2 }, { "item": "protein_bar", "qty": 2 }, { "item": "energy_drink" }],
+    "text": "A starting-kit choice: jerky, protein bars and one energy drink. Enough for a few safe-room meals, or one very bad decision."
+  },
+  {
+    "id": "kit_hardware",
+    "name": "Hardware Aisle",
+    "kind": "kit",
+    "cost": 80,
+    "items": [{ "item": "duct_tape" }, { "item": "box_of_nails" }, { "item": "zip_ties" }, { "item": "copper_wire" }],
+    "text": "A starting-kit choice: tape, nails, zip ties and wire. Every weapon you'll ever love starts as something from this list."
+  },
+  {
+    "id": "kit_junk_drawer",
+    "name": "Junk Drawer",
+    "kind": "kit",
+    "cost": 100,
+    "items": [{ "item": "cracked_screen" }, { "item": "d_batteries" }, { "item": "speaker_scrap" }, { "item": "copper_wire" }],
+    "text": "A starting-kit choice: a cracked screen, batteries, a speaker and some wire. Somebody's idea of a starter electronics set. Somebody with very low expectations of you."
+  },
+  {
+    "id": "kit_self_defense",
+    "name": "Self-Defense Seminar",
+    "kind": "kit",
+    "cost": 130,
+    "items": [{ "item": "crowbar" }],
+    "text": "A starting-kit choice: a crowbar and the confidence of someone who watched one video about it. The crowbar is the useful half."
+  },
+  {
+    "id": "kit_library_card",
+    "name": "Library Card",
+    "kind": "kit",
+    "cost": 150,
+    "items": [{ "item": "spell_tome" }],
+    "text": "A starting-kit choice: one tome, overdue since the Before Times. Read it on the stairs. Learn something. Disappoint me in a new way."
+  }
+]

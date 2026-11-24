@@ -36,6 +36,7 @@ import {
   AchievementSchema,
   BoxesSchema,
   ShopsSchema,
+  UnlockSchema,
   BOX_TIERS,
   BOX_TYPES,
   SPELL_SCHOOLS,
@@ -74,6 +75,7 @@ import {
   type Achievement,
   type BoxesTable,
   type ShopsTable,
+  type Unlock,
   RARITIES,
 } from "./schemas";
 
@@ -114,6 +116,7 @@ export const CONTENT_FILES = {
   "achievements.json": z.array(AchievementSchema),
   "boxes.json": BoxesSchema,
   "shops.json": ShopsSchema,
+  "unlocks.json": z.array(UnlockSchema),
 } as const;
 
 export type ContentFileName = keyof typeof CONTENT_FILES;
@@ -176,6 +179,8 @@ export interface Content {
   boxes: BoxesTable;
   /** Gold drops and the shopkeeper personalities. */
   shops: ShopsTable;
+  /** Account unlocks (Milestone 8), bought with legacy points between runs. */
+  unlocks: Table<Unlock>;
 }
 
 export class ContentError extends Error {
@@ -283,6 +288,7 @@ export function loadContent(raw: RawContent): Content {
     achievements: table("achievements.json", p["achievements.json"], problems),
     boxes: p["boxes.json"],
     shops: p["shops.json"],
+    unlocks: table("unlocks.json", p["unlocks.json"], problems),
   };
 
   checkReferences(content, problems);
@@ -392,9 +398,33 @@ function checkReferences(c: Content, problems: string[]): void {
     }
   }
   checkThread(c, problems, ref);
+  checkUnlocks(c, problems, ref);
   checkTilesets(c, problems);
   checkGenerator(c, problems, ref);
   checkSpells(c, problems, ref);
+}
+
+/** Unlocks: kit items exist, and every backstory pool has exactly one unlock that opens it (and vice versa). */
+function checkUnlocks(c: Content, problems: string[], ref: RefCheck): void {
+  for (const u of c.unlocks.all) {
+    for (const it of u.items) ref(`unlocks.json "${u.id}".items`, "item", itemRefExists(c, it.item), it.item);
+  }
+  const b = c.backstory;
+  const tagged = new Map<string, number>();
+  for (const e of [...b.occupations.all, ...b.events.all, ...b.quirks.all, ...b.locations.all]) {
+    if (e.pool) tagged.set(e.pool, (tagged.get(e.pool) ?? 0) + 1);
+  }
+  for (const [pool] of tagged) {
+    const n = c.unlocks.all.filter((u) => u.pool === pool).length;
+    if (n !== 1) problems.push(`backstory pool "${pool}": needs exactly one unlock in unlocks.json (has ${n})`);
+  }
+  for (const u of c.unlocks.all) {
+    if (u.pool && !tagged.has(u.pool)) problems.push(`unlocks.json "${u.id}": no backstory entry is in the pool "${u.pool}"`);
+  }
+  // A fresh account still needs something to roll in every table.
+  for (const [name, t] of [["occupations", b.occupations], ["events", b.events], ["quirks", b.quirks], ["locations", b.locations]] as const) {
+    if (!t.all.some((e) => !e.pool)) problems.push(`backstory/${name}.json: every entry is in a pool; a new account would have nothing to roll`);
+  }
 }
 
 /** Spells, the school skills, and everything that points at a spell (backstories, tomes, scrolls). */

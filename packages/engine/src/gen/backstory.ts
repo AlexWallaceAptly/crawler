@@ -37,12 +37,17 @@ export function autoEquip(c: Crawler, item: ItemInstance): EquipSlot | null {
   return slot;
 }
 
-export function generateCrawler(content: Content): Crawler {
+/**
+ * Roll a crawler. `pools` are the backstory pools the account has unlocked (Milestone 8): entries
+ * tagged with any other pool are left out, and untagged entries are always in.
+ */
+export function generateCrawler(content: Content, pools: readonly string[] = []): Crawler {
   const b = content.backstory;
-  const occ = pick(b.occupations.all);
-  const ev = pick(b.events.all);
-  const quirk = pick(b.quirks.all);
-  const loc = pick(b.locations.all);
+  const open = <T extends { pool?: string | undefined }>(all: T[]) => all.filter((e) => !e.pool || pools.includes(e.pool));
+  const occ = pick(open(b.occupations.all));
+  const ev = pick(open(b.events.all));
+  const quirk = pick(open(b.quirks.all));
+  const loc = pick(open(b.locations.all));
 
   const crawler: Crawler = {
     name: `${pick(b.names.first)} ${pick(b.names.last)}`,

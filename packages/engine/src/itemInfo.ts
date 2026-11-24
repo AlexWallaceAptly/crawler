@@ -106,6 +106,11 @@ export function itemInfo(c: Crawler, content: Content, it: ItemInstance): ItemIn
     detail.push(`If you equip it: ${changes.length ? formatChanges(changes) : "nothing you'd notice"}${out.length ? ` (replaces ${out.join(" and ")})` : ""}.`);
   }
 
+  if (it.heirloom) {
+    const h = it.heirloom;
+    detail.push(`An heirloom: left by ${h.from} (run ${h.run}), who ${h.cause === "quit" ? "quit" : h.cause.startsWith("descended") ? "made it out" : `died to ${h.cause}`}.`);
+  }
+
   let summary: string | undefined;
   if (it.power) {
     const sw = swingNumbers(holding, content, profileOf(content, it, holding));

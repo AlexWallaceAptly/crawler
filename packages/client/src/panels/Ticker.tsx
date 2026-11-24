@@ -31,6 +31,10 @@ function text(e: GameEvent): string {
       return `★ LEVEL ${e.level} — ${e.unspent} stat points to spend`;
     case "skillUp":
       return `▲ ${e.name} ${e.rank}${e.perkName ? ` — ${e.perkName}` : ""}`;
+    case "runEnded":
+      return `RUN OVER — +${e.legacy} legacy (${e.points} on the account)`;
+    case "unlockBought":
+      return `⚿ UNLOCKED — ${e.name} (${e.points} legacy left)`;
     case "narration":
     case "info":
     case "error":

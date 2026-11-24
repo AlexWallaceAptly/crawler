@@ -622,3 +622,11 @@
   font-size: 13px;
   padding-left: 8px;
 }
+/* Milestone 8: the end-of-run tally */
+.tally {
+  margin: 2px 0 6px;
+  color: var(--system);
+  font: inherit;
+  font-size: 13px;
+  white-space: pre-wrap;
+}

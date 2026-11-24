@@ -31,7 +31,7 @@ export function createEngine(content: Content): Engine {
       return step(world, { type: "newCrawler" }, content);
     },
     restoreAccount(account) {
-      return migrateAccount(account);
+      return migrateAccount(account, content);
     },
     restore(game, account) {
       const g = game as GameState | null;
@@ -65,12 +65,26 @@ export function createEngine(content: Content): Engine {
 
 /**
  * Bring a saved account up to the current shape. Accounts are never thrown away for being old:
- * version 1 (before the thread Codex) gains an empty Codex and keeps everything else.
+ * version 1 (before the thread Codex) gains an empty Codex; version 2 (before Milestone 8) gains
+ * the bequest slot, lifetime legacy, the bestiary's tallies and the vessels seen (read back out of
+ * the run history when the content is at hand). Everything else is kept.
  */
-export function migrateAccount(account: unknown): AccountState | null {
+export function migrateAccount(account: unknown, content?: Content): AccountState | null {
   if (!account || typeof account !== "object") return null;
-  const a = account as AccountState & { version: number };
+  let a = account as AccountState & { version: number };
+  if (a.version === 1) a = { ...a, version: 2, thread: newThreadCodex() };
+  if (a.version === 2) {
+    const names = new Map((content?.thread.vessels ?? []).map((v) => [v.name, v.id]));
+    const seen = [...new Set(a.thread.history.map((r) => names.get(r.vessel)).filter((id): id is string => !!id))];
+    a = {
+      ...a,
+      version: 3,
+      legacyEarned: a.legacyEarned ?? a.legacyPoints ?? 0,
+      codex: { ...a.codex, tallies: a.codex.tallies ?? {} },
+      thread: { ...a.thread, vessels: a.thread.vessels ?? seen },
+      bequest: a.bequest ?? null,
+    };
+  }
   if (a.version === ACCOUNT_VERSION) return a;
-  if (a.version === 1) return { ...a, version: ACCOUNT_VERSION, thread: newThreadCodex() };
   return null;
 }

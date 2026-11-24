@@ -471,12 +471,48 @@ export function CodexSheet({ view }: { view: ViewModel }) {
             {c.history.slice().reverse().map((r) => (
               <li key={r.run + r.crawler} className={s.sub}>
                 #{r.run} {r.crawler}, Floor {r.floor}: {r.outcome}. {r.shards} shard{r.shards === 1 ? "" : "s"}, Temper {r.temper > 0 ? "+" : ""}{r.temper}.
+                {r.legacy !== undefined && ` +${r.legacy} legacy.`}
               </li>
             ))}
           </ul>
         </>
       )}
+      <Records view={view} />
     </div>
+  );
+}
+
+/** The old codex: every enemy (with the bestiary's tallies), item and achievement the account has found. */
+function Records({ view }: { view: ViewModel }) {
+  const r = view.codex.records;
+  return (
+    <>
+      <div className={s.sectionLabel}>Bestiary ({r.bestiary.length} of {r.bestiaryTotal})</div>
+      <ul className={s.list}>
+        {r.bestiary.map((b) => (
+          <li key={b.id} className={s.codexEntry}>
+            <span className={s.codexName}>{b.name}</span>
+            <span className={s.sub}> · met {b.met} · killed {b.killed}{b.killedYou ? ` · killed you ${b.killedYou}` : ""}</span>
+            <div className={s.codexText}>{b.line}</div>
+            {b.description && <div className={s.codexLine}>{b.description}</div>}
+          </li>
+        ))}
+        {r.bestiary.length === 0 && <li className={s.muted}>Nothing yet. Go meet something.</li>}
+      </ul>
+      <div className={s.sectionLabel}>Items ({r.items.found} of {r.items.total})</div>
+      <ul className={s.list}>
+        {r.items.groups.map((g) => (
+          <li key={g.id} className={s.codexEntry}>
+            <span className={g.found ? s.codexName : s.muted}>{g.label}</span>
+            <span className={s.sub}> · {g.found} of {g.total}</span>
+            <div className={s.codexText}>{g.line}</div>
+            {g.names.length > 0 && <div className={s.codexLine}>{g.names.join(" · ")}</div>}
+          </li>
+        ))}
+      </ul>
+      <div className={s.sectionLabel}>Achievements</div>
+      <div className={s.sub}>{r.achievements.found} of {r.achievements.total} ever earned, across every crawler.</div>
+    </>
   );
 }
 

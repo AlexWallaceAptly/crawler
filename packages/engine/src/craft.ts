@@ -503,7 +503,7 @@ function make(ctx: StepContext, m: Match): void {
       }
       if (mishap.statusId) applyStatus(c.statuses, ctx.content.statusEffects.get(mishap.statusId));
       if (c.hp <= 0) {
-        killCrawler(ctx, `a botched ${recipe.name.toLowerCase()}`);
+        killCrawler(ctx, `a botched ${recipe.name.toLowerCase()}`, { source: "craft" });
         return;
       }
     }

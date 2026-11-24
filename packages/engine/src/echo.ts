@@ -13,6 +13,7 @@ import { rollDice } from "./rules/dice";
 import { bfsDistances } from "./gen/floor";
 import { addToPile } from "./inventory";
 import type { StepContext } from "./step";
+import { accountCodexView } from "./accountCodex";
 import { HISTORY_LIMIT, type AccountState, type EchoState, type GameState, type Room, type RunRecord } from "./state";
 
 export type Side = "calm" | "base" | "fed";
@@ -71,6 +72,8 @@ export function echoNarration(game: GameState, content: Content): Record<string,
 /** Echo wakes at the start of a run. */
 export function wakeEcho(ctx: StepContext): void {
   ctx.game.echo = newEcho(ctx.content);
+  const seen = (ctx.account.thread.vessels ??= []);
+  if (!seen.includes(ctx.game.echo.vessel)) seen.push(ctx.game.echo.vessel);
   ctx.describe(vesselOf(ctx.content, ctx.game.echo).wake);
   ctx.echoSay("echo.hello");
 }
@@ -303,6 +306,13 @@ export function showCodex(ctx: StepContext): void {
     }
     lines.push("");
   }
+  const r = accountCodexView(ctx.content, ctx.account);
+  lines.push(`BESTIARY (${r.bestiary.length} of ${r.bestiaryTotal})`);
+  for (const b of r.bestiary) lines.push(`  ${b.name}: met ${b.met}, killed ${b.killed}${b.killedYou ? `, killed you ${b.killedYou}` : ""}. ${b.line}`);
+  if (!r.bestiary.length) lines.push("  Nothing yet.");
+  lines.push("", `ITEMS (${r.items.found} of ${r.items.total})`);
+  for (const g of r.items.groups) lines.push(`  ${g.label}: ${g.found} of ${g.total}. ${g.line}`);
+  lines.push("", `ACHIEVEMENTS: ${r.achievements.found} of ${r.achievements.total} ever earned.`);
   ctx.info("The Codex:", lines);
 }
 
@@ -442,19 +452,20 @@ export function feedEcho(ctx: StepContext, query: string): void {
 
 // ---------------------------------------------------------------- run history
 
-export function recordRun(ctx: StepContext, outcome: string): void {
+/** One line in the account's run history (called once a run's legacy points are known). */
+export function recordRun(ctx: StepContext, outcome: string, floor: number, legacy?: number): void {
   const g = ctx.game;
   if (!g.crawler) return;
-  const deepest = Math.max(g.floor?.floor ?? 0, 1);
   const h = ctx.account.thread.history;
   h.push({
     run: ctx.account.runs,
     crawler: g.crawler.name,
-    floor: deepest,
+    floor: Math.max(floor, 1),
     outcome,
     shards: g.echo?.shards.length ?? 0,
     temper: g.echo?.temper ?? 0,
     vessel: g.echo ? vesselOf(ctx.content, g.echo).name : "none",
+    ...(legacy !== undefined ? { legacy } : {}),
   });
   if (h.length > HISTORY_LIMIT) h.splice(0, h.length - HISTORY_LIMIT);
 }

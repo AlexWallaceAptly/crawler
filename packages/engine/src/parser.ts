@@ -13,6 +13,7 @@ import { pendingShard } from "./echo";
 import { openStairwell } from "./explore";
 import { scrollsIn, spellNumbers, spellTargetTiles } from "./spells";
 import { derive } from "./rules/derived";
+import { kitFor, ownedKits, runEndView, unlockViews } from "./legacy";
 
 export type ParseResult = { ok: true; action: Action } | { ok: false; reason: "empty" | "unknown"; input: string };
 
@@ -68,6 +69,9 @@ const VERBS: Record<string, string> = {
   codex: "codex", lore: "codex", journal: "codex",
   echo: "echo", stray: "echo",
   return: "use", give: "use", hand: "use", show: "use",
+  unlocks: "unlocks", legacy: "unlocks", unlock: "unlock",
+  kit: "kit",
+  bequeath: "bequeath", bequest: "bequeath", leave: "bequeath", will: "bequeath",
 };
 
 const DIR_WORDS: Record<string, Dir> = {
@@ -278,6 +282,17 @@ export function parseCommand(input: string, world: World): ParseResult {
       return { ok: true, action: { type: "codex" } };
     case "echo":
       return { ok: true, action: { type: "echo" } };
+    case "unlocks":
+      return { ok: true, action: { type: "unlocks" } };
+    case "unlock":
+      return { ok: true, action: arg ? { type: "unlock", what: arg } : { type: "unlocks" } };
+    case "kit":
+      return { ok: true, action: { type: "kit", what: arg.replace(/^(the|to) /, "") } };
+    case "bequeath": {
+      const item = arg.replace(/^behind /, "").replace(/^the /, "");
+      if (!item) return { ok: false, reason: "unknown", input: text };
+      return { ok: true, action: { type: "bequeath", item } };
+    }
     case "set": {
       // "set combat grid" / "set combat bands" (also "set grid")
       const words = arg.split(" ").filter((w) => w !== "combat" && w !== "mode" && w !== "to");
@@ -322,8 +337,26 @@ export function availableCommands(world: World, content: Content): CommandOption
     out.push({ label: "Accept crawler", input: "accept", primary: true });
     const left = rerollsLeft(world);
     if (left > 0) out.push({ label: `Reroll (${left} left)`, input: "reroll" });
+    out.push(...kitButtons(world, content));
   }
-  if (phase === "dead") out.push({ label: "Next crawler", input: "new", primary: true });
+  if (phase === "dead") {
+    out.push({ label: "Next crawler", input: "new", primary: true });
+    const end = runEndView(world);
+    if (end && end.candidates.length) {
+      for (const it of end.candidates.slice(0, 4)) {
+        if (it.name === end.bequeathed) continue;
+        out.push({ label: `Leave ${it.name}`, input: it.input });
+      }
+      if (end.bequeathed) out.push({ niche: true, label: "Leave nothing", input: "bequeath nothing" });
+    }
+    out.push(...kitButtons(world, content));
+  }
+  if (phase === "dead" || phase === "creation") {
+    const affordable = unlockViews(content, world.account).filter((u) => u.canBuy);
+    out.push({ label: `Unlocks (${world.account.legacyPoints} pts${affordable.length ? `, ${affordable.length} affordable` : ""})`, input: "unlocks", primary: phase === "dead" && affordable.length > 0 });
+    // Touch layouts have no shop screen for these: one tucked-away button per unlock you can pay for.
+    for (const u of affordable) out.push({ niche: true, label: `Buy ${u.name} (${u.cost})`, input: `unlock ${u.id}` });
+  }
   if ((phase === "exploring" || phase === "combat") && world.game.echo?.urge) {
     out.push({ label: `Let Echo ${world.game.echo.urge.kind}`, input: "let echo", primary: true });
     out.push({ label: "Hush", input: "hush" });
@@ -465,6 +498,17 @@ export function availableCommands(world: World, content: Content): CommandOption
   if (isAllowed(world, "look")) out.push({ niche: true, label: "Look", input: "look" });
   out.push({ niche: true, label: "Help", input: "help" });
   return out;
+}
+
+/** Between runs: a button per owned starting kit you aren't already taking. */
+function kitButtons(world: World, content: Content): CommandOption[] {
+  const owned = ownedKits(content, world.account);
+  if (!owned.length) return [];
+  const current = kitFor(content, world.account);
+  return [
+    ...owned.filter((k) => k.id !== current?.id).map((k): CommandOption => ({ niche: true, label: `Kit: ${k.name}`, input: `kit ${k.name.toLowerCase()}` })),
+    ...(current ? [{ niche: true as const, label: "No starting kit", input: "kit none" }] : []),
+  ];
 }
 
 /** Most spells worth a button: the ones a fight (or a quiet room) can use, up to six. */

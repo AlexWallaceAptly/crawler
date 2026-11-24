@@ -37,6 +37,8 @@ function fightWorld(enemies: Enemy[] = [testEnemy()]): World {
   c.baseStats = { STR: 10, DEX: 6, CON: 8, INT: 4, CHA: 8 };
   c.skills = {};
   c.statuses = [];
+  // A quirk that leaves fights alone (quick_learner / slow_learner would move the XP these tests count).
+  c.backstory.quirk = "cant_swim";
   c.inventory = [{
     uid: "w1", baseId: "test_club", kind: "gear", name: "Test Club", rarity: "common",
     slot: "mainHand", power: [2, 4, 6], damageType: "physical", stat: "STR",

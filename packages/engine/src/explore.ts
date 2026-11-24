@@ -20,7 +20,8 @@ import { seedRoomState } from "./gen/roomstate";
 import { guideAdd } from "./guide";
 import { runEvents, scheduleEvents } from "./showEvents";
 import { wanderRoll } from "./roomwork";
-import { echoOnNewFloor, maybeRoomShard, maybeUrge, pendingShard, recordRun, shardVoice, wholenessOn } from "./echo";
+import { echoOnNewFloor, maybeRoomShard, maybeUrge, pendingShard, shardVoice, wholenessOn } from "./echo";
+import { endRun, placeBequest } from "./legacy";
 import { modulesOnEnter, neutralizePoison, trapAutoSpotted } from "./modules";
 import { bossGateOf, bossNearby, bossOfFloor } from "./boss";
 import type { Dir, FloorState, HazardState, Room, RoomType } from "./state";
@@ -140,7 +141,7 @@ export function advanceTime(ctx: StepContext, minutes: number, reason = "other")
       ctx.describe("The floor gives way behind you, and the stairwell does the only thing it knows how to do.");
       clearFloor(ctx);
     } else {
-      killCrawler(ctx, "floor collapse", "died.collapse");
+      killCrawler(ctx, "floor collapse", { source: "collapse" }, "died.collapse");
     }
     return;
   }
@@ -166,7 +167,7 @@ export function clearFloor(ctx: StepContext): void {
   ctx.game.combat = null;
   const next = ctx.content.floors.all.find((t) => t.floor === floor.floor + 1);
   if (!next) {
-    recordRun(ctx, `descended past Floor ${floor.floor}`);
+    endRun(ctx, "descended", `descended past Floor ${floor.floor}`, floor.floor);
     ctx.game.floor = null;
     ctx.setPhase("dead"); // the deepest built floor is done; "new" starts the next crawler
     return;
@@ -183,6 +184,7 @@ export function enterFloor(ctx: StepContext, theme: FloorTheme): void {
   seedFloorLoot(ctx.game.floor, theme, ctx.content);
   ctx.game.floor.startClock = ctx.game.clock;
   seedRoomState(ctx.game.floor, theme, ctx.content);
+  placeBequest(ctx, ctx.game.floor);
   seedShops(ctx.game.floor, ctx.content);
   scheduleEvents(ctx.game.floor, theme, ctx.content);
   ctx.setPhase("exploring");
@@ -252,7 +254,7 @@ export function tickTravelStatuses(ctx: StepContext): void {
     if (t.amount > 0) ctx.describe(`${t.status} costs you ${t.amount} HP on the way.`);
   }
   if (c.hp <= 0) {
-    killCrawler(ctx, "their own wounds");
+    killCrawler(ctx, "their own wounds", { source: "status" });
     return;
   }
   for (const name of decrementStatuses(c.statuses, ctx.content)) {
@@ -364,7 +366,7 @@ function hurtByHazard(ctx: StepContext, room: Room, h: HazardState, crit: boolea
     h.active = false;
     ctx.describe(`The ${trap.name.toLowerCase()} has finally spent itself. It clicks, once, like it's embarrassed.`);
   }
-  if (c.hp <= 0) killCrawler(ctx, `a ${trap.name.toLowerCase()}`);
+  if (c.hp <= 0) killCrawler(ctx, `a ${trap.name.toLowerCase()}`, { source: "hazard" });
 }
 
 /** Compatibility entry for one hazard check (tests and callers that only have `room.trap`). */
