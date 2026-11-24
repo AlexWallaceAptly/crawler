@@ -19,8 +19,8 @@ import { bossGateOf, bossNearby, bossOfFloor } from "./boss";
 import type { Dir, FloorState, Room, RoomType } from "./state";
 import { DIRS } from "./state";
 
-/** Spec time costs, in game minutes. */
-export const TIME_COST = { move: 10, search: 15, rest: 60, sleep: 8 * 60, combatRound: 1 } as const;
+/** Time costs, in game minutes: data in pacing.json so the sim can sweep them. */
+export const timeCosts = (ctx: StepContext) => ctx.content.pacing.costs;
 
 /** Warning thresholds in minutes left, with their narration keys. */
 const WARNINGS: [number, string][] = [
@@ -76,9 +76,9 @@ export function openStairwell(floor: FloorState, room: Room): boolean {
  * Spend time and report whether the run carries on in the same place: false if the
  * crawler died or the collapse pushed them down onto a new floor meanwhile.
  */
-export function timePassed(ctx: StepContext, minutes: number): boolean {
+export function timePassed(ctx: StepContext, minutes: number, reason = "other"): boolean {
   const floor = ctx.game.floor;
-  advanceTime(ctx, minutes);
+  advanceTime(ctx, minutes, reason);
   return !ctx.dead() && ctx.game.floor === floor;
 }
 
@@ -95,11 +95,16 @@ export function formatTimer(minutes: number): string {
 }
 
 /**
+ * THE clock: every action that costs time comes through here (with a reason, for telemetry).
  * Spend game time. Fires collapse warnings as thresholds are crossed; at zero,
  * anyone off a stairwell dies with the floor, anyone on one is pushed down it.
  */
-export function advanceTime(ctx: StepContext, minutes: number): void {
+export function advanceTime(ctx: StepContext, minutes: number, reason = "other"): void {
   ctx.game.clock += minutes;
+  const spent = (ctx.game.timeSpent ??= {});
+  spent[reason] = (spent[reason] ?? 0) + minutes;
+  // Sleep deprivation runs off this one clock; sleeping itself is handled by the sleep action.
+  if (reason !== "sleep" && ctx.game.crawler) ctx.game.crawler.awakeMin = (ctx.game.crawler.awakeMin ?? 0) + minutes;
   const floor = ctx.game.floor;
   if (!floor || ctx.game.phase === "dead") return;
   floor.timeLeft = Math.max(0, floor.timeLeft - minutes);
@@ -148,7 +153,7 @@ export function clearFloor(ctx: StepContext): void {
 /** Generate a floor (with its boss), stock it, and walk in at the start. */
 export function enterFloor(ctx: StepContext, theme: FloorTheme): void {
   const boss = bossOfFloor(ctx.content, theme.floor);
-  ctx.game.floor = generateFloor(theme, { bossGate: bossGateOf(ctx.content, theme.floor), ...(boss ? { boss: boss.id } : {}) });
+  ctx.game.floor = generateFloor(theme, { safe: ctx.content.pacing.safeRooms, bossGate: bossGateOf(ctx.content, theme.floor), ...(boss ? { boss: boss.id } : {}) });
   seedFloorLoot(ctx.game.floor, theme, ctx.content);
   ctx.setPhase("exploring");
   ctx.emit({ type: "floorEntered", floor: theme.floor, name: theme.name });

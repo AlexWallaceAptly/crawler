@@ -55,7 +55,7 @@ export function seedFloorLoot(floor: FloorState, theme: FloorTheme, content: Con
   const safeDist = safes.map((s) => bfsDistances(floor.rooms, s.id));
   const candidates = floor.rooms.filter((r) =>
     (r.type === "chamber" || r.type === "empty" || r.type === "puzzle") && r.shape !== "corridor" &&
-    r.id !== floor.startRoom && safeDist.every((d) => d[r.id]! >= 3));
+    r.id !== floor.startRoom && safeDist.every((d) => d[r.id]! >= 2));
   const count = int(loot.workshops[0], loot.workshops[1]);
   for (const r of shuffle(candidates).slice(0, count)) {
     r.workbench = true;

@@ -45,7 +45,7 @@ describe("junk seeding", () => {
     const totals = new Map<RoomType, { rooms: number; items: number }>();
     let workshops = 0;
     for (let i = 0; i < 200; i++) {
-      const floor = generateFloor(theme);
+      const floor = generateFloor(theme, { safe: content.pacing.safeRooms });
       seedFloorLoot(floor, theme, content);
       for (const r of floor.rooms) {
         const t = totals.get(r.type) ?? { rooms: 0, items: 0 };
@@ -91,14 +91,14 @@ describe("junk seeding", () => {
     }
   });
 
-  it("search turns up hidden things once, for 15 minutes", () => {
+  it("search turns up hidden things once, for the search cost", () => {
     const world = quietRoom();
     const floor = world.game.floor!;
     const room = floor.rooms[floor.currentRoom]!;
     room.hidden = [itemFromRef(content, "barbed_wire_coil")];
     const t = floor.timeLeft;
     const r1 = engine.step(world, { type: "search" });
-    expect(r1.world.game.floor!.timeLeft).toBe(t - 15);
+    expect(r1.world.game.floor!.timeLeft).toBe(t - content.pacing.costs.search);
     const after = r1.world.game.floor!.rooms[floor.currentRoom]!;
     expect(after.items!.map((i) => i.baseId)).toEqual(["barbed_wire_coil"]);
     expect(after.hidden).toBeUndefined();

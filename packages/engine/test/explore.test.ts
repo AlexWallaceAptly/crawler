@@ -77,30 +77,39 @@ describe("exploring floor 1", () => {
     );
   });
 
-  it("search takes 15 minutes and marks the room; rest heals a quarter", () => {
+  it("search and rest cost what pacing.json says, and rest heals a little", () => {
     const world = freshRun();
     const before = world.game.floor!.timeLeft;
     const s = engine.step(world, { type: "search" });
-    expect(s.world.game.floor!.timeLeft).toBe(before - 15);
+    expect(s.world.game.floor!.timeLeft).toBe(before - content.pacing.costs.search);
     expect(s.world.game.floor!.rooms[s.world.game.floor!.currentRoom]!.searched).toBe(true);
 
     s.world.game.crawler!.hp = 1;
     const r = engine.step(s.world, { type: "rest" });
     expect(r.world.game.crawler!.hp).toBeGreaterThan(1);
-    expect(r.world.game.floor!.timeLeft).toBe(before - 15 - 60);
+    expect(r.world.game.floor!.timeLeft).toBe(before - content.pacing.costs.search - content.pacing.costs.rest);
   });
 
-  it("sleep is refused outside a safe room and heals fully inside one", () => {
-    const world = freshRun();
-    const refused = engine.step(world, { type: "sleep" });
-    expect(refused.world.game.floor!.timeLeft).toBe(world.game.floor!.timeLeft);
+  it("sleep outside a safe room works but restores half and only resets to Tired; in one it heals fully and rests you", () => {
+    const { sleepMin, sleepMax } = content.pacing.costs;
+    const rough = freshRun();
+    rough.game.crawler!.awakeMin = 45 * 60;
+    rough.game.crawler!.hp = 1;
+    const out = engine.step(rough, { type: "sleep" });
+    const lost = rough.game.floor!.timeLeft - out.world.game.floor!.timeLeft;
+    expect(lost).toBeGreaterThanOrEqual(sleepMin);
+    expect(lost).toBeLessThanOrEqual(sleepMax);
+    expect(out.world.game.crawler!.awakeMin).toBe(content.pacing.sleep.outsideSafeAwakeHours * 60);
 
+    const world = freshRun();
     const floor = world.game.floor!;
     floor.currentRoom = floor.rooms.find((r) => r.type === "safe")!.id;
     world.game.crawler!.hp = 1;
+    world.game.crawler!.awakeMin = 45 * 60;
     const slept = engine.step(world, { type: "sleep" });
     expect(slept.world.game.crawler!.hp).toBeGreaterThan(5);
-    expect(slept.world.game.floor!.timeLeft).toBe(floor.timeLeft - 8 * 60);
+    expect(slept.world.game.crawler!.awakeMin).toBe(0);
+    expect(slept.world.game.floor!.timeLeft).toBeLessThanOrEqual(floor.timeLeft - sleepMin);
   });
 
   it("descend is refused off the stairs and takes you down to Floor 2 on them", () => {

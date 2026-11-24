@@ -22,6 +22,7 @@ import {
   ShardSchema,
   ModuleSchema,
   TemperSchema,
+  PacingSchema,
   CodexEntrySchema,
   BossSchema,
   OdditySchema,
@@ -54,6 +55,7 @@ import {
   type Shard,
   type EchoModule,
   type TemperRules,
+  type Pacing,
   type CodexEntry,
   type Boss,
   type Oddity,
@@ -90,6 +92,7 @@ export const CONTENT_FILES = {
   "shards.json": z.array(ShardSchema),
   "modules.json": z.array(ModuleSchema),
   "temper.json": TemperSchema,
+  "pacing.json": PacingSchema,
   "codex.json": z.array(CodexEntrySchema),
   "bosses.json": z.array(BossSchema),
   "items/oddities.json": z.array(OdditySchema),
@@ -147,6 +150,7 @@ export interface Content {
   shards: Table<Shard>;
   modules: Table<EchoModule>;
   temper: TemperRules;
+  pacing: Pacing;
   codex: Table<CodexEntry>;
   bosses: Table<Boss>;
   /** I01-I30; each is also registered as an item base or consumable under the same id. */
@@ -253,6 +257,7 @@ export function loadContent(raw: RawContent): Content {
     shards: table("shards.json", p["shards.json"], problems),
     modules: table("modules.json", p["modules.json"], problems),
     temper: p["temper.json"],
+    pacing: p["pacing.json"],
     codex: table("codex.json", p["codex.json"], problems),
     bosses: table("bosses.json", p["bosses.json"], problems),
     oddities: table("items/oddities.json", oddities, problems),

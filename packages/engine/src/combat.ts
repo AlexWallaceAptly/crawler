@@ -15,7 +15,7 @@
 import type { Content } from "./content/load";
 import type { Consumable, Effect, EnemyAttack, Modifier, Power, RangeBand } from "./content/schemas";
 import { assignMarks, generateGroup, TIER, type EncounterKind } from "./gen/enemy";
-import { enterRoom, advanceTime, TIME_COST } from "./explore";
+import { enterRoom, advanceTime, timeCosts } from "./explore";
 import { dcFor } from "./rules/checks";
 import { rollDice } from "./rules/dice";
 import { collectModifiers, derive, modTotal } from "./rules/derived";
@@ -230,7 +230,7 @@ function endOfRound(ctx: StepContext): void {
   if (combat.arena) combat.arena.moveLeft = 0;
   ageHazards(ctx);
   combat.round += 1;
-  advanceTime(ctx, TIME_COST.combatRound);
+  advanceTime(ctx, timeCosts(ctx).combatRound, "combat");
 }
 
 /**

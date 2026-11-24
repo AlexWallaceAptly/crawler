@@ -165,6 +165,7 @@ export function StatusStrip({ view }: { view: ViewModel }) {
       <span className={s.stripFloor}>{st.floor ? `F${st.floor}` : "PRE-SHOW"}</span>
       {st.room && <span className={s.stripRoom}>{st.room}</span>}
       {st.timer && <span className={s.stripTimer}>⌛ {st.timer}</span>}
+      {st.sleep && <span>{st.sleep}</span>}
       {hp && (
         <span className={s.stripHp} style={{ color: hp.current / hp.max < 0.35 ? "var(--danger)" : undefined }}>
           HP {hp.current}/{hp.max}

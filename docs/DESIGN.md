@@ -2161,3 +2161,19 @@ Built on the `magic-and-spells` branch: the rest of Milestone 6 (spells, school 
 - an out-of-reach spell shown greyed out.
 
 There was no horizontal scroll at either size, and the console was clean.
+
+### Milestone 6c: floor pacing pass (in progress, branch `floor-pacing-pass`)
+
+Source: `floor-pacing-pass.md`. Every number is in `packages/content/pacing.json` (schema `PacingSchema`), so the sim can sweep it.
+
+**Built so far (phase 1):** the time model, sleep deprivation, safe-room placement.
+
+- **One clock.** `advanceTime(ctx, minutes, reason)` was already the single path; it now takes a reason and books `game.timeSpent[reason]`. Costs: move 10, search 20 (was 15), rest 30 (was 60, heals 15% instead of 25%), sleep 6-8h rolled (was a flat 8), combat round 1. The long-haul surcharge is in the config but unused: there is no multi-room travel command yet, only one exit at a time.
+- **Per-floor budgets kept.** The doc says 5 days; the floors are 5, 4 and 6 days. Kept (the doc says not to change the budget).
+- **Sleep stages.** `crawler.awakeMin` counts minutes awake. Stages are data (Rested / Tired 16h / Exhausted 28h / Delirious 40h). The game rolls a d20 with flat modifiers, so "−5%" is −1: the stage's hit goes in as `hit`, its dodge as `defense` (guard), its damage as `damage`. Exhausted and Delirious add 25% to search and scouting. MP regen is scaled by the stage. Exhausted and Delirious are not yet shown anywhere beyond the status bar.
+- **Sleeping rough** is allowed now (the old "refused outside a safe room" is gone): same time, half the restoring, and `awakeMin` drops to the Tired line only. The +50% wandering check waits for the wandering system.
+- **Safe rooms.** One within 2 hops of the entry (was 4-8 steps out), another at least 4 hops from it, at least 2 per floor, never next to a stairwell or each other. The hard rule: every room on the shortest route to each stairwell is within 3 hops of a safe room; the generator adds safe rooms until that holds, and rerolls the layout if it can't. This makes 5-6 safe rooms on Floor 1 where the old rule gave 4. Workshop rooms now sit 2+ rooms from a safe room (was 3), since the floor has less room left.
+- **Known conflict:** Floor 1's first safe room still holds the tutorial craft kit (a pipe, tacks, tape) in plain sight. Rule 4 says safe rooms have no hidden loot; the kit is visible and stays, because the first craft depends on it.
+- The status bar shows the day and time plus the sleep state when not Rested.
+
+**Still to build:** scouting (tiers 0-2), hidden-by-default loot and search passes, per-room state with persistent and escalating hazards, dense rooms, wandering monsters, show events, the Game Guide, the meal and "Well fed", and the sim bots and metrics.

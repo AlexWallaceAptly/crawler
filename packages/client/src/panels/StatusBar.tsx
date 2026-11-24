@@ -27,7 +27,8 @@ export function StatusBar({ view }: { view: ViewModel }) {
         <span className={s.floor}>{st.floor ? `FLOOR ${st.floor}` : "PRE-SHOW"}</span>
         {st.room && <span>{st.room}</span>}
         {st.district && <span>District: {st.district}</span>}
-        <span>Collapse: {st.timer ?? "—"}</span>
+        <span>{st.clock ?? ""} · Collapse: {st.timer ?? "—"}</span>
+        {st.sleep && <span>{st.sleep}</span>}
       </div>
       <div className={s.statusRight}>
         <Meter label="HP" bar={st.hp} color="var(--danger)" />

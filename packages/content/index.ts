@@ -24,6 +24,7 @@ import thread from "./thread.json";
 import shards from "./shards.json";
 import modules from "./modules.json";
 import temper from "./temper.json";
+import pacing from "./pacing.json";
 import codex from "./codex.json";
 import bosses from "./bosses.json";
 import oddities from "./items/oddities.json";
@@ -57,6 +58,7 @@ export const rawContent = {
   "shards.json": shards,
   "modules.json": modules,
   "temper.json": temper,
+  "pacing.json": pacing,
   "codex.json": codex,
   "bosses.json": bosses,
   "items/oddities.json": oddities,

@@ -487,7 +487,7 @@ describe("floor bosses", () => {
 
   it("Floors 1-4: the mini-boss has its own lair and every stairwell stays reachable without it (100 floors)", () => {
     for (let i = 0; i < 100; i++) {
-      const f = generateFloor(lobby, { bossGate: "none", boss: "free_sample_mimic" });
+      const f = generateFloor(lobby, { safe: content.pacing.safeRooms, bossGate: "none", boss: "free_sample_mimic" });
       const lair = f.rooms[f.bossRoom!]!;
       expect(lair.type).toBe("lair");
       expect(lair.boss).toBe("free_sample_mimic");
@@ -502,7 +502,7 @@ describe("floor bosses", () => {
 
   it("Floors 5+: the boss holds the nearest stairwell, the rest are hidden, and one is reachable around it (100 floors)", () => {
     for (let i = 0; i < 100; i++) {
-      const f = generateFloor(lobby, { bossGate: "obviousStairs", boss: "house" });
+      const f = generateFloor(lobby, { safe: content.pacing.safeRooms, bossGate: "obviousStairs", boss: "house" });
       const stairs = f.rooms.filter((r) => r.type === "stairwell");
       const gate = f.rooms[f.bossRoom!]!;
       const d = bfsDistances(f.rooms, f.startRoom);

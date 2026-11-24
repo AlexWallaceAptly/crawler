@@ -1,0 +1,34 @@
+{
+  "costs": {
+    "move": 10,
+    "longHaulPerHop": 10,
+    "longHaulAfterHops": 3,
+    "longHaulSurcharge": 15,
+    "search": 20,
+    "rest": 30,
+    "sleepMin": 360,
+    "sleepMax": 480,
+    "combatRound": 1,
+    "meal": 15
+  },
+  "rest": { "hpPct": 0.15, "mpPct": 0.15 },
+  "sleep": {
+    "outsideSafeRestorePct": 0.5,
+    "outsideSafeAwakeHours": 16,
+    "outsideSafeWanderBonus": 0.5
+  },
+  "sleepStages": [
+    { "id": "rested", "name": "Rested", "fromHours": 0, "hit": 0, "dodge": 0, "damage": 0, "mpRegenPct": 0, "actionCostPct": 0, "scoutErrors": false },
+    { "id": "tired", "name": "Tired", "fromHours": 16, "hit": -1, "dodge": -1, "damage": 0, "mpRegenPct": -10, "actionCostPct": 0, "scoutErrors": false },
+    { "id": "exhausted", "name": "Exhausted", "fromHours": 28, "hit": -2, "dodge": -2, "damage": -1, "mpRegenPct": -10, "actionCostPct": 25, "scoutErrors": false },
+    { "id": "delirious", "name": "Delirious", "fromHours": 40, "hit": -4, "dodge": -4, "damage": -2, "mpRegenPct": -10, "actionCostPct": 25, "scoutErrors": true }
+  ],
+  "safeRooms": {
+    "minPerFloor": 2,
+    "perRooms": 15,
+    "extraAboveRooms": 90,
+    "firstWithinHops": 2,
+    "secondMinHops": 4,
+    "maxGapRooms": 3
+  }
+}

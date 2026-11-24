@@ -482,7 +482,7 @@ function craftCheck(ctx: StepContext, recipe: Recipe): "success" | "failure" | "
 function make(ctx: StepContext, m: Match): void {
   const c = ctx.crawler;
   const { recipe, assignment } = m;
-  advanceTime(ctx, recipe.minutes);
+  advanceTime(ctx, recipe.minutes, "craft");
   if (ctx.game.phase === "dead") return;
   const outcome = craftCheck(ctx, recipe);
   if (outcome !== "success") {
@@ -546,7 +546,7 @@ export function combine(ctx: StepContext, text: string): void {
   }
   const match = matchCombination(ctx.content, inv, text, equipped);
   if (!match) {
-    advanceTime(ctx, FIDDLE_MINUTES);
+    advanceTime(ctx, FIDDLE_MINUTES, "craft");
     if (ctx.game.phase === "dead") return;
     ctx.say("craft.noMatch");
     return;

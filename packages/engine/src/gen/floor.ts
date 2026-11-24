@@ -5,7 +5,7 @@
  * Connectivity holds by construction (every room is carved off an existing one),
  * and the property test re-proves it with BFS anyway.
  */
-import type { BOSS_GATES, FloorTheme, RoomShape } from "../content/schemas";
+import type { BOSS_GATES, FloorTheme, Pacing, RoomShape } from "../content/schemas";
 import { chance, int, pick, shuffle, weightedKey } from "../rng";
 import { DIRS, type Dir, type FloorState, type Room, type RoomType } from "../state";
 
@@ -75,7 +75,24 @@ export function bfsAvoiding(rooms: Room[], from: number, avoid: number): number[
   return dist;
 }
 
+/** Rooms on a shortest path from `from` to `to`, both ends included. */
+export function pathBetween(rooms: Room[], from: number, to: number): number[] {
+  const prev = new Map<number, number>([[from, from]]);
+  const queue = [from];
+  while (queue.length && !prev.has(to)) {
+    const id = queue.shift()!;
+    for (const next of Object.values(rooms[id]!.exits)) {
+      if (!prev.has(next)) { prev.set(next, id); queue.push(next); }
+    }
+  }
+  const path = [to];
+  while (path[0] !== from && prev.has(path[0]!)) path.unshift(prev.get(path[0]!)!);
+  return path;
+}
+
 export interface FloorOptions {
+  /** Safe-room placement rules (pacing.json → safeRooms). */
+  safe: Pacing["safeRooms"];
   /** How the floor's boss sits (thread.json floors → bossGate). */
   bossGate?: (typeof BOSS_GATES)[number];
   /** The boss's id; no boss is placed without one. */
@@ -86,7 +103,7 @@ export interface FloorOptions {
  * Generate a floor. On gate floors a layout where no hidden stairwell can be reached
  * without walking through the boss is thrown away and carved again.
  */
-export function generateFloor(theme: FloorTheme, opts: FloorOptions = {}): FloorState {
+export function generateFloor(theme: FloorTheme, opts: FloorOptions): FloorState {
   for (let tries = 0; tries < 50; tries++) {
     const floor = carveFloor(theme, opts);
     if (floor) return floor;
@@ -154,27 +171,45 @@ function carveFloor(theme: FloorTheme, opts: FloorOptions): FloorState | null {
     stairs.push(best);
   }
 
-  // --- safe rooms: ~1 per 15, spread out, never adjacent to a stairwell ---
-  const nextToStair = (r: Room) => Object.values(r.exits).some((id) => rooms[id]!.type === "stairwell");
-  const safeCount = Math.max(1, Math.round(theme.rooms / 15));
+  // --- safe rooms (pacing.json → safeRooms) ---
+  const cfg = opts.safe;
+  const nextTo = (r: Room, type: RoomType) => Object.values(r.exits).some((id) => rooms[id]!.type === type);
+  const eligible = (r: Room) => r.type === "empty" && r !== start && !nextTo(r, "stairwell") && !nextTo(r, "safe");
   const safes: Room[] = [];
-  // The first one is the tutorial safe room, 4-8 steps from the start.
-  const tutorialPool = rooms.filter((r) =>
-    r.type === "empty" && !nextToStair(r) && distFromStart[r.id]! >= 4 && distFromStart[r.id]! <= 8);
-  const firstSafe = tutorialPool.length > 0
-    ? pick(tutorialPool)
-    : rooms.filter((r) => r.type === "empty" && !nextToStair(r) && r !== start)
-        .sort((a, b) => Math.abs(distFromStart[a.id]! - 6) - Math.abs(distFromStart[b.id]! - 6))[0]!;
-  firstSafe.type = "safe";
-  safes.push(firstSafe);
-  for (let i = 1; i < safeCount; i++) {
-    const candidates = rooms.filter((r) => r.type === "empty" && r !== start && !nextToStair(r));
-    if (candidates.length === 0) break;
-    const spread = (r: Room) => Math.min(...safes.map((s) => Math.abs(s.x - r.x) + Math.abs(s.y - r.y)));
-    let best = candidates[0]!;
-    for (const r of candidates) if (spread(r) > spread(best)) best = r;
-    best.type = "safe";
-    safes.push(best);
+  const spread = (r: Room) => Math.min(...safes.map((s) => Math.abs(s.x - r.x) + Math.abs(s.y - r.y)));
+  const farthest = (pool: Room[]) => pool.reduce((best, r) => (spread(r) > spread(best) ? r : best), pool[0]!);
+  const place = (r: Room) => { r.type = "safe"; safes.push(r); };
+
+  // The first is close to the entry: the tutorial's workbench is a couple of steps away.
+  const near = rooms.filter((r) => eligible(r) && distFromStart[r.id]! <= cfg.firstWithinHops);
+  if (near.length === 0) return null;
+  const firstSafe = pick(near);
+  place(firstSafe);
+  // The second is well away from the first, so there's a bed on the far side of the floor.
+  const firstDist = bfsDistances(rooms, firstSafe.id);
+  const far = rooms.filter((r) => eligible(r) && firstDist[r.id]! >= cfg.secondMinHops);
+  if (far.length === 0) return null;
+  place(farthest(far));
+  const safeCount = Math.max(cfg.minPerFloor, Math.round(theme.rooms / cfg.perRooms));
+  while (safes.length < safeCount) {
+    const pool = rooms.filter(eligible);
+    if (pool.length === 0) break;
+    place(farthest(pool));
+  }
+  // Hard rule: no stairs route runs more than maxGapRooms from a safe room, in either direction.
+  const nearestSafe = () => {
+    const per = safes.map((s) => bfsDistances(rooms, s.id));
+    return rooms.map((r) => Math.min(...per.map((d) => d[r.id]!)));
+  };
+  for (let guard = 0; guard < 40; guard++) {
+    const gap = nearestSafe();
+    const bad = stairs.flatMap((st) => pathBetween(rooms, start.id, st.id)).find((id) => gap[id]! > cfg.maxGapRooms);
+    if (bad === undefined) break;
+    // Fix it with the eligible room nearest the bad stretch, preferring ones on the way.
+    const toBad = bfsDistances(rooms, bad);
+    const fix = rooms.filter(eligible).sort((a, b) => toBad[a.id]! - toBad[b.id]!)[0];
+    if (!fix || toBad[fix.id]! > cfg.maxGapRooms) return null;
+    place(fix);
   }
 
   // --- everything else by spec weight; the start room stays harmless ---

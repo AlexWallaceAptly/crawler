@@ -1,3 +1,4 @@
+import { sleepModifiers, sleepStage } from "./sleep";
 import type { Content } from "../content/load";
 import { STATS, type Modifier, type StatBlock } from "../content/schemas";
 import type { Crawler, ItemInstance } from "../state";
@@ -22,6 +23,7 @@ export function collectModifiers(c: Crawler, content: Content): Modifier[] {
     if (!skill) continue;
     for (const perk of skill.perks) if (st.rank >= perk.rank) mods.push(...perk.modifiers);
   }
+  mods.push(...sleepModifiers(c, content));
   return mods;
 }
 
@@ -68,7 +70,7 @@ export function derive(c: Crawler, content: Content): Derived {
     armor: armor + modTotal(mods, "damageReduction", "dr"),
     guard: modTotal(mods, "defense", `defense:${heldType}`),
     hpRegen: Math.floor(stats.CON / 5) + modTotal(mods, "regen"),
-    mpRegen: Math.floor(stats.INT / 5),
+    mpRegen: Math.floor(Math.floor(stats.INT / 5) * (1 + sleepStage(c, content).mpRegenPct / 100)),
     carryLimit: 20 + 4 * stats.STR + modTotal(mods, "carry"),
     carried: c.inventory.reduce((sum, it) => sum + it.weight * it.qty, 0),
     initiativeBonus: stats.DEX + modTotal(mods, "initiative"),

@@ -131,7 +131,7 @@ export function craftModule(ctx: StepContext, name: string): boolean {
     ctx.error(`You're missing parts for ${m.name}: ${m.partsText.toLowerCase()}.`);
     return true;
   }
-  if (!timePassed(ctx, m.minutes)) return true;
+  if (!timePassed(ctx, m.minutes, "module")) return true;
   for (const p of m.parts) {
     let need = p.qty;
     for (const it of c.inventory.filter((i) => i.baseId === p.item)) {
@@ -359,7 +359,7 @@ export function moduleAction(ctx: StepContext, verb: ModuleVerb, arg?: string): 
   const dir = DIRS.find((d) => d === arg || d[0] === arg);
   const wall = breakableWalls(ctx.game).find((w) => w.dir === dir);
   if (!dir || !wall) return void ctx.error(`There's no weak wall to the ${dir ?? arg ?? "anywhere"}. Weak walls: ${breakableWalls(ctx.game).map((w) => w.dir).join(", ") || "none"}.`);
-  if (!timePassed(ctx, 30)) return;
+  if (!timePassed(ctx, 30, "module")) return;
   const floor = ctx.game.floor!;
   const here = floor.rooms[floor.currentRoom]!;
   here.exits[dir] = wall.to;

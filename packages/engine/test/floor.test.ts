@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { bfsDistances, generateFloor } from "../src/gen/floor";
+import { bfsDistances, generateFloor, pathBetween } from "../src/gen/floor";
 import { describeRoom, mapGrid, renderMap } from "../src/explore";
 import { loadContent } from "../src/content/load";
 import { resetRng } from "../src/rng";
@@ -12,7 +12,7 @@ const theme = content.floors.get("welcome_lobby");
 describe("floor generation (100 floors, spec acceptance)", () => {
   beforeEach(() => resetRng());
 
-  const floors: FloorState[] = Array.from({ length: 100 }, () => generateFloor(theme));
+  const floors: FloorState[] = Array.from({ length: 100 }, () => generateFloor(theme, { safe: content.pacing.safeRooms }));
 
   it("carves exactly the themed room count on the grid", () => {
     for (const f of floors) {
@@ -60,16 +60,34 @@ describe("floor generation (100 floors, spec acceptance)", () => {
     }
   });
 
-  it("has ~1 safe room per 15, never adjacent to a stairwell, one of them 4-8 steps out", () => {
+  it("safe rooms obey the placement rules (100 floors)", () => {
+    const cfg = content.pacing.safeRooms;
     for (const f of floors) {
       const safes = f.rooms.filter((r) => r.type === "safe");
-      expect(safes.length).toBeGreaterThanOrEqual(1);
-      expect(safes.length).toBeLessThanOrEqual(Math.round(theme.rooms / 15));
+      const stairs = f.rooms.filter((r) => r.type === "stairwell");
+      expect(safes.length).toBeGreaterThanOrEqual(cfg.minPerFloor);
+      // never next to a stairwell or to each other, and nothing else lives in them
       for (const s of safes) {
-        for (const id of Object.values(s.exits)) expect(f.rooms[id]!.type).not.toBe("stairwell");
+        for (const id of Object.values(s.exits)) {
+          expect(f.rooms[id]!.type).not.toBe("stairwell");
+          expect(f.rooms[id]!.type).not.toBe("safe");
+        }
+        expect(s.trap).toBeUndefined();
+        expect(s.boss).toBeUndefined();
       }
+      // one within reach of the entry, another well away from it
       const dist = bfsDistances(f.rooms, f.startRoom);
-      expect(safes.some((s) => dist[s.id]! >= 4 && dist[s.id]! <= 8)).toBe(true);
+      const first = safes.reduce((a, b) => (dist[a.id]! <= dist[b.id]! ? a : b));
+      expect(dist[first.id]!).toBeLessThanOrEqual(cfg.firstWithinHops);
+      const fromFirst = bfsDistances(f.rooms, first.id);
+      expect(safes.some((s) => fromFirst[s.id]! >= cfg.secondMinHops)).toBe(true);
+      // hard rule: the way to every stairwell stays within maxGapRooms of a safe room
+      const per = safes.map((s) => bfsDistances(f.rooms, s.id));
+      for (const st of stairs) {
+        for (const id of pathBetween(f.rooms, f.startRoom, st.id)) {
+          expect(Math.min(...per.map((d) => d[id]!))).toBeLessThanOrEqual(cfg.maxGapRooms);
+        }
+      }
     }
   });
 

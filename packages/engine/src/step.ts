@@ -1,10 +1,12 @@
+import { int } from "./rng";
+import { actionMinutes } from "./rules/sleep";
 import { clone } from "./clone";
 import type { Action, ActionType } from "./actions";
 import type { Content } from "./content/load";
 import type { GameEvent, GameEventBody } from "./events";
 import { generateCrawler, introContext } from "./gen/backstory";
 import {
-  clearFloor, enterFloor, enterRoom, formatTimer, openStairwell, renderMap, springTrap, tickTravelStatuses, timePassed, TIME_COST,
+  clearFloor, enterFloor, enterRoom, formatTimer, openStairwell, renderMap, springTrap, tickTravelStatuses, timePassed, timeCosts,
 } from "./explore";
 import {
   aliveEnemies, beginTurn, checkVictory, combatSummary, findEnemy, isGrid, maybeEncounter, playerAttack, playerFlee, playerStep,
@@ -343,7 +345,7 @@ const handlers: Handlers = {
     phases: ["exploring"],
     run(ctx) {
       const { room } = here(ctx);
-      if (!timePassed(ctx, TIME_COST.search)) return;
+      if (!timePassed(ctx, actionMinutes(ctx.crawler, ctx.content, timeCosts(ctx).search), "search")) return;
       room.searched = true;
       const found = room.hidden ?? [];
       const shard = pendingShard(ctx.game, ctx.content, room);
@@ -367,11 +369,12 @@ const handlers: Handlers = {
   rest: {
     phases: ["exploring"],
     run(ctx) {
-      if (!timePassed(ctx, TIME_COST.rest)) return;
+      if (!timePassed(ctx, timeCosts(ctx).rest, "rest")) return;
       const c = ctx.crawler;
       const d = derive(c, ctx.content);
-      c.hp = Math.min(d.maxHP, c.hp + Math.ceil(d.maxHP * 0.25));
-      c.mp = Math.min(d.maxMP, c.mp + Math.ceil(d.maxMP * 0.25));
+      const { hpPct, mpPct } = ctx.content.pacing.rest;
+      c.hp = Math.min(d.maxHP, c.hp + Math.ceil(d.maxHP * hpPct));
+      c.mp = Math.min(d.maxMP, c.mp + Math.ceil(d.maxMP * mpPct));
       // An hour of pressure and swearing: every status runs down by 2 rounds' worth.
       for (const s of c.statuses) s.remaining -= 2;
       c.statuses = c.statuses.filter((s) => s.remaining > 0);
@@ -383,16 +386,24 @@ const handlers: Handlers = {
     phases: ["exploring"],
     run(ctx) {
       const { room } = here(ctx);
-      if (room.type !== "safe") {
-        ctx.say("explore.sleepRefused");
-        return;
-      }
-      if (!timePassed(ctx, TIME_COST.sleep)) return; // slept straight through the collapse
+      const { sleepMin, sleepMax } = timeCosts(ctx);
+      const rules = ctx.content.pacing.sleep;
+      const safe = room.type === "safe";
+      if (!timePassed(ctx, int(sleepMin, sleepMax), "sleep")) return; // slept straight through the collapse
       const c = ctx.crawler;
       const d = derive(c, ctx.content);
-      c.hp = d.maxHP;
-      c.mp = d.maxMP;
-      c.statuses = [];
+      if (safe) {
+        c.hp = d.maxHP;
+        c.mp = d.maxMP;
+        c.statuses = [];
+        c.awakeMin = 0;
+      } else {
+        // Sleeping rough: half the restoring, and only back to the Tired line.
+        c.hp = Math.min(d.maxHP, c.hp + Math.ceil((d.maxHP - c.hp) * rules.outsideSafeRestorePct));
+        c.mp = Math.min(d.maxMP, c.mp + Math.ceil((d.maxMP - c.mp) * rules.outsideSafeRestorePct));
+        c.awakeMin = Math.min(c.awakeMin ?? 0, rules.outsideSafeAwakeHours * 60);
+        // (Wandering-monster check at +outsideSafeWanderBonus lands with the wandering system.)
+      }
       ctx.say("explore.sleep");
       pushTemper(ctx, "rest");
     },
@@ -579,7 +590,7 @@ export function travel(ctx: StepContext, dest: number): void {
   const floor = ctx.game.floor!;
   const cameFrom = floor.currentRoom;
   lapseUrge(ctx); // whatever Echo wanted in that room, it's moot now
-  if (!timePassed(ctx, TIME_COST.move)) return; // the floor ran out mid-step
+  if (!timePassed(ctx, timeCosts(ctx).move, "travel")) return; // the floor ran out mid-step
   const target = floor.rooms[dest]!;
   const firstVisit = !target.visited;
   // out-of-combat regen per room moved (spec: Derived values)

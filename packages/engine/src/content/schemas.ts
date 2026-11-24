@@ -1244,3 +1244,52 @@ export const OdditySchema = z.strictObject({
 }).refine((o) => (o.gear ? 1 : 0) + (o.consumable ? 1 : 0) === 1, { message: "an oddity is exactly one of gear or consumable" })
   .refine((o) => (o.gear ?? o.consumable)!.id === o.id && (o.gear ?? o.consumable)!.name === o.name, { message: "the item's id and name must match the oddity's" });
 export type Oddity = z.infer<typeof OdditySchema>;
+
+// ---------------------------------------------------------------- pacing (Milestone 6c)
+
+/** Every number in the floor pacing pass: time costs, sleep stages, safe-room placement. Sweepable by the sim. */
+export const PacingSchema = z.strictObject({
+  costs: z.strictObject({
+    move: z.number().int().positive(),
+    longHaulPerHop: z.number().int().positive(),
+    longHaulAfterHops: z.number().int().positive(),
+    longHaulSurcharge: z.number().int().min(0),
+    search: z.number().int().positive(),
+    rest: z.number().int().positive(),
+    sleepMin: z.number().int().positive(),
+    sleepMax: z.number().int().positive(),
+    combatRound: z.number().int().positive(),
+    meal: z.number().int().positive(),
+  }),
+  rest: z.strictObject({ hpPct: z.number().min(0).max(1), mpPct: z.number().min(0).max(1) }),
+  sleep: z.strictObject({
+    outsideSafeRestorePct: z.number().min(0).max(1),
+    outsideSafeAwakeHours: z.number().min(0),
+    outsideSafeWanderBonus: z.number().min(0),
+  }),
+  sleepStages: z.array(z.strictObject({
+    id: IdSchema,
+    name: z.string(),
+    fromHours: z.number().min(0),
+    /** Flat points on the d20 roll (about 5% each). */
+    hit: z.number().int(),
+    dodge: z.number().int(),
+    damage: z.number().int(),
+    mpRegenPct: z.number().int(),
+    /** Extra cost on scouting and search. */
+    actionCostPct: z.number().int(),
+    scoutErrors: z.boolean(),
+  })).min(1),
+  safeRooms: z.strictObject({
+    minPerFloor: z.number().int().min(1),
+    perRooms: z.number().int().positive(),
+    extraAboveRooms: z.number().int().positive(),
+    firstWithinHops: z.number().int().positive(),
+    secondMinHops: z.number().int().positive(),
+    maxGapRooms: z.number().int().positive(),
+  }),
+}).refine((p) => p.costs.sleepMin <= p.costs.sleepMax, "sleepMin must not exceed sleepMax")
+  .refine((p) => p.sleepStages[0]!.fromHours === 0 &&
+    p.sleepStages.every((s, i, a) => i === 0 || s.fromHours > a[i - 1]!.fromHours), "sleepStages must start at 0 and ascend");
+export type Pacing = z.infer<typeof PacingSchema>;
+export type SleepStage = Pacing["sleepStages"][number];

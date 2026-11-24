@@ -107,6 +107,8 @@ export interface Crawler {
   baseStats: StatBlock;
   unspentStatPoints: number;
   skillPoints: number;
+  /** Minutes awake since the last proper sleep (see rules/sleep.ts). */
+  awakeMin?: number;
   hp: number;
   mp: number;
   skills: Record<string, SkillState>;
@@ -351,6 +353,8 @@ export interface GameState {
   turn: number;
   /** Game minutes elapsed this run. */
   clock: number;
+  /** Game minutes spent this run by reason (travel, search, rest...): telemetry for the sim. */
+  timeSpent?: Record<string, number>;
   crawler: Crawler | null;
   floor: FloorState | null;
   combat: CombatState | null;

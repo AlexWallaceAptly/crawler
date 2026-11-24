@@ -1,3 +1,4 @@
+import { sleepStage } from "./rules/sleep";
 /**
  * UI-facing projection of the world. Panels render from this, never from raw state.
  */
@@ -45,6 +46,10 @@ export interface ViewModel {
     floor: number | null;
     district: string | null;
     timer: string | null;
+    /** Day and time on this run's clock ("Day 2, 14:30"). */
+    clock: string | null;
+    /** Sleep state ("Tired"), or null while rested. */
+    sleep: string | null;
     /** Current room name, with its badge if the type is player-visible ("SAFE ROOM"). */
     room: string | null;
     hp: Bar | null;
@@ -153,7 +158,7 @@ export function view(world: World, content: Content): ViewModel {
   if (!c) {
     return {
       phase: game.phase,
-      status: { floor: null, district: null, timer: null, room: null, hp: null, mp: null, xp: null, level: null },
+      status: { floor: null, district: null, timer: null, clock: null, sleep: null, room: null, hp: null, mp: null, xp: null, level: null },
       character: null, equipment: [], inventory: [], effects: [], combat: null, recipeBook: null, workbench: null, room: null, minimap: null, mapGrid: null, account: accountView,
       settings: { combatMode: combatModeOf(account) },
       echo: null,
@@ -195,6 +200,8 @@ export function view(world: World, content: Content): ViewModel {
       floor: floor ? floor.floor : null,
       district: null, // one district per floor until Floor 2
       timer: floor ? formatTimer(floor.timeLeft) : null,
+      clock: floor ? formatClock(game.clock) : null,
+      sleep: sleepStage(c, content).id === "rested" ? null : sleepStage(c, content).name,
       room: room ? (badge ? `${room.name} [${badge}]` : room.name) : null,
       hp: { current: c.hp, max: d.maxHP },
       mp: { current: c.mp, max: d.maxMP },
@@ -324,4 +331,12 @@ function weaponInHand(c: NonNullable<World["game"]["crawler"]>) {
 
 function weaponReach(c: NonNullable<World["game"]["crawler"]>): RangeBand {
   return weaponInHand(c)?.range ?? "close";
+}
+
+/** "Day 2, 14:30" from the run's clock in minutes. */
+function formatClock(minutes: number): string {
+  const day = Math.floor(minutes / 1440) + 1;
+  const h = Math.floor((minutes % 1440) / 60);
+  const m = Math.floor(minutes % 60);
+  return `Day ${day}, ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
