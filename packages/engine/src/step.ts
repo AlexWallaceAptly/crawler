@@ -1,3 +1,5 @@
+import { afterAction, assess, listen, searchPass } from "./roomwork";
+import { eatMeal, seedGuide, showGuide } from "./guideActions";
 import { int } from "./rng";
 import { actionMinutes } from "./rules/sleep";
 import { clone } from "./clone";
@@ -6,7 +8,7 @@ import type { Content } from "./content/load";
 import type { GameEvent, GameEventBody } from "./events";
 import { generateCrawler, introContext } from "./gen/backstory";
 import {
-  clearFloor, enterFloor, enterRoom, formatTimer, openStairwell, renderMap, springTrap, tickTravelStatuses, timePassed, timeCosts,
+  clearFloor, enterFloor, enterRoom, formatTimer, openStairwell, renderMap, tickTravelStatuses, timePassed, timeCosts, activeHazards, tickHazards, disarmHazards,
 } from "./explore";
 import {
   aliveEnemies, beginTurn, checkVictory, combatSummary, findEnemy, isGrid, maybeEncounter, playerAttack, playerFlee, playerStep,
@@ -111,9 +113,14 @@ export const HELP_LINES = [
   "look                 describe where you are",
   "n / e / s / w        move (also: go north, east, ...)",
   "map                  the floor so far",
-  "search               search the room (15 min)",
-  "rest                 catch your breath (1 hour, heals a little)",
-  "sleep                safe rooms only (8 hours, full heal)",
+  "search               one search pass (20 min); more passes reach deeper",
+  "listen <dir>         10 min: how dangerous is the room next door, and is there a hazard?",
+  "assess [dir]         30 min: hazards, who is waiting and how much is hidden, here or next door",
+  "disarm               switch off this room's hazards (skill check)",
+  "meal                 safe rooms: eat something for a small bonus until you sleep",
+  "guide                the run's Game Guide (events, scout reports, rules)",
+  "rest                 catch your breath (30 min, heals a little)",
+  "sleep                6-8 hours: full heal in a safe room, half as good anywhere else",
   "descend              take a stairwell down, ending the floor",
   "attack [name]        in combat. A turn is 3 AP: attack 2, move 1, flee 2, talk 2; `wait` ends the turn",
   "advance / retreat    1 AP: close in or back off (also: flee / talk / wait)",
@@ -154,6 +161,8 @@ function startNewCrawler(ctx: StepContext): void {
   ctx.game.echo = null;
   ctx.game.turn = 0;
   ctx.game.clock = 0;
+  ctx.game.timeSpent = {};
+  seedGuide(ctx.game);
   ctx.setPhase("creation");
   ctx.emit({ type: "crawlerCreated", name: crawler.name });
   const intro = introContext(crawler, ctx.content);
@@ -233,6 +242,10 @@ const handlers: Handlers = {
       const dest = room.exits[action.dir];
       if (dest === undefined) {
         ctx.say("explore.blocked", { dir: action.dir });
+        return;
+      }
+      if (here(ctx).floor.rooms[dest]!.closed) {
+        ctx.describe("That way is sealed. Whatever was in there is staying in there.");
         return;
       }
       travel(ctx, dest);
@@ -344,26 +357,37 @@ const handlers: Handlers = {
   search: {
     phases: ["exploring"],
     run(ctx) {
-      const { room } = here(ctx);
-      if (!timePassed(ctx, actionMinutes(ctx.crawler, ctx.content, timeCosts(ctx).search), "search")) return;
-      room.searched = true;
-      const found = room.hidden ?? [];
-      const shard = pendingShard(ctx.game, ctx.content, room);
-      let stairs = false;
-      if (room.concealed) {
-        room.concealed = false;
-        stairs = true;
-        ctx.describe("Behind a panel that doesn't quite match the wall, a stairwell goes down into the dark. It was here all along. Of course it was.");
-      }
-      if (found.length > 0) {
-        room.items ??= [];
-        for (const it of found) addToPile(room.items, it);
-        delete room.hidden;
-        ctx.describe(`You turn up: ${found.map((i) => (i.qty > 1 ? `${i.name} ×${i.qty}` : i.name)).join(", ")}.`);
-        ctx.say("explore.searchFound");
-      } else if (!stairs && !shard) ctx.say("explore.searchNothing");
-      if (shard) revealRoomShard(ctx, room, shard);
-      if (found.length || stairs || shard) trainSkill(ctx, "perception", 1);
+      searchPass(ctx, here(ctx).room);
+    },
+  },
+  listen: {
+    phases: ["exploring"],
+    run(ctx, action) {
+      listen(ctx, action.dir);
+    },
+  },
+  assess: {
+    phases: ["exploring"],
+    run(ctx, action) {
+      assess(ctx, action.dir);
+    },
+  },
+  disarm: {
+    phases: ["exploring"],
+    run(ctx) {
+      disarmHazards(ctx, here(ctx).room);
+    },
+  },
+  meal: {
+    phases: ["exploring"],
+    run(ctx) {
+      eatMeal(ctx, here(ctx).room);
+    },
+  },
+  guide: {
+    phases: "any",
+    run(ctx, action) {
+      showGuide(ctx, !!action.quiet);
     },
   },
   rest: {
@@ -392,6 +416,7 @@ const handlers: Handlers = {
       if (!timePassed(ctx, int(sleepMin, sleepMax), "sleep")) return; // slept straight through the collapse
       const c = ctx.crawler;
       const d = derive(c, ctx.content);
+      c.wellFed = false; // a meal lasts until the next sleep
       if (safe) {
         c.hp = d.maxHP;
         c.mp = d.maxMP;
@@ -600,16 +625,20 @@ export function travel(ctx: StepContext, dest: number): void {
   c.mp = Math.min(d.maxMP, c.mp + d.mpRegen);
   tickTravelStatuses(ctx);
   if (ctx.dead()) return;
+  if (target.closed) { // the section closed while you were walking
+    ctx.describe("The way closes in front of you. You lost the time anyway.");
+    return;
+  }
   enterRoom(ctx, dest, firstVisit ? "first" : "revisit");
-  if (firstVisit && target.type === "trap") {
-    springTrap(ctx, target);
+  if (activeHazards(target).length > 0) {
+    tickHazards(ctx, target, "enter");
     if (ctx.dead()) return;
   }
   maybeEncounter(ctx, target, firstVisit, cameFrom);
 }
 
 /** Actions that don't advance the turn counter (no game effect). */
-const FREE_ACTIONS = new Set<ActionType>(["help", "set", "recipes", "codex", "echo"]);
+const FREE_ACTIONS = new Set<ActionType>(["help", "set", "recipes", "codex", "echo", "guide"]);
 
 export function killCrawler(ctx: StepContext, cause: string, key = "died"): void {
   ctx.game.combat = null;
@@ -654,6 +683,7 @@ export function step(world: World, action: Action, content: Content, echo?: stri
     ctx.say("command.notNow", { verb: action.type });
   } else {
     handler.run(ctx, action);
+    afterAction(ctx);
     if (!FREE_ACTIONS.has(action.type)) draft.game.turn += 1;
   }
   ctx.emit({ type: "stateChanged" });

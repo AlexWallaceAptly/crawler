@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CommandOption } from "@crawler/engine";
 import { EnemyStrip, LogView } from "./LogView";
-import { CharacterSheet, CodexSheet, EchoPanel, EffectsList, EquipmentList, InventoryList, RecipeBook } from "./Sheets";
+import { CharacterSheet, CodexSheet, GuideSheet, EchoPanel, EffectsList, EquipmentList, InventoryList, RecipeBook } from "./Sheets";
 import { InputBar } from "./InputBar";
 import { MiniMapGrid } from "./MiniMapGrid";
 import { BattleGrid } from "./BattleGrid";
@@ -15,7 +15,7 @@ import { StatusStrip, Toggle, useShown, type ShellProps } from "./Mobile";
 import { readPref, writePref } from "../storage";
 import s from "./tablet.module.css";
 
-type Tab = "character" | "equipment" | "inventory" | "crafting" | "effects" | "echo";
+type Tab = "character" | "equipment" | "inventory" | "crafting" | "effects" | "echo" | "guide";
 const TABS: { id: Tab; label: string }[] = [
   { id: "character", label: "Character" },
   { id: "equipment", label: "Gear" },
@@ -23,6 +23,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "crafting", label: "Crafting" },
   { id: "effects", label: "Effects" },
   { id: "echo", label: "Echo" },
+  { id: "guide", label: "Guide" },
 ];
 const DIRS = ["north", "east", "south", "west"] as const;
 
@@ -139,6 +140,7 @@ export function TabletShell({ view, log, battle, commands, submit, onLocal, arme
               {tab === "inventory" && <InventoryList view={view} submit={submit} />}
               {tab === "crafting" && <RecipeBook view={view} submit={submit} />}
               {tab === "effects" && <EffectsList view={view} />}
+              {tab === "guide" && <GuideSheet view={view} submit={submit} />}
               {tab === "echo" && (
                 <>
                   <EchoPanel view={view} />

@@ -24,6 +24,7 @@ export function collectModifiers(c: Crawler, content: Content): Modifier[] {
     for (const perk of skill.perks) if (st.rank >= perk.rank) mods.push(...perk.modifiers);
   }
   mods.push(...sleepModifiers(c, content));
+  if (c.wellFed) mods.push({ to: "perk:xpBonus", value: content.pacing.meal.xpPct } as Modifier);
   return mods;
 }
 

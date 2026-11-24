@@ -31,6 +31,11 @@ const VERBS: Record<string, string> = {
   northeast: "diag", northwest: "diag", southeast: "diag", southwest: "diag",
   map: "map", m: "map",
   search: "search", loot: "search",
+  listen: "listen", peek: "listen", hark: "listen",
+  assess: "assess", scout: "assess", survey: "assess", inspect: "assess",
+  disarm: "disarm", defuse: "disarm",
+  meal: "meal", dine: "meal", snack: "meal",
+  guide: "guide", g: "guide", manual: "guide",
   rest: "rest", sleep: "sleep", nap: "sleep",
   descend: "descend", down: "descend", stairs: "descend",
   attack: "attack", a: "attack", hit: "attack", kill: "attack", fight: "attack",
@@ -145,6 +150,21 @@ export function parseCommand(input: string, world: World): ParseResult {
       return { ok: true, action: { type: "map" } };
     case "search":
       return { ok: true, action: { type: "search" } };
+    case "listen": {
+      const dir = DIR_WORDS[arg];
+      return dir ? { ok: true, action: { type: "listen", dir } } : { ok: false, reason: "unknown", input: text };
+    }
+    case "assess": {
+      if (!arg) return { ok: true, action: { type: "assess" } };
+      const dir = DIR_WORDS[arg];
+      return dir ? { ok: true, action: { type: "assess", dir } } : { ok: false, reason: "unknown", input: text };
+    }
+    case "disarm":
+      return { ok: true, action: { type: "disarm" } };
+    case "meal":
+      return { ok: true, action: { type: "meal" } };
+    case "guide":
+      return { ok: true, action: arg === "read" ? { type: "guide", quiet: true } : { type: "guide" } };
     case "rest":
       return { ok: true, action: { type: "rest" } };
     case "sleep":
@@ -397,7 +417,15 @@ export function availableCommands(world: World, content: Content): CommandOption
       out.push({ label: `Read ${tome.name}`, input: `use ${tome.name.toLowerCase()}`, primary: !c.spells[tome.spellId!] });
     }
     if (pendingShard(world.game, content, room)) out.push({ label: "Search for the voice", input: "search", primary: true });
-    else if (!room.searched) out.push({ label: "Search", input: "search" });
+    else if (room.type !== "safe" && room.rs.hiddenTotal - room.rs.itemsFound > 0 || !room.searched) out.push({ label: room.searched ? "Search again" : "Search", input: "search" });
+    if (room.type !== "safe") {
+      out.push({ niche: true, label: "Assess (30 min)", input: "assess" });
+      for (const dir of Object.keys(room.exits)) out.push({ niche: true, label: `Listen ${dir}`, input: `listen ${dir}` });
+    }
+    if (room.rs.hazards.some((h) => h.active)) out.push({ label: "Disarm", input: "disarm" });
+    if (room.type === "safe" && !world.game.crawler?.wellFed && world.game.crawler?.inventory.some((i) => i.kind === "consumable" && i.tags.includes("food"))) {
+      out.push({ label: "Eat a meal", input: "meal" });
+    }
     out.push({ label: "Rest", input: "rest" });
     out.push({ niche: true, label: "Map", input: "map" });
     if (world.game.echo) {
@@ -408,6 +436,7 @@ export function availableCommands(world: World, content: Content): CommandOption
     }
   }
   if (world.game.crawler) out.push({ niche: true, label: "Codex", input: "codex" });
+  if (world.game.crawler) out.push({ niche: true, label: "Guide", input: "guide" });
   if (isAllowed(world, "look")) out.push({ niche: true, label: "Look", input: "look" });
   out.push({ niche: true, label: "Help", input: "help" });
   return out;

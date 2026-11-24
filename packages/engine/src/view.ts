@@ -1,3 +1,4 @@
+import { GUIDE_SECTIONS, unseenGuide } from "./guide";
 import { sleepStage } from "./rules/sleep";
 /**
  * UI-facing projection of the world. Panels render from this, never from raw state.
@@ -38,6 +39,22 @@ export interface ItemView {
   summary?: string;
   /** Gear you aren't using: would equipping it be better, worse, or a trade-off? */
   verdict?: "better" | "worse" | "mixed" | "same";
+}
+
+export interface GuideView {
+  unseen: number;
+  sections: { id: string; name: string; entries: { id: string; title: string; text: string; isNew: boolean }[] }[];
+}
+
+function guideView(game: World["game"]): GuideView {
+  return {
+    unseen: unseenGuide(game),
+    sections: GUIDE_SECTIONS.map((sec) => ({
+      id: sec.id,
+      name: sec.name,
+      entries: game.guide.filter((e) => e.section === sec.id).map((e) => ({ id: e.id, title: e.title, text: e.text, isNew: !e.seen })),
+    })).filter((sec) => sec.entries.length > 0),
+  };
 }
 
 export interface ViewModel {
@@ -132,6 +149,8 @@ export interface ViewModel {
     /** What Echo is asking to do, if anything. */
     urge: string | null;
   };
+  /** The run's Game Guide: reference text kept off the main screens. */
+  guide: GuideView;
   /** What the account remembers across runs. */
   codex: CodexView;
   /** The room you're in: what's on the floor, and whether you can craft here. */
@@ -163,6 +182,7 @@ export function view(world: World, content: Content): ViewModel {
       settings: { combatMode: combatModeOf(account) },
       echo: null,
       codex: codexView(content, account),
+    guide: guideView(game),
     };
   }
   const d = derive(c, content);
@@ -314,6 +334,7 @@ export function view(world: World, content: Content): ViewModel {
         }
       : null,
     codex: codexView(content, account),
+    guide: guideView(game),
   };
 }
 

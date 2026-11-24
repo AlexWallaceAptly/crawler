@@ -2,7 +2,7 @@ import type { EnemyAttack, Power, RangeBand, Rarity, RoomShape, Slot, StatBlock,
 import type { GameEvent } from "./events";
 
 /** Bump when the save shape changes incompatibly; old saves are discarded (see the decision log in docs/DESIGN.md). */
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 /** Bump with a migration in engine.ts `restoreAccount`: accounts are upgraded, never discarded. */
 export const ACCOUNT_VERSION = 2;
 export const LOG_LIMIT = 300;
@@ -53,6 +53,12 @@ export interface ItemInstance {
   onHit?: { id: string; chance: number; duration?: number };
   /** Recipe ids already applied to this item as upgrades (each applies once). */
   crafted?: string[];
+  /** Hidden loot: how good a search has to be to turn it up (Milestone 6c). */
+  searchDc?: number;
+  /** Quest-ish items (a boss's counter, an oddity) stay in plain sight instead of hiding. */
+  plain?: boolean;
+  /** A sponsor drop that vanishes when its show event ends. */
+  sponsor?: boolean;
   /** Tomes and scrolls: the spell (spells.json id) rolled when it dropped. */
   spellId?: string;
   /** Scrolls: the level the spell casts at (the floor it dropped on). */
@@ -109,6 +115,8 @@ export interface Crawler {
   skillPoints: number;
   /** Minutes awake since the last proper sleep (see rules/sleep.ts). */
   awakeMin?: number;
+  /** "Well fed": a meal in a safe room, until the next sleep. */
+  wellFed?: boolean;
   hp: number;
   mp: number;
   skills: Record<string, SkillState>;
@@ -174,6 +182,60 @@ export interface Room {
   concealed?: boolean;
   /** Fault Sense or a boss's warning has marked it on the map before you've been in. */
   marked?: boolean;
+  /** Part of a collapsed section: can't be entered any more. */
+  closed?: boolean;
+  /** What the room remembers (Milestone 6c). */
+  rs: RoomState;
+}
+
+export type DangerBand = "calm" | "uneasy" | "dangerous";
+export type GroupKind = "pack" | "corridor" | "elite";
+
+/** An enemy group waiting in a room. The enemies are rolled when first needed (a scout or a fight) and kept. */
+export interface GroupPlan {
+  kind: GroupKind;
+  enemies?: Enemy[];
+}
+
+export interface HazardState {
+  /** Trap type id (floors.json trapTypes). */
+  id: string;
+  active: boolean;
+  /** Multiplies the damage; grows while you're away. */
+  intensity: number;
+  /** Game clock when it was set (and last grew). */
+  sourceTime: number;
+  /** Times it has actually hurt someone; it burns out after enough. */
+  ticks: number;
+}
+
+export interface RoomState {
+  cleared: boolean;
+  /** Groups still waiting here. */
+  groups: GroupPlan[];
+  hazards: HazardState[];
+  itemsFound: number;
+  /** Hidden items the room started with (what an assess can count down from). */
+  hiddenTotal: number;
+  searchPasses: number;
+  /** 0 glance, 1 listened, 2 assessed. */
+  scoutTier: 0 | 1 | 2;
+  /** The band as reported (a Delirious listen can be one off). */
+  danger?: DangerBand;
+  /** What the last scout said, line by line (also in the Guide). */
+  scoutNote?: string[];
+  /** Fled on round one: the room gets an extra group when you're back. */
+  alerted: boolean;
+  /** Game clock of the last time you were in it; -1 never. */
+  lastVisit: number;
+  dense: boolean;
+}
+
+export function newRoomState(): RoomState {
+  return {
+    cleared: false, groups: [], hazards: [], itemsFound: 0, hiddenTotal: 0, searchPasses: 0,
+    scoutTier: 0, alerted: false, lastVisit: -1, dense: false,
+  };
 }
 
 // ---------------------------------------------------------------- combat
@@ -290,6 +352,8 @@ export interface CombatState {
   arena?: ArenaState;
   /** A floor boss fight: which boss, and how far its weakness has got. */
   boss?: { id: string; uid: string; declines: number; triggered: boolean };
+  /** A wandering group, not the room's own. */
+  wander?: boolean;
   /** Once-a-fight module abilities already used (`shout`, `bind`). */
   used?: string[];
   /** Skill XP earned this fight, by skill id, for the end-of-fight summary. */
@@ -314,6 +378,46 @@ export interface FloorState {
   /** Room the floor boss lives in, and whether it's been beaten. */
   bossRoom?: number;
   bossDefeated?: boolean;
+  /** Run clock when the floor was entered: events and wandering count days from here. */
+  startClock: number;
+  /** The floor's scheduled show events (see showEvents.ts). */
+  events: ShowEvent[];
+  /** A wandering group found the crawler during the last action; the step resolves it. */
+  wanderDue?: boolean;
+  /** The last-day surge is on: more wanderers. */
+  surge?: boolean;
+}
+
+export type ShowEventType = "reward" | "closing" | "surge" | "announcement";
+
+export interface ShowEvent {
+  id: string;
+  type: ShowEventType;
+  /** Minutes since the floor began: when it announces, starts and ends. */
+  announceAt: number;
+  startAt: number;
+  endAt: number;
+  announced: boolean;
+  started: boolean;
+  ended: boolean;
+  /** Rooms it touches (a reward's room; a closing section). */
+  rooms: number[];
+  /** Announcements: which effect. */
+  effect?: string;
+  /** Uids of sponsor items placed by a reward. */
+  items?: string[];
+}
+
+export interface GuideEntry {
+  id: string;
+  /** Guide section: events, scouting, rooms, rules, echo. */
+  section: "events" | "scouting" | "rooms" | "rules" | "echo";
+  title: string;
+  text: string;
+  /** Run clock when it was written, for the event log. */
+  at: number;
+  /** Shown to the player yet? New ones carry a marker. */
+  seen: boolean;
 }
 
 export interface NarratorState {
@@ -368,6 +472,8 @@ export interface GameState {
   narrator: NarratorState;
   /** The thing in your pocket. Null before the run starts. */
   echo: EchoState | null;
+  /** The run's Game Guide entries (the Codex is the account's, and separate). */
+  guide: GuideEntry[];
 }
 
 /** One finished run, for the account's history. */
@@ -456,5 +562,6 @@ export function newGameState(): GameState {
     nextEventId: 1,
     narrator: { recent: [], mood: 0 },
     echo: null,
+    guide: [],
   };
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ViewModel } from "@crawler/engine";
 import s from "./panels.module.css";
 import { MiniMapGrid } from "./MiniMapGrid";
@@ -472,6 +472,37 @@ export function CodexSheet({ view }: { view: ViewModel }) {
           </ul>
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * The run's Game Guide: rules, show events, scout reports and the rooms' long descriptions.
+ * (The account's Codex is separate.) Entries new since the last visit carry a marker, which
+ * stays for this visit and clears once the guide has been read.
+ */
+export function GuideSheet({ view, submit }: { view: ViewModel; submit?: (t: string) => void }) {
+  const fresh = useRef(new Set(view.guide.sections.flatMap((sec) => sec.entries.filter((e) => e.isNew).map((e) => e.id))));
+  for (const sec of view.guide.sections) for (const e of sec.entries) if (e.isNew) fresh.current.add(e.id);
+  useEffect(() => {
+    if (view.guide.unseen > 0) submit?.("guide read");
+  }, [view.guide.unseen]);
+  if (view.guide.sections.length === 0) return <div className={s.muted}>Nothing in the Guide yet.</div>;
+  return (
+    <div>
+      {view.guide.sections.map((sec) => (
+        <div key={sec.id}>
+          <div className={s.sectionLabel}>{sec.name}</div>
+          <ul className={s.list}>
+            {sec.entries.map((e) => (
+              <li key={e.id} className={s.codexEntry}>
+                <span className={s.codexName}>{fresh.current.has(e.id) ? "● " : ""}{e.title}</span>
+                {e.text.split("\n").map((l, i) => <div key={i} className={s.codexText}>{l}</div>)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
   );
 }

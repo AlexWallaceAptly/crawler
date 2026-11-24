@@ -15,7 +15,8 @@
 import type { Content } from "./content/load";
 import type { Consumable, Effect, EnemyAttack, Modifier, Power, RangeBand } from "./content/schemas";
 import { assignMarks, generateGroup, TIER, type EncounterKind } from "./gen/enemy";
-import { enterRoom, advanceTime, timeCosts } from "./explore";
+import { enterRoom, advanceTime, timeCosts, timePassed } from "./explore";
+import { groupEnemies } from "./roomwork";
 import { dcFor } from "./rules/checks";
 import { rollDice } from "./rules/dice";
 import { collectModifiers, derive, modTotal } from "./rules/derived";
@@ -64,7 +65,10 @@ export function isGrid(ctx: StepContext): boolean {
 
 // ---------------------------------------------------------------- encounters
 
-/** Encounter odds by room type. Lairs always fight (elite); corridors roll every entry. */
+/**
+ * Walking into a room with groups still waiting fights the first one. The groups were set at
+ * generation (see gen/roomstate.ts), so a cleared room stays clear and a fled one stays dangerous.
+ */
 export function maybeEncounter(ctx: StepContext, room: Room, firstVisit: boolean, cameFrom?: number): boolean {
   if (ctx.game.phase !== "exploring") return false;
   const floor = ctx.game.floor!;
@@ -73,21 +77,30 @@ export function maybeEncounter(ctx: StepContext, room: Room, firstVisit: boolean
     startBossFight(ctx, room, cameFrom ?? floor.currentRoom);
     return true;
   }
-  // The floor's first few fights come from the easy pool, wherever they happen:
-  // a lair you stumble into that early has a couple of squatters, not its elite.
-  const theme = ctx.content.floors.byId[floor.theme];
-  const easy = (floor.fights ?? 0) < (theme?.encounters.easyFights ?? 0);
-  let kind: EncounterKind = room.type === "corridor" ? "corridor" : "pack";
-  let p = 0;
-  if (room.type === "lair") { p = firstVisit ? 1 : 0.2; if (firstVisit && !easy) kind = "elite"; }
-  else if (room.type === "chamber") p = firstVisit ? 0.35 : 0.06;
-  else if (room.type === "corridor") p = 0.08;
-  else if (room.type === "event" || room.type === "npc" || room.type === "puzzle") p = firstVisit ? 0.15 : 0.05;
-  if (p <= 0 || !chance(p)) return false;
-  const enemies = generateGroup(floor.floor, kind, ctx.content, { easy });
-  if (enemies.length === 0) return false;
+  const rs = room.rs;
+  // You ran from here on round one: the room has been told.
+  if (rs.alerted) {
+    rs.alerted = false;
+    for (let n = 0; n < ctx.content.pacing.retreat.roundOneAlertExtraGroups; n++) rs.groups.push({ kind: "pack" });
+    if (ctx.content.pacing.retreat.roundOneAlertExtraGroups > 0) ctx.describe("The room is on edge. It heard you leave, and it brought friends.");
+  }
+  const plan = rs.groups[0];
+  if (!plan) return false;
+  const enemies = groupEnemies(ctx, plan);
+  if (enemies.length === 0) { rs.groups.shift(); return false; }
+  for (const e of enemies) delete e.pos;
   startCombat(ctx, enemies, { fromRoom: cameFrom ?? floor.currentRoom });
   return true;
+}
+
+/** A won fight in a room clears that group. */
+function groupBeaten(ctx: StepContext): void {
+  const floor = ctx.game.floor;
+  const combat = ctx.game.combat;
+  if (!floor || !combat || combat.wander || combat.boss) return;
+  const rs = floor.rooms[floor.currentRoom]!.rs;
+  rs.groups.shift();
+  if (rs.groups.length === 0) rs.cleared = true;
 }
 
 export interface StartOptions {
@@ -95,6 +108,8 @@ export interface StartOptions {
   fromRoom?: number;
   /** Override the account setting (tests, the sim). */
   mode?: CombatMode;
+  /** A wandering group rather than the room's own. */
+  wander?: boolean;
   /** A floor boss fight (boss.ts). */
   boss?: NonNullable<CombatState["boss"]>;
   /** Said after the enemies are listed and before any ambush turn (a boss's intro). */
@@ -125,6 +140,7 @@ export function startCombat(ctx: StepContext, enemies: Enemy[], opts: StartOptio
     turnBegun: false,
     fromRoom,
     ...(opts.boss ? { boss: opts.boss } : {}),
+    ...(opts.wander ? { wander: true } : {}),
   };
   if (mode === "grid") {
     const room = floor.rooms[floor.currentRoom]!;
@@ -577,11 +593,25 @@ export function fledEvent(ctx: StepContext): Extract<GameEventBody, { type: "com
 
 /** End the fight as a flight and put the crawler in `toRoom` (no time cost: you ran). */
 export function leaveCombat(ctx: StepContext, toRoom: number): void {
+  const combat = ctx.game.combat;
+  const floor = ctx.game.floor;
+  const cfg = ctx.content.pacing;
+  let minutes = 0;
+  if (combat && floor) {
+    const here = floor.rooms[floor.currentRoom]!;
+    if (combat.wander) minutes = cfg.wander.fleeMinutes;
+    else if (!combat.boss && here.rs.groups[0]) {
+      // The survivors stay in the room, as hurt as you left them.
+      here.rs.groups[0].enemies = combat.enemies.filter((e) => e.hp > 0).map((e) => { delete e.pos; e.initiative = 0; return e; });
+      // Out the door on round one: it costs time, and the room is alerted.
+      if (combat.round <= 1 && toRoom !== here.id) { here.rs.alerted = cfg.retreat.roundOneAlertExtraGroups > 0; minutes = cfg.retreat.roundOneMinutes; }
+    }
+  }
   const ended = fledEvent(ctx);
   endCombat(ctx);
   ctx.emit(ended);
   ctx.setPhase("exploring");
-  const floor = ctx.game.floor;
+  if (minutes > 0 && !timePassed(ctx, minutes, "flee")) return;
   if (floor && toRoom !== floor.currentRoom) enterRoom(ctx, toRoom, "revisit");
 }
 
@@ -1112,6 +1142,7 @@ export function checkVictory(ctx: StepContext): void {
   // talked enemies already paid half in playerTalk; fled ones pay nothing
   const { gained: xp, levels } = gainXp(ctx, earned, false);
   if (combat.boss) bossDefeated(ctx);
+  groupBeaten(ctx);
   const drops = rollDrops(ctx);
   const skills = fightSkillSummary(ctx);
   endCombat(ctx);

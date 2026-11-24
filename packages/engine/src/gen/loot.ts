@@ -98,8 +98,9 @@ export function scatterFloorLoot(floor: FloorState, theme: FloorTheme, content: 
         : s.item ? itemFromRef(content, s.item, 1, floor.floor)
         : oddityFor(content, floor.floor);
       if (!item) continue;
+      if (!s.table) item.plain = true; // a named item or an oddity is a quest object: never hidden
       const room = pick(open);
-      const pile = chance(s.hiddenChance) ? (room.hidden ??= []) : (room.items ??= []);
+      const pile = !item.plain && chance(s.hiddenChance) ? (room.hidden ??= []) : (room.items ??= []);
       addToPile(pile, item);
     }
   }

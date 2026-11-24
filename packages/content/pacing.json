@@ -11,17 +11,60 @@
     "combatRound": 1,
     "meal": 15
   },
-  "rest": { "hpPct": 0.15, "mpPct": 0.15 },
+  "rest": {
+    "hpPct": 0.15,
+    "mpPct": 0.15
+  },
   "sleep": {
     "outsideSafeRestorePct": 0.5,
     "outsideSafeAwakeHours": 16,
     "outsideSafeWanderBonus": 0.5
   },
   "sleepStages": [
-    { "id": "rested", "name": "Rested", "fromHours": 0, "hit": 0, "dodge": 0, "damage": 0, "mpRegenPct": 0, "actionCostPct": 0, "scoutErrors": false },
-    { "id": "tired", "name": "Tired", "fromHours": 16, "hit": -1, "dodge": -1, "damage": 0, "mpRegenPct": -10, "actionCostPct": 0, "scoutErrors": false },
-    { "id": "exhausted", "name": "Exhausted", "fromHours": 28, "hit": -2, "dodge": -2, "damage": -1, "mpRegenPct": -10, "actionCostPct": 25, "scoutErrors": false },
-    { "id": "delirious", "name": "Delirious", "fromHours": 40, "hit": -4, "dodge": -4, "damage": -2, "mpRegenPct": -10, "actionCostPct": 25, "scoutErrors": true }
+    {
+      "id": "rested",
+      "name": "Rested",
+      "fromHours": 0,
+      "hit": 0,
+      "dodge": 0,
+      "damage": 0,
+      "mpRegenPct": 0,
+      "actionCostPct": 0,
+      "scoutErrors": false
+    },
+    {
+      "id": "tired",
+      "name": "Tired",
+      "fromHours": 16,
+      "hit": -1,
+      "dodge": -1,
+      "damage": 0,
+      "mpRegenPct": -10,
+      "actionCostPct": 0,
+      "scoutErrors": false
+    },
+    {
+      "id": "exhausted",
+      "name": "Exhausted",
+      "fromHours": 28,
+      "hit": -2,
+      "dodge": -2,
+      "damage": -1,
+      "mpRegenPct": -10,
+      "actionCostPct": 25,
+      "scoutErrors": false
+    },
+    {
+      "id": "delirious",
+      "name": "Delirious",
+      "fromHours": 40,
+      "hit": -4,
+      "dodge": -4,
+      "damage": -2,
+      "mpRegenPct": -10,
+      "actionCostPct": 25,
+      "scoutErrors": true
+    }
   ],
   "safeRooms": {
     "minPerFloor": 2,
@@ -30,5 +73,115 @@
     "firstWithinHops": 2,
     "secondMinHops": 4,
     "maxGapRooms": 3
+  },
+  "scout": {
+    "listenMinutes": 10,
+    "assessMinutes": 30,
+    "minutesOffPerPerceptionRank": 1,
+    "minListen": 5,
+    "minAssess": 15,
+    "extraDetailRank": 3,
+    "deliriousErrorChance": 0.25
+  },
+  "search": {
+    "dcMin": 3,
+    "dcMax": 14,
+    "randomBonus": 3,
+    "passBonus": 2,
+    "denseDcBonus": 2,
+    "hints": [
+      "Something glints under the clutter.",
+      "There's a corner of this room that looks picked over by someone who gave up too early.",
+      "A loose panel, a sagging shelf. Something could be back there.",
+      "The dust is disturbed in one place. Only one."
+    ]
+  },
+  "dense": {
+    "minPct": 0.15,
+    "maxPct": 0.25,
+    "extraGroups": 1,
+    "extraRewardRolls": 2
+  },
+  "groups": {
+    "chance": {
+      "chamber": 0.35,
+      "corridor": 0.12,
+      "event": 0.15,
+      "npc": 0.15,
+      "puzzle": 0.15,
+      "treasure": 0.1,
+      "trap": 0
+    },
+    "trapFightFromFloor": 2,
+    "trapFightChance": 0.3
+  },
+  "hazards": {
+    "growthPerDay": 0.5,
+    "maxIntensity": 3,
+    "burnoutTicks": 4,
+    "disarmMinutes": 20,
+    "disarmTier": "moderate"
+  },
+  "retreat": {
+    "roundOneMinutes": 10,
+    "roundOneAlertExtraGroups": 1
+  },
+  "wander": {
+    "basePerHour": 0.012,
+    "perDay": 0.01,
+    "cap": 0.06,
+    "lateFromDay": 4,
+    "lateMult": 1.75,
+    "surgeMult": 2,
+    "fleeMinutes": 10,
+    "kinds": [
+      "pack",
+      "corridor"
+    ]
+  },
+  "events": {
+    "min": 2,
+    "max": 4,
+    "rewardLeadMin": 180,
+    "rewardLengthMin": 480,
+    "closingLeadMin": 720,
+    "closingFromPct": 0.35,
+    "closingToPct": 0.7,
+    "closingRadius": 1,
+    "closingDamagePct": 0.2,
+    "surgeLeadMin": 1440,
+    "surgeExtraGroupsPct": 0.3,
+    "announceHealPct": 0.25,
+    "announceDebuffMinutes": 180,
+    "weights": {
+      "reward": 3,
+      "closing": 3,
+      "surge": 1,
+      "announcement": 3
+    },
+    "announceEffects": [
+      "hint",
+      "heal",
+      "debuff"
+    ]
+  },
+  "meal": {
+    "xpPct": 10
+  },
+  "guide": {
+    "roomLines": 2
+  },
+  "eventText": {
+    "reward.announce": "SPONSOR NOTICE: a crate is being dropped in the {room} in a few hours. It will not wait for you.",
+    "reward.start": "The sponsor crate has landed in the {room}. It is on a timer, like everything.",
+    "reward.end": "The sponsor crate in the {room} has been reclaimed. Nobody will tell you who by.",
+    "closing.announce": "FLOOR MAINTENANCE: the section around the {room} closes soon. Anyone still inside will be treated as having made a choice.",
+    "closing.start": "The section around the {room} has sealed. You can't get in. It is going to be fine.",
+    "closing.pushed": "The walls come down around you. You are thrown clear, and it costs you {damage} HP.",
+    "surge.announce": "AUDIENCE ENGAGEMENT: viewership is soft. Additional contestants-adjacent staff will be released on the final day.",
+    "surge.start": "The surge is released. Every room you cleared is a little less clear.",
+    "hint.announce": "The System AI helpfully mentions that a way down is somewhere near the {room}.",
+    "heal.announce": "A complimentary snack cart passed through the floor. It healed you {pct}% on its way by.",
+    "debuff.announce": "An hour of loud, unskippable announcements. You lose {minutes} minutes and any will to live."
   }
 }

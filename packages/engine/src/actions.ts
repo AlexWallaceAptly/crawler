@@ -11,6 +11,14 @@ export type Action =
   | { type: "go"; dir: Dir }
   | { type: "map" }
   | { type: "search" }
+  /** Scouting (Milestone 6c): listen to an adjacent room; assess this one (or a neighbor). */
+  | { type: "listen"; dir: Dir }
+  | { type: "assess"; dir?: Dir }
+  | { type: "disarm" }
+  /** A meal in a safe room: "Well fed" until the next sleep. */
+  | { type: "meal" }
+  /** Free: the run's Game Guide. */
+  | { type: "guide"; quiet?: boolean }
   | { type: "rest" }
   | { type: "sleep" }
   | { type: "descend" }

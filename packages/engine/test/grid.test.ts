@@ -1,3 +1,4 @@
+import { newRoomState } from "../src/state";
 import { afterEach, describe, expect, it } from "vitest";
 import { StepContext, isAllowed } from "../src/step";
 import { startCombat } from "../src/combat";
@@ -85,7 +86,7 @@ describe("arena generation", () => {
   const theme = content.floors.get("welcome_lobby");
   const room = (shape: Room["shape"], exits: Dir[]): Room => ({
     id: 0, x: 0, y: 0, type: shape === "corridor" ? "corridor" : "chamber", shape, name: "Test", visited: true,
-    seen: true, searched: false, desc: null,
+    seen: true, searched: false, desc: null, rs: newRoomState(),
     exits: Object.fromEntries(exits.map((d, i) => [d, i + 1])),
   });
 

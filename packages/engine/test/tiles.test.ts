@@ -1,3 +1,4 @@
+import { newRoomState } from "../src/state";
 import { afterEach, describe, expect, it } from "vitest";
 import { PEERING_BITS, TilesetSchema, type PeeringBit, type Tileset } from "../src/content/schemas";
 import { buildArena } from "../src/grid/arena";
@@ -302,7 +303,7 @@ describe("Godot TileSet import", () => {
 
 describe("ground layout (looks only)", () => {
   const room = (shape: Room["shape"]): Room => ({
-    id: 0, x: 0, y: 0, type: "chamber", shape, name: "Test", visited: true, seen: true, searched: false, desc: null,
+    id: 0, x: 0, y: 0, type: "chamber", shape, name: "Test", visited: true, seen: true, searched: false, desc: null, rs: newRoomState(),
     exits: { west: 1, east: 2 },
   });
 

@@ -13,10 +13,14 @@ import { killCrawler, type StepContext } from "./step";
 import { skillRank, trainSkill } from "./progression";
 import { generateFloor, MINUTES_PER_DAY } from "./gen/floor";
 import { seedFloorLoot, workbenchLine } from "./gen/loot";
+import { seedRoomState } from "./gen/roomstate";
+import { guideAdd } from "./guide";
+import { runEvents, scheduleEvents } from "./showEvents";
+import { wanderRoll } from "./roomwork";
 import { echoOnNewFloor, maybeRoomShard, maybeUrge, pendingShard, recordRun, shardVoice, wholenessOn } from "./echo";
 import { modulesOnEnter, neutralizePoison, trapAutoSpotted } from "./modules";
 import { bossGateOf, bossNearby, bossOfFloor } from "./boss";
-import type { Dir, FloorState, Room, RoomType } from "./state";
+import type { Dir, FloorState, HazardState, Room, RoomType } from "./state";
 import { DIRS } from "./state";
 
 /** Time costs, in game minutes: data in pacing.json so the sim can sweep them. */
@@ -108,6 +112,8 @@ export function advanceTime(ctx: StepContext, minutes: number, reason = "other")
   const floor = ctx.game.floor;
   if (!floor || ctx.game.phase === "dead") return;
   floor.timeLeft = Math.max(0, floor.timeLeft - minutes);
+  runEvents(ctx);
+  wanderRoll(ctx, minutes, reason);
 
   if (floor.timeLeft <= 0) {
     const room = floor.rooms[floor.currentRoom]!;
@@ -155,6 +161,9 @@ export function enterFloor(ctx: StepContext, theme: FloorTheme): void {
   const boss = bossOfFloor(ctx.content, theme.floor);
   ctx.game.floor = generateFloor(theme, { safe: ctx.content.pacing.safeRooms, bossGate: bossGateOf(ctx.content, theme.floor), ...(boss ? { boss: boss.id } : {}) });
   seedFloorLoot(ctx.game.floor, theme, ctx.content);
+  ctx.game.floor.startClock = ctx.game.clock;
+  seedRoomState(ctx.game.floor, theme, ctx.content);
+  scheduleEvents(ctx.game.floor, theme, ctx.content);
   ctx.setPhase("exploring");
   ctx.emit({ type: "floorEntered", floor: theme.floor, name: theme.name });
   if (theme.floor > 1) ctx.say("floor.entered", { floor: theme.floor, name: theme.name });
@@ -174,16 +183,26 @@ export function enterRoom(ctx: StepContext, roomId: number, kind: "first" | "rev
   for (const id of Object.values(room.exits)) floor.rooms[id]!.seen = true;
 
   const first = kind === "first";
+  if (kind !== "look") {
+    escalateHazards(ctx, room);
+    room.rs.lastVisit = ctx.game.clock;
+  }
   if (!room.desc) {
     room.desc = describeRoom(theme, room);
+    // Loot is hidden, but the room may say so.
+    if (room.rs.hiddenTotal > 0 && chance(0.5)) room.desc.push(pick(ctx.content.pacing.search.hints));
     if (first) maybeRoomShard(ctx, room);
   }
+  // The main screen gets a couple of lines; the rest lives in the Guide.
+  const keep = ctx.content.pacing.guide.roomLines;
+  const shown = kind === "look" || room.desc.length <= keep ? room.desc : [...room.desc.slice(0, keep), "(The rest of the room is in the Guide, or `look`.)"];
+  if (room.desc.length > keep) guideAdd(ctx.game, `room.${floor.floor}.${room.id}`, "rooms", room.name, room.desc.join("\n"));
   const items = itemLabels(room);
   ctx.emit({
     type: "roomEntered",
     name: room.name,
     badge: roomBadge(room),
-    lines: kind === "revisit" ? [] : room.desc,
+    lines: kind === "revisit" ? [] : shown,
     exits: exitList(floor, room),
     first,
     ...(items.length ? { items } : {}),
@@ -222,62 +241,144 @@ export function tickTravelStatuses(ctx: StepContext): void {
 
 // ---------------------------------------------------------------- traps
 
-/** First entry to a trap room: spot it (INT + Perception) or eat it (avoid halves nothing — it's dodge or damage). */
-export function springTrap(ctx: StepContext, room: Room): void {
-  if (!room.trap || room.trapSprung) return;
-  room.trapSprung = true;
-  const theme = ctx.content.floors.get(ctx.game.floor!.theme);
-  const trap = theme.trapTypes.find((t) => t.id === room.trap);
-  if (!trap) return;
-  const c = ctx.crawler;
-  const d = derive(c, ctx.content);
-  const mods = collectModifiers(c, ctx.content);
-  const floorNo = ctx.game.floor!.floor;
+/** Late in the floor, escalation and wandering both speed up. */
+export function floorDay(ctx: StepContext): number {
+  const floor = ctx.game.floor!;
+  return Math.floor((ctx.game.clock - floor.startClock) / MINUTES_PER_DAY) + 1;
+}
+export function lateMult(ctx: StepContext): number {
+  const w = ctx.content.pacing.wander;
+  return floorDay(ctx) >= w.lateFromDay ? w.lateMult : 1;
+}
 
-  if (trapAutoSpotted(ctx)) {
-    ctx.echoSay("echo.glowTrap");
-    ctx.describe(trap.spotted);
-    return;
+/** A hazard left alone grows: intensity climbs with the days since you were last here, up to a cap. */
+export function escalateHazards(ctx: StepContext, room: Room): void {
+  const cfg = ctx.content.pacing.hazards;
+  const now = ctx.game.clock;
+  for (const h of room.rs.hazards) {
+    if (!h.active) continue;
+    const away = Math.max(0, now - Math.max(h.sourceTime, room.rs.lastVisit < 0 ? h.sourceTime : room.rs.lastVisit)) / MINUTES_PER_DAY;
+    h.intensity = Math.min(cfg.maxIntensity, Math.round((h.intensity + cfg.growthPerDay * away * lateMult(ctx)) * 100) / 100);
+    h.sourceTime = now;
   }
-  // Bad Feeling (a utility spell): the hair on your neck spots it for you.
-  if (hasFlag(c.statuses, ctx.content, "spotTraps")) {
-    ctx.describe(`Your bad feeling stops you a step short. ${trap.spotted}`);
-    return;
+}
+
+/** The active hazards in a room, which bite on every entry and every search pass until disarmed or burnt out. */
+export function activeHazards(room: Room): HazardState[] {
+  return room.rs.hazards.filter((h) => h.active);
+}
+
+/**
+ * Each active hazard gets its chance: spot it (INT + Perception), else avoid it (dodge),
+ * else it hurts, scaled by how much it has grown. Hazards persist; they burn out after enough bites.
+ */
+export function tickHazards(ctx: StepContext, room: Room, why: "enter" | "search"): void {
+  const theme = ctx.content.floors.get(ctx.game.floor!.theme);
+  for (const h of activeHazards(room)) {
+    if (ctx.dead()) return;
+    const trap = theme.trapTypes.find((t) => t.id === h.id);
+    if (!trap) { h.active = false; continue; }
+    const c = ctx.crawler;
+    const d = derive(c, ctx.content);
+    const mods = collectModifiers(c, ctx.content);
+    const floorNo = ctx.game.floor!.floor;
+    if (h.intensity > 1.2) ctx.describe(`The ${trap.name.toLowerCase()} is worse than you remember (x${h.intensity.toFixed(1)}).`);
+
+    if (trapAutoSpotted(ctx)) {
+      ctx.echoSay("echo.glowTrap");
+      ctx.describe(trap.spotted);
+      continue;
+    }
+    // Bad Feeling (a utility spell): the hair on your neck spots it for you.
+    if (hasFlag(c.statuses, ctx.content, "spotTraps")) {
+      ctx.describe(`Your bad feeling stops you a step short. ${trap.spotted}`);
+      continue;
+    }
+    const spot = resolveCheck({
+      label: `Spot the ${trap.name}`,
+      modifier: d.stats.INT + skillRank(c, "perception", mods),
+      dc: dcFor(trap.spotTier as DcTier, floorNo),
+    });
+    ctx.emit({ type: "check", result: spot, text: describeCheck(spot) });
+    if (spot.success) {
+      ctx.describe(trap.spotted);
+      if (trap.spotTier !== "trivial") trainSkill(ctx, "perception", 1);
+      continue;
+    }
+    const avoid = resolveCheck({
+      label: `Avoid the ${trap.name}`,
+      modifier: d.stats[trap.avoidStat] + skillRank(c, "dodge", mods),
+      dc: dcFor(trap.avoidTier as DcTier, floorNo),
+    });
+    ctx.emit({ type: "check", result: avoid, text: describeCheck(avoid) });
+    if (avoid.success) {
+      ctx.describe(trap.avoided);
+      if (trap.avoidTier !== "trivial") trainSkill(ctx, "dodge", 1);
+      continue;
+    }
+    hurtByHazard(ctx, room, h, avoid.outcome === "critFailure");
   }
-  const spot = resolveCheck({
-    label: `Spot the ${trap.name}`,
-    modifier: d.stats.INT + skillRank(c, "perception", mods),
-    dc: dcFor(trap.spotTier as DcTier, floorNo),
-  });
-  ctx.emit({ type: "check", result: spot, text: describeCheck(spot) });
-  if (spot.success) {
-    ctx.describe(trap.spotted);
-    if (trap.spotTier !== "trivial") trainSkill(ctx, "perception", 1);
-    return;
-  }
-  const avoid = resolveCheck({
-    label: `Avoid the ${trap.name}`,
-    modifier: d.stats[trap.avoidStat] + skillRank(c, "dodge", mods),
-    dc: dcFor(trap.avoidTier as DcTier, floorNo),
-  });
-  ctx.emit({ type: "check", result: avoid, text: describeCheck(avoid) });
-  if (avoid.success) {
-    ctx.describe(trap.avoided);
-    if (trap.avoidTier !== "trivial") trainSkill(ctx, "dodge", 1);
-    return;
-  }
-  let dmg = rollDice(trap.dice).total;
-  if (avoid.outcome === "critFailure") dmg *= 2;
+}
+
+function hurtByHazard(ctx: StepContext, room: Room, h: HazardState, crit: boolean): void {
+  const theme = ctx.content.floors.get(ctx.game.floor!.theme);
+  const trap = theme.trapTypes.find((t) => t.id === h.id)!;
+  const c = ctx.crawler;
+  const mods = collectModifiers(c, ctx.content);
+  let dmg = Math.round(rollDice(trap.dice).total * h.intensity);
+  if (crit) dmg *= 2;
   dmg = Math.max(1, dmg - modTotal(mods, "damageReduction", `resist:${trap.damageType}`));
   c.hp -= dmg;
+  room.trapSprung = true;
+  h.ticks += 1;
   ctx.describe(trap.triggered);
-  ctx.describe(`${dmg} ${trap.damageType} damage${avoid.outcome === "critFailure" ? " (critical failure — doubled)" : ""}.`);
+  ctx.describe(`${dmg} ${trap.damageType} damage${crit ? " (critical failure — doubled)" : ""}.`);
   if (trap.status && c.hp > 0 && chance(trap.status.chance)) {
     const def = ctx.content.statusEffects.get(trap.status.id);
     applyStatus(c.statuses, def, trap.status.duration);
     ctx.describe(`You are ${def.name.toLowerCase()}.`);
   }
+  if (h.ticks >= ctx.content.pacing.hazards.burnoutTicks) {
+    h.active = false;
+    ctx.describe(`The ${trap.name.toLowerCase()} has finally spent itself. It clicks, once, like it's embarrassed.`);
+  }
   if (c.hp <= 0) killCrawler(ctx, `a ${trap.name.toLowerCase()}`);
+}
+
+/** Compatibility entry for one hazard check (tests and callers that only have `room.trap`). */
+export function springTrap(ctx: StepContext, room: Room): void {
+  if (room.trap && room.rs.hazards.length === 0 && !room.trapSprung) {
+    room.rs.hazards.push({ id: room.trap, active: true, intensity: 1, sourceTime: ctx.game.clock, ticks: 0 });
+  }
+  tickHazards(ctx, room, "enter");
+}
+
+/** `disarm`: take the time to switch a room's hazards off. A skill check; a slip sets one off. */
+export function disarmHazards(ctx: StepContext, room: Room): void {
+  const hazards = activeHazards(room);
+  if (hazards.length === 0) {
+    ctx.error("Nothing here needs disarming.");
+    return;
+  }
+  const cfg = ctx.content.pacing;
+  if (!timePassed(ctx, cfg.hazards.disarmMinutes, "disarm")) return;
+  const c = ctx.crawler;
+  const d = derive(c, ctx.content);
+  const mods = collectModifiers(c, ctx.content);
+  const check = resolveCheck({
+    label: "Disarm",
+    modifier: Math.max(d.stats.INT, d.stats.DEX) + skillRank(c, "perception", mods),
+    dc: dcFor(cfg.hazards.disarmTier as DcTier, ctx.game.floor!.floor),
+  });
+  ctx.emit({ type: "check", result: check, text: describeCheck(check) });
+  if (check.success) {
+    for (const h of hazards) h.active = false;
+    ctx.describe("Click. Whatever it was waiting for, it isn't any more.");
+    trainSkill(ctx, "perception", 1);
+    return;
+  }
+  ctx.describe("Your hands slip. The thing notices.");
+  hurtByHazard(ctx, room, hazards[0]!, check.outcome === "critFailure");
 }
 
 // ---------------------------------------------------------------- map

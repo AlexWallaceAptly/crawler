@@ -1,3 +1,4 @@
+import { newRoomState } from "../src/state";
 import { afterEach, describe, expect, it } from "vitest";
 import { createEngine } from "../src/engine";
 import { loadContent } from "../src/content/load";
@@ -345,7 +346,7 @@ describe("scripted fights", () => {
       ({ world } = engine.step(world, { type: "accept" }));
       world.game.crawler!.hp = 500;
       const ctx = new StepContext(world, content);
-      const room = { ...world.game.floor!.rooms[0]!, type: "lair" as const };
+      const room = { ...world.game.floor!.rooms[0]!, type: "lair" as const, rs: { ...newRoomState(), groups: [{ kind: "elite" as const }] } };
       expect(maybeEncounter(ctx, room, true)).toBe(true);
       const foes = ctx.game.combat!.enemies;
       expect(foes.length).toBeLessThanOrEqual(enc.easyPack[1]);
@@ -380,6 +381,7 @@ describe("milestone 4b fixes", () => {
     const dir = (Object.keys(start.exits) as (keyof typeof start.exits)[])[0]!;
     const lair = floor.rooms[start.exits[dir]!]!;
     lair.type = "lair"; // guaranteed fight on first entry
+    lair.rs.groups = [{ kind: "elite" }];
     lair.visited = false;
     ({ world } = engine.step(world, { type: "go", dir }));
     expect(world.game.phase).toBe("combat");

@@ -7,7 +7,7 @@
  */
 import type { BOSS_GATES, FloorTheme, Pacing, RoomShape } from "../content/schemas";
 import { chance, int, pick, shuffle, weightedKey } from "../rng";
-import { DIRS, type Dir, type FloorState, type Room, type RoomType } from "../state";
+import { DIRS, newRoomState, type Dir, type FloorState, type Room, type RoomType } from "../state";
 
 export const MINUTES_PER_DAY = 24 * 60;
 
@@ -121,7 +121,7 @@ function carveFloor(theme: FloorTheme, opts: FloorOptions): FloorState | null {
   const carve = (x: number, y: number, from: Room | null): Room => {
     const room: Room = {
       id: rooms.length, x, y, type: "empty", shape: "small", name: "",
-      exits: {}, visited: false, seen: false, searched: false, desc: null,
+      exits: {}, visited: false, seen: false, searched: false, desc: null, rs: newRoomState(),
     };
     rooms.push(room);
     at.set(key(x, y), room);
@@ -275,6 +275,8 @@ function carveFloor(theme: FloorTheme, opts: FloorOptions): FloorState | null {
     timeLeft: Math.round(theme.days * MINUTES_PER_DAY),
     warned: [],
     fights: 0,
+    startClock: 0,
+    events: [],
     ...(bossRoom !== undefined ? { bossRoom, bossDefeated: false } : {}),
   };
 }

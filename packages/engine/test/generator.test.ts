@@ -303,13 +303,13 @@ describe("drops and potency", () => {
     expect(out[0]).toBe("+9 HP"); // (1+1+4) × 1.5
   });
 
-  it("floors seed generated gear: treasure rooms show theirs", () => {
+  it("floors seed generated gear: treasure rooms hold theirs (hidden until searched)", () => {
     let found = 0;
     for (let i = 0; i < 10; i++) {
       const world = fresh();
       for (const r of world.game.floor!.rooms) {
         found += [...(r.items ?? []), ...(r.hidden ?? [])].filter((it: ItemInstance) => it.itemLevel !== undefined).length;
-        if (r.type === "treasure") expect((r.items ?? []).some((it) => it.itemLevel !== undefined)).toBe(true);
+        if (r.type === "treasure") expect([...(r.items ?? []), ...(r.hidden ?? [])].some((it) => it.itemLevel !== undefined)).toBe(true);
       }
     }
     expect(found).toBeGreaterThan(0);
