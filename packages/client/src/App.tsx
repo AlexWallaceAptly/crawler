@@ -50,7 +50,7 @@ export function App({ engine }: { engine: Engine }) {
         setCodexOpen(false);
         return true;
       }
-      if (t === "guide sheet" || t === "guide" || t === "g") {
+      if (layoutControl.layout === "desktop" && (t === "guide sheet" || t === "guide" || t === "g")) {
         setGuideOpen((o) => !o);
         setInventoryOpen(false);
         setCodexOpen(false);
@@ -67,7 +67,7 @@ export function App({ engine }: { engine: Engine }) {
       }
       return false;
     },
-    [resetEverything],
+    [resetEverything, layoutControl.layout],
   );
 
   useEffect(() => {

@@ -28,6 +28,7 @@ const ROUTES: Record<GameEventType, LogPanel[]> = {
   shardFound: ["log", "battle", "ticker"],
   codexUpdated: ["log", "ticker"],
   temperChanged: ["log"],
+  sleepStageChanged: ["log"],
   moduleBuilt: ["log", "ticker"],
   floorEntered: ["log", "ticker"],
   phaseChanged: [],

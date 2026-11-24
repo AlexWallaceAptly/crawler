@@ -1,3 +1,5 @@
+import { bfsDistances } from "./gen/floor";
+import { safeServices, type SafeService } from "./hooks";
 import { GUIDE_SECTIONS, unseenGuide } from "./guide";
 import { sleepStage } from "./rules/sleep";
 /**
@@ -47,14 +49,31 @@ export interface GuideView {
 }
 
 function guideView(game: World["game"]): GuideView {
-  return {
-    unseen: unseenGuide(game),
-    sections: GUIDE_SECTIONS.map((sec) => ({
-      id: sec.id,
-      name: sec.name,
-      entries: game.guide.filter((e) => e.section === sec.id).map((e) => ({ id: e.id, title: e.title, text: e.text, isNew: !e.seen })),
-    })).filter((sec) => sec.entries.length > 0),
-  };
+  const sections: GuideView["sections"] = GUIDE_SECTIONS.map((sec) => ({
+    id: sec.id,
+    name: sec.name,
+    entries: game.guide.filter((e) => e.section === sec.id).map((e) => ({ id: e.id, title: e.title, text: e.text, isNew: !e.seen })),
+  })).filter((sec) => sec.entries.length > 0);
+  const floor = game.floor;
+  if (floor) {
+    // The map is live, not a stored entry: the floor so far, and every safe room you know about.
+    const dist = bfsDistances(floor.rooms, floor.currentRoom);
+    const safe = floor.rooms.filter((r) => r.type === "safe" && (r.visited || r.marked));
+    const where = (r: (typeof safe)[number]) => (r.id === floor.currentRoom ? "you are here" : `${dist[r.id]} rooms away`);
+    sections.unshift({
+      id: "map",
+      name: "Map",
+      entries: [
+        { id: "map.floor", title: "The floor so far", text: trimMap(renderMap(floor)).join("\n"), isNew: false },
+        {
+          id: "map.safe", title: "Safe rooms found",
+          text: safe.length ? safe.map((r) => `${r.name}: ${where(r)}`).join("\n") : "None yet. They are marked S on the map once you have seen one.",
+          isNew: false,
+        },
+      ],
+    });
+  }
+  return { unseen: unseenGuide(game), sections };
 }
 
 export interface ViewModel {
@@ -154,7 +173,7 @@ export interface ViewModel {
   /** What the account remembers across runs. */
   codex: CodexView;
   /** The room you're in: what's on the floor, and whether you can craft here. */
-  room: null | { items: ItemView[]; workbench: boolean };
+  room: null | { items: ItemView[]; workbench: boolean; /** Safe rooms: what they offer (slots for Milestone 7 are listed unavailable). */ services: SafeService[] };
   minimap: string[] | null;
   /** Structured map for the tile minimap; `minimap` stays as the text/fallback form. */
   mapGrid: MapGrid | null;
@@ -312,6 +331,7 @@ export function view(world: World, content: Content): ViewModel {
       ? {
           items: (room.items ?? []).map((it) => itemView(it.uid, room.items)!).filter(Boolean),
           workbench: room.type === "safe" || !!room.workbench,
+          services: safeServices(room),
         }
       : null,
     minimap: floor ? renderMap(floor) : null,
@@ -360,4 +380,14 @@ function formatClock(minutes: number): string {
   const h = Math.floor((minutes % 1440) / 60);
   const m = Math.floor(minutes % 60);
   return `Day ${day}, ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/** Drop the empty margins of the map so the Guide shows just the part you've explored. */
+function trimMap(rows: string[]): string[] {
+  const used = rows.map((r, y) => (r.trim() ? y : -1)).filter((y) => y >= 0);
+  if (used.length === 0) return rows;
+  const y0 = Math.min(...used), y1 = Math.max(...used);
+  const cols = rows.flatMap((r) => [...r].map((ch, x) => (ch !== " " ? x : -1))).filter((x) => x >= 0);
+  const x0 = Math.min(...cols), x1 = Math.max(...cols);
+  return rows.slice(y0, y1 + 1).map((r) => r.slice(x0, x1 + 1));
 }

@@ -57,7 +57,7 @@ export interface ShellProps {
   layout: LayoutControl;
 }
 
-export function MobileShell({ view, log, battle, commands, submit, onLocal, armed, setArmed, layout }: ShellProps) {
+export function MobileShell({ view, log, battle, commands, submit: submitRaw, onLocal, armed, setArmed, layout }: ShellProps) {
   const [screen, setScreen] = useState<Screen>("map");
   const [menuOpen, setMenuOpen] = useState(false);
   const inCombat = view.phase === "combat";
@@ -83,6 +83,11 @@ export function MobileShell({ view, log, battle, commands, submit, onLocal, arme
   const pick = (id: Screen) => {
     setScreen(id);
     setMenuOpen(false);
+  };
+  // The Guide is a screen here, not a block of text in the log.
+  const submit = (t: string) => {
+    if (/^(guide|g)$/i.test(t.trim())) pick("guide");
+    else submitRaw(t);
   };
 
   const effective: Screen = screen === "battle" && !inCombat ? "map" : screen;

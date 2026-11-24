@@ -22,6 +22,8 @@ import { modulesOnEnter, neutralizePoison, trapAutoSpotted } from "./modules";
 import { bossGateOf, bossNearby, bossOfFloor } from "./boss";
 import type { Dir, FloorState, HazardState, Room, RoomType } from "./state";
 import { DIRS } from "./state";
+import { sleepStage } from "./rules/sleep";
+import { onSleepStageChange } from "./hooks";
 
 /** Time costs, in game minutes: data in pacing.json so the sim can sweep them. */
 export const timeCosts = (ctx: StepContext) => ctx.content.pacing.costs;
@@ -98,6 +100,18 @@ export function formatTimer(minutes: number): string {
   return `${min}m`;
 }
 
+/** Tell the log (and the Echo hook) when the sleep state changes. */
+export function noteSleepStage(ctx: StepContext, beforeId: string | undefined): void {
+  const c = ctx.game.crawler;
+  if (!c || !beforeId) return;
+  const now = sleepStage(c, ctx.content);
+  if (now.id === beforeId) return;
+  const order = ctx.content.pacing.sleepStages.map((st) => st.id);
+  const worse = order.indexOf(now.id) > order.indexOf(beforeId);
+  ctx.emit({ type: "sleepStageChanged", from: beforeId, to: now.id, name: now.name, worse });
+  onSleepStageChange(ctx, beforeId, now.id, worse);
+}
+
 /**
  * THE clock: every action that costs time comes through here (with a reason, for telemetry).
  * Spend game time. Fires collapse warnings as thresholds are crossed; at zero,
@@ -108,7 +122,9 @@ export function advanceTime(ctx: StepContext, minutes: number, reason = "other")
   const spent = (ctx.game.timeSpent ??= {});
   spent[reason] = (spent[reason] ?? 0) + minutes;
   // Sleep deprivation runs off this one clock; sleeping itself is handled by the sleep action.
+  const before = ctx.game.crawler ? sleepStage(ctx.game.crawler, ctx.content) : null;
   if (reason !== "sleep" && ctx.game.crawler) ctx.game.crawler.awakeMin = (ctx.game.crawler.awakeMin ?? 0) + minutes;
+  noteSleepStage(ctx, before?.id);
   const floor = ctx.game.floor;
   if (!floor || ctx.game.phase === "dead") return;
   floor.timeLeft = Math.max(0, floor.timeLeft - minutes);
@@ -396,7 +412,7 @@ export function renderMap(floor: FloorState): string[] {
     if (!r || (!r.visited && !r.seen)) return " ";
     if (r.id === floor.currentRoom) return "@";
     if (r.boss && !floor.bossDefeated && (r.visited || r.marked)) return "!";
-    if (!r.visited && !r.marked) return "?";
+    if (!r.visited && !r.marked) return "?"; // (a safe room you have scouted is `marked`, so it shows as S)
     if (r.type === "safe") return "S";
     if (r.type === "stairwell" && !r.concealed) return ">";
     return "·";

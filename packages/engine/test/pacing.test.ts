@@ -233,3 +233,195 @@ describe("wandering", () => {
 });
 import { wanderRoll } from "../src/roomwork";
 function wanderRollOnce(ctx: StepContext) { wanderRoll(ctx, 600, "travel"); }
+
+import { forceDice, setRandomSource } from "../src/rng";
+import { afterAction } from "../src/roomwork";
+import { testEnemy } from "./helpers";
+import { renderMap } from "../src/explore";
+
+/** A run standing at the start with one room next door set up as a fight. */
+function doorway() {
+  const world = freshRun();
+  world.account.settings = { combatMode: "bands" };
+  world.game.crawler!.hp = 500;
+  world.game.crawler!.statuses = [];
+  const floor = world.game.floor!;
+  const start = floor.rooms[floor.currentRoom]!;
+  const dir = Object.keys(start.exits)[0] as keyof typeof start.exits;
+  const next = floor.rooms[start.exits[dir]!]!;
+  next.type = "chamber";
+  next.rs.hazards = [];
+  next.rs.groups = [{ kind: "pack", enemies: [testEnemy({ hp: 40, maxHP: 40 })] }];
+  return { world, floor, start, dir, next };
+}
+
+describe("round-one retreat", () => {
+  it("costs time, alerts the room, and the room has an extra group when you return", () => {
+    const { world, dir, start, next } = doorway();
+    let w = engine.step(world, { type: "go", dir }).world;
+    expect(w.game.phase).toBe("combat");
+    const t0 = w.game.timeSpent?.flee ?? 0;
+    w.game.crawler!.statuses = [];
+    forceDice(20, 1);
+    w = engine.step(w, { type: "flee" }).world;
+    expect(w.game.phase).toBe("exploring");
+    expect(w.game.floor!.currentRoom).toBe(start.id);
+    expect((w.game.timeSpent?.flee ?? 0) - t0).toBe(content.pacing.retreat.roundOneMinutes);
+    const room = w.game.floor!.rooms[next.id]!;
+    expect(room.rs.alerted).toBe(true);
+    expect(room.rs.groups).toHaveLength(1); // the survivor is still there, hurt or not
+    expect(room.rs.cleared).toBe(false);
+    const back = engine.step(w, { type: "go", dir });
+    const again = back.world.game.floor!.rooms[next.id]!;
+    expect(again.rs.alerted).toBe(false);
+    expect(again.rs.groups.length).toBe(1 + content.pacing.retreat.roundOneAlertExtraGroups);
+  });
+
+  it("with the penalty set to nothing there is no alert", () => {
+    const { world, dir, next } = doorway();
+    const cfg = content.pacing.retreat;
+    const saved = cfg.roundOneAlertExtraGroups;
+    cfg.roundOneAlertExtraGroups = 0;
+    try {
+      let w = engine.step(world, { type: "go", dir }).world;
+      w.game.crawler!.statuses = [];
+      forceDice(20, 1);
+      w = engine.step(w, { type: "flee" }).world;
+      expect(w.game.floor!.rooms[next.id]!.rs.alerted).toBe(false);
+    } finally {
+      cfg.roundOneAlertExtraGroups = saved;
+    }
+  });
+});
+
+describe("a closing section", () => {
+  it("throws you out of a room that has closed, for a fifth of your health, and shuts the door behind you", () => {
+    const w = freshRun();
+    const floor = w.game.floor!;
+    const ctx = new StepContext(w, content);
+    const here = floor.rooms[floor.currentRoom]!;
+    const next = floor.rooms[Object.values(here.exits)[0]!]!;
+    here.closed = true;
+    const hp = w.game.crawler!.hp;
+    afterAction(ctx);
+    expect(floor.currentRoom).not.toBe(here.id);
+    expect(floor.rooms[floor.currentRoom]!.closed).toBeFalsy();
+    expect(w.game.crawler!.hp).toBeLessThan(hp);
+    // and nobody can walk back in
+    const dir = (Object.entries(floor.rooms[floor.currentRoom]!.exits).find(([, id]) => id === here.id)?.[0]) as "north" | undefined;
+    if (dir) {
+      const out = engine.step(w, { type: "go", dir });
+      expect(out.world.game.floor!.currentRoom).toBe(floor.currentRoom);
+    }
+    void next;
+  });
+});
+
+describe("wandering gets likelier late in the floor", () => {
+  it("rolls more often on day 4+ than on day 1, and more again during a surge", () => {
+    const rate = (day: number, surge = false) => {
+      const w = freshRun();
+      const floor = w.game.floor!;
+      floor.surge = surge;
+      const ctx = new StepContext(w, content);
+      w.game.clock = floor.startClock + (day - 1) * MINUTES_PER_DAY;
+      floor.currentRoom = floor.rooms.find((r) => r.type !== "safe")!.id;
+      let hits = 0;
+      for (let i = 0; i < 4000; i++) {
+        floor.wanderDue = false;
+        wanderRoll(ctx, 600, "travel");
+        if (floor.wanderDue) hits++;
+      }
+      return hits / 4000;
+    };
+    resetRng();
+    const early = rate(1);
+    const late = rate(5);
+    expect(late).toBeGreaterThan(early);
+    expect(rate(5, true)).toBeGreaterThan(late);
+  });
+
+  it("a wanderer found while resting starts a fight that is not the room's own", () => {
+    let w = freshRun();
+    w.game.floor!.currentRoom = w.game.floor!.rooms.find((r) => r.type === "corridor" || r.type === "chamber")!.id;
+    w.game.floor!.rooms[w.game.floor!.currentRoom]!.rs.groups = [];
+    setRandomSource(() => 0); // every roll hits
+    w = engine.step(w, { type: "rest" }).world;
+    resetRng();
+    expect(w.game.phase).toBe("combat");
+    expect(w.game.combat!.wander).toBe(true);
+  });
+});
+
+describe("saving and loading", () => {
+  it("room state, scouting, hazards, events and the Guide survive a JSON round trip", () => {
+    let w = freshRun();
+    const floor = w.game.floor!;
+    const here = floor.rooms[floor.currentRoom]!;
+    const dir = Object.keys(here.exits)[0] as keyof typeof here.exits;
+    const next = floor.rooms[here.exits[dir]!]!;
+    next.rs.hazards = [{ id: theme.trapTypes[0]!.id, active: true, intensity: 1.5, sourceTime: 10, ticks: 2 }];
+    next.rs.groups = [{ kind: "pack" }];
+    w = engine.step(w, { type: "listen", dir }).world;
+    w = engine.step(w, { type: "assess" }).world;
+    const restored = engine.restore(JSON.parse(JSON.stringify(w.game)), JSON.parse(JSON.stringify(w.account)))!;
+    expect(restored).not.toBeNull();
+    const f2 = restored.game.floor!;
+    expect(f2.rooms[next.id]!.rs).toEqual(w.game.floor!.rooms[next.id]!.rs);
+    expect(f2.rooms[next.id]!.rs.hazards[0]!.intensity).toBe(1.5);
+    expect(f2.rooms[next.id]!.rs.scoutTier).toBe(1);
+    expect(f2.events).toEqual(w.game.floor!.events);
+    expect(restored.game.guide).toEqual(w.game.guide);
+    expect(restored.game.crawler!.awakeMin).toBe(w.game.crawler!.awakeMin);
+    // and the restored run still plays
+    const next2 = engine.step(restored, { type: "search" });
+    expect(next2.world.game.timeSpent?.search).toBeGreaterThan(0);
+  });
+});
+
+describe("safe rooms on the map and the Guide", () => {
+  it("a safe room you have listened to shows as S, and the Guide map lists it", () => {
+    let w = freshRun();
+    const floor = w.game.floor!;
+    const safe = floor.rooms.find((r) => r.type === "safe")!;
+    // stand next to it
+    const nb = floor.rooms[Object.values(safe.exits)[0]!]!;
+    floor.currentRoom = nb.id;
+    nb.visited = true;
+    safe.seen = true; // walking in next door shows you its door
+    const dir = (Object.entries(nb.exits).find(([, id]) => id === safe.id)![0]) as "north";
+    expect(renderMap(floor).join("\n")).not.toMatch(/S/);
+    w = engine.step(w, { type: "listen", dir }).world;
+    const f = w.game.floor!;
+    expect(f.rooms[safe.id]!.marked).toBe(true);
+    expect(renderMap(f).join("")).toContain("S");
+    const guide = engine.view(w).guide.sections.find((s) => s.id === "map")!;
+    expect(guide.entries.find((e) => e.id === "map.safe")!.text).toContain(safe.name);
+    expect(guide.entries.find((e) => e.id === "map.floor")!.text).toContain("S");
+  });
+
+  it("safe rooms list their services, with the milestone 7 slots marked unavailable", () => {
+    const w = freshRun();
+    const floor = w.game.floor!;
+    floor.currentRoom = floor.rooms.find((r) => r.type === "safe")!.id;
+    const services = engine.view(w).room!.services;
+    expect(services.filter((s) => s.available).map((s) => s.id)).toEqual(["sleep", "rest", "meal"]);
+    expect(services.filter((s) => !s.available).map((s) => s.id)).toEqual(["shop", "lootBox", "achievements"]);
+  });
+});
+
+describe("sleep state changes", () => {
+  it("tell the log, in both directions", () => {
+    let w = freshRun();
+    w.game.crawler!.awakeMin = 16 * 60 - 5;
+    const out = engine.step(w, { type: "rest" });
+    const ev = out.events.filter((e) => e.type === "sleepStageChanged");
+    expect(ev).toHaveLength(1);
+    expect(ev[0]).toMatchObject({ to: "tired", worse: true });
+    w = out.world;
+    const floor = w.game.floor!;
+    floor.currentRoom = floor.rooms.find((r) => r.type === "safe")!.id;
+    const after = engine.step(w, { type: "sleep" });
+    expect(after.events.find((e) => e.type === "sleepStageChanged")).toMatchObject({ to: "rested", worse: false });
+  });
+});

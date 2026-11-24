@@ -127,6 +127,8 @@ function Line({ e }: { e: GameEvent }) {
           ❖ Codex: {e.entry}{e.kind === "unlocked" ? " (new entry)" : e.kind === "line" ? " (another line)" : ""}
         </div>
       );
+    case "sleepStageChanged":
+      return <div className={`${s.line} ${s.skillNote}`}>{e.worse ? "☾" : "☀"} {e.name}</div>;
     case "temperChanged":
       return (
         <div className={`${s.line} ${s.temperNote}`}>

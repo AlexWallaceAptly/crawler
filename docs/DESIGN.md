@@ -2199,4 +2199,10 @@ Source: `floor-pacing-pass.md`, built on the `floor-pacing-pass` branch. Every n
 - Full sweeper (collapse timer stretched 4x): about 10% finish within the real budget (target 15% or fewer), but the cost of a completed sweep is 107% of the budget, below the 140-160% target; and 75% of sweepers die first, so the completed ones are the lucky ones. Not tuned further: more rooms or search cost would also punish the balanced player.
 - Spell numbers are not broken out; only aggregates.
 
-**Not done:** the long-haul travel command, Echo's reactions to sleep states and Echo notes in the Guide (milestone 7), moving item lore and the bestiary into the Guide, shops, loot boxes and achievements in safe rooms (hooks only).
+**Hooks for Milestone 7** (`src/hooks.ts`): `onSleepStageChange` is called when the sleep state changes (an empty seam for Echo's narration; the log also gets a `sleepStageChanged` line), and `safeServices(room)` lists what a safe room offers (sleep, rest and meal now; shop, loot boxes and achievements as unavailable slots), shown in `view.room.services`.
+
+**Map and Guide.** A safe room shows as S once visited or listened to. The Guide opens with a live map of the explored part of the floor and a list of the safe rooms found (and how far away). On tablet and phone the `guide` command opens the Guide tab or screen instead of printing it.
+
+**Checked in a browser** (desktop, tablet and phone, in Chrome): the Guide overlay and F1, the tab and screen versions, the two-line room text with its pointer, and the new buttons. No console errors.
+
+**Not done:** the long-haul travel command, Echo notes in the Guide (milestone 7), moving item lore and the bestiary into the Guide, shops, loot boxes and achievements in safe rooms (slots only).

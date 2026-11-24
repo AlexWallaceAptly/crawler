@@ -497,7 +497,7 @@ export function GuideSheet({ view, submit }: { view: ViewModel; submit?: (t: str
             {sec.entries.map((e) => (
               <li key={e.id} className={s.codexEntry}>
                 <span className={s.codexName}>{fresh.current.has(e.id) ? "● " : ""}{e.title}</span>
-                {e.text.split("\n").map((l, i) => <div key={i} className={s.codexText}>{l}</div>)}
+                {e.text.split("\n").map((l, i) => <div key={i} className={s.codexText} style={e.id === "map.floor" ? { whiteSpace: "pre", fontFamily: "monospace" } : undefined}>{l}</div>)}
               </li>
             ))}
           </ul>

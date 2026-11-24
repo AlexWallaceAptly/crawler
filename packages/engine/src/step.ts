@@ -1,14 +1,14 @@
 import { afterAction, assess, listen, searchPass } from "./roomwork";
 import { eatMeal, seedGuide, showGuide } from "./guideActions";
 import { int } from "./rng";
-import { actionMinutes } from "./rules/sleep";
+import { actionMinutes, sleepStage } from "./rules/sleep";
 import { clone } from "./clone";
 import type { Action, ActionType } from "./actions";
 import type { Content } from "./content/load";
 import type { GameEvent, GameEventBody } from "./events";
 import { generateCrawler, introContext } from "./gen/backstory";
 import {
-  clearFloor, enterFloor, enterRoom, formatTimer, openStairwell, renderMap, tickTravelStatuses, timePassed, timeCosts, activeHazards, tickHazards, disarmHazards,
+  clearFloor, enterFloor, enterRoom, formatTimer, openStairwell, renderMap, tickTravelStatuses, timePassed, timeCosts, noteSleepStage, activeHazards, tickHazards, disarmHazards,
 } from "./explore";
 import {
   aliveEnemies, beginTurn, checkVictory, combatSummary, findEnemy, isGrid, maybeEncounter, playerAttack, playerFlee, playerStep,
@@ -162,7 +162,7 @@ function startNewCrawler(ctx: StepContext): void {
   ctx.game.turn = 0;
   ctx.game.clock = 0;
   ctx.game.timeSpent = {};
-  seedGuide(ctx.game);
+  seedGuide(ctx.game, ctx.content);
   ctx.setPhase("creation");
   ctx.emit({ type: "crawlerCreated", name: crawler.name });
   const intro = introContext(crawler, ctx.content);
@@ -413,6 +413,7 @@ const handlers: Handlers = {
       const { sleepMin, sleepMax } = timeCosts(ctx);
       const rules = ctx.content.pacing.sleep;
       const safe = room.type === "safe";
+      const stageBefore = sleepStage(ctx.crawler, ctx.content).id;
       if (!timePassed(ctx, int(sleepMin, sleepMax), "sleep")) return; // slept straight through the collapse
       const c = ctx.crawler;
       const d = derive(c, ctx.content);
@@ -427,8 +428,8 @@ const handlers: Handlers = {
         c.hp = Math.min(d.maxHP, c.hp + Math.ceil((d.maxHP - c.hp) * rules.outsideSafeRestorePct));
         c.mp = Math.min(d.maxMP, c.mp + Math.ceil((d.maxMP - c.mp) * rules.outsideSafeRestorePct));
         c.awakeMin = Math.min(c.awakeMin ?? 0, rules.outsideSafeAwakeHours * 60);
-        // (Wandering-monster check at +outsideSafeWanderBonus lands with the wandering system.)
       }
+      noteSleepStage(ctx, stageBefore);
       ctx.say("explore.sleep");
       pushTemper(ctx, "rest");
     },

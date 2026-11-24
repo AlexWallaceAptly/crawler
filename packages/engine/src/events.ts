@@ -65,6 +65,8 @@ export type GameEventBody =
     speaker?: string;
   }
   /** The account's Codex gained something. */
+  /** The crawler crossed into another sleep state (Rested / Tired / Exhausted / Delirious). */
+  | { type: "sleepStageChanged"; from: string; to: string; name: string; worse: boolean }
   | { type: "codexUpdated"; entry: string; kind: "unlocked" | "line" | "recipe" | "weakness" | "ending" }
   | { type: "temperChanged"; temper: number; delta: number; side: "calm" | "base" | "fed" }
   /** Echo has a new module for this run. */

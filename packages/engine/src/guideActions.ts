@@ -1,13 +1,14 @@
 /** Guide and meal commands (Milestone 6c). The Guide's data and helpers are in guide.ts. */
-import { GUIDE_RULES, GUIDE_SECTIONS, guideAdd } from "./guide";
+import { guideRules, GUIDE_SECTIONS, guideAdd } from "./guide";
 import { timePassed, timeCosts } from "./explore";
+import type { Content } from "./content/load";
 import type { GameState, Room } from "./state";
 import type { StepContext } from "./step";
 
 /** A fresh run: an empty event log and the rules entries (all "new"). */
-export function seedGuide(game: GameState): void {
+export function seedGuide(game: GameState, content: Content): void {
   game.guide = [];
-  for (const r of GUIDE_RULES) guideAdd(game, r.id, "rules", r.title, r.text);
+  for (const r of guideRules(content)) guideAdd(game, r.id, "rules", r.title, r.text);
 }
 
 /** `guide`: print the Guide (the client also shows it as a panel) and mark it read. */

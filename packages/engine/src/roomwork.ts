@@ -54,6 +54,8 @@ function scoutMinutes(ctx: StepContext, base: number, min: number): number {
 
 function record(ctx: StepContext, room: Room, tier: 1 | 2, lines: string[], danger?: DangerBand): void {
   const rs = room.rs;
+  // A safe room you have listened to is a safe room you know about: it goes on the map.
+  if (room.type === "safe") { room.marked = true; lines.push("A safe room."); }
   if (tier > rs.scoutTier) rs.scoutTier = tier;
   if (danger) rs.danger = danger;
   rs.scoutNote = lines;

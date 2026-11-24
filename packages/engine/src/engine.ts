@@ -43,7 +43,11 @@ export function createEngine(content: Content): Engine {
     step: (world, action) => step(world, action, content),
     input(world, text) {
       const parsed = parseCommand(text, world);
-      if (parsed.ok) return step(world, parsed.action, content, normalize(text));
+      if (parsed.ok) {
+        // Marking the Guide read is bookkeeping, not something the player typed: no echo line.
+        const quiet = parsed.action.type === "guide" && parsed.action.quiet;
+        return step(world, parsed.action, content, quiet ? undefined : normalize(text));
+      }
       const draft = clone(world);
       if (parsed.reason === "empty") return { world, events: [] };
       const line = narrate(content, draft.game.narrator, "command.unknown", { input: parsed.input });

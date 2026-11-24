@@ -27,7 +27,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 const DIRS = ["north", "east", "south", "west"] as const;
 
-export function TabletShell({ view, log, battle, commands, submit, onLocal, armed, setArmed, layout }: ShellProps) {
+export function TabletShell({ view, log, battle, commands, submit: submitRaw, onLocal, armed, setArmed, layout }: ShellProps) {
   const inCombat = view.phase === "combat";
   const board = inCombat && !!view.combat?.grid;
   const exploring = view.phase === "exploring" && !!view.mapGrid;
@@ -39,6 +39,11 @@ export function TabletShell({ view, log, battle, commands, submit, onLocal, arme
 
   const setTab = (t: Tab) => { setTabState(t); writePref("tabletTab", t); };
   const openBench = () => { setTab("crafting"); if (!tabsShown) toggleTabs(); };
+  // The Guide is a tab here, not a block of text in the log.
+  const submit = (t: string) => {
+    if (/^(guide|g)$/i.test(t.trim())) { setTab("guide"); if (!tabsShown) toggleTabs(); }
+    else submitRaw(t);
+  };
 
   // The menu never outlives the state it was opened in.
   useEffect(() => setMoreOpen(false), [view.phase]);
