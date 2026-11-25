@@ -6,3 +6,6 @@ packages/server/logs/
 *.log
 .DS_Store
 coverage/
+
+# Personal Claude Code settings (per machine)
+.claude/settings.local.json
