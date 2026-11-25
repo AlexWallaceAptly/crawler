@@ -50,6 +50,9 @@ const ROUTES: Record<GameEventType, LogPanel[]> = {
   legacyEarned: ["log"],
   bequeathed: [],
   unlockBought: ["log", "ticker"],
+  // Milestone 9: the district's own line and the System AI's carry it; the ticker gets the name.
+  districtEntered: ["ticker"],
+  championsCleared: ["ticker"],
 };
 
 export function routeEvent(e: GameEvent): LogPanel[] {

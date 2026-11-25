@@ -138,7 +138,7 @@ function Line({ e }: { e: GameEvent }) {
     case "moduleBuilt":
       return <div className={`${s.line} ${s.divider}`}>── ECHO MODULE: {e.name} ──</div>;
     case "achievementEarned":
-      return <div className={`${s.line} ${s.levelUp}`}>🏆 ACHIEVEMENT · {e.name} · {e.reward}</div>;
+      return <div className={`${s.line} ${s.levelUp}`}>🏆 ACHIEVEMENT · {e.name} · {e.reward || "no prize"}</div>;
     case "boxEarned":
       return <div className={`${s.line} ${s.loot}`}>▣ A {e.tier} box joins your pack. It opens in a safe room.</div>;
     case "boxOpened":

@@ -9,6 +9,7 @@ export type GuideSection = GuideEntry["section"];
 
 export const GUIDE_SECTIONS: { id: GuideSection; name: string }[] = [
   { id: "events", name: "Show events" },
+  { id: "districts", name: "Districts" },
   { id: "scouting", name: "Scout reports" },
   { id: "rooms", name: "Rooms" },
   { id: "rules", name: "Rules" },
@@ -40,5 +41,6 @@ export function guideRules(content: Content): { id: string; title: string; text:
     { id: "rule.search", title: "Searching", text: "Loot is hidden until found. Each `search` pass finds what is within your reach; more passes reach deeper. An assess tells you how much is left." },
     { id: "rule.hazards", title: "Hazards", text: "Traps and the like stay where they are, and grow worse the longer you're away. `disarm` switches them off, or they burn out after biting a few times. None of them blocks a path for good." },
     { id: "rule.rooms", title: "Rooms remember", text: "Cleared rooms stay cleared. A room you fled in the first round is alerted when you return. Dense rooms hold more enemies and better loot." },
+    { id: "rule.districts", title: "Districts", text: "Deeper floors are split into districts. The further a district is from where you came in, the tougher its enemies. Each one has a champion, a named elite in a lair at its far end, worth a silver box. Lair elites drop a box too." },
   ];
 }

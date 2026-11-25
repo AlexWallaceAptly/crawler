@@ -11,6 +11,7 @@ import { generateItem, itemFromRef, itemLevelFor } from "./gen/item";
 import { addToPile, findItems, howManyFit } from "./inventory";
 import { effectsNow } from "./modules";
 import { derive } from "./rules/derived";
+import { itemInfo, type ItemQuick } from "./itemInfo";
 import { chance, int, pick } from "./rng";
 import type { Crawler, FloorState, GameState, ItemInstance, Room } from "./state";
 import type { StepContext } from "./step";
@@ -69,7 +70,11 @@ export function sellPrice(game: GameState, content: Content, shop: { personality
 
 // ---------------------------------------------------------------- views
 
-export interface ShopLine { name: string; qty: number; price: number; rarity: string; slot?: string; value: number }
+export interface ShopLine {
+  name: string; qty: number; price: number; rarity: string; slot?: string; value: number;
+  /** For sale: a weapon's stat and the one number against what you have on, like the inventory row. */
+  quick?: ItemQuick;
+}
 
 export interface ShopView {
   keeper: string;
@@ -91,7 +96,10 @@ export function shopView(game: GameState, content: Content, room: Room): ShopVie
     title: p.title,
     blurb: p.blurb,
     gold: c.gold,
-    stock: room.shop.stock.map((i) => ({ name: i.name, qty: i.qty, price: buyPrice(game, content, room.shop!, i), rarity: i.rarity, ...(i.slot ? { slot: i.slot } : {}), value: i.value })),
+    stock: room.shop.stock.map((i) => {
+      const quick = i.kind === "gear" ? itemInfo(c, content, i).quick : undefined;
+      return { name: i.name, qty: i.qty, price: buyPrice(game, content, room.shop!, i), rarity: i.rarity, ...(i.slot ? { slot: i.slot } : {}), value: i.value, ...(quick ? { quick } : {}) };
+    }),
     sell: c.inventory.filter((i) => !equipped.has(i.uid)).map((i) => ({ name: i.name, qty: i.qty, price: sellPrice(game, content, room.shop!, i), rarity: i.rarity, ...(i.slot ? { slot: i.slot } : {}), value: i.value })),
   };
 }

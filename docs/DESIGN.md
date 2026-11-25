@@ -846,6 +846,21 @@ Each floor is a grid of connected rooms with a theme, several stairwells, scatte
 
 Themes live in `floors.json`: room name parts, description fragments (sights, smells, sounds), trap types, loot, arena dressing and encounter pools (enemy families). Which boss a floor has and whether it gates the stairs come from the floor arc in `thread.json` and the boss in `bosses.json`.
 
+**Districts** (Milestone 9) are listed on the floor theme in depth order (`floors.json` → `districts`). The first holds the entrance and the last is the deep end. A floor with no list is one district and shows none.
+
+| Floor | Districts, entrance first |
+| --- | --- |
+| 2 | Intake (claim-tag moths, finders keepers) → The Stacks (suitcases, umbrella bats) → The Unclaimed (odd-sock wraiths, and the drains that aren't drains) |
+| 3 | Level P1: Short Stay (valet imps, car alarms) → The Car Wash (oil slicks) → The Ramps (hubcap crabs) → Sealed Level B4 (brake-line eels). The quest's finale lives in the fourth (Milestone 12) |
+
+A district has:
+
+- a name, and a line printed the first time you cross in
+- a level step: by default its index, so enemies are `floor * 4 + district.index`
+- the families it favors, which are three times as likely to lead a group there
+- its own adjectives, sights, sounds and smells, which mix 50/50 with the floor's
+- a **champion**: one named elite in a lair at the district's far end
+
 The Floor 1-3 themes replaced the earlier Undercroft, Drowned Mall and Rot Carnival. The Undercroft's hand-written text is archived in `content-csv/archive/`; its enemy families and floor art stayed, because the Mother's drains run under the lobby.
 
 ### Map algorithm
@@ -856,11 +871,17 @@ generateFloor(floorDef):
   carve rooms by random walk from the start cell until roomCount reached
   connect neighbors that the walk touched (N/S/E/W exits)
   add loops: connect 10-15% extra adjacent pairs so it isn't a tree
-  districts = split rooms into floorDef.districts groups (seeded flood fill from spread-out cells)
+  districts = split rooms into floorDef.districts groups (seeded flood fill from spread-out cells:
+    the start, then the rooms farthest from the seeds so far; the smallest district grows next;
+    seeds move to their district's middle and the fill reruns; district 0 holds the start, the
+    rest are numbered by distance; a lopsided split is carved again)
   stairwells = pick 3-5 rooms far from start and from each other (BFS distance)
-  safeRooms  = about 1 per 15 rooms, spread by BFS distance, never adjacent to a stairwell
+  safeRooms  = about 1 per 15 rooms, spread by BFS distance, never adjacent to a stairwell;
+    at least one in every district
   place the floor boss (see The thread → Floor bosses): a dead-end lair on mini-boss floors;
     on gate floors, the stairwell nearest the start, with every other stairwell hidden
+  place each district champion's lair: the room in its district farthest from the start
+    (a dead end if one is near the end), never next to a stairwell, a safe room or the boss
   every other room gets a type by weight (see below), then contents
   verify: every stairwell reachable from start (on gate floors, a hidden one without passing the boss); else regenerate
 ```
@@ -901,7 +922,8 @@ The System AI announces remaining time at 24 hours, 6 hours, 1 hour and 10 minut
 ### Exploration UI
 
 - `look` prints the room description: theme fragments + contents (what's on the floor, a workbench) + exits.
-- `map` prints an ASCII grid of explored rooms: `@` you, `S` safe room, `>` stairwell, `!` boss lair, `?` seen but unvisited.
+- `map` prints an ASCII grid of explored rooms: `@` you, `S` safe room, `>` stairwell, `!` boss lair, `?` seen but unvisited. Under it is the district you're in. The graphical minimap draws a dashed line between districts.
+- The first time you cross into a district, its line prints, the System AI comments, and the Guide gets an entry for it: how much tougher it is, and whether its champion is alive.
 - Room descriptions are generated once and cached so revisits read the same. A shard delivered in a room becomes part of its cached description.
 - Hidden stairwells (gate floors) read as ordinary rooms, with no badge and no map marker, until `search`, Glow or Fault Sense turns them up.
 
@@ -928,7 +950,8 @@ generateEnemy(family, tier, floor, district):
 | --- | --- | --- | --- |
 | Minion | 0.6 | 0 | Two levels below a mob, 60% XP. Ordinary encounters are packs of 2-4 minions (2-3 in corridors), from up to two families (`floors.json` → `encounters`) |
 | Mob | 1 | 0-1 | A standard foe. On `mobChance` (25% on Floor 1) one leads a hard-pool pack of 3+ in place of two of its minions |
-| Elite | 2.5 | 1-2 | Alone or with 1-2 minion escorts; drops a bronze or silver box |
+| Elite | 2.5 | 1-2 | Alone or with 1-2 minion escorts; drops a bronze or silver box (`boxes.json` → `drops`) |
+| District champion | 2.5 (elite) | 2 | One per district on Floors 2-3, in a lair at the district's far end: a named elite of the district's family, a level above its elites, always escorted, never an easy fight; drops a silver box and a piece of gear |
 | Floor boss (mini) | per boss in `bosses.json` (about 4) | 0 | Floors 1-4: one optional boss in its own lair; hand-written, weakness enforced; rule-based until Milestone 10, then Claude-run; gold box |
 | Floor boss (gate) | per boss (about 6) | 0 | Floors 5+: stands on the obvious stairwell; Claude-run; gold box |
 | Quest boss | 10 | 3 | Floor 3 quest finale; Claude-run; platinum box |
@@ -1229,7 +1252,7 @@ These are out of scope for the first build. The engine should leave room for the
 - **Fame and audience**: viewers, followers, sponsors, fan boxes, benefactor boxes, AI mood tied to ratings.
 - **Floors 4-13** (and the achievements tagged "Floors 4+" in `Achievements (pending).csv`: floors 5/9/13, 15 shards, the Floor 13 endings, Echo's Act 2/3 and Floor 13 speech): themes, rooms and the bosses' fights (their arc rows, weaknesses, shards and module text are already in the data), celestial boxes, more complex quests, and the Floor 13 finale (the ending rule is built).
 - **Echo's later stages** (turn on `well_actually`, `no_echo` and `own_words` from the pending sheet with it; see "Achievement hooks" under Milestone 7): the Angry stage's free action and refusals, Soothe, the Host's PA voice changing with Temper, quakes and the Mother's tremors, and modules M07-M14.
-- **Districts and elites on Floors 2-3** (Milestone 9): the themes are in, the districts are not.
+- **Event, puzzle and NPC rooms**: the design wants about 40 event scenes (numbered choices with stat checks, outcomes from a fixed effect list), puzzles and talking NPCs. Until they exist, these rooms are a flavor line plus their loot and fights. No milestone owns them yet. Milestone 13 is the latest they can go in, since its "fill all tables" pass needs them.
 - **Pet sentience and pet classes.**
 - **More magic**: the summoning school (it needs allied units on the board), `ally` targets, enemy spellcasters and Echo's Quiet Field (M09) that silences them, and spells from class and race grants (Milestone 11).
 - **Advanced crafting**: basic junk crafting landed in Milestone 4b. The Junk Engineer class gets crafting perks (bench-free crafting, Tinkering ranks, gadget recipes) in Milestone 11.
@@ -2302,3 +2325,120 @@ Built in the order of the plan: the `died` fields, legacy points and the run's t
 **Sim snapshot** (`--floors 3 --craft --chain 10`, 60 runs as six careers of 10 crawlers on one account; the bot leaves its most valuable item, walks to it on the next Floor 1 once, and buys the cheapest unlock it can afford until it can't). No stuck runs. Legacy points: median 106 a run (deaths 88, clears 114; 10th-90th 63-119), a little above the "60-80" guessed in planning, because a run now earns about 30 achievements. With the costs above, a career owns 1 of the 10 one-off unlocks after its first run, 5 after its fourth, and nearly all after its tenth; the first costs (50-60) are all within one run's pay. The heirloom was picked up in every run that had one. Clears 58% (reached F2 83%, F3 60%), against 47% in Milestone 7's fresh-account snapshot; by position in the career it's noisy at six careers (33-83%), so it says only that kits and heirlooms help a bit. Re-run with more careers before Milestone 13 tuning. A first pass with an earlier bot got 3 runs stuck: it walked back for a bequest it couldn't keep and ran out of actions. The bot now tries once.
 
 **Not done.** The race and class unlocks (Milestone 11). The companion pet (deferred). `know_your_enemy` and `all_endings` (they need Floors 4+; their account side would be `codexWeaknesses` and `endingsSeen` states). Dedicated tablet and phone screens for the end of a run and the unlock shop (the buttons and the log do the job for now).
+
+### Milestone 9: districts and elites
+
+Built in the order of the plan: content and schemas, state, the split, encounters, rewards, exploring, the client, achievements, the sim. `SAVE_VERSION` stays 8. The new fields (`room.district`, `floor.districts`, `districtsSeen`, `championsKilled`, a group's `champion`) are optional. A floor saved before this milestone plays as one district until the next floor.
+
+**Decisions made with the player.**
+- The scope is districts and elites. Event, puzzle and NPC rooms are still a flavor line; they're listed under Deferred, with no owner yet.
+- Each district on Floors 2-3 gets a **champion**: one named elite in a lair at the district's far end. It always drops a silver box. Champions replace the old spec's district-boss lairs, and Milestone 12 can reuse them for "kill an elite".
+
+**Districts** (`floors.json` → `districts`, schema `DistrictSchema`).
+- A floor lists its districts in depth order, so the first one holds the entrance. Floor 1 has no list: it's one district, and the client shows none.
+- Each district has:
+  - a name, and an `enter` line
+  - a `levelOffset`, which defaults to its index (the spec's `floor*4 + district.index`)
+  - `favored` hard-pool families, which lead a group three times as often (`encounters.favoredWeight`)
+  - adjective, sight, sound and smell pools. Each line comes from the district's pool half the time; the 50% is a constant in code.
+  - an optional champion
+- The text is original and written for these floors:
+  - Floor 2: Intake → The Stacks → The Unclaimed
+  - Floor 3: Level P1: Short Stay → The Car Wash → The Ramps → Sealed Level B4
+- The order is fixed by the content, not shuffled, so a garage gets wetter as you go down.
+
+**The split** (`gen/district.ts`).
+- It runs after the walk and the loops, before stairwells.
+- **Seeds:** the start room, then each room farthest from the seeds so far.
+- **Fill:** turn by turn, the smallest district with an open frontier claims a room.
+- **Rebalancing:** three rounds move each seed (but the start's) to the middle of its district and refill. Seeds from the farthest-room rule sat at the ends of branches and left districts boxed in, with sizes up to 2.3× an even share.
+- **Numbering:** district 0 is the start's; the rest are ordered by their rooms' mean distance from the start.
+- **Rejected splits:** a split is thrown away (and the floor carved again) if any district is under 0.5× or over 1.8× an even share, or if the entrance's district isn't the nearest. That happens to about 6-11% of carves; `generateFloor` already retries.
+- **Fallback:** the last resort is now an ungated, single-district floor, and failing that it throws an error instead of returning nothing.
+- **Sizes:** the median district is 0.8-1.2× an even share.
+
+**Safe rooms.** Every district gets at least one, placed after the existing rules. A district without one gets one in its most central eligible room.
+
+**Champions.**
+- **Lair:** the ordinary room in the district farthest from the start, a dead end if one is within 2 hops of the farthest. Never the start, a stairwell, a safe room or the boss's room, and never next to a stairwell, safe room or the boss.
+- **Fight:**
+  - An elite of the champion's family, with both mods its tier allows, `levelBonus` (1) above the district's elites, and always with escorts.
+  - Its name is its title; the roster line reads "Valet Supervisor — level 10 CHAMPION (Valet Imp)". When it kills you, the death line says "the Valet Supervisor".
+  - The lair isn't a dense room and gets no extra group. It's never downgraded by the easy-fights rule.
+- **It never flees and can't be talked down.** A champion that walked off alive would never pay out, and the Guide would call it alive for the rest of the floor.
+- **Lines:** its intro goes in the battle log when the fight starts. Its last line goes in the event log, like a floor boss's. The browser check found that a last line in the battle log disappeared with the fight.
+- **Payout:** a silver box (type boss) and a guaranteed piece of gear. The floor records the kill (`championsKilled`), the Guide entry says "Dead", and the last champion on the floor emits `championsCleared`.
+
+**Elites** now drop the box the tier table promised: `boxes.json` → `drops.elite`, a box every time, silver 25% of the time, bronze otherwise. This applies on every floor, Floor 1's lair elites included, since the tier table isn't floor-specific. Random lair elites stay as they were.
+
+**Crossing into a district.**
+- **When it fires:** the first time you enter a room in a district you haven't been in. `look` doesn't count.
+- **The log:** the district's `enter` line prints, then a System AI `district.entered` line. Its variants cover the entrance, the deep end and a champion that's still alive; lines that quote the level step skip the entrance.
+- **Event, ticker and counter:** the event is `districtEntered` (with `allSeen`). The ticker reads "DISTRICT 2 OF 3 — The Stacks", and the counter `districts.entered` goes up.
+- **The Guide** gets a Districts section with the district's line, how much tougher it is, and its champion, alive or dead.
+- **Where the district shows:**
+  - the desktop status bar, and the tablet strip
+  - the phone's Map header ("Map · The Stacks"). On the phone strip it pushed the room name down to two letters.
+  - under the `map` command
+  - the minimap, as a dashed line between rooms in different districts
+
+**Achievements.** Three new rows, written in the workbook's Achievements format and added to `Achievements.csv`:
+
+| Achievement | Earned by | Trigger |
+| --- | --- | --- |
+| Hostile Takeover | killing a district champion | `kills.champion` |
+| Regime Change | killing every champion on one floor | `championsCleared` |
+| Package Holiday | setting foot in every district on one floor | `districtEntered` with `allSeen` |
+
+`TRIGGER_EVENTS` gains the two new events. **The workbook's Achievements sheet needs the same three rows**, or the next export will drop them. No pending rows were tagged for Milestone 9.
+
+**Sim** (balanced bot, 200 runs, `--floors 3 --craft`; `--no-districts` is the same code with districts and elite boxes off, which is the game before this milestone).
+
+| Configuration | Cleared | Reached F2 | Reached F3 | Stuck |
+| --- | --- | --- | --- | --- |
+| No districts (before) | 45% | 69% | 45% | 1 |
+| Districts, old offsets (F2 -1, F3 -2) | 33% | 69% | 37% | 0 |
+| **Districts, F2 -2, F3 -3 (shipped)** | **47%** | **69%** | **48%** | **0** |
+| Districts, F2 -2, F3 -4 | 46% | 73% | 48% | 1 |
+| Districts, F2 -3, F3 -4 | 54% | 69% | 55% | 1 |
+
+- **Why the retune:** the district steps average about +1 level on Floor 2 and +1.5 on Floor 3. Without the retune that cost 12 points of clear rate, almost all of it on Floor 2. Each floor's `levelOffset` dropped by one, which brought it back.
+- **Where deaths happen** (shipped setting):
+  - Floor 2: Intake 13, The Stacks 19, The Unclaimed 9
+  - Floor 3: nearly none (2 of 96 runs)
+  
+  The Stacks favors umbrella bats, already the top killer before districts.
+- **Champions killed:** 0.82 of 3 per run on Floor 2 (at least one in 61% of runs) and 1.26 of 4 on Floor 3 (84%). That's without any bot policy: the bot walks into lairs on its way to the nearest unvisited room, so the plan's "go after champions" policy wasn't needed.
+- **Boxes:** elites and champions add about 5.6 and 1.2 boxes a run. Boxes opened went from 24 to 32 a run, and gold earned rose with them (1214 → 1492).
+- **Stuck runs:** every one is the same pre-existing grid fight, an Odd Sock Wraith that keeps its distance and outlasts the 60-round cap. It also happened once with districts off. The Unclaimed favors wraiths, so it may come up a little more often. Not fixed here.
+
+**Not done.**
+- Elite weaknesses hinted in lair descriptions (Boss traits, Milestone 10).
+- District-themed loot tables: lairs use the floor's.
+- A bot policy for champions (not needed; see above).
+- Event, puzzle and NPC rooms (Deferred).
+
+#### Follow-ups from playtesting (after Milestone 9)
+
+**Some achievements are sarcasm only.**
+- The routine firsts pay nothing now: first kill, spell, safe room, craft, level, purchase, box and flee. So do Explore 20 rooms and the ones that reward collecting rewards: open ten boxes, open a gold box, earn ten achievements, earn twenty-five.
+- They still fire, still move the mood, and still count for the class offer's tags.
+- **How it's stored:** the reward is optional (`AchievementSchema.reward`). In `Achievements.csv` the Reward cell is `none`. **The workbook's Reward column needs the same 13 changes.**
+- **What it says:** `achievement.earned` has its own no-prize lines ("Your reward is my attention, and it is already wandering."). The lines that name a reward now require `rewarded: true`. The log banner and the Achievements list read "no prize".
+- **Renamed:** the new every-district achievement is Package Holiday, since `rooms_20` was already called Tourist.
+
+**Item panels say less, and a card says the rest.**
+- **The row:** an item in the inventory or equipment list is its name, a stat tag for weapons (STR / DEX / INT), and one number against what you have on. The one-tap action (equip, use) sits at the end of the row. The old per-item verdict marks and their legend are gone.
+- **The number:**
+  - For a weapon, damage a turn: the average hit per AP × 3, rounded. Its sign agrees with the old better/worse verdict, since both work per AP.
+  - For anything else, the first change in this order: armor, a stat, max HP, max MP, guard, initiative, carry, to-hit ("+1 armor", "+2 DEX").
+  - "⇅" marks a trade-off.
+  - The shop's stock shows the same tag and number.
+- **The card:** picking an item opens a card (`ItemCard`, a bottom sheet on the phone).
+  - **Weapons:** chips for stat, AP and reach; tiles for damage, average hit, damage a turn and the roll; an odds bar with each tier's damage; the skill line.
+  - **Everything:** the traits (affixes, the legendary power, on-hit, plain modifiers), a table of what equipping changes and what it replaces, notes, flavor and weight, with Equip / Take off / Use / Drop at the bottom.
+  - **Closing:** Esc closes the card, not the overlay under it. So does a click outside, or acting on the item.
+  - **Data:** the engine builds it as `ItemView.card` and `ItemView.quick` (`itemInfo.ts`). `detail` stays as the plain-text version.
+- **The character sheet's Fighting block** is now weapon (it opens its card), damage, armor, the skill's name and rank, and one "Suits you: STR weapons (STR 22 · DEX 18)" line. The roll and odds line moved to the card.
+
+**Fixed:** a district champion could still flee. Its family's `flee_below_N` AI token and fear statuses bypassed `fleeBelow`. `wantsToFlee` now says no for any champion, and the generator strips the tokens too. Champions also lose `keep_range`. The Last Sock (an odd-sock wraith) kited the bot to the 60-round cap in 2 of 300 sim runs once it couldn't flee. Ordinary wraiths still keep their distance; that's the pre-existing stuck fight noted above.

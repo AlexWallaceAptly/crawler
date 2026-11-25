@@ -22,3 +22,5 @@ export * from "./progression";
 export * from "./engine";
 export { loadDefaultContent } from "./content/default";
 export type { GridView, GridTileView, GridUnitView, FloorTileView } from "./grid/view";
+export type { ItemCard, ItemQuick, WeaponCard } from "./itemInfo";
+export type { GearChange } from "./gear";

@@ -8,6 +8,7 @@
 import type { BOSS_GATES, FloorTheme, Pacing, RoomShape } from "../content/schemas";
 import { chance, int, pick, shuffle, weightedKey } from "../rng";
 import { DIRS, newRoomState, type Dir, type FloorState, type Room, type RoomType } from "../state";
+import { placeChampionLairs, safeRoomPerDistrict, splitDistricts } from "./district";
 
 export const MINUTES_PER_DAY = 24 * 60;
 
@@ -108,8 +109,12 @@ export function generateFloor(theme: FloorTheme, opts: FloorOptions): FloorState
     const floor = carveFloor(theme, opts);
     if (floor) return floor;
   }
-  // Practically unreachable (3-5 stairwells spread far apart); fall back to an ungated floor.
-  return carveFloor(theme, { ...opts, bossGate: "none" })!;
+  // Practically unreachable (each try fails about 1 time in 10); fall back to an ungated floor in one district.
+  for (let tries = 0; tries < 50; tries++) {
+    const floor = carveFloor({ ...theme, districts: [] }, { ...opts, bossGate: "none" });
+    if (floor) return floor;
+  }
+  throw new Error(`generateFloor: could not carve "${theme.id}"`);
 }
 
 function carveFloor(theme: FloorTheme, opts: FloorOptions): FloorState | null {
@@ -156,6 +161,14 @@ function carveFloor(theme: FloorTheme, opts: FloorOptions): FloorState | null {
   }
   const wanted = Math.round(rooms.length * (10 + int(0, 5)) / 100);
   for (const [a, b] of shuffle(unlinked).slice(0, wanted)) connect(rooms, a, b);
+
+  // --- districts (Milestone 9): regions by flood fill, entrance first ---
+  const districtCount = Math.max(1, theme.districts.length);
+  if (districtCount > 1) {
+    const owner = splitDistricts(rooms, start.id, districtCount);
+    if (!owner) return null;
+    for (const r of rooms) r.district = owner[r.id]!;
+  }
 
   // --- stairwells: 3-5 rooms far from start and from each other ---
   const distFromStart = bfsDistances(rooms, start.id);
@@ -211,6 +224,8 @@ function carveFloor(theme: FloorTheme, opts: FloorOptions): FloorState | null {
     if (!fix || toBad[fix.id]! > cfg.maxGapRooms) return null;
     place(fix);
   }
+  // Every district has a bed somewhere in it.
+  if (!safeRoomPerDistrict(rooms, districtCount, eligible, place)) return null;
 
   // --- everything else by spec weight; the start room stays harmless ---
   for (const room of rooms) {
@@ -246,6 +261,9 @@ function carveFloor(theme: FloorTheme, opts: FloorOptions): FloorState | null {
     for (const s of stairs) if (s !== gate) s.concealed = true;
   }
 
+  // --- district champions: a lair at each district's far end ---
+  if (!placeChampionLairs(rooms, start.id, theme.districts, bossRoom)) return null;
+
   for (const room of rooms) room.shape = shapeFor(room.type);
   for (const room of rooms) {
     if (room.type === "trap" && theme.trapTypes.length > 0) room.trap = pick(theme.trapTypes).id;
@@ -255,8 +273,10 @@ function carveFloor(theme: FloorTheme, opts: FloorOptions): FloorState | null {
   const used = new Set<string>();
   for (const room of rooms) {
     let name = "";
+    const local = theme.districts[room.district ?? 0]?.adjectives ?? [];
     for (let tries = 0; tries < 8; tries++) {
-      name = `${pick(theme.roomNames.adjectives)} ${pick(theme.roomNames.nouns[room.shape])}`;
+      const adjective = local.length && chance(0.5) ? pick(local) : pick(theme.roomNames.adjectives);
+      name = `${adjective} ${pick(theme.roomNames.nouns[room.shape])}`;
       if (!used.has(name)) break;
     }
     used.add(name);
@@ -278,5 +298,6 @@ function carveFloor(theme: FloorTheme, opts: FloorOptions): FloorState | null {
     startClock: 0,
     events: [],
     ...(bossRoom !== undefined ? { bossRoom, bossDefeated: false } : {}),
+    ...(districtCount > 1 ? { districts: theme.districts.map((d) => d.id), districtsSeen: [] } : {}),
   };
 }

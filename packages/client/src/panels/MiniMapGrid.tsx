@@ -14,10 +14,17 @@ function Tile({ name, fallback, className }: { name: string; fallback?: string; 
   return <Sprite paths={paths} glyph={glyph} className={`${s.img} ${className ?? ""}`} glyphClassName={`${s.glyph} ${className ?? ""}`} />;
 }
 
-function Cell({ c }: { c: MapCell }) {
+/** Sides of a cell that face a known room in another district (Milestone 9). */
+type Edges = { north: boolean; east: boolean; south: boolean; west: boolean };
+
+function Cell({ c, edges }: { c: MapCell; edges?: Edges }) {
   const tile = c.kind === "trap" && c.trapSprung ? "trap-sprung" : c.kind;
   return (
     <div className={`${s.cell} ${c.visited ? "" : s.fogged}`} style={{ gridColumn: c.x + 1, gridRow: c.y + 1 }} title={c.kind}>
+      {edges?.north && <i className={`${s.edge} ${s.edgeN}`} />}
+      {edges?.east && <i className={`${s.edge} ${s.edgeE}`} />}
+      {edges?.south && <i className={`${s.edge} ${s.edgeS}`} />}
+      {edges?.west && <i className={`${s.edge} ${s.edgeW}`} />}
       {c.exits.north && <i className={`${s.link} ${s.n}`} />}
       {c.exits.east && <i className={`${s.link} ${s.e}`} />}
       {c.exits.south && <i className={`${s.link} ${s.sx}`} />}
@@ -51,6 +58,13 @@ export function MiniMapGrid({ view, className, moves, tile }: Props) {
   if (!g) return null;
   const here = g.cells.find((c) => c.current);
   const arrows = here && moves ? (Object.keys(STEP) as MoveDir[]).filter((d) => moves[d]) : [];
+  // A dashed line where two known rooms side by side belong to different districts.
+  const districtAt = new Map(g.cells.map((c) => [`${c.x},${c.y}`, c.district]));
+  const differs = (c: MapCell, dx: number, dy: number) => {
+    const other = districtAt.get(`${c.x + dx},${c.y + dy}`);
+    return other !== undefined && other !== c.district;
+  };
+  const edgesOf = (c: MapCell): Edges => ({ north: differs(c, 0, -1), east: differs(c, 1, 0), south: differs(c, 0, 1), west: differs(c, -1, 0) });
   return (
     <div
       className={`${s.grid} ${className ?? ""}`}
@@ -63,7 +77,7 @@ export function MiniMapGrid({ view, className, moves, tile }: Props) {
       aria-label="Map"
     >
       {g.cells.map((c) => (
-        <Cell key={`${c.x},${c.y}`} c={c} />
+        <Cell key={`${c.x},${c.y}`} c={c} edges={edgesOf(c)} />
       ))}
       {arrows.map((d) => {
         const st = STEP[d];

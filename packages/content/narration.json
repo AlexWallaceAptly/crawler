@@ -1596,7 +1596,8 @@
         "when": {
           "mood": {
             "lte": -3
-          }
+          },
+          "rewarded": true
         }
       },
       {
@@ -1604,20 +1605,48 @@
         "when": {
           "mood": {
             "gte": 4
-          }
+          },
+          "rewarded": true
         }
       },
       {
         "text": "ACHIEVEMENT: {name}. {text} {reward}. Say thank you.",
         "when": {
-          "group": "humiliation"
+          "group": "humiliation",
+          "rewarded": true
         }
       },
       {
         "text": "ACHIEVEMENT: {name}. {text} {reward}. The audience is laughing. At you, not with you.",
         "when": {
-          "group": "stupidity"
+          "group": "stupidity",
+          "rewarded": true
         }
+      },
+      {
+        "when": {
+          "rewarded": false
+        },
+        "text": "ACHIEVEMENT: {name}. {text} No prize. The achievement is the prize. Frame it."
+      },
+      {
+        "when": {
+          "rewarded": false
+        },
+        "text": "Achievement unlocked: {name}. {text} You were hoping for a box. For that. Adorable."
+      },
+      {
+        "when": {
+          "rewarded": false
+        },
+        "text": "ACHIEVEMENT: {name}. {text} Your reward is my attention, and it is already wandering."
+      },
+      {
+        "when": {
+          "rewarded": false,
+          "group": "firstTime"
+        },
+        "text": "ACHIEVEMENT: {name}. {text} Everybody gets this one. It is a participation ribbon with no ribbon."
       }
     ]
   },
@@ -2304,6 +2333,71 @@
             "gte": 1
           }
         }
+      }
+    ]
+  },
+  {
+    "key": "district.entered",
+    "variants": [
+      {
+        "when": {
+          "first": true
+        },
+        "text": "You are in {name}, the part of the floor nearest the way in. This is the easy bit. Enjoy that sentence while it is still true."
+      },
+      {
+        "when": {
+          "first": true
+        },
+        "text": "{name}. District one of {of}. The further in you go, the worse it gets. That is not a warning, it is the format."
+      },
+      {
+        "when": {
+          "deep": true
+        },
+        "text": "{name}. The deep end. Everything in here is {tougher} meaner than the welcome mat, and none of it has ever been told no."
+      },
+      {
+        "when": {
+          "deep": true
+        },
+        "text": "Welcome to {name}, the bottom of the brochure. Crawlers who make it this far get a round of applause. From me. Sarcastically."
+      },
+      {
+        "when": {
+          "championAlive": true
+        },
+        "text": "Now entering {name}. Word is the {champion} runs this district from somewhere at the far end. You could go and say hello. People have."
+      },
+      {
+        "when": {
+          "championAlive": true,
+          "first": false
+        },
+        "text": "{name}, district {index} of {of}. The {champion} lives at the far end and does not take visitors. It takes them apart. Enemies here are {tougher} tougher, too, if you needed another reason."
+      },
+      {
+        "text": "Now entering {name}. The locals are {tougher} tougher here. The locals were already doing fine.",
+        "when": {
+          "first": false
+        }
+      },
+      {
+        "text": "{name}, district {index} of {of}. Same floor, worse neighbours. Mind the step."
+      }
+    ]
+  },
+  {
+    "key": "champion.killed",
+    "variants": [
+      {
+        "text": "The {champion} is dead. {district} is under new management, and the new management is you. My condolences to {district}."
+      },
+      {
+        "text": "That was the {champion}. Was. {district} will need a new one by Tuesday. I will be holding auditions."
+      },
+      {
+        "text": "You killed the {champion}! The district is yours! You get nothing for that, except the box. And my grudging attention."
       }
     ]
   }

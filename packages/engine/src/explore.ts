@@ -6,7 +6,7 @@
 import { grantBox } from "./boxes";
 import { seedShops } from "./shop";
 import { emitDamageTaken } from "./counters";
-import type { FloorTheme } from "./content/schemas";
+import type { District, FloorTheme } from "./content/schemas";
 import { chance, pick } from "./rng";
 import { dcFor, describeCheck, resolveCheck, type DcTier } from "./rules/checks";
 import { rollDice } from "./rules/dice";
@@ -28,6 +28,7 @@ import type { Dir, FloorState, HazardState, Room, RoomType } from "./state";
 import { DIRS } from "./state";
 import { sleepStage } from "./rules/sleep";
 import { onSleepStageChange } from "./hooks";
+import { districtOf, noteDistrict } from "./districts";
 
 /** Time costs, in game minutes: data in pacing.json so the sim can sweep them. */
 export const timeCosts = (ctx: StepContext) => ctx.content.pacing.costs;
@@ -47,12 +48,16 @@ const WARNING_LABELS: Record<string, string> = {
 
 // ---------------------------------------------------------------- descriptions
 
+/** Half the time, a line from the district's own pool (when it has one) instead of the floor's. */
+const local = (own: string[] | undefined, floorPool: string[]): string =>
+  own?.length && chance(0.5) ? pick(own) : pick(floorPool);
+
 /** Build a room's description once; it's cached on the room so revisits read the same. */
-export function describeRoom(theme: FloorTheme, room: Room): string[] {
+export function describeRoom(theme: FloorTheme, room: Room, district?: District): string[] {
   const lines = [
     pick(theme.fragments.openings[room.shape]),
-    pick(theme.fragments.sights),
-    chance(0.5) ? pick(theme.fragments.sounds) : pick(theme.fragments.smells),
+    local(district?.sights, theme.fragments.sights),
+    chance(0.5) ? local(district?.sounds, theme.fragments.sounds) : local(district?.smells, theme.fragments.smells),
   ];
   const typeLines = (theme.typeLines as Partial<Record<string, string[]>>)[room.type];
   if (typeLines && typeLines.length > 0) lines.push(pick(typeLines));
@@ -210,8 +215,10 @@ export function enterRoom(ctx: StepContext, roomId: number, kind: "first" | "rev
     escalateHazards(ctx, room);
     room.rs.lastVisit = ctx.game.clock;
   }
+  // A district you haven't been in yet says so before the room does.
+  if (kind !== "look") noteDistrict(ctx, room);
   if (!room.desc) {
-    room.desc = describeRoom(theme, room);
+    room.desc = describeRoom(theme, room, districtOf(ctx.content, floor, room).def);
     // Loot is hidden, but the room may say so.
     if (room.rs.hiddenTotal > 0 && chance(0.5)) room.desc.push(pick(ctx.content.pacing.search.hints));
     if (first) maybeRoomShard(ctx, room);
@@ -457,6 +464,8 @@ export interface MapCell {
   trapSprung: boolean;
   /** A living floor boss is known to be here. */
   boss: boolean;
+  /** Milestone 9: district index (0 on a floor with one district). */
+  district: number;
   /** Connections to other *known* rooms. */
   exits: { north: boolean; east: boolean; south: boolean; west: boolean };
 }
@@ -487,6 +496,7 @@ export function mapGrid(floor: FloorState): MapGrid {
       visited: r.visited,
       trapSprung: !!r.trapSprung,
       boss: !!r.boss && !floor.bossDefeated && shown,
+      district: r.district ?? 0,
       exits: { north: open("north", 0, -1), east: open("east", 1, 0), south: open("south", 0, 1), west: open("west", -1, 0) },
     });
   }

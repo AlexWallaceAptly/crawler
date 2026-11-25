@@ -164,12 +164,14 @@ function Sheet({ children }: { children: React.ReactNode }) {
   return <div className={s.sheet}>{children}</div>;
 }
 
-export function StatusStrip({ view }: { view: ViewModel }) {
+/** `district`: the tablet has the width for it; the phone shows it on the Map header instead. */
+export function StatusStrip({ view, district = false }: { view: ViewModel; district?: boolean }) {
   const st = view.status;
   const hp = st.hp;
   return (
     <header className={s.strip}>
       <span className={s.stripFloor}>{st.floor ? `F${st.floor}` : "PRE-SHOW"}</span>
+      {district && st.district && <span className={s.stripTimer}>{st.district}</span>}
       {st.room && <span className={s.stripRoom}>{st.room}</span>}
       {st.timer && <span className={s.stripTimer}>⌛ {st.timer}</span>}
       {st.sleep && <span>{st.sleep}</span>}
@@ -207,7 +209,7 @@ function NavView({ view, log, commands, submit, openBench }: { view: ViewModel; 
   return (
     <div className={s.nav}>
       <div className={s.toggles}>
-        <Toggle label="Map" shown={mapShown} onClick={toggleMap} />
+        <Toggle label={view.status.district ? `Map · ${view.status.district}` : "Map"} shown={mapShown} onClick={toggleMap} />
         <Toggle label="Event log" shown={logShown} onClick={toggleLog} />
       </div>
       {mapShown && (

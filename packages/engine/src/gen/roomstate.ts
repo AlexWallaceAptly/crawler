@@ -18,9 +18,10 @@ export function seedRoomState(floor: FloorState, theme: FloorTheme, content: Con
   const cfg = content.pacing;
   const open = floor.rooms.filter((r) => ordinary(floor, r));
 
-  // --- hazards and groups from the room type ---
+  // --- hazards and groups from the room type (a champion's lair already has its group) ---
   for (const room of open) {
     const rs = room.rs;
+    if (rs.groups.some((g) => g.champion)) continue;
     if (room.trap) rs.hazards.push({ id: room.trap, active: true, intensity: 1, sourceTime: 0, ticks: 0 });
     let p = room.type === "lair" ? 1 : (cfg.groups.chance[room.type] ?? 0);
     if (room.type === "trap") p = floor.floor >= cfg.groups.trapFightFromFloor ? cfg.groups.trapFightChance : 0;
@@ -31,7 +32,7 @@ export function seedRoomState(floor: FloorState, theme: FloorTheme, content: Con
   }
 
   // --- dense rooms: one more group and a better reward, flagged "dangerous" when scouted ---
-  const denseable = open.filter((r) => r.type !== "corridor" && r.type !== "empty");
+  const denseable = open.filter((r) => r.type !== "corridor" && r.type !== "empty" && !r.rs.groups.some((g) => g.champion));
   const share = cfg.dense.minPct + (cfg.dense.maxPct - cfg.dense.minPct) * random();
   const target = Math.round(open.length * share);
   for (const room of shuffle(denseable).slice(0, target)) {

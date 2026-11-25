@@ -104,8 +104,9 @@ function holds(cond: Condition, ev: Eval): boolean {
   return cond.any.some((x) => holds(x, ev));
 }
 
-/** How a payout reads in the ticker. */
+/** How a payout reads in the ticker ("" when it pays nothing). */
 export function rewardText(a: Achievement, ctx: StepContext): string {
+  if (!a.reward) return "";
   if ("box" in a.reward) {
     const tier = ctx.content.boxes.tiers.find((t) => t.id === (a.reward as { box: string }).box)?.name ?? a.reward.box;
     const type = ctx.content.boxes.types.find((t) => t.id === (a.reward as { boxType: string }).boxType)?.name ?? "";
@@ -116,6 +117,7 @@ export function rewardText(a: Achievement, ctx: StepContext): string {
 
 function rewardLabel(a: Achievement): string {
   const r = a.reward;
+  if (!r) return "no prize";
   if ("box" in r) return `${r.box} ${r.boxType} box`;
   if ("xp" in r) return `${r.xp} XP`;
   if ("legacy" in r) return `${r.legacy} legacy points`;
@@ -134,10 +136,11 @@ export function award(ctx: StepContext, a: Achievement, hit?: GameEventBody): vo
   const text = render(a.text, view);
   const reward = rewardText(a, ctx);
   ctx.emit({ type: "achievementEarned", achievementId: a.id, name: a.name, text, tags: a.tags, reward });
-  ctx.say("achievement.earned", { name: a.name, text, reward, group: a.group, tags: a.tags });
+  ctx.say("achievement.earned", { name: a.name, text, reward, rewarded: !!a.reward, group: a.group, tags: a.tags });
   if (a.mood !== 0) moveMood(ctx, a.mood, `achievement: ${a.name}`);
 
   const r = a.reward;
+  if (!r) return; // sarcasm only
   if ("box" in r) grantBox(ctx, r.box, r.boxType, `achievement: ${a.name}`);
   else if ("xp" in r) gainXp(ctx, r.xp);
   else if ("legacy" in r) {

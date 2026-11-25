@@ -86,7 +86,7 @@ describe("dying", () => {
     expect(c.achievements).toEqual(expect.arrayContaining(["first_death", "rodent_rights", "tutorial_boss"]));
     const paid = ["first_death", "rodent_rights", "tutorial_boss"].reduce((n, id) => {
       const r = content.achievements.get(id).reward;
-      return n + ("legacy" in r ? r.legacy : 0);
+      return n + (r && "legacy" in r ? r.legacy : 0);
     }, 0);
     expect(world.game.ended!.legacy!.bonus).toBeGreaterThanOrEqual(paid);
     expect(world.game.boxes.every((b) => !b.source.includes("Pilot Episode"))).toBe(true);

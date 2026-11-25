@@ -9,10 +9,6 @@
     "trigger": {
       "event": "kill"
     },
-    "reward": {
-      "box": "bronze",
-      "boxType": "adventurer"
-    },
     "repeatable": false,
     "secret": false,
     "mood": 1,
@@ -28,10 +24,6 @@
     ],
     "trigger": {
       "event": "spellCast"
-    },
-    "reward": {
-      "box": "bronze",
-      "boxType": "spell"
     },
     "repeatable": false,
     "secret": false,
@@ -50,10 +42,6 @@
       "counter": "rooms.safe",
       "gte": 1
     },
-    "reward": {
-      "box": "bronze",
-      "boxType": "adventurer"
-    },
     "repeatable": false,
     "secret": false,
     "mood": 1,
@@ -69,10 +57,6 @@
     ],
     "trigger": {
       "event": "crafted"
-    },
-    "reward": {
-      "box": "bronze",
-      "boxType": "weapon"
     },
     "repeatable": false,
     "secret": false,
@@ -91,10 +75,6 @@
       "counter": "levels",
       "gte": 1
     },
-    "reward": {
-      "box": "bronze",
-      "boxType": "adventurer"
-    },
     "repeatable": false,
     "secret": false,
     "mood": 1,
@@ -111,9 +91,6 @@
     "trigger": {
       "event": "shopBought"
     },
-    "reward": {
-      "gold": 25
-    },
     "repeatable": false,
     "secret": false,
     "mood": 1,
@@ -129,9 +106,6 @@
     ],
     "trigger": {
       "event": "boxOpened"
-    },
-    "reward": {
-      "xp": 25
     },
     "repeatable": false,
     "secret": false,
@@ -363,10 +337,6 @@
     "trigger": {
       "counter": "rooms.entered",
       "gte": 20
-    },
-    "reward": {
-      "box": "bronze",
-      "boxType": "adventurer"
     },
     "repeatable": false,
     "secret": false,
@@ -808,10 +778,6 @@
         "outcome": "fled"
       }
     },
-    "reward": {
-      "box": "bronze",
-      "boxType": "adventurer"
-    },
     "repeatable": false,
     "secret": false,
     "mood": 1,
@@ -1128,10 +1094,6 @@
       "counter": "boxes.opened",
       "gte": 10
     },
-    "reward": {
-      "box": "silver",
-      "boxType": "adventurer"
-    },
     "repeatable": false,
     "secret": false,
     "mood": 1,
@@ -1152,9 +1114,6 @@
         "tier": "gold"
       }
     },
-    "reward": {
-      "gold": 50
-    },
     "repeatable": false,
     "secret": false,
     "mood": 1,
@@ -1172,10 +1131,6 @@
       "state": "achievements",
       "gte": 10
     },
-    "reward": {
-      "box": "silver",
-      "boxType": "adventurer"
-    },
     "repeatable": false,
     "secret": false,
     "mood": 1,
@@ -1192,10 +1147,6 @@
     "trigger": {
       "state": "achievements",
       "gte": 25
-    },
-    "reward": {
-      "box": "gold",
-      "boxType": "adventurer"
     },
     "repeatable": false,
     "secret": false,
@@ -1572,5 +1523,72 @@
     "mood": 1,
     "text": "Ten deaths. The paperwork has your name pre-printed.",
     "hint": "Die ten times."
+  },
+  {
+    "id": "champion_slayer",
+    "name": "Hostile Takeover",
+    "group": "combat",
+    "tags": [
+      "combat",
+      "district"
+    ],
+    "trigger": {
+      "counter": "kills.champion",
+      "gte": 1
+    },
+    "reward": {
+      "box": "silver",
+      "boxType": "armor"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "A district champion, dead. The district would thank you, but it's mostly teeth.",
+    "hint": "Kill a district champion."
+  },
+  {
+    "id": "regime_change",
+    "name": "Regime Change",
+    "group": "combat",
+    "tags": [
+      "combat",
+      "district"
+    ],
+    "trigger": {
+      "event": "championsCleared"
+    },
+    "reward": {
+      "box": "gold",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 2,
+    "text": "Every champion on the floor. The floor is technically yours now. Please don't tell it.",
+    "hint": "Kill every district champion on one floor."
+  },
+  {
+    "id": "tourist",
+    "name": "Package Holiday",
+    "group": "exploration",
+    "tags": [
+      "exploration",
+      "district"
+    ],
+    "trigger": {
+      "event": "districtEntered",
+      "where": {
+        "allSeen": true
+      }
+    },
+    "reward": {
+      "box": "bronze",
+      "boxType": "adventurer"
+    },
+    "repeatable": false,
+    "secret": false,
+    "mood": 1,
+    "text": "Every district on the floor. You want a T-shirt? We don't do T-shirts. Here's a box.",
+    "hint": "Set foot in every district on one floor."
   }
 ]

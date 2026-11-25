@@ -41,6 +41,8 @@ import { rollLoot } from "./gen/loot";
 import { generateItem, itemLevelFor, potencyFor } from "./gen/item";
 import { addToPile } from "./inventory";
 import { addGold } from "./economy";
+import { grantBox } from "./boxes";
+import { guideChampionKilled } from "./districts";
 import { emitDamageTaken } from "./counters";
 import { moveMood } from "./mood";
 import { announceLevels, fightSkillSummary, gainXp, SKILL_CAP, skillRank, trainSkill, xpToNext } from "./progression";
@@ -89,7 +91,7 @@ export function maybeEncounter(ctx: StepContext, room: Room, firstVisit: boolean
   }
   const plan = rs.groups[0];
   if (!plan) return false;
-  const enemies = groupEnemies(ctx, plan);
+  const enemies = groupEnemies(ctx, room, plan);
   if (enemies.length === 0) { rs.groups.shift(); return false; }
   for (const e of enemies) delete e.pos;
   startCombat(ctx, enemies, { fromRoom: cameFrom ?? floor.currentRoom });
@@ -170,7 +172,14 @@ export function startCombat(ctx: StepContext, enemies: Enemy[], opts: StartOptio
   ctx.say("combat.start");
   for (const e of enemies) {
     const at = e.pos ? `at ${coord(e.pos)}` : `${e.range} range`;
-    ctx.fight(`${e.name} — level ${e.level}${e.tier === "boss" ? " BOSS" : e.tier === "elite" ? " ELITE" : e.tier === "minion" ? " minion" : ""}, ${at}.`, "enemy");
+    const tier = e.champion ? ` CHAMPION (${ctx.content.enemies.get(e.familyId).name})` : e.tier === "boss" ? " BOSS" : e.tier === "elite" ? " ELITE" : e.tier === "minion" ? " minion" : "";
+    ctx.fight(`${e.name} — level ${e.level}${tier}, ${at}.`, "enemy");
+  }
+  // A district champion introduces itself.
+  for (const e of enemies) {
+    if (!e.champion) continue;
+    const intro = ctx.content.floors.get(floor.theme).districts.find((d) => d.id === e.champion)?.champion?.intro;
+    if (intro) ctx.fight(intro, "enemy");
   }
   opts.prelude?.(ctx);
   glowFlare(ctx);
@@ -549,7 +558,34 @@ export function damageEnemy(ctx: StepContext, e: Enemy, dmg: number, how: string
 
 /** A kill, for the counters and the achievement engine. Overkill is the damage past zero HP. */
 export function recordKill(ctx: StepContext, e: Enemy, how: string): void {
-  ctx.emit({ type: "kill", target: e.name, family: e.familyId, tier: e.tier, overkill: Math.max(0, -e.hp), how });
+  ctx.emit({ type: "kill", target: e.name, family: e.familyId, tier: e.tier, overkill: Math.max(0, -e.hp), how, ...(e.champion ? { champion: e.champion } : {}) });
+  killBoxes(ctx, e);
+}
+
+/**
+ * Milestone 9: an elite drops a bronze or silver box (boxes.json → drops). A district champion
+ * always drops its tier, says its last line, and goes on the floor's list of dead champions.
+ */
+function killBoxes(ctx: StepContext, e: Enemy): void {
+  const drops = ctx.content.boxes.drops;
+  const floor = ctx.game.floor;
+  if (e.champion && floor) {
+    const theme = ctx.content.floors.get(floor.theme);
+    const def = theme.districts.find((d) => d.id === e.champion);
+    // Like a floor boss's, the last line goes in the event log, which is what's on screen once the fight is over.
+    if (def?.champion) ctx.describe(def.champion.defeat);
+    ctx.say("champion.killed", { champion: e.name, district: def?.name ?? "the district" });
+    grantBox(ctx, drops.champion, "boss", `champion: ${e.name}`);
+    const killed = (floor.championsKilled ??= []);
+    if (!killed.includes(e.champion)) killed.push(e.champion);
+    guideChampionKilled(ctx, floor, e.champion);
+    const total = theme.districts.filter((d) => d.champion).length;
+    if (killed.length === total) ctx.emit({ type: "championsCleared", floor: floor.floor, count: total });
+    return;
+  }
+  if (e.tier === "elite" && chance(drops.elite.chance)) {
+    grantBox(ctx, chance(drops.elite.silverChance) ? "silver" : "bronze", "adventurer", `elite: ${e.name}`);
+  }
 }
 
 // ---------------------------------------------------------------- flee / talk / move
@@ -1004,8 +1040,9 @@ function lashOut(ctx: StepContext, e: Enemy): boolean {
   return true;
 }
 
-/** Does this enemy want out (fear, an AI flee threshold, a cowardly mod)? */
+/** Does this enemy want out (fear, an AI flee threshold, a cowardly mod)? A district champion never does. */
 export function wantsToFlee(ctx: StepContext, e: Enemy, token: string): boolean {
+  if (e.champion) return false;
   const fleeMatch = /^flee_below_(\d+)$/.exec(token);
   return hasFlag(e.statuses, ctx.content, "fleeOnly") ||
     (fleeMatch !== null && e.hp / e.maxHP < Number(fleeMatch[1]) / 100) ||
@@ -1117,7 +1154,7 @@ export function enemyStrike(ctx: StepContext, e: Enemy, attack: LiveAttack, opts
   }
   if (c.hp > 0) igniteUnder(ctx, "crawler", attack.damageType === "fire"); // fire, or a fresh burn, on oil
   if (ctx.game.phase !== "combat") return roll; // the fire got you
-  if (c.hp <= 0) killInCombat(ctx, e.tier === "boss" ? `the ${e.name}` : `${/^[aeiou]/i.test(e.name) ? "an" : "a"} ${e.name}`, { source: "enemy", killer: e.familyId, tier: e.tier });
+  if (c.hp <= 0) killInCombat(ctx, e.tier === "boss" || e.champion ? `the ${e.name}` : `${/^[aeiou]/i.test(e.name) ? "an" : "a"} ${e.name}`, { source: "enemy", killer: e.familyId, tier: e.tier });
   return roll;
 }
 
@@ -1205,7 +1242,7 @@ function rollDrops(ctx: StepContext): { from: string; item: ItemInstance }[] {
   const out: { from: string; item: ItemInstance }[] = [];
   for (const e of combat.enemies) {
     if (e.hp > 0 || e.fate || e.tier === "boss") continue;
-    if (!chance(chances[e.tier] ?? 0)) continue;
+    if (!e.champion && !chance(chances[e.tier] ?? 0)) continue; // a champion always leaves something
     out.push({ from: e.name, item: generateItem(ctx.content, itemLevelFor(floor.floor) + (e.tier === "elite" ? 1 : 0), { floor: floor.floor, narrator: ctx.game.narrator }) });
   }
   return out;

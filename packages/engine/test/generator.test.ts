@@ -212,6 +212,43 @@ describe("what gear tells you", () => {
     expect(row.summary).toBe("armor 1");
     expect(row.detail.some((d) => d.startsWith("If you equip it: Armor 0 → 1"))).toBe(true);
   });
+
+  it("the row's one number: armor for armor, and the card lists the change", () => {
+    const world = fresh();
+    const c = bare(world);
+    c.inventory = [itemFromRef(content, "padded_jacket")];
+    const row = engine.view(world).inventory[0]!;
+    expect(row.quick.stat).toBeUndefined();
+    expect(row.quick.delta).toMatchObject({ text: "+1 armor", better: 1, mixed: false });
+    expect(row.card.armor).toBe(1);
+    expect(row.card.changes).toContainEqual({ label: "Armor", from: "0", to: "1", better: 1 });
+    expect(row.card.weight).toBeGreaterThan(0);
+  });
+
+  it("a weapon's row shows its stat and damage a turn against what you hold; the card has the swing", () => {
+    const world = fresh();
+    const c = bare(world);
+    c.baseStats = { STR: 4, DEX: 10, CON: 6, INT: 4, CHA: 4 };
+    const club = itemFromRef(content, "club");
+    const machete = itemFromRef(content, "machete");
+    c.inventory = [club, machete];
+    equip(c, club);
+    const view = engine.view(world);
+    const held = view.inventory.find((i) => i.name === club.name)!;
+    const spare = view.inventory.find((i) => i.name === machete.name)!;
+    expect(held.quick).toEqual({ stat: "STR" }); // in your hand: no comparison
+    expect(held.card.equipped).toBe("In your hand.");
+    expect(spare.quick.stat).toBe("DEX");
+    expect(spare.quick.delta!.better).toBe(1);
+    expect(spare.quick.delta!.text).toMatch(/^\+\d+$/);
+    const w = spare.card.weapon!;
+    expect(w.stat).toBe("DEX");
+    expect(w.damage).toMatch(/^\d+\/\d+\/\d+$/);
+    expect(w.odds[0] + w.odds[1] + w.odds[2]).toBeCloseTo(1);
+    expect(w.perTurn).toBeGreaterThan(0);
+    // The number is the gap in damage a turn, rounded.
+    expect(Number(spare.quick.delta!.text)).toBe(Math.round(w.perTurn - held.card.weapon!.perTurn));
+  });
 });
 
 describe("generated effects in a fight", () => {

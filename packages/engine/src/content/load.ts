@@ -370,6 +370,12 @@ function checkReferences(c: Content, problems: string[]): void {
         ref(`floors.json "${t.id}".encounters.${pool}`, "enemy family", c.enemies.all.some((e) => e.id === id && e.floor === t.floor), id);
       }
     }
+    // Districts (Milestone 9): what they favor, and their champions, fight on this floor.
+    const hard = t.encounters.hardPool.length ? t.encounters.hardPool : c.enemies.all.filter((e) => e.floor === t.floor).map((e) => e.id);
+    for (const d of t.districts) {
+      for (const id of d.favored) ref(`floors.json "${t.id}".districts "${d.id}".favored`, `family in the floor's hard pool`, hard.includes(id), id);
+      if (d.champion) ref(`floors.json "${t.id}".districts "${d.id}".champion.family`, `family in the floor's hard pool`, hard.includes(d.champion.family), d.champion.family);
+    }
     if (t.arena.scrap) ref(`floors.json "${t.id}".arena.scrap`, "loot table", c.lootTables.has(t.arena.scrap), t.arena.scrap);
     if (t.loot.workshopTable) ref(`${where}.workshopTable`, "loot table", c.lootTables.has(t.loot.workshopTable), t.loot.workshopTable);
     for (const f of t.loot.firstSafe) ref(`${where}.firstSafe`, "item", itemRefExists(c, f.item), f.item);

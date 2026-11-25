@@ -73,6 +73,10 @@ const CASES: { id: string; events?: GameEventBody[]; setup?: (c: Crawler, w: Wor
   { id: "mood_up", events: [noop], setup: (_c, w) => { w.game.narrator.mood = 6; } },
   { id: "boss_kill", events: [kill({ tier: "boss" })] },
   { id: "elite_five", events: [noop], setup: (c) => { c.counters["kills.elite"] = 5; } },
+  // Milestone 9: districts and their champions.
+  { id: "champion_slayer", events: [kill({ tier: "elite", champion: "intake" })] },
+  { id: "regime_change", events: [{ type: "championsCleared", floor: 2, count: 3 }] },
+  { id: "tourist", events: [{ type: "districtEntered", floor: 2, district: "the_unclaimed", name: "The Unclaimed", index: 2, of: 3, allSeen: true }] },
   { id: "kills_500", events: [noop], setup: (c) => { c.counters["kills.total"] = 500; } },
   { id: "crit_twenty", events: [noop], setup: (c) => { c.counters["checks.crit"] = 20; } },
   { id: "first_flee", events: [{ type: "combatEnded", outcome: "fled" }] },
@@ -149,14 +153,32 @@ describe("achievements fire", () => {
   });
 
   it("a box reward lands in the pack, unopened, and moves the mood", () => {
-    const ctx = settleWith(exploring(), [kill()]);
-    expect(ctx.game.boxes.some((b) => b.source.includes("First Blood"))).toBe(true);
-    expect(ctx.game.narrator.mood).toBe(1);
+    const ctx = settleWith(exploring(), [kill({ tier: "elite" })]);
+    expect(ctx.game.boxes.some((b) => b.source.includes("Above Your Pay Grade"))).toBe(true);
+    expect(ctx.game.narrator.mood).toBe(2); // First Blood and Above Your Pay Grade, +1 each
   });
 
   it("a payout's own events count: boxes.earned reaches the counters", () => {
-    const ctx = settleWith(exploring(), [kill()]);
+    const ctx = settleWith(exploring(), [kill({ tier: "elite" })]);
     expect(ctx.game.crawler!.counters["boxes.earned"]).toBeGreaterThanOrEqual(1);
+  });
+
+  it("a routine first pays nothing: just the remark, and the mood still moves", () => {
+    const ctx = settleWith(exploring(), [kill()]);
+    expect(ctx.game.crawler!.achievements).toContain("first_blood");
+    expect(content.achievements.get("first_blood").reward).toBeUndefined();
+    expect(ctx.game.boxes).toHaveLength(0);
+    const said = ctx.events.find((e) => e.type === "narration" && e.key === "achievement.earned")!;
+    expect((said as { text: string }).text).not.toMatch(/Reward:|You get|box/);
+    expect(of(ctx.events as never, "achievementEarned")[0]!.reward).toBe("");
+    expect(ctx.game.narrator.mood).toBe(1);
+  });
+
+  it("the routine firsts and the ones for collecting rewards are sarcasm only", () => {
+    const free = ["first_blood", "first_spell", "first_safe_room", "first_craft", "first_level", "first_buy", "first_box", "first_flee",
+      "rooms_20", "gambling_problem", "jackpot", "overachiever", "trophy_case"];
+    for (const id of free) expect(content.achievements.get(id).reward, id).toBeUndefined();
+    expect(content.achievements.get("first_death").reward).toEqual({ legacy: 5 }); // dying still pays the account
   });
 
   it("the System AI says something for each one (no speechless fallbacks)", () => {
@@ -191,6 +213,6 @@ describe("through the real reducer", () => {
     expect(w.game.crawler!.counters["kills.total"]).toBe(1);
     expect(w.game.crawler!.achievements).toContain("first_blood");
     expect(of(events, "achievementEarned").map((e) => e.achievementId)).toContain("first_blood");
-    expect(w.game.boxes.length).toBeGreaterThan(0);
+    expect(w.game.boxes.some((b) => b.source.includes("First Blood"))).toBe(false); // sarcasm only
   });
 });

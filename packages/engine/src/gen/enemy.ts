@@ -21,7 +21,7 @@ export const TIER: Record<EnemyTier, { hpMult: number; mods: readonly [number, n
   boss: { hpMult: 1, mods: [0, 0], levelOffset: 0, xpMult: 1, ap: 3 },
 };
 
-export function generateEnemy(family: EnemyFamily, tier: EnemyTier, floor: number, content: Content, levelOffset = 0): Enemy {
+export function generateEnemy(family: EnemyFamily, tier: EnemyTier, floor: number, content: Content, levelOffset = 0, opts: { mods?: number } = {}): Enemy {
   const level = Math.max(1, floor * 4 + int(-1, 2) + TIER[tier].levelOffset + levelOffset);
   const baseline = floor * 4; // the level family.stats are written for
   const shift = level - baseline;
@@ -29,7 +29,7 @@ export function generateEnemy(family: EnemyFamily, tier: EnemyTier, floor: numbe
   const stats = { ...family.stats };
   for (const s of STATS) stats[s] = Math.max(1, stats[s] + shift);
 
-  const modCount = int(TIER[tier].mods[0], TIER[tier].mods[1]);
+  const modCount = opts.mods ?? int(TIER[tier].mods[0], TIER[tier].mods[1]);
   const mods: EnemyMod[] = [];
   const pool = content.enemyMods.all.slice();
   for (let i = 0; i < modCount && pool.length > 0; i++) {
@@ -105,6 +105,15 @@ export type EncounterKind = "pack" | "corridor" | "elite";
 export interface GroupOptions {
   /** One of the floor's opening fights: easy pool, small pack, lower levels. */
   easy?: boolean;
+  /** Milestone 9: the district's level offset (deeper districts are tougher). */
+  levelOffset?: number;
+  /** Milestone 9: families the district favors to lead the group (x encounters.favoredWeight). */
+  favored?: readonly string[];
+  /**
+   * Milestone 9: the district champion's group. An elite of `family` with the most mods its tier
+   * allows, `levelBonus` levels up, named `title`, always with escorts. Never an easy fight.
+   */
+  champion?: { district: string; title: string; family: string; levelBonus: number };
 }
 
 /**
@@ -115,21 +124,42 @@ export interface GroupOptions {
  *   anyway on `mixedChance`. Never a lone enemy. On `mobChance` a full-strength mob
  *   leads the pack in place of two minions.
  * - elite: one elite of a hard-pool family, alone or with 1-2 minion escorts of the same family.
+ * - champion (opts.champion): a district's named elite, always escorted.
+ * In a district, the group's leading family leans toward the district's favored ones.
  */
 export function generateGroup(floor: number, kind: EncounterKind, content: Content, opts: GroupOptions = {}): Enemy[] {
   const onFloor = content.enemies.all.filter((f) => f.floor === floor);
   if (onFloor.length === 0) return [];
   const theme = content.floors.all.find((t) => t.floor === floor);
   const enc = theme?.encounters ?? DEFAULT_ENCOUNTERS;
-  const easy = !!opts.easy && kind !== "elite";
+  const champ = opts.champion;
+  const easy = !!opts.easy && kind !== "elite" && !champ;
   const poolIds = easy ? enc.easyPool : enc.hardPool;
   const pooled = onFloor.filter((f) => poolIds.includes(f.id));
   const families = pooled.length > 0 ? pooled : onFloor;
-  const offset = enc.levelOffset + (easy ? enc.easyLevelOffset : 0);
+  const offset = enc.levelOffset + (easy ? enc.easyLevelOffset : 0) + (opts.levelOffset ?? 0);
   const spawn = (family: EnemyFamily, tier: EnemyTier) => generateEnemy(family, tier, floor, content, offset);
+  const favored = opts.favored ?? [];
+  const leader = (from: EnemyFamily[]) =>
+    favored.length ? weightedPick(from, (f) => (favored.includes(f.id) ? enc.favoredWeight : 1)) : pick(from);
+
+  if (champ) {
+    const family = content.enemies.get(champ.family);
+    const chief = generateEnemy(family, "elite", floor, content, offset + champ.levelBonus, { mods: TIER.elite.mods[1] });
+    chief.name = champ.title;
+    chief.champion = champ.district;
+    // It's their district: a champion doesn't run or back off, and it can't be talked out of it.
+    chief.fleeBelow = 0;
+    chief.ai = chief.ai.filter((token) => !token.startsWith("flee_below_") && token !== "keep_range");
+    chief.talkable = false;
+    const out = [chief];
+    const extra = int(enc.eliteEscorts[0], enc.eliteEscorts[1]);
+    for (let i = 0; i < extra; i++) out.push(spawn(family, "minion"));
+    return out;
+  }
 
   if (kind === "elite") {
-    const family = pick(families);
+    const family = leader(families);
     const out = [spawn(family, "elite")];
     if (!chance(enc.eliteAloneChance)) {
       const extra = int(enc.eliteEscorts[0], enc.eliteEscorts[1]);
@@ -140,7 +170,8 @@ export function generateGroup(floor: number, kind: EncounterKind, content: Conte
 
   const [lo, hi] = easy ? enc.easyPack : kind === "corridor" ? enc.corridorPack : enc.pack;
   const total = int(Math.max(1, lo), Math.max(1, hi));
-  const [primary, ...others] = shuffle(families);
+  const primary = leader(families);
+  const others = shuffle(families.filter((f) => f !== primary));
   if (easy) {
     const out: Enemy[] = [];
     for (let i = 0; i < total; i++) out.push(spawn(primary!, "minion"));
@@ -170,7 +201,7 @@ export function generateGroup(floor: number, kind: EncounterKind, content: Conte
 const DEFAULT_ENCOUNTERS = {
   pack: [2, 4], corridorPack: [2, 3], mixedChance: 0.35, eliteAloneChance: 0.5, eliteEscorts: [1, 2],
   easyFights: 3, easyPool: [] as string[], hardPool: [] as string[], easyPack: [1, 2], easyLevelOffset: -1,
-  levelOffset: 0, mobChance: 0.25,
+  levelOffset: 0, mobChance: 0.25, favoredWeight: 3,
 } as const;
 
 /**

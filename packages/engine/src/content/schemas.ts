@@ -613,6 +613,40 @@ export const GroundSchema = z.strictObject({
 });
 export type Ground = z.infer<typeof GroundSchema>;
 
+/**
+ * A district (Milestone 9): a region of a floor, carved by flood fill. Districts are listed in
+ * depth order: the first holds the entrance, the last is the deep end.
+ */
+export const DistrictSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string().min(1),
+  /** Narrator line printed the first time you cross in. */
+  enter: z.string().min(1),
+  /** Added to enemy levels in this district. Defaults to the district's index (spec: floor*4 + district.index). */
+  levelOffset: z.number().int().optional(),
+  /** Hard-pool families this district favors when a pack's main family is picked. */
+  favored: z.array(IdSchema).default([]),
+  /** Flavor that mixes with the floor's own pools (about half the time each). */
+  adjectives: LinePool.default([]),
+  sights: LinePool.default([]),
+  sounds: LinePool.default([]),
+  smells: LinePool.default([]),
+  /** The district's champion: one named elite in a lair at the district's far end. */
+  champion: z.strictObject({
+    /** Display name in the fight ("the Night Porter"). */
+    title: z.string().min(1),
+    /** An enemy family on this floor (one of `favored`, by convention). */
+    family: IdSchema,
+    /** Said when the fight starts. */
+    intro: z.string().min(1),
+    /** Said when it dies. */
+    defeat: z.string().min(1),
+    /** Levels on top of the district's elites. */
+    levelBonus: z.number().int().default(1),
+  }).optional(),
+});
+export type District = z.infer<typeof DistrictSchema>;
+
 /** A floor's text identity: name parts and description fragment pools. */
 export const FloorThemeSchema = z.strictObject({
   id: IdSchema,
@@ -735,6 +769,8 @@ export const FloorThemeSchema = z.strictObject({
     levelOffset: z.number().int().default(0),
     /** Chance a hard pack is led by a full-strength mob in place of two of its minions. */
     mobChance: z.number().min(0).max(1).default(0.25),
+    /** Milestone 9: how much more likely a district's favored families are to lead a group. */
+    favoredWeight: z.number().min(1).default(3),
   }).prefault({}),
   /** Extra closing lines by special room type; empty array = no extra line. */
   typeLines: z.strictObject({
@@ -745,8 +781,12 @@ export const FloorThemeSchema = z.strictObject({
     npc: LinePool.default([]),
     empty: LinePool.default([]),
   }),
+  /** Milestone 9: the floor's districts in depth order. Absent or one entry = a single district (not shown). */
+  districts: z.array(DistrictSchema).default([]),
 }).refine((t) => t.rooms <= t.width * t.height * 0.7, {
   message: "rooms must fit the grid with slack (<= 70% of cells) or the walk jams",
+}).refine((t) => new Set(t.districts.map((d) => d.id)).size === t.districts.length, {
+  message: "district ids must be unique on a floor",
 });
 export type FloorTheme = z.infer<typeof FloorThemeSchema>;
 
@@ -1388,6 +1428,8 @@ export const TRIGGER_EVENTS = [
   "kill", "damageTaken", "itemUsed", "spellCast", "crafted", "goldChanged", "boxOpened", "shopBought", "shopSold",
   "check", "roomEntered", "combatStarted", "combatEnded", "levelUp", "skillUp", "died", "recipeLearned", "shardFound",
   "moduleBuilt", "floorEntered", "floorCleared", "sleepStageChanged", "temperChanged", "codexUpdated", "achievementEarned",
+  // Milestone 9
+  "districtEntered", "championsCleared",
 ] as const;
 
 /** What `{ state }` can read (see achievements.ts `stateView`). */
@@ -1437,13 +1479,14 @@ export const AchievementSchema = z.strictObject({
   /** They feed the class offer (Milestone 11) and the absurd-race offer. */
   tags: z.array(z.string()).default([]),
   trigger: ConditionSchema,
+  /** What it pays. Absent: nothing but the System AI's remark (the routine firsts, the ones for collecting rewards). */
   reward: z.union([
     z.strictObject({ box: BoxTierIdSchema, boxType: BoxTypeIdSchema.default("adventurer") }),
     z.strictObject({ xp: z.number().int().positive() }),
     z.strictObject({ gold: z.number().int().positive() }),
     /** Legacy points go straight to the account (Milestone 8): the only reward a dead crawler can use. */
     z.strictObject({ legacy: z.number().int().positive() }),
-  ]),
+  ]).optional(),
   /** Repeatable ones fire for every matching event (not every step). */
   repeatable: z.boolean().default(false),
   /** Secret achievements show as ??? until earned. */
@@ -1497,6 +1540,16 @@ export type BoxType = z.infer<typeof BoxTypeSchema>;
 export const BoxesSchema = z.strictObject({
   tiers: z.array(BoxTierSchema).min(1),
   types: z.array(BoxTypeSchema).min(1),
+  /** Boxes dropped by kills (Milestone 9). Floor bosses pay theirs in boss.ts. */
+  drops: z.strictObject({
+    /** An elite: a box on `chance`, silver on `silverChance`, bronze otherwise. */
+    elite: z.strictObject({
+      chance: z.number().min(0).max(1).default(1),
+      silverChance: z.number().min(0).max(1).default(0.25),
+    }).prefault({}),
+    /** A district champion always drops this tier. */
+    champion: BoxTierIdSchema.default("silver"),
+  }).prefault({}),
 });
 export type BoxesTable = z.infer<typeof BoxesSchema>;
 

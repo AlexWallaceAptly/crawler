@@ -80,7 +80,7 @@ export function TabletShell({ view, log, battle, commands, submit: submitRaw, on
 
   return (
     <div className={s.shell}>
-      <div className={s.status}><StatusStrip view={view} /></div>
+      <div className={s.status}><StatusStrip view={view} district /></div>
 
       <main className={s.stage}>
         {board && (

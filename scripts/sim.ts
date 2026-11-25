@@ -36,6 +36,9 @@
  * forced descents, where the minutes went, sleep states, wanderers, hazards and events.
  *   npm run sim -- 200 --floors 3 --craft --bot all
  *
+ * Districts (Milestone 9): the report adds elites and champions killed per floor and deaths by
+ * district. `--no-districts` turns districts and elite boxes off, for a before/after.
+ *
  * Death and the account (Milestone 8): `--chain 10` plays the runs as careers of 10 crawlers that
  * share one account. Between runs the bot leaves its most valuable item as the bequest (and walks
  * to it on the next Floor 1), and buys the cheapest unlock it can afford until it can't. The report
@@ -81,6 +84,12 @@ if (offsetsArg) {
     const o = offs[(f.floor ?? 1) - 1];
     if (o !== undefined && !Number.isNaN(o)) f.encounters.levelOffset = o;
   }
+}
+// Milestone 9: `--no-districts` plays the floors as one district each with no elite boxes (the
+// pre-Milestone 9 game), for a before/after on the same code.
+if (args.includes("--no-districts")) {
+  for (const f of content.floors.all) f.districts = [];
+  content.boxes.drops.elite.chance = 0;
 }
 const engine = createEngine(content);
 const crafty = args.includes("--craft");
@@ -179,6 +188,17 @@ interface Outcome {
   /** Position in its career (chain mode), from 0. */
   chainIndex: number;
   account: AccountState;
+  /** Milestone 9: per floor, elites and district champions killed, boxes they paid, districts seen; where a death happened. */
+  districts: DistrictTally;
+}
+
+interface DistrictTally {
+  elites: Record<number, number>;
+  champions: Record<number, number>;
+  eliteBoxes: number;
+  championBoxes: number;
+  seen: Record<number, number>;
+  death?: { floor: number; district: number };
 }
 
 function hpPct(world: World): number {
@@ -256,6 +276,7 @@ function runOne(mode: CombatMode | "default", bot: Bot, account?: AccountState):
   let fights = 0;
   let fled = 0;
   let bequestTried = false;
+  const districts: DistrictTally = { elites: {}, champions: {}, eliteBoxes: 0, championBoxes: 0, seen: {} };
   let earlyDeath = false;
   const fightRounds: number[] = [];
   const fightDamage: number[] = [];
@@ -360,6 +381,18 @@ function runOne(mode: CombatMode | "default", bot: Bot, account?: AccountState):
       if ((world.game.crawler?.unspentStatPoints ?? 0) >= before) break;
     }
     for (const e of r.events) if (e.type === "shardFound") shardsByFloor[e.floor] = (shardsByFloor[e.floor] ?? 0) + 1;
+    // Milestone 9: districts, elites and champions.
+    for (const e of r.events) {
+      if (e.type === "kill" && e.champion) districts.champions[floorBefore] = (districts.champions[floorBefore] ?? 0) + 1;
+      else if (e.type === "kill" && e.tier === "elite") districts.elites[floorBefore] = (districts.elites[floorBefore] ?? 0) + 1;
+      if (e.type === "boxEarned" && e.source.startsWith("elite:")) districts.eliteBoxes++;
+      if (e.type === "boxEarned" && e.source.startsWith("champion:")) districts.championBoxes++;
+      if (e.type === "districtEntered") districts.seen[e.floor] = (districts.seen[e.floor] ?? 0) + 1; // once per district
+      if (e.type === "died" && prev.game.floor) {
+        const fl = world.game.floor ?? prev.game.floor;
+        districts.death = { floor: fl.floor, district: fl.rooms[fl.currentRoom]?.district ?? 0 };
+      }
+    }
     if (r.events.some((e) => e.type === "codexUpdated" && e.kind === "weakness") && (wasBoss || world.game.combat?.boss)) weakness++;
     if (r.events.some((e) => e.type === "combatStarted")) {
       if (castThisFight) castFights++;
@@ -403,6 +436,7 @@ function runOne(mode: CombatMode | "default", bot: Bot, account?: AccountState):
       deepest, shardsByFloor, modules: 0, bossFights, bossWins, weakness, temper: 0, atFloorEnd, weaponXp, rankAtFight, floorXp, bossDownOn,
       ...magic(),
       legacy: world.game.ended?.legacy?.total ?? 0, unlocksOwned: world.account.unlocks.length, heirloom: false, chainIndex: 0, account: world.account,
+      districts,
     };
   };
   /** Run a command; false if the engine refused it (not enough AP, out of reach...). */
@@ -746,6 +780,7 @@ function runOne(mode: CombatMode | "default", bot: Bot, account?: AccountState):
     heirloom,
     chainIndex: 0,
     account: world.account,
+    districts,
   };
 }
 
@@ -774,6 +809,22 @@ function rewardsReport(outcomes: Outcome[]): void {
   console.log(`  rewards: ${avg(outcomes.map((o) => o.achievements.length)).toFixed(1)} achievements/run of ${content.achievements.all.length}; boxes opened ${avg(outcomes.map((o) => o.boxesOpened)).toFixed(1)}/run (${avg(outcomes.map((o) => o.boxesLeft)).toFixed(1)} left unopened); gold earned ${Math.round(avg(outcomes.map((o) => o.goldEarned)))}, spent ${Math.round(avg(outcomes.map((o) => o.goldSpent)))}; mood ${avg(outcomes.map((o) => o.mood)).toFixed(1)}`);
   console.log(`    most common: ${top.slice(0, 5).map(([id, k]) => `${id} ${Math.round((100 * k) / n)}%`).join(", ")}`);
   console.log(`    never earned (non-secret): ${never.length ? never.join(", ") : "none"}`);
+}
+
+/** Milestone 9: districts, elites and champions on the floors that have them. */
+function districtReport(outcomes: Outcome[]): void {
+  for (let f = 2; f <= floorsArg; f++) {
+    const theme = content.floors.all.find((t) => t.floor === f);
+    if (!theme || theme.districts.length < 2) continue;
+    const on = outcomes.filter((o) => o.deepest >= f);
+    if (!on.length) continue;
+    const champs = theme.districts.filter((d) => d.champion).length;
+    const deaths = on.filter((o) => o.districts.death?.floor === f);
+    const byDistrict = theme.districts.map((d, i) => `${d.name} ${deaths.filter((o) => o.districts.death!.district === i).length}`);
+    console.log(`  F${f} districts (${on.length} runs): seen ${avg(on.map((o) => o.districts.seen[f] ?? 0)).toFixed(1)}/${theme.districts.length}; elites killed ${avg(on.map((o) => o.districts.elites[f] ?? 0)).toFixed(2)}/run; champions killed ${avg(on.map((o) => o.districts.champions[f] ?? 0)).toFixed(2)}/${champs} (any: ${pct(on.filter((o) => (o.districts.champions[f] ?? 0) > 0).length, on.length)})`);
+    console.log(`      deaths by district: ${byDistrict.join(" · ")}`);
+  }
+  console.log(`  boxes from kills per run: elites ${avg(outcomes.map((o) => o.districts.eliteBoxes)).toFixed(2)}, champions ${avg(outcomes.map((o) => o.districts.championBoxes)).toFixed(2)}`);
 }
 
 /** Milestone 8: what runs pay the account, and how fast a career buys its unlocks. */
@@ -866,6 +917,7 @@ for (const [bot, mode] of bots.flatMap((b) => modes.map((m) => [b, m] as const))
   console.log(`  died in the first 3 fights: ${outcomes.filter((o) => o.earlyDeath).length} (${Math.round((100 * outcomes.filter((o) => o.earlyDeath).length) / runs)}%)`);
   if (crafty) console.log(`  crafted per run: ${avg(outcomes.map((o) => o.crafted)).toFixed(1)}`);
   rewardsReport(outcomes);
+  districtReport(outcomes);
   legacyReport(outcomes);
   if (floorsArg > 1) {
     const reached = (f: number) => outcomes.filter((o) => o.deepest >= f).length;

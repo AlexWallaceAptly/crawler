@@ -45,7 +45,7 @@ describe("shops", () => {
     const price = buyPrice(w.game, content, shopOf(w), item);
     w.game.crawler!.gold = price + 50;
     const { world, events } = engine.step(w, { type: "buy", item: item.name, qty: "1" });
-    expect(world.game.crawler!.gold).toBe(50 + 25); // change, plus the 25 First Buy pays
+    expect(world.game.crawler!.gold).toBe(50); // the change (First Buy is sarcasm only)
     expect(world.game.crawler!.inventory.some((i) => i.name === item.name)).toBe(true);
     expect(of(events, "shopBought")).toHaveLength(1);
     expect(world.game.crawler!.counters["shop.bought"]).toBe(1);

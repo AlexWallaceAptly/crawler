@@ -26,6 +26,12 @@
 .e, .w { top: calc(50% - 1px); height: 2px; width: 50%; }
 .e { right: 0; }
 .w { left: 0; }
+/* Milestone 9: district borders, drawn on the cell's own side (both neighbours draw theirs, so it reads as one line). */
+.edge { position: absolute; z-index: 1; pointer-events: none; border: 0 dashed var(--system); opacity: 0.7; }
+.edgeN { top: 0; left: 0; right: 0; border-top-width: 1px; }
+.edgeS { bottom: 0; left: 0; right: 0; border-bottom-width: 1px; }
+.edgeE { top: 0; bottom: 0; right: 0; border-right-width: 1px; }
+.edgeW { top: 0; bottom: 0; left: 0; border-left-width: 1px; }
 
 /* Movement arrows: the whole neighbouring cell is the tap target, the arrow sits on the side nearest you. */
 .go {

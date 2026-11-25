@@ -284,32 +284,50 @@
   margin: 0;
   padding: 0;
 }
-.slotRow {
-  display: grid;
-  grid-template-columns: 7ch 1fr;
+/* An item in a list (inventory, equipment): label, name, stat tag, the one number, the action. */
+.itemRow {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  width: 100%;
+  min-height: 30px;
+}
+.itemLabel {
+  flex: 0 0 7ch;
+  color: var(--dim);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.itemName {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 2px 0;
+  font: inherit;
   text-align: left;
   background: none;
   border: 0;
-  padding: 0;
   cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
-.slotRow:disabled {
-  cursor: default;
-}
-.slotLabel {
+.itemName:hover span { text-decoration: underline; text-underline-offset: 3px; }
+.statTag {
+  flex: none;
+  padding: 0 5px;
+  font-size: 11px;
   color: var(--dim);
+  border: 1px solid var(--border-hi);
 }
-.detail {
-  color: var(--dim);
-  padding: 0 0 4px 8ch;
+.delta {
+  flex: none;
+  min-width: 3ch;
   font-size: 12px;
-}
-.itemSummary {
+  text-align: right;
   color: var(--faint);
-  font-size: 12px;
 }
+.deltaUp { color: var(--good); }
+.deltaDown { color: var(--danger); }
 .itemActions {
   display: flex;
   flex-wrap: wrap;
@@ -330,19 +348,17 @@
   border-color: var(--good);
   color: var(--good);
 }
-.legend {
-  margin-bottom: 4px;
-  color: var(--faint);
-  font-size: 11px;
+/* A name that opens its card, in a run of text. */
+.linkish {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
 }
-.verdict {
-  margin-left: 4px;
-  font-size: 11px;
-}
-.verdict_better { color: var(--good); }
-.verdict_worse { color: var(--danger); }
-.verdict_mixed { color: var(--system); }
-.verdict_same { color: var(--faint); }
 .fight {
   display: flex;
   flex-direction: column;

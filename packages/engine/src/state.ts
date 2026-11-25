@@ -190,6 +190,8 @@ export interface Room {
   rs: RoomState;
   /** Safe rooms: the shopkeeper and what's on the shelf (Milestone 7), fixed when the floor is generated. */
   shop?: ShopState;
+  /** Milestone 9: index into FloorState.districts (absent = 0, a floor saved before districts). */
+  district?: number;
 }
 
 /** A safe room's shop. The stock is rolled once, so a reload shows the same shelf. */
@@ -207,6 +209,8 @@ export type GroupKind = "pack" | "corridor" | "elite";
 export interface GroupPlan {
   kind: GroupKind;
   enemies?: Enemy[];
+  /** The district champion's group (Milestone 9): the district id whose champion leads it. */
+  champion?: string;
 }
 
 export interface HazardState {
@@ -293,6 +297,8 @@ export interface Enemy {
   xp: number;
   /** Set when the enemy left the fight alive; no XP from these. */
   fate?: "fled" | "pacified";
+  /** A district champion (Milestone 9): the district id. */
+  champion?: string;
 }
 
 // ---------------------------------------------------------------- grid arenas
@@ -400,6 +406,12 @@ export interface FloorState {
   surge?: boolean;
   /** Floor 1: where the last crawler's bequest was left. */
   bequest?: { room: number; name: string; from: string };
+  /** Milestone 9: district ids (floors.json) in index order, entrance first. Absent = one district. */
+  districts?: string[];
+  /** District indexes the crawler has been in. */
+  districtsSeen?: number[];
+  /** District ids whose champion is dead. */
+  championsKilled?: string[];
 }
 
 export type ShowEventType = "reward" | "closing" | "surge" | "announcement";
@@ -424,8 +436,8 @@ export interface ShowEvent {
 
 export interface GuideEntry {
   id: string;
-  /** Guide section: events, scouting, rooms, rules, echo. */
-  section: "events" | "scouting" | "rooms" | "rules" | "echo";
+  /** Guide section: events, scouting, rooms, rules, echo, districts. */
+  section: "events" | "scouting" | "rooms" | "rules" | "echo" | "districts";
   title: string;
   text: string;
   /** Run clock when it was written, for the event log. */

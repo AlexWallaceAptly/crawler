@@ -18,7 +18,7 @@ import { partsOf, recipeBook, workbenchChips, type RecipeBookView, type Workbenc
 import type { RangeBand } from "./content/schemas";
 import { codexView, sideOf, stageOn, vesselOf, wholenessOn, type CodexView, type Side } from "./echo";
 import { moduleItemDetails, moduleViews, type ModuleView } from "./modules";
-import { itemInfo } from "./itemInfo";
+import { itemInfo, type ItemCard, type ItemQuick } from "./itemInfo";
 import { heldWeapon, profileOf, swingNumbers, weaponFit } from "./gear";
 import { spellViews, type SpellView } from "./spells";
 import { achievementList } from "./achievements";
@@ -27,6 +27,7 @@ import { kitFor, ownedKits, runEndView, unlockViews, type RunEndView, type Unloc
 import { boxName } from "./boxes";
 import { moodWord } from "./mood";
 import { shopView, type ShopView } from "./shop";
+import { districtOf } from "./districts";
 
 export interface Bar {
   current: number;
@@ -47,6 +48,10 @@ export interface ItemView {
   summary?: string;
   /** Gear you aren't using: would equipping it be better, worse, or a trade-off? */
   verdict?: "better" | "worse" | "mixed" | "same";
+  /** The list row: a weapon's stat, and one number against what you have on ("+3", "−1 armor"). */
+  quick: ItemQuick;
+  /** Everything else, laid out for the item card that opens when you pick it. */
+  card: ItemCard & { parts?: string[]; weight: number; flavor?: string };
 }
 
 export interface GuideView {
@@ -149,6 +154,8 @@ export interface ViewModel {
       guard: number;
       /** "Your DEX (9) beats your STR (5): weapons marked DEX hit harder for you." */
       fit: string;
+      /** The short version for the sheet: "STR weapons (STR 22 · DEX 18)". */
+      suits: string;
     };
   };
   equipment: { slot: EquipSlot; label: string; item: ItemView | null }[];
@@ -252,15 +259,21 @@ export function view(world: World, content: Content): ViewModel {
     const detail = info.detail;
     const parts = partsOf(it, content);
     if (parts.length) detail.push(`crafting: ${parts.join(", ").toLowerCase()}`);
-    if (it.tags.includes("module_part")) detail.push("one of Echo's module parts");
-    detail.push(...moduleItemDetails(game, content, it));
-    detail.push(`weight ${Math.round(it.weight * it.qty * 10) / 10}`);
+    const notes = [...info.card.notes];
+    if (it.tags.includes("module_part")) { detail.push("one of Echo's module parts"); notes.push("One of Echo's module parts."); }
+    const moduleLines = moduleItemDetails(game, content, it);
+    detail.push(...moduleLines);
+    notes.push(...moduleLines);
+    const weight = Math.round(it.weight * it.qty * 10) / 10;
+    detail.push(`weight ${weight}`);
     if (it.flavor) detail.push(it.flavor);
     const slot = slotOf.get(it.uid);
+    const card = { ...info.card, notes, weight, ...(parts.length ? { parts } : {}), ...(it.flavor ? { flavor: it.flavor } : {}) };
     return {
       uid: it.uid, name: it.name, rarity: it.rarity, detail, qty: it.qty, kind: it.kind,
       ...(parts.length ? { parts } : {}), ...(slot ? { equippedIn: slot } : {}),
       ...(info.summary ? { summary: info.summary } : {}), ...(info.verdict ? { verdict: info.verdict } : {}),
+      quick: info.quick, card,
     };
   };
 
@@ -275,7 +288,8 @@ export function view(world: World, content: Content): ViewModel {
     phase: game.phase,
     status: {
       floor: floor ? floor.floor : null,
-      district: null, // one district per floor until Floor 2
+      // Milestone 9: shown only on floors with more than one district.
+      district: floor && room ? districtOf(content, floor, room).def?.name ?? null : null,
       timer: floor ? formatTimer(floor.timeLeft) : null,
       clock: floor ? formatClock(game.clock) : null,
       sleep: sleepStage(c, content).id === "rested" ? null : sleepStage(c, content).name,
@@ -323,7 +337,10 @@ export function view(world: World, content: Content): ViewModel {
         return {
           weapon: w.name, stat: w.stat, skill: w.skillId ? skillLine(c, content, w.skillId, "swings") : null, roll: sw.rollBonus,
           damage: sw.damage.join("/"), odds: sw.odds, average: sw.average, apCost: w.apCost,
-          armor: d.armor, guard: d.guard, fit: weaponFit(c, content, d).text,
+          armor: d.armor, guard: d.guard, fit: weaponFit(c, content, d).text, suits: (() => {
+            const fit = weaponFit(c, content, d);
+            return fit.stat === "either" ? `STR or DEX (${d.stats.STR} / ${d.stats.DEX})` : `${fit.stat} weapons (STR ${d.stats.STR} · DEX ${d.stats.DEX})`;
+          })(),
         };
       })(),
     },

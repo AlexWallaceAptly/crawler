@@ -4,6 +4,7 @@
  * `room.rs` (see state.ts); this file reads and writes it.
  */
 import { generateGroup } from "./gen/enemy";
+import { districtGroupOptions } from "./districts";
 import { chance, int, pick } from "./rng";
 import { derive } from "./rules/derived";
 import { collectModifiers } from "./rules/derived";
@@ -27,14 +28,15 @@ export function dangerOf(room: Room, bossAlive = false): DangerBand {
   return n === 1 ? "uneasy" : "calm";
 }
 
-/** The enemies in a waiting group, rolled the first time anyone asks and kept after that. */
-export function groupEnemies(ctx: StepContext, plan: GroupPlan): Enemy[] {
+/** The enemies in a waiting group in `room`, rolled the first time anyone asks and kept after that. */
+export function groupEnemies(ctx: StepContext, room: Room, plan: GroupPlan): Enemy[] {
   if (plan.enemies) return plan.enemies;
   const floor = ctx.game.floor!;
   const theme = ctx.content.floors.byId[floor.theme];
-  const easy = (floor.fights ?? 0) < (theme?.encounters.easyFights ?? 0);
-  // The floor's first fights are small packs, even from a lair.
-  plan.enemies = generateGroup(floor.floor, easy && plan.kind === "elite" ? "pack" : plan.kind, ctx.content, { easy });
+  // The floor's first fights are small packs, even from a lair (but never the district's champion).
+  const easy = !plan.champion && (floor.fights ?? 0) < (theme?.encounters.easyFights ?? 0);
+  const opts = { ...districtGroupOptions(ctx, room, plan.champion), easy };
+  plan.enemies = generateGroup(floor.floor, easy && plan.kind === "elite" ? "pack" : plan.kind, ctx.content, opts);
   return plan.enemies;
 }
 
@@ -106,7 +108,7 @@ export function assess(ctx: StepContext, dir?: Dir): void {
   const lines = [`Assessing ${dir ? `the room ${dir}` : "this room"}: ${target.name}.`];
   if (target.boss && !floor.bossDefeated) lines.push("Something huge lives here. You can tell from the floor.");
   if (rs.groups.length === 0) lines.push("Nobody waiting.");
-  for (const g of rs.groups) lines.push(`Waiting: ${countNames(groupEnemies(ctx, g))}.`);
+  for (const g of rs.groups) lines.push(`Waiting: ${countNames(groupEnemies(ctx, target, g))}${g.champion ? " (the district's champion)" : ""}.`);
   if (rs.dense) lines.push("A crowded room. More of everything, including the good stuff.");
   const theme = ctx.content.floors.get(floor.theme);
   const hazards = activeHazards(target);
@@ -183,7 +185,7 @@ export function afterAction(ctx: StepContext): void {
   const kind = pick(ctx.content.pacing.wander.kinds);
   const theme = ctx.content.floors.byId[floor.theme];
   const easy = (floor.fights ?? 0) < (theme?.encounters.easyFights ?? 0);
-  const enemies = generateGroup(floor.floor, kind, ctx.content, { easy });
+  const enemies = generateGroup(floor.floor, kind, ctx.content, { ...districtGroupOptions(ctx, room), easy });
   if (enemies.length === 0) return;
   ctx.describe(`Day ${floorDay(ctx)}: something has been following the noise you make. It found you.`);
   startCombat(ctx, enemies, { fromRoom: floor.currentRoom, wander: true });

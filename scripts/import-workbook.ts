@@ -365,12 +365,13 @@ function formatSkills(skills: Json[]): string {
 
 const GROUPS = ["firstTime", "combat", "nearDeath", "exploration", "crafting", "magic", "social", "humiliation", "stupidity", "secret", "thread", "progress", "time", "show"];
 
-/** "box silver weapon" | "box bronze" | "xp 20" | "gold 25" | "legacy 10" -> the engine's reward object. */
-function parseReward(v: string, where: string): Json {
+/** "box silver weapon" | "box bronze" | "xp 20" | "gold 25" | "legacy 10" | "none" -> the engine's reward object (undefined for none). */
+function parseReward(v: string, where: string): Json | undefined {
   const [kind, a, b] = v.trim().toLowerCase().split(/\s+/);
+  if (!kind || kind === "none") return undefined;
   if (kind === "box" && a) return { box: a, boxType: b ?? "adventurer" };
   if ((kind === "xp" || kind === "gold" || kind === "legacy") && a && Number.isInteger(Number(a))) return { [kind]: Number(a) };
-  throw new Error(`${where}: Reward "${v}" must look like "box silver weapon", "xp 20", "gold 25" or "legacy 10"`);
+  throw new Error(`${where}: Reward "${v}" must look like "box silver weapon", "xp 20", "gold 25", "legacy 10" or "none"`);
 }
 
 /** The sheet's event names that the engine spells differently. */

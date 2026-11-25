@@ -198,5 +198,12 @@
         "oddity": 0
       }
     }
-  ]
+  ],
+  "drops": {
+    "elite": {
+      "chance": 1,
+      "silverChance": 0.25
+    },
+    "champion": "silver"
+  }
 }

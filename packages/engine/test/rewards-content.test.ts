@@ -4,7 +4,7 @@ import { content, engine } from "./helpers";
 
 describe("Milestone 7 narration", () => {
   it("the reward code's fixed narration keys exist", () => {
-    for (const k of ["achievement.earned", "box.granted", "box.refused", "echo.sleep.worse", "echo.sleep.better", "shop.worthless"]) {
+    for (const k of ["achievement.earned", "box.granted", "box.refused", "echo.sleep.worse", "echo.sleep.better", "shop.worthless", "district.entered", "champion.killed"]) {
       expect(content.narration[k], k).toBeDefined();
     }
   });

@@ -7,7 +7,8 @@
  * `items.used`, `items.<type>`, `spells.cast`, `spells.<school>`, `crafts`, `checks.total`,
  * `checks.crit`, `checks.fumble`, `rooms.entered`, `rooms.safe`, `combats.won`, `combats.fled`,
  * `gold.earned`, `gold.spent`, `boxes.earned`, `boxes.opened`, `shop.bought`, `shop.sold`,
- * `levels`, `shards`, `modules`, `floors.cleared`.
+ * `levels`, `shards`, `modules`, `floors.cleared`, and (Milestone 9) `kills.champion`,
+ * `districts.entered`.
  */
 import type { GameEventBody } from "./events";
 import { derive } from "./rules/derived";
@@ -22,7 +23,7 @@ export function bump(c: Crawler, key: string, n = 1): void {
 function bumpsFor(e: GameEventBody): [string, number][] {
   switch (e.type) {
     case "kill":
-      return [["kills.total", 1], [`kills.${e.family}`, 1], [`kills.${e.tier}`, 1]];
+      return [["kills.total", 1], [`kills.${e.family}`, 1], [`kills.${e.tier}`, 1], ...(e.champion ? [["kills.champion", 1] as [string, number]] : [])];
     case "damageTaken":
       return [["damage.taken", e.amount], ["hits.taken", 1]];
     case "itemUsed":
@@ -59,6 +60,8 @@ function bumpsFor(e: GameEventBody): [string, number][] {
       return [["modules", 1]];
     case "floorCleared":
       return [["floors.cleared", 1]];
+    case "districtEntered":
+      return [["districts.entered", 1]];
     default:
       return [];
   }

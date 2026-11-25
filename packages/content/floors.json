@@ -715,7 +715,7 @@
         2
       ],
       "easyLevelOffset": -1,
-      "levelOffset": -1,
+      "levelOffset": -2,
       "mobChance": 0.25
     },
     "roomNames": {
@@ -1220,7 +1220,105 @@
         }
       ],
       "scrap": "arena_scrap"
-    }
+    },
+    "districts": [
+      {
+        "id": "intake",
+        "name": "Intake",
+        "enter": "The shelving thins out into counters, windows and a rope line with nobody in it. Signs everywhere: INTAKE. ALL ITEMS MUST BE LOGGED. Including you.",
+        "favored": [
+          "tag_moth",
+          "finders_keeper"
+        ],
+        "adjectives": [
+          "Stamped",
+          "Pending",
+          "Logged",
+          "Triplicate"
+        ],
+        "sights": [
+          "A row of empty chairs faces a counter under a sign: NOW SERVING 0. The number has never changed.",
+          "Inboxes are stacked to the ceiling, every one labelled IN, every one full.",
+          "A rubber stamp sits in a pool of red ink that isn't drying, and isn't ink."
+        ],
+        "sounds": [
+          "A bell on the counter dings by itself, politely, every few minutes, for nobody."
+        ],
+        "smells": [
+          "Toner, carbon paper and the inside of a filing cabinet."
+        ],
+        "champion": {
+          "title": "Intake Clerk",
+          "family": "finders_keeper",
+          "intro": "The Intake Clerk looks you over, stamps something, and decides you're a found object. Found objects don't get to leave.",
+          "defeat": "The Intake Clerk goes down clutching a form in triplicate. The bottom copy has your name on it, already filled in."
+        }
+      },
+      {
+        "id": "the_stacks",
+        "name": "The Stacks",
+        "enter": "The shelves go up and keep going. Aisles turn into canyons, and the canyons have weather: drifts of claim tags, a draft that smells of luggage. Welcome to the Stacks.",
+        "favored": [
+          "unclaimed_suitcase",
+          "umbrella_bat"
+        ],
+        "adjectives": [
+          "Towering",
+          "Teetering",
+          "Overhead",
+          "Forty-High"
+        ],
+        "sights": [
+          "Suitcases stacked forty high lean together like drunks holding each other up.",
+          "An umbrella hangs open from a top shelf, upside down, like something roosting.",
+          "A ladder on rails runs off into the dark between the shelves. Nobody's on it. It's still rolling."
+        ],
+        "sounds": [
+          "Somewhere high in the shelves, a zip opens. Slowly. Then stops, as if it heard you."
+        ],
+        "smells": [
+          "Airport. Just the smell of airport, boiled down."
+        ],
+        "champion": {
+          "title": "Overweight Bag",
+          "family": "unclaimed_suitcase",
+          "intro": "Something at the back of the aisle unzips itself. The Overweight Bag has gone round this floor for years waiting for someone to claim it. It's decided you'll do.",
+          "defeat": "The Overweight Bag bursts at every seam. Out spills a whole life's worth of somebody's things, none of them yours, all of them damp."
+        }
+      },
+      {
+        "id": "the_unclaimed",
+        "name": "The Unclaimed",
+        "enter": "Past the last labelled shelf, nobody filed anything. Things lie where they fell. The drains in the floor are wide and warm, and they move when you aren't looking straight at them. This is where unclaimed goes.",
+        "favored": [
+          "odd_sock_wraith",
+          "tag_moth"
+        ],
+        "adjectives": [
+          "Unfiled",
+          "Abandoned",
+          "Drain-Side",
+          "Unmarked"
+        ],
+        "sights": [
+          "A drain in the floor is fringed with socks, all singles, all pointing inward.",
+          "Junk is heaped against one wall, as if the room tipped once and something swallowed the rest.",
+          "A claim tag on the floor reads CLAIMED BY: and then a word that has been chewed off."
+        ],
+        "sounds": [
+          "The drain gurgles in a rhythm that's almost, almost, breathing."
+        ],
+        "smells": [
+          "Wet wool, and under it something warm, like the inside of a mouth."
+        ],
+        "champion": {
+          "title": "Last Sock",
+          "family": "odd_sock_wraith",
+          "intro": "The Last Sock unspools from a drain grate. It's what's left of every pair that ever lost its other half, and it has waited a long time for feet.",
+          "defeat": "The Last Sock goes limp and slides back down the drain. The drain swallows. It does not sound like plumbing."
+        }
+      }
+    ]
   },
   {
     "id": "flooded_parking_garage",
@@ -1262,7 +1360,7 @@
         2
       ],
       "easyLevelOffset": -1,
-      "levelOffset": -2,
+      "levelOffset": -3,
       "mobChance": 0.25
     },
     "roomNames": {
@@ -1775,6 +1873,136 @@
         }
       ],
       "scrap": "arena_scrap"
-    }
+    },
+    "districts": [
+      {
+        "id": "short_stay",
+        "name": "Level P1: Short Stay",
+        "enter": "Painted bays, a ticket machine, a sign: SHORT STAY. MAX 2 HOURS. The machine has a ticket sticking out of its mouth, dated four years ago.",
+        "favored": [
+          "valet_imp",
+          "car_alarm"
+        ],
+        "adjectives": [
+          "Short-Stay",
+          "Pay-and-Display",
+          "Kerbside",
+          "Clamped"
+        ],
+        "sights": [
+          "A row of wheel clamps sits on cars with nobody in them, and one on a shopping trolley.",
+          "A sign reads DROP-OFF ONLY. NO WAITING. Someone has been waiting a very long time.",
+          "A valet podium holds a bowl of mints and a tip jar with one tooth in it."
+        ],
+        "sounds": [
+          "A ticket machine prints a ticket for nobody. Then another. Then another."
+        ],
+        "smells": [
+          "Exhaust and peppermint, which is worse than either."
+        ],
+        "champion": {
+          "title": "Valet Supervisor",
+          "family": "valet_imp",
+          "intro": "The Valet Supervisor spins a key ring round one finger. \"Ticket?\" it asks. You don't have one. It looks delighted.",
+          "defeat": "The Valet Supervisor drops its key ring. Every key on it is for a car that's underwater."
+        }
+      },
+      {
+        "id": "car_wash",
+        "name": "The Car Wash",
+        "enter": "The floor tilts toward a tunnel of giant brushes and dripping curtains. A sign flickers WASH - WAX - DRY - DROWN. The last option is lit.",
+        "favored": [
+          "oil_slick",
+          "hubcap_crab"
+        ],
+        "adjectives": [
+          "Soapy",
+          "Foam-Choked",
+          "Waxed",
+          "Rinsed"
+        ],
+        "sights": [
+          "Giant brushes hang still, heavy with something darker than water.",
+          "Foam is piled in the corners like snowdrifts, rainbow-slick on top.",
+          "A row of air dryers points at the ceiling, holding its breath."
+        ],
+        "sounds": [
+          "Somewhere a brush turns half a turn and stops, like it's been told off."
+        ],
+        "smells": [
+          "Cheap cherry soap over petrol, a smell that gets into your teeth."
+        ],
+        "champion": {
+          "title": "Rinse Cycle",
+          "family": "oil_slick",
+          "intro": "The brushes start turning on their own. Out of the foam slides the Rinse Cycle, a slick of oil the size of a van, and it's very keen on getting you clean.",
+          "defeat": "The Rinse Cycle splits into a hundred rainbow puddles and drains away. The brushes slow, stop, then turn once more, just to let you know."
+        }
+      },
+      {
+        "id": "the_ramps",
+        "name": "The Ramps",
+        "enter": "The floor tilts and keeps tilting. Ramps spiral down into the dark, level after level, with arrows painted on them that disagree.",
+        "favored": [
+          "hubcap_crab",
+          "car_alarm"
+        ],
+        "adjectives": [
+          "Spiralling",
+          "Sloped",
+          "Down-Ramp",
+          "One-Way"
+        ],
+        "sights": [
+          "Arrows on the ramp point down, then up, then at you.",
+          "Tyre marks spiral down the wall, across the ceiling and back down the wall.",
+          "A height bar swings over the ramp: MAX HEADROOM 2.1M. Something much taller has bent it."
+        ],
+        "sounds": [
+          "Something rolls down the ramp behind you, slowly, and never reaches the bottom."
+        ],
+        "smells": [
+          "Burnt clutch and cold concrete."
+        ],
+        "champion": {
+          "title": "Speed Bump",
+          "family": "hubcap_crab",
+          "intro": "The Speed Bump rises out of the ramp, all shell and welded hubcaps, and settles across the only way down. It has done this to a lot of cars.",
+          "defeat": "The Speed Bump cracks down the middle and slides away downhill, shedding hubcaps all the way to the bottom."
+        }
+      },
+      {
+        "id": "level_b4",
+        "name": "Sealed Level B4",
+        "enter": "Someone welded the door to B4 shut, and someone else unwelded it. Below the last ramp the water is waist-deep and still, and every car down here has its headlights on, pointed at you.",
+        "favored": [
+          "brake_eel",
+          "oil_slick"
+        ],
+        "adjectives": [
+          "Sealed",
+          "Submerged",
+          "Waist-Deep",
+          "Lightless"
+        ],
+        "sights": [
+          "Headlights glow under the water, a whole level of them, all pointed the same way.",
+          "A rope hangs from the ceiling into the flood, taut, as if something on the other end is holding on.",
+          "A sign above the waterline reads B4 - CLOSED FOR YOUR SAFETY. Below the waterline it says something else."
+        ],
+        "sounds": [
+          "A car horn sounds under the water, muffled and patient, once a minute."
+        ],
+        "smells": [
+          "Brine, rust, and the cold breath of something very large, asleep."
+        ],
+        "champion": {
+          "title": "Tow Line",
+          "family": "brake_eel",
+          "intro": "The water stirs and the Tow Line surfaces: an eel as long as the level, braided from every brake line that ever failed down here. It wants to take you somewhere.",
+          "defeat": "The Tow Line goes slack and sinks. For a moment the whole drowned level is quiet, and you can hear the honking again, far off, under the water."
+        }
+      }
+    ]
   }
 ]

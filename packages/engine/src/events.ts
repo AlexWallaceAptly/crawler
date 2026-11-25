@@ -95,7 +95,12 @@ export type GameEventBody =
   | { type: "floorEntered"; floor: number; name: string }
   // ---- Milestone 7: facts the achievement engine and the counters read. Most print nothing.
   /** An enemy died. `how` is a short tag: "swing", "spell", "item", "status", "friendlyFire", "echo". */
-  | { type: "kill"; target: string; family: string; tier: string; overkill: number; how: string }
+  | { type: "kill"; target: string; family: string; tier: string; overkill: number; how: string; champion?: string }
+  // ---- Milestone 9: districts and their champions.
+  /** First time in a district this floor. `allSeen`: that was the floor's last unvisited district. */
+  | { type: "districtEntered"; floor: number; district: string; name: string; index: number; of: number; allSeen: boolean }
+  /** The floor's last living district champion just died. */
+  | { type: "championsCleared"; floor: number; count: number }
   /** The crawler lost HP. `source`: enemy, hazard, self (your own item), show (a show event), craft (a botch). */
   | { type: "damageTaken"; amount: number; source: string; cause: string; hp: number; hpPct: number }
   /** A consumable was used. `itemType` is its consumables.json type (potion, food, explosive...). */

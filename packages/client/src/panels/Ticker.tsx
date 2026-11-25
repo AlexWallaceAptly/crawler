@@ -35,6 +35,10 @@ function text(e: GameEvent): string {
       return `RUN OVER — +${e.legacy} legacy (${e.points} on the account)`;
     case "unlockBought":
       return `⚿ UNLOCKED — ${e.name} (${e.points} legacy left)`;
+    case "districtEntered":
+      return `DISTRICT ${e.index + 1} OF ${e.of} — ${e.name}`;
+    case "championsCleared":
+      return `EVERY CHAMPION ON FLOOR ${e.floor} — DEAD`;
     case "narration":
     case "info":
     case "error":

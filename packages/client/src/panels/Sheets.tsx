@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ViewModel } from "@crawler/engine";
 import s from "./panels.module.css";
 import { MiniMapGrid } from "./MiniMapGrid";
+import { ItemCard } from "./ItemCard";
 
 const rarityClass = (r: string) => s[r] ?? s.common;
 
@@ -56,7 +57,7 @@ export function CharacterSheet({ view, submit }: { view: ViewModel; submit?: (t:
           </div>
         ))}
       </dl>
-      <Fighting view={view} />
+      <Fighting view={view} submit={submit} />
       <div className={s.sectionLabel}>Skills</div>
       <ul className={s.skillList}>
         {c.skills.map((sk) => (
@@ -122,52 +123,59 @@ function Progress({ current, max }: { current: number; max: number }) {
   );
 }
 
-/** How you fight right now: what your weapon and stats add up to, and which stat suits you. */
-function Fighting({ view }: { view: ViewModel }) {
+/**
+ * How you fight right now, at a glance: the weapon (pick it for its card), its damage, your armor,
+ * and which stat suits you. The full swing math is on the weapon's card.
+ */
+function Fighting({ view, submit }: { view: ViewModel; submit?: (t: string) => void }) {
+  const [open, setOpen] = useState(false);
   const f = view.character?.fighting;
   if (!f) return null;
-  const pct = (p: number) => `${Math.round(p * 100)}%`;
+  const held = view.equipment.find((row) => row.slot === "mainHand")?.item ?? null;
   return (
     <>
       <div className={s.sectionLabel}>Fighting</div>
       <div className={s.fight}>
-        <div><span className={s.fightKey}>Weapon</span> {f.weapon} <span className={s.sub}>({f.stat}, {f.apCost} AP)</span></div>
-        {f.skill && <div><span className={s.fightKey}>Skill</span> <span className={s.fightSkill}>{f.skill}</span></div>}
-        <div><span className={s.fightKey}>Roll</span> 2d10 {f.roll >= 0 ? "+" : ""}{f.roll} <span className={s.sub}>weak {pct(f.odds[0])} · solid {pct(f.odds[1])} · great {pct(f.odds[2])}</span></div>
-        <div><span className={s.fightKey}>Damage</span> {f.damage} <span className={s.sub}>avg {f.average} a swing</span></div>
-        <div><span className={s.fightKey}>Armor</span> {f.armor} <span className={s.sub}>off every hit{f.guard ? ` · guard ${f.guard > 0 ? "+" : ""}${f.guard}` : ""}</span></div>
-        <div className={s.fightFit}>{f.fit}</div>
+        <div>
+          <span className={s.fightKey}>Weapon</span>{" "}
+          {held ? <button className={s.linkish} onClick={() => setOpen(true)}>{f.weapon}</button> : f.weapon}{" "}
+          <span className={s.statTag}>{f.stat}</span> <span className={s.sub}>{f.apCost} AP</span>
+        </div>
+        <div><span className={s.fightKey}>Damage</span> {f.damage}</div>
+        <div><span className={s.fightKey}>Armor</span> {f.armor}{f.guard ? <span className={s.sub}> · guard {f.guard > 0 ? "+" : ""}{f.guard}</span> : null}</div>
+        {f.skill && <div><span className={s.fightKey}>Skill</span> <span className={s.fightSkill}>{f.skill.split(" · ")[0]}</span></div>}
+        <div className={s.fightFit}>Suits you: {f.suits}</div>
       </div>
+      {open && held && <ItemCard item={held} submit={submit} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-const VERDICT: Record<string, { mark: string; label: string }> = {
-  better: { mark: "▲", label: "better than what you have on" },
-  worse: { mark: "▼", label: "worse than what you have on" },
-  mixed: { mark: "⇅", label: "a trade-off: open it to see" },
-  same: { mark: "=", label: "about the same" },
-};
-
-function Verdict({ v }: { v?: string }) {
-  if (!v) return null;
-  const x = VERDICT[v]!;
-  return <span className={`${s.verdict} ${s[`verdict_${v}`] ?? ""}`} title={x.label} aria-label={x.label}>{x.mark}</span>;
-}
-
 type Item = ViewModel["inventory"][number];
 
-/** Equip / take off / use / drop, under an opened item. */
-function ItemActions({ it, submit }: { it: Item; submit?: (t: string) => void }) {
-  if (!submit) return null;
+/**
+ * One item in a list: its name (pick it for the card), the stat a weapon swings with, one number
+ * against what you have on, and the one-tap action. Everything else is on the card.
+ */
+function ItemRow({ it, label, onOpen, submit }: { it: Item; label: string; onOpen: () => void; submit?: (t: string) => void }) {
+  const d = it.quick.delta;
   const name = it.name.toLowerCase();
   return (
-    <div className={s.itemActions}>
-      {it.kind === "gear" && (it.equippedIn
-        ? <button className={s.itemBtn} onClick={() => submit(`unequip ${name}`)}>take off</button>
-        : <button className={`${s.itemBtn} ${it.verdict === "better" ? s.itemBtnGood : ""}`} onClick={() => submit(`equip ${name}`)}>equip</button>)}
-      {it.kind === "consumable" && <button className={s.itemBtn} onClick={() => submit(`use ${name}`)}>use</button>}
-      {!it.equippedIn && <button className={s.itemBtn} onClick={() => submit(`drop ${name}`)}>drop</button>}
+    <div className={s.itemRow}>
+      <span className={s.itemLabel}>{label}</span>
+      <button className={s.itemName} onClick={onOpen} title="Details">
+        <span className={rarityClass(it.rarity)}>{it.name}</span>
+      </button>
+      {it.quick.stat && <span className={s.statTag} title={`Swings with ${it.quick.stat}`}>{it.quick.stat}</span>}
+      {d && (
+        <span className={`${s.delta} ${d.better > 0 ? s.deltaUp : d.better < 0 ? s.deltaDown : ""}`} title={d.title}>
+          {d.text}{d.mixed ? " ⇅" : ""}
+        </span>
+      )}
+      {submit && it.kind === "gear" && !it.equippedIn && (
+        <button className={`${s.itemBtn} ${it.verdict === "better" ? s.itemBtnGood : ""}`} onClick={() => submit(`equip ${name}`)}>equip</button>
+      )}
+      {submit && it.kind === "consumable" && <button className={s.itemBtn} onClick={() => submit(`use ${name}`)}>use</button>}
     </div>
   );
 }
@@ -175,32 +183,20 @@ function ItemActions({ it, submit }: { it: Item; submit?: (t: string) => void })
 export function EquipmentList({ view, submit }: { view: ViewModel; submit?: (t: string) => void }) {
   const [open, setOpen] = useState<string | null>(null);
   if (!view.character) return <div className={s.muted}>Nothing to wear. Nobody to wear it.</div>;
+  const picked = view.equipment.find((row) => row.item?.uid === open)?.item;
   return (
-    <ul className={s.list}>
-      {view.equipment.map((row) => (
-        <li key={row.slot}>
-          <button
-            className={s.slotRow}
-            disabled={!row.item}
-            onClick={() => setOpen(open === row.slot ? null : row.slot)}
-            aria-expanded={open === row.slot}
-          >
-            <span className={s.slotLabel}>{row.label}:</span>
+    <>
+      <ul className={s.list}>
+        {view.equipment.map((row) => (
+          <li key={row.slot}>
             {row.item
-              ? <span><span className={rarityClass(row.item.rarity)}>{row.item.name}</span>{row.item.summary && <span className={s.itemSummary}> {row.item.summary}</span>}</span>
-              : <span className={s.muted}>—</span>}
-          </button>
-          {open === row.slot && row.item && (
-            <div className={s.detail}>
-              {row.item.detail.map((d, i) => (
-                <div key={i}>{d}</div>
-              ))}
-              <ItemActions it={row.item} submit={submit} />
-            </div>
-          )}
-        </li>
-      ))}
-    </ul>
+              ? <ItemRow it={row.item} label={`${row.label}:`} onOpen={() => setOpen(row.item!.uid)} submit={submit} />
+              : <div className={s.itemRow}><span className={s.itemLabel}>{row.label}:</span><span className={s.muted}>—</span></div>}
+          </li>
+        ))}
+      </ul>
+      {picked && <ItemCard item={picked} submit={submit} onClose={() => setOpen(null)} />}
+    </>
   );
 }
 
@@ -227,31 +223,17 @@ export function MiniMap({ view }: { view: ViewModel }) {
 export function InventoryList({ view, submit }: { view: ViewModel; submit?: (t: string) => void }) {
   const [open, setOpen] = useState<string | null>(null);
   if (view.inventory.length === 0) return <div className={s.muted}>Empty. Like your future.</div>;
-  const hasVerdicts = view.inventory.some((it) => it.verdict);
+  const picked = view.inventory.find((it) => it.uid === open);
   return (
     <>
-      {hasVerdicts && <div className={s.legend}>▲ better than what you have on · ▼ worse · ⇅ a trade-off. Open one to see why.</div>}
       <ul className={s.list}>
         {view.inventory.map((it) => (
           <li key={it.uid}>
-            <button className={s.slotRow} onClick={() => setOpen(open === it.uid ? null : it.uid)} aria-expanded={open === it.uid}>
-              <span className={s.slotLabel}>{it.equippedIn ? "[E]" : it.qty > 1 ? `x${it.qty}` : ""}<Verdict v={it.verdict} /></span>
-              <span>
-                <span className={rarityClass(it.rarity)}>{it.name}</span>
-                {it.summary && <span className={s.itemSummary}> {it.summary}</span>}
-              </span>
-            </button>
-            {open === it.uid && (
-              <div className={s.detail}>
-                {it.detail.map((d, i) => (
-                  <div key={i}>{d}</div>
-                ))}
-                <ItemActions it={it} submit={submit} />
-              </div>
-            )}
+            <ItemRow it={it} label={it.equippedIn ? "[E]" : it.qty > 1 ? `x${it.qty}` : ""} onOpen={() => setOpen(it.uid)} submit={submit} />
           </li>
         ))}
       </ul>
+      {picked && <ItemCard item={picked} submit={submit} onClose={() => setOpen(null)} />}
     </>
   );
 }
@@ -597,7 +579,13 @@ export function ShopSheet({ view, submit }: { view: ViewModel; submit: (t: strin
         {shop.stock.map((it, i) => (
           <li key={`${it.name}${i}`} className={s.codexEntry}>
             <span className={rarityClass(it.rarity)}>{it.name}{it.qty > 1 ? ` ×${it.qty}` : ""}</span>
-            <span className={s.sub}> · {it.price}g{it.slot ? ` · ${it.slot}` : ""}</span>{" "}
+            <span className={s.sub}> · {it.price}g</span>{" "}
+            {it.quick?.stat && <span className={s.statTag}>{it.quick.stat}</span>}{" "}
+            {it.quick?.delta && (
+              <span className={`${s.delta} ${it.quick.delta.better > 0 ? s.deltaUp : it.quick.delta.better < 0 ? s.deltaDown : ""}`} title={it.quick.delta.title}>
+                {it.quick.delta.text}{it.quick.delta.mixed ? " ⇅" : ""}
+              </span>
+            )}{" "}
             <button className={s.itemBtn} disabled={shop.gold < it.price} onClick={() => submit(`buy ${i + 1}`)}>buy</button>
           </li>
         ))}

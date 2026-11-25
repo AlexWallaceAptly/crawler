@@ -1,4 +1,5 @@
 import { afterAction, assess, listen, searchPass } from "./roomwork";
+import { districtLabel } from "./districts";
 import { openBoxes, showAchievements, showBoxes } from "./rewardActions";
 import { buyItem, sellItem, showShop } from "./shop";
 import { settle } from "./achievements";
@@ -368,12 +369,13 @@ const handlers: Handlers = {
   map: {
     phases: ["exploring"],
     run(ctx) {
-      const { floor } = here(ctx);
+      const { floor, room } = here(ctx);
       const theme = ctx.content.floors.get(floor.theme);
       const explored = floor.rooms.filter((r) => r.visited).length;
+      const district = districtLabel(ctx.content, floor, room);
       ctx.info(
         `${theme.name} — ${explored}/${floor.rooms.length} rooms, collapse in ${formatTimer(floor.timeLeft)}`,
-        [...renderMap(floor), "", "@ you   · visited   ? seen   S safe   > stairs   ! boss"],
+        [...renderMap(floor), "", "@ you   · visited   ? seen   S safe   > stairs   ! boss", ...(district ? [`District: ${district}`] : [])],
       );
     },
   },
